@@ -3,12 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import SFTPClient from 'ssh2-sftp-client';
 import { ServerHandler } from './ServerHandler';
-import { ServerHandlerInterface, SystemInfo } from './types';
+import { ServerHandlerInterface, SystemInfo } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class RemoteServerHandler extends ServerHandler implements ServerHandlerInterface {
-  protected currentDirectory: string = ''; // Initialize currentDirectory
-  private conn: Client | null = null; // Initialize conn as nullable Client
+  protected currentDirectory: string = '';
+  private conn: Client | null = null;
 
   constructor(identifier: string) {
     super();
@@ -473,9 +473,8 @@ public async updateFile(filePath: string, pattern: string, replacement: string, 
   }
 
   public setCurrentDirectory(directory: string): boolean {
-    // Implementation to set the current directory
     this.currentDirectory = directory;
-    return true; // Assuming the operation is always successful
+    return true; 
   }
 
 }

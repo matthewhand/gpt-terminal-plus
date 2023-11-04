@@ -1,7 +1,7 @@
 // serverHandlerInstance.ts
 import { LocalServerHandler } from '../handlers/LocalServerHandler';
 import { RemoteServerHandler } from '../handlers/RemoteServerHandler';
-import { ServerConfig } from '../handlers/types';
+import { ServerConfig } from '../types';
 
 class ServerHandlerSingleton {
   static instance: LocalServerHandler | RemoteServerHandler | null = null;

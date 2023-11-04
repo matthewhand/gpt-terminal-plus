@@ -7,7 +7,7 @@ const router = Router();
 // Serve logo.png
 router.get('/logo.png', (_, res) => {
   const options = {
-    root: path.join(__dirname, '../public'), // Adjust the path according to your file structure
+    root: path.join(__dirname, '../../'),
   };
 
   const filename = 'logo.png';

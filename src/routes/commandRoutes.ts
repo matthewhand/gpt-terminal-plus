@@ -1,6 +1,6 @@
 import express from 'express';
 import ServerHandlerSingleton from '../services/serverHandlerInstance';
-import { ServerConfig } from '../handlers/types';
+import { ServerConfig } from '../types';
 import config from 'config';
 
 // Define interfaces for expected request body to improve type safety

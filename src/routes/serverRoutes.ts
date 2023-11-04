@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
 import ServerHandler from '../services/serverHandlerInstance';
 import config from 'config';
-import { ServerConfig } from '../handlers/types';
+import { ServerConfig } from '../types';
 
 const router = express.Router();
 
 // Use the ServerConfig from the config package directly
-const servers: ServerConfig[] = config.get('ServerConfig');
+const servers: ServerConfig[] = config.get('serverConfig');
 
 router.get('/list-servers', (req: Request, res: Response) => {
   res.json({ servers });

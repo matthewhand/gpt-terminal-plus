@@ -3,7 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { ServerHandler } from './ServerHandler';
-import { SystemInfo } from './types';
+import { SystemInfo } from '../types';
 
 export class LocalServerHandler extends ServerHandler {
   constructor() {
@@ -49,94 +49,120 @@ export class LocalServerHandler extends ServerHandler {
     }
   }
 
-  async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
-    const filePath = path.join(directory, filename);
+  async listFiles(directory: string, limit = 42, offset = 0, orderBy = 'filename'): Promise<string[]> {
     try {
-      // Check if backup is needed
-      if (backup && fs.existsSync(filePath)) {
-        const backupPath = filePath + '.bak';
-        fs.copyFileSync(filePath, backupPath);
+      // Debug: Log the input parameters
+      if (process.env.DEBUG === 'true') {
+        console.log(`Listing files with parameters - Directory: ${directory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
       }
-      // Perform the file creation logic here
-      fs.writeFileSync(filePath, content);
-      return true; // Resolve the promise with true if successful
+  
+      const fullPaths = await fs.promises.readdir(directory, { withFileTypes: true });
+      
+      // Debug: Log the full paths retrieved
+      if (process.env.DEBUG === 'true') {
+        console.log('Full paths retrieved:', fullPaths);
+      }
+  
+      let fileNames = fullPaths.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
+    
+      if (orderBy === 'datetime') {
+        const filesWithStats = await Promise.all(fileNames.map(async fileName => {
+          const fullPath = path.join(directory, fileName);
+          const stats = await fs.promises.stat(fullPath);
+          return { name: fileName, mtime: stats.mtime };
+        }));
+      
+        // Log filesWithStats before sorting
+        console.log('Before sorting:', filesWithStats);
+      
+        fileNames = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
+      
+        // Log fileNames after sorting
+        console.log('After sorting:', fileNames);
+      } else {
+        fileNames.sort();
+      }
+        
+      // Debug: Print the filenames before pagination
+      if (process.env.DEBUG === 'true') {
+        console.log('Files found:', fileNames);
+      }
+  
+      // Perform the slice operation to paginate the file names
+      const paginatedFiles = fileNames.slice(offset, offset + limit);
+  
+      // Debug: Print the paginated files
+      if (process.env.DEBUG === 'true') {
+        console.log(`Paginated files (offset: ${offset}, limit: ${limit}):`, paginatedFiles);
+      }
+  
+      // Return the paginated list of files
+      return paginatedFiles;
+  
     } catch (error) {
-      console.error('Error creating file:', error);
-      return false; // Resolve the promise with false if there is an error
+      if (process.env.DEBUG === 'true') {
+        console.error('Error listing files:', error);
+      }
+      throw error;
     }
   }
+      
+    async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
+      const filePath = path.join(directory, filename);
+      try {
+        if (backup && fs.existsSync(filePath)) {
+          const backupPath = filePath + '.bak';
+          fs.copyFileSync(filePath, backupPath);
+        }
   
-
-  updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
-    const fullPath = path.join(this.currentDirectory, filePath);
-    return new Promise((resolve, reject) => {
+        fs.writeFileSync(filePath, content);
+        return true;
+      } catch (error) {
+        if (process.env.DEBUG === 'true') {
+          console.error('Error creating file:', error);
+        }
+        return false;
+      }
+    }
+  
+    async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
+      const fullPath = path.join(this.currentDirectory, filePath);
       try {
         let fileContent = fs.readFileSync(fullPath, 'utf8');
         const regexPattern = new RegExp(pattern, 'g');
         fileContent = fileContent.replace(regexPattern, replacement);
+  
+        if (backup) {
+          const backupPath = fullPath + '.bak';
+          fs.copyFileSync(fullPath, backupPath);
+        }
+  
         fs.writeFileSync(fullPath, fileContent);
-        resolve(true);
+        return true;
       } catch (error) {
-        console.error('Error updating file:', error);
-        reject(false);
+        if (process.env.DEBUG === 'true') {
+          console.error('Error updating file:', error);
+        }
+        return false;
       }
-    });
-  }
-
-  amendFile(filePath: string, content: string): Promise<boolean> {
-    const fullPath = path.join(this.currentDirectory, filePath);
-    return new Promise((resolve, reject) => {
+    }
+  
+    async amendFile(filePath: string, content: string): Promise<boolean> {
+      const fullPath = path.join(this.currentDirectory, filePath);
       try {
         const fileContent = fs.readFileSync(fullPath, 'utf8');
         const amendedContent = fileContent + content;
         fs.writeFileSync(fullPath, amendedContent);
-        resolve(true);
+        return true;
       } catch (error) {
-        console.error('Error amending file:', error);
-        reject(false);
+        if (process.env.DEBUG === 'true') {
+          console.error('Error amending file:', error);
+        }
+        return false;
       }
-    });
-  }
-
-// Correctly implement listFiles to match the expected signature
-async listFiles(directory: string, limit = 42, offset = 0, orderBy = 'filename'): Promise<string[]> {
-  try {
-    // Get the full paths of all items in the directory using the promise-based API
-    const fullPaths = await fs.promises.readdir(directory, { withFileTypes: true });
-    
-    // Filter out directories and get file names only
-    let fileNames = fullPaths.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
-
-    // Order the files if needed
-    if (orderBy === 'datetime') {
-      // Get file details including the modification time using the promise-based API
-      const filesWithStats = await Promise.all(fileNames.map(async fileName => {
-        const fullPath = path.join(directory, fileName);
-        const stats = await fs.promises.stat(fullPath);
-        return { name: fileName, mtime: stats.mtime };
-      }));
-
-      // Sort by modification time
-      fileNames = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
-    } else {
-      // Default order by filename
-      fileNames.sort();
     }
 
-    // Apply limit and offset for pagination
-    const paginatedFiles = fileNames.slice(offset, offset + limit);
-
-    return paginatedFiles;
-  } catch (error) {
-    console.error('Error listing files:', error);
-    throw error; // Rethrow the error to be handled by the caller
-  }
-}
-
-
-  // Correctly implement getCurrentDirectory to match the expected signature
   getCurrentDirectory(): Promise<string> {
-    // If the value needs to be resolved immediately, use Promise.resolve
     return Promise.resolve(this.currentDirectory);
   }
   

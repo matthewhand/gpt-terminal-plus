@@ -1,5 +1,5 @@
 {
-    "ServerConfig": [
+    "serverConfig": [
       {
         "connectionString": "localhost",
         "code": true,

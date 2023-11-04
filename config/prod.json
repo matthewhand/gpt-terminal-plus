@@ -1,5 +1,5 @@
 {
-  "ServerConfig": [
+  "serverConfig": [
     {
       "connectionString": "localhost",
       "code": true,
@@ -8,39 +8,31 @@
     {
       "connectionString": "root@proxmox1.domain.home",
       "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
-      "posix": true,
       "systemInfo": false
     },
     {
       "connectionString": "root@proxmox2.domain.home",
       "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
-      "posix": true,
       "systemInfo": false
     },
     {
-      "connectionString": "matthewh@ubuntu-amdgpu.domain.home",
-      "posix": true,
-      "remoteInfo": true
+      "connectionString": "matthewh@ubuntu-amdgpu.domain.home"
     },
     {
       "connectionString": "matthewh@ubuntu-gtx.domain.home",
-      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
-      "posix": true
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
     },
     {
       "connectionString": "matth@gamingpc",
-      "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
-      "posix": false
+      "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key"
     },
     {
       "connectionString": "matthewh@ubuntu-gamingpc.domain.home",
-      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
-      "posix": true
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
     },
     {
       "connectionString": "chatgpt@teamstinky.duckdns.org",
-      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
-      "posix": true
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
     }
   ],
   "commandTimeout": 180000,

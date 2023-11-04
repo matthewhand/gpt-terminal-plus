@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ServerConfig, SystemInfo } from './types';
+import { ServerConfig, SystemInfo } from '../types';
 import config from 'config';
 
 // Define an abstract class ServerHandler
 export abstract class ServerHandler {
   protected currentDirectory: string;
   protected serverConfig: ServerConfig | null = null;
-  protected servers: ServerConfig[] = config.get('ServerConfig');
+  protected servers: ServerConfig[] = config.get('serverConfig');
   protected identifier: string;
 
   constructor(identifier: string = "") {
@@ -22,11 +22,8 @@ export abstract class ServerHandler {
       throw new Error('Server configuration is not defined in the config.');
     }
   
-    // Get the server configuration from the config
-    const serverConfigs: ServerConfig[] = config.get('ServerConfig');
-  
     // Find the server configuration for localhost, or default to null
-    this.serverConfig = serverConfigs.find((configItem: ServerConfig) => configItem.connectionString === 'localhost') ?? null;
+    this.serverConfig = this.servers.find((configItem: ServerConfig) => configItem.connectionString === 'localhost') ?? null;
   
     if (!this.serverConfig) {
       throw new Error('No matching server configuration found for localhost.');

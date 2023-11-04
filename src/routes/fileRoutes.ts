@@ -1,14 +1,14 @@
 import express from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
 import ServerHandlerSingleton from '../services/serverHandlerInstance';
-import { ServerConfig } from '../handlers/types'
+import { ServerConfig } from '../types'
 import { escapeRegExp } from '../utils/escapeRegExp';
 import path from 'path';
 import { Response } from 'express';
 import config from 'config';
 
 const router = express.Router();
-const serverConfig = config.get<ServerConfig>('ServerConfig'); // Assuming ServerConfig is a type you have defined
+const serverConfig = config.get<ServerConfig>('serverConfig');
 
 // Helper function to ensure serverHandler is initialized
 function getServerHandler(res: Response): ServerHandler | null {
@@ -67,13 +67,13 @@ router.post('/update-file', async (req, res) => {
 
 // List files in a directory
 router.post('/list-files', async (req, res) => {
-  const { directory, orderBy, limit = 42, offset = 0 } = req.body;
+  const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
   const serverHandler = getServerHandler(res);
   if (!serverHandler) return;
 
-  serverHandler.listFiles(directory, orderBy, limit, offset)
-  .then((files: string[]) => res.status(200).json({ files }))
-  .catch((err: Error) => res.status(500).json({ error: err.message }));
+  serverHandler.listFiles(directory, limit, offset, orderBy)
+    .then((files: string[]) => res.status(200).json({ files }))
+    .catch((err: Error) => res.status(500).json({ error: err.message }));
 });
 
 // Amend a file
