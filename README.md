@@ -1,8 +1,7 @@
 
 # gpt-terminal-plus
 
-`gpt-terminal-plus` is a powerful tool designed to facilitate system administration, coding, and general computer tasks through a ChatGPT plugin running locally on a workstation or similar setup. It's an ideal solution for developers and system administrators who require a robust and flexible environment to manage local and remote systems, automate tasks, and enhance their coding workflow.
-
+`gpt-terminal-plus` is a powerful tool designed to facilitate system administration, coding, and general computer tasks through a ChatGPT plugin running locally on a workstation or similar setup. Inspired by and originally based on the [gpt-terminal-plugin](https://github.com/etherlegend/gpt-terminal-plugin), it's an ideal solution for developers and system administrators who require a robust and flexible environment to manage local and remote systems, automate tasks, and enhance their coding workflow.
 
 [![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.gg/YvEJg5CC3X)
 [![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
