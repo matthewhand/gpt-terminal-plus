@@ -55,6 +55,7 @@ Contributions are welcome! We use Jest for test-driven development, so please en
 
 - [x] Publish code to github
 - [ ] Add AWS SSM remote handler
+- [ ] Add some examples of usage like chatgpt logs and/or screenshots
 
 ## Donation
 
