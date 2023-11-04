@@ -51,6 +51,11 @@ To get started with `gpt-terminal-plus`, clone the repository and follow the set
 
 Contributions are welcome! We use Jest for test-driven development, so please ensure that new features come with adequate test coverage. Feel free to open issues or submit pull requests to improve the application.
 
+## TODO
+
+- [x] Publish code to github
+- [ ] Add AWS SSM remote handler
+
 ## Donation
 
 If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
