@@ -1,0 +1,49 @@
+{
+  "ServerConfig": [
+    {
+      "connectionString": "localhost",
+      "code": true,
+      "posix": false
+    },
+    {
+      "connectionString": "root@proxmox1.domain.home",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
+      "posix": true,
+      "systemInfo": false
+    },
+    {
+      "connectionString": "root@proxmox2.domain.home",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
+      "posix": true,
+      "systemInfo": false
+    },
+    {
+      "connectionString": "matthewh@ubuntu-amdgpu.domain.home",
+      "posix": true,
+      "remoteInfo": true
+    },
+    {
+      "connectionString": "matthewh@ubuntu-gtx.domain.home",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
+      "posix": true
+    },
+    {
+      "connectionString": "matth@gamingpc",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
+      "posix": false
+    },
+    {
+      "connectionString": "matthewh@ubuntu-gamingpc.domain.home",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
+      "posix": true
+    },
+    {
+      "connectionString": "chatgpt@teamstinky.duckdns.org",
+      "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key",
+      "posix": true
+    }
+  ],
+  "commandTimeout": 180000,
+  "maxResponse": 2000,
+  "port": 5004
+}

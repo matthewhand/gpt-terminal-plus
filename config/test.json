@@ -1,0 +1,12 @@
+{
+    "ServerConfig": [
+      {
+        "connectionString": "localhost",
+        "code": true,
+        "posix": false
+      }
+    ],
+    "commandTimeout": 180000,
+    "maxResponse": 2000
+  }
+  
