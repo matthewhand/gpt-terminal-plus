@@ -1,44 +1,47 @@
+```
 project-root/
 │
 ├── src/
-│   ├── config/                  # Configuration files and constants
-│   │   ├── index.ts             # Export configuration settings
-│   │   └── ...
-│   │
-│   ├── handlers/                # Handlers for different server operations
-│   │   ├── ServerHandler.ts     # Abstract base class for server handlers
-│   │   ├── LocalhostHandler.ts  # Localhost-specific operations
-│   │   └── RemoteHandler.ts     # Remote server-specific operations
-│   │
-│   ├── middleware/              # Express middleware
-│   │   └── ...
-│   │
-│   ├── routes/                  # Route definitions for the API
-│   │   └── ...
-│   │
-│   ├── services/                # Business logic services
-│   │   └── ...
-│   │
-│   ├── utils/                   # Utility functions and helpers
-│   │   └── ...
-│   │
-│   ├── app.ts                   # Main application setup
-│   └── server.ts                # Server startup script
+│ ├── config/ # Contains configuration files and constants for the application.
+│ │ ├── index.ts # Central export point for configuration settings.
+│ │ └── ... # Other configuration files as needed for different environments.
+│ │
+│ ├── handlers/ # Handlers encapsulate the logic for server operations.
+│ │ ├── ServerHandler.ts # Abstract base class providing a template for server handlers.
+│ │ ├── LocalhostHandler.ts # Implementation of ServerHandler for localhost operations.
+│ │ └── RemoteHandler.ts # Implementation of ServerHandler for remote server operations.
+│ │
+│ ├── middleware/ # Express middleware modules for request processing.
+│ │ └── ... # Custom middleware files.
+│ │
+│ ├── routes/ # Defines the API routes and their corresponding handlers.
+│ │ └── ... # Route files for different API endpoints.
+│ │
+│ ├── services/ # Business logic services for abstracting and encapsulating core functionality.
+│ │ └── ... # Service files for different domains of the application.
+│ │
+│ ├── utils/ # Utility functions and helper modules.
+│ │ └── ... # Helper utilities for common tasks throughout the app.
+│ │
+│ ├── app.ts # Sets up the main application, including middleware and routes.
+│ └── server.ts # Entry script to start the server and listen for requests.
 │
-├── .well-known/                 # Well-known files for service configuration
-│   └── ai-plugin.json
+├── .well-known/ # Directory for well-known files used in service configuration.
+│ └── ai-plugin.json # Configuration file for AI plugin specifics.
 │
-├── public/                      # Publicly accessible files, like images
-│   └── logo.png
+├── public/ # Public directory for static files accessible by clients.
+│ └── logo.png # Example static file, such as an application logo.
 │
-├── views/                       # Templates for server-side rendering (if used)
-│   └── ...
+├── views/ # Contains server-side templates for rendering HTML (if applicable).
+│ └── ... # Template files for different views.
 │
-├── test/                        # Test suite files
-│   └── ...
+├── test/ # Test directory with all the test files for the application.
+│ └── ... # Unit, integration, and end-to-end test files.
 │
-├── node_modules/                # Node.js modules (don't commit to version control)
+├── node_modules/ # Node.js modules installed via npm (excluded from version control).
 │
-├── package.json                 # Project metadata and dependencies
-├── tsconfig.json                # TypeScript configuration
-└── ...
+├── package.json # Defines project metadata and lists dependencies.
+├── tsconfig.json # Configuration file for TypeScript compiler options.
+└── ... # Other miscellaneous files and directories.
+
+```

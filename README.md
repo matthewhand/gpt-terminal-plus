@@ -51,21 +51,24 @@ To get started with `gpt-terminal-plus`, clone the repository and follow the set
 
 Contributions are welcome! We use Jest for test-driven development, so please ensure that new features come with adequate test coverage. Feel free to open issues or submit pull requests to improve the application.
 
-## Support
+## TODO
 
-If you find this project useful, consider joining our community or supporting its development:
+- [x] Publish code to github
+- [ ] Add AWS SSM remote handler
+- [ ] Add some examples of usage like chatgpt logs and/or screenshots
 
-[![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.gg/YvEJg5CC3X)
+## Donation
 
-To make a donation, click on the button below:
+If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
 
-[![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
+If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
 
-Or send to the Ethereum (ETH) wallet:
+<img src="https://github.com/matthewhand/stripe-payment/raw/main/qr_00g14peASeEd7xCcMM.png" width="150" />
 
+Or send to my Ethereum (ETH) wallet
 `0xDf994CeA5a0a11397C938cd903259E8496DA15f5`
 
-![Ethereum Wallet QR Code](https://github.com/matthewhand/stripe-payment/raw/main/etherium-qrcode-receive.png)
+<img src="https://github.com/matthewhand/stripe-payment/raw/main/etherium-qrcode-receive.png" width="150" />
 
 ## License
 
