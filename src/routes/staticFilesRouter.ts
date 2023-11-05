@@ -21,7 +21,7 @@ router.get('/logo.png', (_, res) => {
 
 // Serve ai-plugin.json
 router.get('/.well-known/ai-plugin.json', (_, res) => {
-  const filePath = path.join(__dirname, '../public/.well-known/ai-plugin.json'); // Adjust the path according to your file structure
+  const filePath = path.join(__dirname, '../public/.well-known/ai-plugin.json'); 
 
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
@@ -36,7 +36,7 @@ router.get('/.well-known/ai-plugin.json', (_, res) => {
 
 // Serve openapi.yaml
 router.get('/openapi.yaml', (_, res) => {
-  const filePath = path.join(__dirname, '../public/openapi.yaml'); // Adjust the path according to your file structure
+  const filePath = path.join(__dirname, '../public/openapi.yaml'); 
 
   fs.readFile(filePath, 'utf8', (err, data) => {
     if (err) {
