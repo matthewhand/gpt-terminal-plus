@@ -61,13 +61,14 @@ Contributions are welcome! We use Jest for test-driven development, so please en
 
 If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
 
+If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
+
 <img src="https://github.com/matthewhand/stripe-payment/raw/main/qr_00g14peASeEd7xCcMM.png" width="150" />
 
-Or send to the Ethereum (ETH) wallet:
-
+Or send to my Ethereum (ETH) wallet
 `0xDf994CeA5a0a11397C938cd903259E8496DA15f5`
 
-![Ethereum Wallet QR Code](https://github.com/matthewhand/stripe-payment/raw/main/etherium-qrcode-receive.png)
+<img src="https://github.com/matthewhand/stripe-payment/raw/main/etherium-qrcode-receive.png" width="150" />
 
 ## License
 
