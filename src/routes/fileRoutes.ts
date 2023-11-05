@@ -125,11 +125,12 @@ router.post('/amend-file', async (req, res) => {
 
     try {
       // Perform the file amendment
-      await serverHandler.amendFile(fullPath, content);
-      res.status(200).json({ message: 'File amended successfully.' });
-    } catch (err) {
-      // If an error occurs, respond with the error message
-      res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+      const success = await serverHandler.amendFile(fullPath, content);
+      if (success) {
+        res.status(200).json({ message: 'File amended successfully.' });
+      } else {
+        res.status(400).json({ error: 'Failed to amend file.' });
+      }
     } finally {
       // Always release the lock
       await release();
@@ -140,5 +141,19 @@ router.post('/amend-file', async (req, res) => {
   }
 });
 
+router.post('/list-files', async (req, res) => {
+  const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
+  const serverHandler = getServerHandler(res);
+  if (!serverHandler) return;
+
+  try {
+    // Perform the list files operation
+    const files = await serverHandler.listFiles(directory, limit, offset, orderBy);
+    res.status(200).json({ files });
+  } catch (err) {
+    // If an error occurs, respond with the error message
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+  }
+});
 
 export default router;

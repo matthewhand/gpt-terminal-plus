@@ -1,14 +1,21 @@
-import * as fs from 'fs';
 import * as os from 'os';
+import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
+import { escapeRegExp } from '../utils/escapeRegExp';
 import { ServerHandler } from './ServerHandler';
 import { SystemInfo } from '../types';
+import config from 'config'; // Ensure you have imported the config package
 
 export class LocalServerHandler extends ServerHandler {
+  serverConfig: any;
+
   constructor() {
-    super(os.homedir()); // Initialize with the current working directory
+    super(os.homedir());
+    // Load the server configuration
+    this.serverConfig = config.get('serverConfig');
   }
+
 
   // Implement the abstract method from ServerHandler
   getSystemInfo(): Promise<SystemInfo> {
@@ -131,8 +138,9 @@ export class LocalServerHandler extends ServerHandler {
         if (process.env.DEBUG === 'true') {
           console.log('Updating file:', fullPath);
         }
+  
         let fileContent = fs.readFileSync(fullPath, 'utf8');
-        const regexPattern = new RegExp(pattern, 'g');
+        const regexPattern = new RegExp(escapeRegExp(pattern), 'g');
         fileContent = fileContent.replace(regexPattern, replacement);
   
         if (backup) {
@@ -141,6 +149,19 @@ export class LocalServerHandler extends ServerHandler {
         }
   
         fs.writeFileSync(fullPath, fileContent);
+  
+        // Check the server configuration for the 'code' option
+        const shouldOpenInEditor = this.serverConfig.code === true;
+  
+        if (shouldOpenInEditor) {
+          // Open in VSCode at the first occurrence of the pattern
+          const match = regexPattern.exec(fileContent);
+          if (match) {
+            const lineNumber = fileContent.substring(0, match.index).split('\n').length;
+            exec(`code --goto ${fullPath}:${lineNumber}:1`);
+          }
+        }
+  
         return true;
       } catch (error) {
         if (process.env.DEBUG === 'true') {
@@ -150,6 +171,7 @@ export class LocalServerHandler extends ServerHandler {
       }
     }
   
+    
     async amendFile(filePath: string, content: string): Promise<boolean> {
       const fullPath = path.join(this.currentDirectory, filePath);
       try {
