@@ -42,3 +42,15 @@ export interface AppConfig {
   maxResponse: number;         // Maximum size of the response
   port: number;                // Port number for the application to listen on
 }
+
+export interface ResponsePage {
+  stdout: string;
+  stderr: string;
+  totalPages: number;
+}
+
+export interface PaginatedResponse {
+  stdout: string[];
+  stderr: string[];
+  timestamp: number; // Timestamp for cleanup purposes
+}

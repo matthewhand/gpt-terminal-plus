@@ -2,7 +2,7 @@ import express from 'express';
 import ServerHandlerSingleton from '../services/serverHandlerInstance';
 import { ServerConfig } from '../types';
 import config from 'config';
-import { generateResponseId, storeResponse } from '../handlers/PaginationHandler';
+import { getPaginatedResponse, storeResponse } from '../handlers/PaginationHandler';
 
 // Define interfaces for expected request body to improve type safety
 interface RunCommandRequestBody {
@@ -27,25 +27,22 @@ router.post('/run', async (req, res) => {
   const maxResponseSize = config.get<number>('maxResponseSize') || 1000;
 
   try {
-    const { stdout, stderr } = await serverHandler.executeCommand(command, effectiveTimeout);
-    const responseId = generateResponseId();
-    // Store the paginated stdout and stderr
-    storeResponse(responseId, stdout, stderr, maxResponseSize);
+    // Execute the command and get the raw output
+    const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
+    
+    // Store the paginated stdout and stderr and get the response ID
+    const responseId = storeResponse(executionResult.stdout, executionResult.stderr, maxResponseSize);
 
-    // Calculate total pages
-    const totalPages = Math.ceil(Math.max(stdout.length, stderr.length) / maxResponseSize);
+    // Retrieve the paginated response
+    const paginatedResult = getPaginatedResponse(responseId, 0);
 
-    // Get the first page of stdout and stderr
-    const firstPageStdout = stdout.slice(0, maxResponseSize);
-    const firstPageStderr = stderr.slice(0, maxResponseSize);
-
-    // Respond with the first page and total pages
+    // Respond with the paginated output
     res.status(200).json({
       responseId,
-      totalPages,
+      totalPages: paginatedResult.totalPages,
       currentPage: 0,
-      stdout: firstPageStdout,
-      stderr: firstPageStderr
+      stdout: paginatedResult.stdout,
+      stderr: paginatedResult.stderr
     });
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
