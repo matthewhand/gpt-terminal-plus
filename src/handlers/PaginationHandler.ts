@@ -1,4 +1,3 @@
-
 import { ResponsePage, PaginatedResponse } from '../types';
 import config from 'config';
 
@@ -12,8 +11,8 @@ let responseCounter = 0;
 
 // Function to generate a unique response ID
 function generateResponseId(): string {
-  // Simple incremental ID with padding
-  return (responseCounter++).toString().padStart(4, '0');
+  // Simple incremental ID without padding
+  return (responseCounter++).toString();
 }
 
 // Helper function to paginate data
@@ -39,7 +38,7 @@ function getPaginatedResponse(responseId: string, page: number): ResponsePage {
     throw new Error(`Response with ID '${responseId}' not found.`);
   }
 
-  const totalPages = Math.ceil(Math.max(response.stdout.length, response.stderr.length) / maxResponseSize);
+  const totalPages = Math.max(response.stdout.length, response.stderr.length);
 
   // If there's only one page, we still return it in the same object format
   if (totalPages <= 1) {

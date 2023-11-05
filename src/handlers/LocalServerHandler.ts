@@ -37,7 +37,7 @@ export class LocalServerHandler extends ServerHandler {
 
   executeCommand(command: string, timeout: number = 5000): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
-      exec(command, { timeout, cwd: this.currentDirectory }, (error, stdout, stderr) => {
+      exec(command, { maxBuffer: 1024 * 1024 * 10 , timeout, cwd: this.currentDirectory }, (error, stdout, stderr) => { // TODO config instead of hardcode
         if (error) {
           reject(error);
         } else {

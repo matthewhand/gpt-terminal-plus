@@ -1,124 +1,142 @@
 import { ServerHandler } from '../../src/handlers/ServerHandler';
 import { SystemInfo } from '../../src/types';
+import config from 'config';
 
-// Mock the fs module since ServerHandler uses it
-jest.mock('fs', () => ({
-  existsSync: jest.fn().mockReturnValue(true),
-}));
+jest.mock('config');
 
-// Create a mock class based on the abstract ServerHandler to test its concrete methods
-class MockServerHandler extends ServerHandler {
-    executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }> {
-        // Check if the command is to generate a large response
-        if (command === 'generate-large-response') {
-          // Generate a large string to simulate a large response
-          const largeResponse = 'a'.repeat(5000); // Adjust the size as needed for testing
-          return Promise.resolve({ stdout: largeResponse, stderr: '' });
-        }
-        // Mock implementation for other commands
-        return Promise.resolve({ stdout: 'Command executed', stderr: '' });
-      }
+// Mock ServerHandler to test the loadServerConfig method
+class TestServerHandler extends ServerHandler {
+  // ... other properties and methods ...
+
+  // Dummy implementations for abstract methods
+  executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }> {
+    // Return a dummy response or use jest.fn() to mock the implementation
+    return Promise.resolve({ stdout: '', stderr: '' });
+  }
+
   setCurrentDirectory(directory: string): boolean {
-    // Mock implementation
+    // Return a dummy response or use jest.fn() to mock the implementation
     return true;
   }
+
   getCurrentDirectory(): Promise<string> {
-    // Mock implementation
-    return Promise.resolve('/mock/directory');
+    // Return a dummy response or use jest.fn() to mock the implementation
+    return Promise.resolve('');
   }
+
   listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]> {
-    // Mock implementation
-    return Promise.resolve(['file1.txt', 'file2.txt', 'file3.txt']);
+    // Return a dummy response or use jest.fn() to mock the implementation
+    return Promise.resolve([]);
   }
+
   createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
-    // Mock implementation
+    // Return a dummy response or use jest.fn() to mock the implementation
     return Promise.resolve(true);
   }
+
   updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
-    // Mock implementation
+    // Return a dummy response or use jest.fn() to mock the implementation
     return Promise.resolve(true);
   }
+
   amendFile(filePath: string, content: string): Promise<boolean> {
-    // Mock implementation
+    // Return a dummy response or use jest.fn() to mock the implementation
     return Promise.resolve(true);
   }
+
   getSystemInfo(): Promise<SystemInfo> {
-    // Complete mock implementation according to the SystemInfo type
-    const mockSystemInfo: SystemInfo = {
-      freeMemory: 1024,
-      totalMemory: 2048,
-      homeFolder: '/mock/home', // Add mock value
-      type: 'MockType', // Add mock value
-      release: 'MockRelease', // Add mock value
-      pythonVersion: '3.8.5', // Mock Python version
-      cpuArchitecture: 'x64', // Mock CPU architecture
-      uptime: 123456, // Mock system uptime in seconds
-      currentFolder: '/mock/current', // Mock current folder
-      platform: 'mockPlatform' // Add mock value
-    };
-  
-    return Promise.resolve(mockSystemInfo);
+    // Return a dummy response with all properties required by the SystemInfo type
+    return Promise.resolve({
+      homeFolder: '',
+      type: '',
+      release: '',
+      platform: '',
+      arch: '',
+      hostname: '',
+      pythonVersion: '', 
+      cpuArchitecture: '', 
+      totalMemory: 0, 
+      freeMemory: 0, 
+      uptime: 0, 
+      currentFolder: ''
+    });
+  }
+
+  // Expose the serverConfig for testing purposes
+  getServerConfig() {
+    return this.serverConfig;
   }
 }
 
 describe('ServerHandler', () => {
-  let mockServerHandler: MockServerHandler;
 
   beforeEach(() => {
-    mockServerHandler = new MockServerHandler();
+  // Clear all mocks before each test
+  jest.clearAllMocks();
+
+  // Set up the mock for `config.has`
+  (config.has as jest.Mock).mockImplementation((key) => key === 'serverConfig');
+
+  // Set up the mock for `config.get` for the first test
+  (config.get as jest.Mock).mockImplementation((key) => {
+    if (key === 'serverConfig') {
+      return [{ connectionString: 'localhost', otherConfig: 'value' }];
+    }
+    throw new Error(`Config key ${key} not found`);
   });
-
-  describe('Pagination', () => {
-    it('should handle large responses from executeCommand', async () => {
-      const { stdout } = await mockServerHandler.executeCommand('generate-large-response');
-      const responseId = mockServerHandler['storeResponse'](stdout);
-
-      expect(mockServerHandler['responseStorage']).toHaveProperty(responseId);
-      expect(mockServerHandler['responseStorage'][responseId].length).toBeGreaterThan(1);
-    });    
-    
-    it('should store responses correctly', () => {
-      const longResponse = 'a'.repeat(5000); // Create a response string longer than maxResponseSize
-      const responseId = mockServerHandler['storeResponse'](longResponse);
-
-      expect(mockServerHandler['responseStorage']).toHaveProperty(responseId);
-      expect(mockServerHandler['responseStorage'][responseId].length).toBeGreaterThan(1);
-    });
-
-    it('should retrieve the correct page of data', () => {
-      const responseString = 'a'.repeat(3000); // Create a response string to span multiple pages
-      const responseId = mockServerHandler['storeResponse'](responseString);
-      const pageData = mockServerHandler.getResponsePage(responseId, 1); // Retrieve the second page
-
-      expect(pageData).not.toBeNull();
-      expect(pageData?.data).toBe(responseString.substring(1024, 2048));
-    });
-
-
-    it('should return null when trying to retrieve a page beyond the pagination limit', () => {
-      const responseString = 'a'.repeat(5000); // Ensure this is larger than your maxResponseSize
-      const responseId = mockServerHandler['storeResponse'](responseString);
-      
-      // Calculate the number of pages
-      const maxResponseSize = 1024; // This should match the maxResponseSize in your ServerHandler
-      const numPages = Math.ceil(responseString.length / maxResponseSize);
-
-      // Attempt to retrieve a page beyond the last page
-      const beyondLastPageData = mockServerHandler.getResponsePage(responseId, numPages);
-
-      expect(beyondLastPageData).toBeNull();
-    });
-
-    it('should return null for an invalid page number', () => {
-      const responseString = 'a'.repeat(1024);
-      const responseId = mockServerHandler['storeResponse'](responseString);
-      const invalidPageData = mockServerHandler.getResponsePage(responseId, 2); // There should only be one page
-
-      expect(invalidPageData).toBeNull();
-    });
-  });
-
-  // Add more tests for other methods if needed
 });
 
-export {};
+it('should load server configuration successfully', () => {
+  const handler = new TestServerHandler();
+  expect(handler.getServerConfig()).toEqual({ connectionString: 'localhost', otherConfig: 'value' });
+});
+
+it('should throw an error if serverConfig is not defined in the config', () => {
+  // Override the mock for `config.get` for this test
+  (config.get as jest.Mock).mockImplementation((key) => {
+    if (key === 'serverConfig') {
+      throw new Error('Server configuration is not defined in the config.');
+    }
+  });
+
+  expect(() => new TestServerHandler()).toThrow('Server configuration is not defined in the config.');
+});
+
+  it('should load server configuration successfully', () => {
+    // Mock the config to have a serverConfig with localhost
+    (config.get as jest.Mock).mockImplementation((key) => {
+      if (key === 'serverConfig') {
+        return [{ connectionString: 'localhost', otherConfig: 'value' }];
+      }
+      throw new Error(`Config key ${key} not found`);
+    });
+
+    const handler = new TestServerHandler();
+    expect(handler.getServerConfig()).toEqual({ connectionString: 'localhost', otherConfig: 'value' });
+  });
+
+  it('should throw an error if serverConfig is not defined in the config', () => {
+    // Mock the config to not have a serverConfig
+    (config.get as jest.Mock).mockImplementation((key) => {
+      if (key === 'serverConfig') {
+        throw new Error('Server configuration is not defined in the config.');
+      }
+    });
+
+    expect(() => new TestServerHandler()).toThrow('Server configuration is not defined in the config.');
+  });
+
+  it('should throw an error if no matching server configuration found for localhost', () => {
+    // Mock the config to have a serverConfig without localhost
+    (config.get as jest.Mock).mockImplementation((key) => {
+      if (key === 'serverConfig') {
+        return [{ connectionString: 'remotehost', otherConfig: 'value' }];
+      }
+      throw new Error(`Config key ${key} not found`);
+    });
+
+    expect(() => new TestServerHandler()).toThrow('No matching server configuration found for localhost.');
+  });
+
+  // ... other tests ...
+});
