@@ -61,8 +61,6 @@ Contributions are welcome! We use Jest for test-driven development, so please en
 
 If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
 
-If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
-
 <img src="https://github.com/matthewhand/stripe-payment/raw/main/qr_00g14peASeEd7xCcMM.png" width="150" />
 
 Or send to my Ethereum (ETH) wallet
