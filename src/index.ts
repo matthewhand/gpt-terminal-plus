@@ -1,4 +1,3 @@
-// Load environment variables from .env file
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -6,9 +5,18 @@ import express, { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
-import ServerHandler from './services/serverHandlerInstance';
 import { json } from 'body-parser';
-import { ServerConfig } from './types'; // Import the type definitions
+
+import ServerHandlerSingleton from './services/serverHandlerInstance';
+import { ServerConfig } from './types';
+
+import serverRoutes from './routes/serverRoutes';
+import fileRoutes from './routes/fileRoutes';
+import commandRoutes from './routes/commandRoutes';
+import staticFilesRouter from './routes/staticFilesRouter';
+
+// Import the PaginationHandler
+import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
@@ -24,64 +32,52 @@ app.use(cors({
 }));
 app.use(json());
 
-let serverHandler: ServerHandler | null = null;
-
 // Middleware to ensure server is set
 function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
-  if (!serverHandler) {
-    if (process.env.DEBUG === 'true') {
-      console.log('Server is not set, setting to localhost by default.');
-    }
+  if (!req.serverHandler) {
     const serverConfigs: ServerConfig[] = config.get('serverConfig');
-    const serverConfig = serverConfigs[0]; // Select the first server configuration
-    serverHandler = ServerHandler.getInstance(serverConfig);
+    const serverConfig = serverConfigs[0]; // Default to the first configured
+    req.serverHandler = ServerHandlerSingleton.getInstance(serverConfig);
   }
-  (req as any).serverHandler = serverHandler;
   next();
 }
 
-// Use the routes from the routes directory
-import serverRoutes from './routes/serverRoutes';
-import fileRoutes from './routes/fileRoutes';
-import commandRoutes from './routes/commandRoutes';
-import staticFilesRouter from './routes/staticFilesRouter';
-
-app.use(ensureServerIsSet, serverRoutes);
 app.use(ensureServerIsSet, fileRoutes);
 app.use(ensureServerIsSet, commandRoutes);
-app.use(ensureServerIsSet, staticFilesRouter);
+
+// Endpoint to retrieve paginated response
+app.get('/response/:id/:page', (req: Request, res: Response) => {
+  const responseId = req.params.id;
+  const page = parseInt(req.params.page, 10);
+
+  try {
+    const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
+    res.status(200).json({ responseId, page, stdout, stderr, totalPages });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
 
 const main = () => {
-  // Use the port if it's defined in the configuration, otherwise default to 3000
   const port: number = config.get('port') || 3000;
 
   const server = app.listen(port, '0.0.0.0', () => {
-    if (process.env.DEBUG === 'true') {
-      console.log(`Server running on port ${port}`);
-    }
+    console.log(`Server running on port ${port}`);
   });
 
   const shutdown = (signal: 'SIGINT' | 'SIGTERM') => {
-    if (process.env.DEBUG === 'true') {
-      console.log(`Received ${signal}. Shutting down gracefully.`);
-    }
+    console.log(`Received ${signal}. Shutting down gracefully.`);
     server.close(() => {
-      if (process.env.DEBUG === 'true') {
-        console.log('Server closed.');
-      }
+      console.log('Server closed.');
       process.exit(0);
     });
 
-    // If the server hasn't finished closing within a reasonable time, force close
     setTimeout(() => {
-      if (process.env.DEBUG === 'true') {
-        console.error('Could not close connections in time, forcefully shutting down');
-      }
+      console.error('Could not close connections in time, forcefully shutting down');
       process.exit(1);
     }, 10000); // 10 seconds timeout
   };
 
-  // Handle SIGINT and SIGTERM signals for graceful shutdown
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 };

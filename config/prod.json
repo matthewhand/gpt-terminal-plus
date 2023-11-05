@@ -36,6 +36,6 @@
       }
     ],
     "commandTimeout": 180000,
-    "maxResponse": 2000,
+    "maxResponseSize": 2000,
     "port": 5004
   }
