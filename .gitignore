@@ -53,15 +53,14 @@ out/
 dist/
 .vuepress/dist/
 
-# Environment variables and secrets
-.env*
-!config/default.json
+.env
+!config/*
+config/default.json
 
 # Application specific ignore
-config/prod.json
 package-lock.json
 npm/*
-gpt-terminal-plus@1.0.0/
+gpt-terminal-plus@1.0.0
 
 # IDE specific files
 .vscode-test/

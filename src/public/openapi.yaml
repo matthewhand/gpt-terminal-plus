@@ -184,23 +184,48 @@ paths:
     post:
       operationId: setCurrentFolder
       summary: Set the current directory
-      parameters:
-        - in: body
-          name: directory
-          required: true
-          schema:
-            type: string
-            description: The directory to set as the current directory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - directory
+              properties:
+                directory:
+                  type: string
+                  description: The directory to set as the current directory
       responses:
         200:
           description: Current directory set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
         400:
           description: Directory does not exist or is not provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
   /update-file:
     post:
       operationId: updateFile
       summary: Update a file
       parameters:
+        - in: body
+          name: filename
+          required: true
+          schema:
+            type: string
+            description: The file to update
         - in: body
           name: pattern
           required: true

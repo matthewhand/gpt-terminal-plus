@@ -6,6 +6,7 @@ import { escapeRegExp } from '../utils/escapeRegExp';
 import path from 'path';
 import { Response } from 'express';
 import config from 'config';
+import * as fs from 'fs';
 
 const router = express.Router();
 const serverConfig = config.get<ServerConfig>('serverConfig');
@@ -54,13 +55,24 @@ router.post(['/create-file', '/create-or-replace-file'], async (req, res) => {
 
 // Update a file
 router.post('/update-file', async (req, res) => {
-  const { relative, pattern, replacement, backup = true, directory = "" } = req.body;
+  const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   const serverHandler = getServerHandler(res);
   if (!serverHandler) return;
 
-  const targetDirectory = directory || serverHandler.getCurrentDirectory();
+  // Validate that none of the parameters are empty
+  if (!filename || !pattern || !replacement || !directory.trim()) {
+    return res.status(400).json({ error: 'All parameters must be provided and non-empty.' });
+  }
 
-  serverHandler.updateFile(path.join(targetDirectory, relative), escapeRegExp(pattern), replacement, backup)
+  const targetDirectory = directory || serverHandler.getCurrentDirectory();
+  const fullPath = path.join(targetDirectory, filename);
+
+  // Check if the file exists
+  if (!fs.existsSync(fullPath)) {
+    return res.status(400).json({ error: 'The target file does not exist.' });
+  }
+
+  serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup)
     .then(() => res.status(200).json({ message: 'File updated successfully.' }))
     .catch((err: Error) => res.status(500).json({ error: err.message }));
 });

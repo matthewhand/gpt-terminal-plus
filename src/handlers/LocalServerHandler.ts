@@ -128,6 +128,9 @@ export class LocalServerHandler extends ServerHandler {
     async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
       const fullPath = path.join(this.currentDirectory, filePath);
       try {
+        if (process.env.DEBUG === 'true') {
+          console.log('Updating file:', fullPath);
+        }
         let fileContent = fs.readFileSync(fullPath, 'utf8');
         const regexPattern = new RegExp(pattern, 'g');
         fileContent = fileContent.replace(regexPattern, replacement);

@@ -1,0 +1,44 @@
+export interface SystemInfo {
+  homeFolder: string;
+  type: string;
+  release: string;
+  platform: string;
+  pythonVersion: string;
+  cpuArchitecture: string;
+  totalMemory: number;
+  freeMemory: number;
+  uptime: number;
+  currentFolder: string;
+}
+
+// Updated ServerConfig interface to include all possible properties
+export interface ServerConfig {
+  connectionString: string;    // Includes both the username and the host
+  privateKeyPath?: string;     // If not the default ~/.ssh/id_rsa or similar
+  keyPath?: string;            // Path to the SSH key file
+  posix?: boolean;             // Indicates if the server is POSIX-compliant
+  systemInfo?: boolean;        // Indicates if additional remote information should be fetched
+  port?: number;               // e.g. If not TCP/22 when using SSH
+  code?: boolean;              // Whether to use code cmd when using files operations
+  username?: string;           // Dynamically extracted from connectionString
+  host?: string;               // Dynamically extracted from connectionString
+}
+
+export interface ServerHandlerInterface {
+  setCurrentDirectory(directory: string): boolean;
+  executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }>;
+  createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
+  updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
+  amendFile(filePath: string, content: string): Promise<boolean>;
+  getSystemInfo(): Promise<SystemInfo>;
+  fileExists(filePath: string): boolean;
+  listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
+}
+
+// Define an interface for the AppConfig that now includes all the properties
+export interface AppConfig {
+  serverConfig: ServerConfig[]; // Reflects the new structure with an array of ServerConfig
+  commandTimeout: number;      // Time in milliseconds for command execution timeout
+  maxResponse: number;         // Maximum size of the response
+  port: number;                // Port number for the application to listen on
+}
