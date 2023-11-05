@@ -2,6 +2,7 @@ import express from 'express';
 import ServerHandlerSingleton from '../services/serverHandlerInstance';
 import { ServerConfig } from '../types';
 import config from 'config';
+import lockfile from 'proper-lockfile';
 
 // Define interfaces for expected request body to improve type safety
 interface RunCommandRequestBody {
@@ -31,13 +32,25 @@ router.post('/run', async (req, res) => {
   const { command, timeout }: RunCommandRequestBody = req.body;
   const effectiveTimeout = timeout || config.get<number>('commandTimeout') || 180000;
 
+  // Define a unique lock name based on the command, or use a generic one if the command should not run concurrently with any other
+  const lockName = `command-lock-${command}`;
+
   try {
-    const result = await serverHandler.executeCommand(command, effectiveTimeout);
-    res.status(200).json(result);
+    // Attempt to acquire a lock before executing the command
+    const release = await lockfile.lock(lockName, { realpath: false });
+
+    try {
+      const result = await serverHandler.executeCommand(command, effectiveTimeout);
+      res.status(200).json(result);
+    } finally {
+      // Release the lock after the command execution
+      await release();
+    }
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
+
 
 router.post(['/create-file', '/create-or-replace-file'], async (req, res) => {
   const { filename, content, backup = true, directory = "" }: CreateFileRequestBody = req.body;

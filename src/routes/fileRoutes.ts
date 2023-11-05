@@ -1,12 +1,13 @@
 import express from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
 import ServerHandlerSingleton from '../services/serverHandlerInstance';
-import { ServerConfig } from '../types'
+import { ServerConfig } from '../types';
 import { escapeRegExp } from '../utils/escapeRegExp';
 import path from 'path';
 import { Response } from 'express';
 import config from 'config';
 import * as fs from 'fs';
+import lockfile from 'proper-lockfile';
 
 const router = express.Router();
 const serverConfig = config.get<ServerConfig>('serverConfig');
@@ -53,7 +54,6 @@ router.post(['/create-file', '/create-or-replace-file'], async (req, res) => {
     .catch((err: Error) => res.status(500).json({ error: err.message }));
 });
 
-// Update a file
 router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   const serverHandler = getServerHandler(res);
@@ -67,25 +67,28 @@ router.post('/update-file', async (req, res) => {
   const targetDirectory = directory || serverHandler.getCurrentDirectory();
   const fullPath = path.join(targetDirectory, filename);
 
-  // Check if the file exists
-  if (!fs.existsSync(fullPath)) {
-    return res.status(400).json({ error: 'The target file does not exist.' });
+  try {
+    // Lock the file
+    await lockfile.lock(fullPath);
+
+    // Perform the file update
+    const updateResult = await serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup);
+    if (updateResult) {
+      res.status(200).json({ message: 'File updated successfully.' });
+    } else {
+      res.status(400).json({ error: 'Failed to update the file.' });
+    }
+  } catch (err) {
+    // Handle error
+    if (err instanceof Error) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: 'An unknown error occurred' });
+    }
+  } finally {
+    // Unlock the file, ignoring any errors during unlock
+    await lockfile.unlock(fullPath).catch(() => {});
   }
-
-  serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup)
-    .then(() => res.status(200).json({ message: 'File updated successfully.' }))
-    .catch((err: Error) => res.status(500).json({ error: err.message }));
-});
-
-// List files in a directory
-router.post('/list-files', async (req, res) => {
-  const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
-  const serverHandler = getServerHandler(res);
-  if (!serverHandler) return;
-
-  serverHandler.listFiles(directory, limit, offset, orderBy)
-    .then((files: string[]) => res.status(200).json({ files }))
-    .catch((err: Error) => res.status(500).json({ error: err.message }));
 });
 
 // Amend a file
