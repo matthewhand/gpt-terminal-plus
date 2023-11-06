@@ -12,7 +12,8 @@
     "ncu": "ncu"
   },
   "resolutions": {
-    "minimist": "^0.2.4"
+    "minimist": "^0.2.4",
+    "jpeg-js": "^0.4.4"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
