@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { ServerHandler } from './ServerHandler';
@@ -15,32 +14,46 @@ export default class LocalServerHandler extends ServerHandler {
   }
 
   async getSystemInfo(): Promise<SystemInfo> {
-    // Get Python version by executing 'python --version'
-    const getPythonVersion = async (): Promise<string> => {
+    if (this.serverConfig.shell === 'powershell') {
+      const psCommand = `
+        $info = @{}
+        $info['homeFolder'] = [System.Environment]::GetFolderPath('UserProfile')
+        $info['type'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+        $info['release'] = (Get-WmiObject -Class Win32_OperatingSystem).Version
+        $info['platform'] = [System.Environment]::OSVersion.Platform
+        $info['cpuArchitecture'] = [System.Environment]::Is64BitOperatingSystem
+        $info['totalMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
+        $info['freeMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)
+        $info['uptime'] = (Get-WmiObject -Class Win32_OperatingSystem).LastBootUpTime
+        $info['currentFolder'] = Get-Location
+        $info['powershellVersion'] = $PSVersionTable.PSVersion.ToString()
+        $info | ConvertTo-Json
+      `;
       try {
-        const { stdout } = await execAsync('python --version');
-        return stdout.trim();
+        const { stdout } = await execAsync(psCommand, { shell: 'powershell' });
+        const result = JSON.parse(stdout.trim());
+        return {
+          homeFolder: result.homeFolder,
+          type: result.type,
+          release: result.release,
+          platform: result.platform.toString(),
+          powershellVersion: result.powershellVersion,
+          cpuArchitecture: result.cpuArchitecture ? 'x64' : 'x86',
+          totalMemory: result.totalMemory,
+          freeMemory: result.freeMemory,
+          uptime: new Date(result.uptime).getTime() / 1000, // Convert to seconds
+          currentFolder: result.currentFolder.Path
+        };
       } catch (error) {
-        console.error('Error getting Python version:', error);
-        return 'Unknown';
+        console.error('Error getting system information with PowerShell:', error);
+        throw error; // Rethrow the error to be handled by the caller
       }
-    };
-
-    const pythonVersion = await getPythonVersion();
-
-    return {
-      homeFolder: os.homedir(),
-      type: os.type(),
-      release: os.release(),
-      platform: os.platform(),
-      pythonVersion: pythonVersion,
-      cpuArchitecture: os.arch(),
-      totalMemory: os.totalmem(),
-      freeMemory: os.freemem(),
-      uptime: os.uptime(),
-      currentFolder: process.cwd(),
-    };
+    } else {
+      // If the shell is not 'powershell', throw an error or provide an alternative implementation
+      throw new Error('Shell type not supported for system info retrieval.');
+    }
   }
+
 
   executeCommand(command: string, timeout: number = 5000): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {

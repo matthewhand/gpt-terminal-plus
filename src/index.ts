@@ -32,19 +32,19 @@ app.use(cors({
 }));
 app.use(json());
 
-// Middleware to ensure server is set
 async function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
-  if (!req.serverHandler) {
-    const serverConfigs: ServerConfig[] = config.get('serverConfig');
-    const serverConfig = serverConfigs[0]; // Default to the first configured
-    // Extract the host from the serverConfig
-    const host = serverConfig.host;
-    // Use the host to get the instance
-    req.serverHandler = await ServerHandler.getInstance(host);
+  try {
+    if (!req.serverHandler) {
+      const serverConfigs: ServerConfig[] = config.get('serverConfig');
+      const serverConfig = serverConfigs[0]; // Default to the first configured server
+      const host = serverConfig.host;
+      req.serverHandler = await ServerHandler.getInstance(host);
+    }
+    next();
+  } catch (error) {
+    next(error); // Pass the error to the next error handling middleware
   }
-  next();
 }
-
 
 app.use(ensureServerIsSet, fileRoutes);
 app.use(ensureServerIsSet, commandRoutes);

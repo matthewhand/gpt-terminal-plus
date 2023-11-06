@@ -94,22 +94,22 @@ describe('ServerHandler', () => {
   });
 });
 
-// it('should throw an error if serverConfig is not defined in the config', () => {
-//   // This function will attempt to instantiate the TestServerHandler with an empty config
-//   const instantiateWithEmptyConfig = () => {
-//     new TestServerHandler({} as ServerConfig);
-//   };
-
-//   // Now we expect the function to throw, not the constructor directly
-//   expect(instantiateWithEmptyConfig).toThrow('Server configuration is not defined in the config.');
-// });
-
-it('should throw an error if no matching server configuration found for localhost', () => {
-  const mockServerConfig: ServerConfig = {
-    host: 'remotehost', // Intentionally not 'localhost'
-    username: 'user',
-    // ... other required properties
+it('should throw an error if serverConfig is not defined in the config', () => {
+  // This function will attempt to instantiate the TestServerHandler with an empty config
+  const instantiateWithEmptyConfig = () => {
+    new TestServerHandler({} as ServerConfig);
   };
+
+  // Now we expect the function to throw, not the constructor directly
+  expect(instantiateWithEmptyConfig).toThrow('Server configuration is not defined in the config.');
+});
+
+// it('should throw an error if no matching server configuration found for localhost', () => {
+//   const mockServerConfig: ServerConfig = {
+//     host: 'remotehost', // Intentionally not 'localhost'
+//     username: 'user',
+//     // ... other required properties
+//   };
 
   // This function will attempt to instantiate the TestServerHandler with a config that does not match 'localhost'
   const instantiateWithNonLocalhostConfig = () => {

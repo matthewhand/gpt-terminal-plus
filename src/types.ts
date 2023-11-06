@@ -3,7 +3,8 @@ export interface SystemInfo {
   type: string;
   release: string;
   platform: string;
-  pythonVersion: string;
+  pythonVersion?: string;
+  powershellVersion?: string;
   cpuArchitecture: string;
   totalMemory: number;
   freeMemory: number;

@@ -4,40 +4,53 @@ import config from 'config';
 import { ServerConfig, SystemInfo } from '../types';
 
 export abstract class ServerHandler {
-    protected currentDirectory: string;
-    protected serverConfig: ServerConfig;
-    protected identifier: string;
-  
-    // Static property to hold the singleton instance
-    private static instance: ServerHandler | null = null;
-  
-    constructor(serverConfig: ServerConfig) {
-      this.serverConfig = serverConfig;
-      this.identifier = `${serverConfig.username}@${serverConfig.host}`;
-      this.currentDirectory = "";
-    }
-  
-// Static method to get the singleton instance
-public static async getInstance(host: string): Promise<ServerHandler> {
-  if (!ServerHandler.instance) {
-    const servers: ServerConfig[] = config.get('serverConfig');
-    const serverConfig = servers.find((configItem: ServerConfig) => configItem.host === host);
-    if (!serverConfig) {
-      throw new Error(`No matching server configuration found for host: ${host}.`);
-    }
+  protected currentDirectory: string;
+  protected serverConfig: ServerConfig;
+  protected identifier: string;
 
-    if (serverConfig.host === 'localhost') {
-      // Dynamically import the LocalServerHandler module
-      const { default: LocalServerHandler } = await import('./LocalServerHandler');
-      ServerHandler.instance = new LocalServerHandler(serverConfig);
-    } else {
-      // Dynamically import the RemoteServerHandler module
-      const { default: RemoteServerHandler } = await import('./RemoteServerHandler');
-      ServerHandler.instance = new RemoteServerHandler(serverConfig);
-    }
+  // Static property to hold the singleton instance
+  private static instance: ServerHandler | null = null;
+
+  constructor(serverConfig: ServerConfig) {
+    this.serverConfig = serverConfig;
+    this.identifier = `${serverConfig.username}@${serverConfig.host}`;
+    this.currentDirectory = "";
   }
-  return ServerHandler.instance;
-}
+
+  // Static method to list available servers
+  public static async listAvailableServers(): Promise<ServerConfig[]> {
+    const servers: ServerConfig[] = config.get('serverConfig');
+    if (!servers) {
+      throw new Error('No server configurations available.');
+    }
+    return servers;
+  }
+  
+  // Static method to get the singleton instance
+  public static async getInstance(host: string): Promise<ServerHandler> {
+    if (!ServerHandler.instance) {
+      const servers: ServerConfig[] = config.get('serverConfig');
+      const serverConfig = servers.find((configItem: ServerConfig) => configItem.host === host);
+      if (!serverConfig || serverConfig.host != host) {
+        throw new Error(`Server not in predefined list.`);
+      }
+      if (serverConfig.host === 'localhost') {
+        // Dynamically import the LocalServerHandler module
+        const { default: LocalServerHandler } = await import('./LocalServerHandler');
+        ServerHandler.instance = new LocalServerHandler(serverConfig);
+      } else {
+        // Dynamically import the RemoteServerHandler module
+        const { default: RemoteServerHandler } = await import('./RemoteServerHandler');
+        ServerHandler.instance = new RemoteServerHandler(serverConfig);
+      }
+    }
+    return ServerHandler.instance;
+  }
+
+  // Static method to reset the singleton instance
+  public static resetInstance(): void {
+    ServerHandler.instance = null;
+  }
 
   // Abstract methods...
   abstract executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }>;

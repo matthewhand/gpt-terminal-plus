@@ -1,48 +1,53 @@
 import express, { Request, Response } from 'express';
-import config from 'config';
 import Debug from 'debug';
 import { ServerHandler } from '../handlers/ServerHandler';
-import { ServerConfig } from '../types';
 
-const debug = Debug('server:routes');
+const debug = Debug('app:serverRoutes');
 const router = express.Router();
 
-// Use the ServerConfig from the config package directly
-const servers: ServerConfig[] = config.get('serverConfig');
-
-router.get('/list-servers', (req: Request, res: Response) => {
+router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers');
   try {
+    const servers = await ServerHandler.listAvailableServers();
     res.json({ servers });
-  } catch (error) {
-    debug('Error in /list-servers:', error);
-    res.status(500).send('Internal Server Error');
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      debug('Error in /list-servers:', error.message);
+      res.status(500).send('Internal Server Error');
+    } else {
+      debug('Unknown error in /list-servers');
+      res.status(500).send('An unknown error occurred');
+    }
   }
 });
 
 router.post('/set-server', async (req: Request, res: Response) => {
-  const server = req.body.server; // Changed from host to server
-  debug(`Received request to set server with host: ${server}`);
+  const { server } = req.body;
+  debug(`Received request to set server: ${server}`);
   
   try {
-    if (!server) {
-      debug('Invalid connection string format. Expected format: server');
-      res.status(400).send('Invalid connection string format. Expected format: server');
-      return;
-    }
-
-    // Initialize the server handler with the configuration
+    // Initialize the server handler with the provided configuration
     const serverHandler = await ServerHandler.getInstance(server);
     const systemInfo = await serverHandler.getSystemInfo();
     
-    debug(`Server set to: ${server}`);
+    debug(`Server set to ${server}`);
     res.status(200).json({ output: `Server set to ${server}`, systemInfo });
-  } catch (error) {
-    debug('Error in /set-server:', error);
-    res.status(500).send('Internal Server Error');
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Server not in predefined list.') {
+      debug('Error in /set-server:', error.message);
+      res.status(400).json({ output: error.message });
+    } else if (error instanceof Error) {
+      debug('Error in /set-server:', error.message);
+      res.status(500).json({
+        output: 'Error retrieving system info',
+        error: error.message
+      });
+    } else {
+      debug('Unknown error in /set-server');
+      res.status(500).send('An unknown error occurred');
+    }
   }
 });
 
 // Export the router
 export default router;
-
