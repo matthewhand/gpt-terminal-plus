@@ -22,6 +22,7 @@ export interface ServerConfig {
   code?: boolean;              // Whether to use code cmd when using files operations
   username?: string;           // Dynamically extracted from connectionString
   protocol?: string;           // 'ssh'
+  shell?: string;              // 'powershell' | null
 }
 
 export interface ServerHandlerInterface {

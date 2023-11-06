@@ -44,7 +44,10 @@ export default class LocalServerHandler extends ServerHandler {
 
   executeCommand(command: string, timeout: number = 5000): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
-      exec(command, { maxBuffer: 1024 * 1024 * 10 , timeout, cwd: this.currentDirectory }, (error, stdout, stderr) => { // TODO config instead of hardcode
+      // Check the server configuration for the shell option
+      const shell = this.serverConfig.shell === 'powershell' ? 'powershell' : undefined;
+
+      exec(command, { timeout, cwd: this.currentDirectory, shell }, (error, stdout, stderr) => {
         if (error) {
           reject(error);
         } else {

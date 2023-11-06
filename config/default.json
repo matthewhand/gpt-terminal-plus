@@ -3,7 +3,8 @@
       {
         "host": "localhost",
         "code": true,
-        "posix": false
+        "posix": false,
+        "shell": "powershell"
       }
     ],
     "commandTimeout": 180000,

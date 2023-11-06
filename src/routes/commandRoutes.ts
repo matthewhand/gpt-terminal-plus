@@ -32,14 +32,13 @@ router.post('/run', async (req, res) => {
   }
 
   const effectiveTimeout = timeout || config.get<number>('commandTimeout') || 180000;
-  const maxResponseSize = config.get<number>('maxResponseSize') || 1000;
 
   try {
     // Execute the command and get the raw output
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
     
     // Store the paginated stdout and stderr and get the response ID
-    const responseId = storeResponse(executionResult.stdout, executionResult.stderr, maxResponseSize);
+    const responseId = storeResponse(executionResult.stdout, executionResult.stderr);
 
     // Retrieve the paginated response
     const paginatedResult = getPaginatedResponse(responseId, 0);

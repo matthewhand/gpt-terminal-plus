@@ -3,6 +3,9 @@ import config from 'config';
 
 const maxResponseSize = config.get<number>('maxResponseSize') || 1000;
 
+// Define threshold for cleanup in the outer scope
+const cleanupThreshold = 60 * 60 * 1000; // 1 hour in milliseconds
+
 // Pagination response storage
 const responseStorage: Record<string, PaginatedResponse> = {};
 
@@ -11,17 +14,35 @@ let responseCounter = 0;
 
 // Function to generate a unique response ID
 function generateResponseId(): string {
-  // Simple incremental ID without padding
-  return (responseCounter++).toString();
+  return (responseCounter++).toString(); // Simple incremental ID
 }
 
-// Helper function to paginate data
+// Helper function to paginate data by lines within the maxResponseSize limit
 const paginate = (data: string, maxResponseSize: number): string[] => {
-  return data.match(new RegExp(`.{1,${maxResponseSize}}`, 'g')) || [];
+  const lines = data.split('\n');
+  const pages: string[] = [];
+  let currentPage = '';
+
+  lines.forEach((line) => {
+    // Check if adding the next line exceeds the max size
+    if ((currentPage.length + line.length + 1) <= maxResponseSize) {
+      currentPage += line + '\n';
+    } else {
+      pages.push(currentPage);
+      currentPage = line + '\n'; // Start a new page with the current line
+    }
+  });
+
+  // Add the last page if there's remaining content
+  if (currentPage) {
+    pages.push(currentPage);
+  }
+
+  return pages;
 };
 
 // Function to store paginated response
-function storeResponse(stdout: string, stderr: string, maxResponseSize: number): string {
+function storeResponse(stdout: string, stderr: string): string {
   const responseId = generateResponseId();
   responseStorage[responseId] = {
     stdout: paginate(stdout, maxResponseSize),
@@ -39,22 +60,10 @@ function getPaginatedResponse(responseId: string, page: number): ResponsePage {
   }
 
   const totalPages = Math.max(response.stdout.length, response.stderr.length);
-
-  // If there's only one page, we still return it in the same object format
-  if (totalPages <= 1) {
-    return {
-      stdout: response.stdout[0] || '',
-      stderr: response.stderr[0] || '',
-      totalPages: 1 // Indicate that there is only one page
-    };
-  }
-
-  // For multiple pages, ensure the page number is within bounds
   if (page < 0 || page >= totalPages) {
     throw new Error(`Page number ${page} is out of bounds. Must be between 0 and ${totalPages - 1}.`);
   }
 
-  // Return the requested page along with total pages
   return {
     stdout: response.stdout[page] || '',
     stderr: response.stderr[page] || '',
@@ -64,16 +73,15 @@ function getPaginatedResponse(responseId: string, page: number): ResponsePage {
 
 // Cleanup function for responseStorage
 function cleanupResponseStorage() {
-  const threshold = 60 * 60 * 1000; // e.g., 1 hour
   const now = Date.now();
-  Object.keys(responseStorage).forEach((id) => {
-    if (now - responseStorage[id].timestamp > threshold) {
+  Object.entries(responseStorage).forEach(([id, { timestamp }]) => {
+    if (now - timestamp > cleanupThreshold) {
       delete responseStorage[id];
     }
   });
 }
 
-// You would call cleanupResponseStorage periodically, for example, using setInterval in a Node.js environment
-// setInterval(cleanupResponseStorage, 60 * 60 * 1000); // every hour
+// Periodic cleanup of responseStorage
+setInterval(cleanupResponseStorage, cleanupThreshold); // Cleanup every hour
 
 export { generateResponseId, storeResponse, getPaginatedResponse, cleanupResponseStorage };

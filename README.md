@@ -45,7 +45,7 @@ To get started with `gpt-terminal-plus`, clone the repository and follow the set
 ### Running the Application
 
 - Start the application with `npm start`.
-- For development purposes, you can use `npm start dev` to start the application with nodemon, which will watch for file changes.
+- For development purposes, you can use `npm run start:dev` to start the application with nodemon, which will watch for file changes.
 
 ## Contributing
 
