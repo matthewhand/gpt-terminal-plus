@@ -1,6 +1,6 @@
 {
   "name": "gpt-terminal-plus",
-  "version": "1.0.0",
+  "version": "latest",
   "description": "ChatGPT terminal plugin",
   "main": "src/index.js",
   "scripts": {
@@ -8,8 +8,9 @@
     "start:prod": "node dist/src/index.js",
     "start:dev": "nodemon --exec ts-node src/index.ts",
     "build": "webpack",
-    "test": "cross-env DEBUG=true jest"
-  },  
+    "test": "cross-env DEBUG=true jest",
+    "ncu": "ncu"
+  },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
   "license": "MIT",
@@ -46,11 +47,13 @@
     "webpack-dev-server": "^4.15.1"
   },
   "dependencies": {
+    "@npmcli/fs": "^3.1.0",
     "aws-sdk": "^2.1488.0",
     "config": "^3.3.6",
     "dotenv": "^16.0.0",
     "jimp": "^0.3.5",
     "morgan": "^1.10.0",
+    "npm-check-updates": "^16.14.6",
     "proper-lockfile": "^4.1.2",
     "ssh2": "^1.14.0",
     "ssh2-sftp-client": "^9.1.0",
@@ -58,3 +61,5 @@
     "uuid": "^9.0.1"
   }
 }
+
+
