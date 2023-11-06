@@ -52,7 +52,6 @@
     "webpack-dev-server": "^4.15.1"
   },
   "dependencies": {
-    "@npmcli/fs": "^3.1.0",
     "aws-sdk": "^2.1488.0",
     "config": "^3.3.9",
     "dotenv": "^16.3.1",
