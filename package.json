@@ -7,7 +7,6 @@
     "start": "ts-node src/index.ts",
     "start:prod": "node dist/src/index.js",
     "start:dev": "nodemon --exec ts-node src/index.ts",
-    "build": "webpack",
     "test": "cross-env DEBUG=ServerHandler jest --verbose --runInBand",
     "ncu": "ncu"
   },
