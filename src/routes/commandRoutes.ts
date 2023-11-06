@@ -1,5 +1,5 @@
 import express from 'express';
-import ServerHandlerSingleton from '../services/serverHandlerInstance';
+import { ServerHandler } from '../handlers/ServerHandler';
 import { ServerConfig } from '../types';
 import config from 'config';
 import { getPaginatedResponse, storeResponse } from '../handlers/PaginationHandler';
@@ -12,17 +12,25 @@ interface RunCommandRequestBody {
 
 const router = express.Router();
 
-// Initialize serverHandler immediately if configuration exists
-const serverConfig = config.get<ServerConfig>('serverConfig');
-const serverHandler = serverConfig ? ServerHandlerSingleton.getInstance(serverConfig) : null;
-
-if (!serverHandler) {
-  console.error('serverConfig is not defined in the config files.');
-  process.exit(1);
+// Helper function to get serverHandler
+async function getServerHandler(): Promise<ServerHandler | null> {
+  try {
+    const serverConfig = config.get<ServerConfig>('serverConfig');
+    const serverHandler = await ServerHandler.getInstance(serverConfig.host); // Await the Promise here
+    return serverHandler;
+  } catch (error) {
+    console.error('Failed to initialize serverHandler:', error);
+    return null;
+  }
 }
 
 router.post('/run', async (req, res) => {
   const { command, timeout }: RunCommandRequestBody = req.body;
+  const serverHandler = await getServerHandler(); 
+  if (!serverHandler) {
+    return res.status(500).json({ error: 'Server handler not initialized' });
+  }
+
   const effectiveTimeout = timeout || config.get<number>('commandTimeout') || 180000;
   const maxResponseSize = config.get<number>('maxResponseSize') || 1000;
 

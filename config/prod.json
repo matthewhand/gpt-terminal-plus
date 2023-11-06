@@ -1,37 +1,51 @@
 {
     "serverConfig": [
       {
-        "connectionString": "localhost",
+        "host": "localhost",
         "code": true,
         "posix": false
       },
       {
-        "connectionString": "root@proxmox1.domain.home",
+        "host": "proxmox1.domain.home",
+        "protocol": "ssh",
+        "username": "root",
         "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
         "systemInfo": false
       },
       {
-        "connectionString": "root@proxmox2.domain.home",
+        "host": "proxmox2.domain.home",
+        "protocol": "ssh",
+        "username": "root",
         "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key",
         "systemInfo": false
       },
       {
-        "connectionString": "matthewh@ubuntu-amdgpu.domain.home"
+        "host": "ubuntu-amdgpu.domain.home",
+        "protocol": "ssh",
+        "username": "matthewh"
       },
       {
-        "connectionString": "matthewh@ubuntu-gtx.domain.home",
+        "host": "ubuntu-gtx.domain.home",
+        "protocol": "ssh",
+        "username": "matthewh",
         "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
       },
       {
-        "connectionString": "matth@gamingpc",
-        "keyPath": "OneDrive/Documents/ssh-key-2023-07-12.key"
+        "host": "gamingpc",
+        "protocol": "ssh",
+        "username": "matth",
+        "h": "OneDrive/Documents/ssh-key-2023-07-12.key"
       },
       {
-        "connectionString": "matthewh@ubuntu-gamingpc.domain.home",
+        "host": "ubuntu-gamingpc.domain.home",
+        "protocol": "ssh",
+        "username": "matthewh",
         "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
       },
       {
-        "connectionString": "chatgpt@teamstinky.duckdns.org",
+        "host": "teamstinky.duckdns.org",
+        "protocol": "ssh",
+        "username": "chatgpt",
         "keyPath": "OneDrive/Documents/ssh-key-2023-06-13.key"
       }
     ],

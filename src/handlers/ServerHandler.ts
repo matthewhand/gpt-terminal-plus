@@ -1,34 +1,43 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { ServerConfig, SystemInfo } from '../types';
 import config from 'config';
+import { ServerConfig, SystemInfo } from '../types';
 
-// Define an abstract class ServerHandler
 export abstract class ServerHandler {
-  protected currentDirectory: string;
-  protected serverConfig: ServerConfig | null = null;
-  protected servers: ServerConfig[] = config.get('serverConfig');
-  protected identifier: string;
-
-  constructor(identifier: string = "") {
-    this.identifier = identifier;
-    this.currentDirectory = "";
-    this.loadServerConfig();
-  }
-
-  private loadServerConfig(): void {
-    // Check if the server configuration is defined in the config
-    if (!config.has('serverConfig')) {
-      throw new Error('Server configuration is not defined in the config.');
+    protected currentDirectory: string;
+    protected serverConfig: ServerConfig;
+    protected identifier: string;
+  
+    // Static property to hold the singleton instance
+    private static instance: ServerHandler | null = null;
+  
+    constructor(serverConfig: ServerConfig) {
+      this.serverConfig = serverConfig;
+      this.identifier = `${serverConfig.username}@${serverConfig.host}`;
+      this.currentDirectory = "";
     }
   
-    // Find the server configuration for localhost, or default to null
-    this.serverConfig = this.servers.find((configItem: ServerConfig) => configItem.connectionString === 'localhost') ?? null;
-  
-    if (!this.serverConfig) {
-      throw new Error('No matching server configuration found for localhost.');
+// Static method to get the singleton instance
+public static async getInstance(host: string): Promise<ServerHandler> {
+  if (!ServerHandler.instance) {
+    const servers: ServerConfig[] = config.get('serverConfig');
+    const serverConfig = servers.find((configItem: ServerConfig) => configItem.host === host);
+    if (!serverConfig) {
+      throw new Error(`No matching server configuration found for host: ${host}.`);
+    }
+
+    if (serverConfig.host === 'localhost') {
+      // Dynamically import the LocalServerHandler module
+      const { default: LocalServerHandler } = await import('./LocalServerHandler');
+      ServerHandler.instance = new LocalServerHandler(serverConfig);
+    } else {
+      // Dynamically import the RemoteServerHandler module
+      const { default: RemoteServerHandler } = await import('./RemoteServerHandler');
+      ServerHandler.instance = new RemoteServerHandler(serverConfig);
     }
   }
+  return ServerHandler.instance;
+}
 
   // Abstract methods...
   abstract executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }>;

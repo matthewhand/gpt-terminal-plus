@@ -1,54 +1,48 @@
 import express, { Request, Response } from 'express';
-import ServerHandler from '../services/serverHandlerInstance';
 import config from 'config';
+import Debug from 'debug';
+import { ServerHandler } from '../handlers/ServerHandler';
 import { ServerConfig } from '../types';
 
+const debug = Debug('server:routes');
 const router = express.Router();
 
 // Use the ServerConfig from the config package directly
 const servers: ServerConfig[] = config.get('serverConfig');
 
 router.get('/list-servers', (req: Request, res: Response) => {
-  res.json({ servers });
+  debug('Received request to list servers');
+  try {
+    res.json({ servers });
+  } catch (error) {
+    debug('Error in /list-servers:', error);
+    res.status(500).send('Internal Server Error');
+  }
 });
 
 router.post('/set-server', async (req: Request, res: Response) => {
-  const newServerAddress = req.body.server as string;
-  // Find the server configuration that matches the newServerAddress
-  const serverConfig = servers.find(server => server.connectionString === newServerAddress);
-
-  if (!serverConfig) {
-    console.error('Server not found in predefined list:', newServerAddress);
-    res.status(400).json({ output: 'Server not in predefined list.' });
-    return;
-  }
-
-  // Initialize the server handler with the configuration
-  const serverHandler = ServerHandler.getInstance(serverConfig);
-
-  // Check if serverHandler is null and handle it
-  if (!serverHandler) {
-    console.error('Failed to initialize server handler.');
-    res.status(500).json({ output: 'Failed to initialize server handler.' });
-    return;
-  }
-
+  const server = req.body.server; // Changed from host to server
+  debug(`Received request to set server with host: ${server}`);
+  
   try {
-    const systemInfo = await (serverHandler as any).getSystemInfo();
-    // Here you should handle setting the current server configuration in your application's state
-    console.log(`Server set to: ${serverConfig.connectionString}`);
-    res.status(200).json({ output: `Server set to ${serverConfig.connectionString}`, systemInfo });
-  } catch (error) {
-    // Use a type guard to check if the error is an instance of Error
-    if (error instanceof Error) {
-      console.error('Error retrieving system info:', error.message);
-      res.status(500).json({ output: 'Error retrieving system info', error: error.message });
-    } else {
-      // If it's not an Error instance, handle it as an unknown type
-      console.error('An unknown error occurred');
-      res.status(500).json({ output: 'An unknown error occurred' });
+    if (!server) {
+      debug('Invalid connection string format. Expected format: server');
+      res.status(400).send('Invalid connection string format. Expected format: server');
+      return;
     }
+
+    // Initialize the server handler with the configuration
+    const serverHandler = await ServerHandler.getInstance(server);
+    const systemInfo = await serverHandler.getSystemInfo();
+    
+    debug(`Server set to: ${server}`);
+    res.status(200).json({ output: `Server set to ${server}`, systemInfo });
+  } catch (error) {
+    debug('Error in /set-server:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
+
 // Export the router
 export default router;
+

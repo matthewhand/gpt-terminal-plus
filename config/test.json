@@ -1,7 +1,7 @@
 {
     "serverConfig": [
       {
-        "connectionString": "localhost",
+        "host": "localhost",
         "code": true,
         "posix": false
       }

@@ -1,11 +1,8 @@
 // LocalServerHandler.test.ts
-import { LocalServerHandler } from '../../src/handlers/LocalServerHandler';
+import LocalServerHandler from '../../src/handlers/LocalServerHandler';
 import * as fs from 'fs';
 import * as path from 'path';
-import { exec } from 'child_process';
-
-// Import the actual fs module
-import * as actualFs from 'fs';
+import { ServerConfig } from '../../src/types';
 
 // Mock the modules with Jest mock functions
 jest.mock('fs', () => ({
@@ -33,12 +30,17 @@ const mockedFs = fs as jest.Mocked<typeof fs> & {
   },
 };
 
+const mockServerConfig: ServerConfig = {
+  host: 'localhost',
+  // ... other necessary properties
+};
+
 describe('LocalServerHandler', () => {
   let localServerHandler: LocalServerHandler;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    localServerHandler = new LocalServerHandler();
+    localServerHandler = new LocalServerHandler(mockServerConfig);
   });
 
   describe('setCurrentDirectory', () => {

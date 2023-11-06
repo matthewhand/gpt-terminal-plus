@@ -1,38 +1,45 @@
-import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { exec } from 'child_process';
-import { escapeRegExp } from '../utils/escapeRegExp';
+import { promisify } from 'util';
 import { ServerHandler } from './ServerHandler';
-import { SystemInfo } from '../types';
-import config from 'config'; // Ensure you have imported the config package
+import { ServerConfig, SystemInfo } from '../types';
+import { escapeRegExp } from '../utils/escapeRegExp';
 
-export class LocalServerHandler extends ServerHandler {
-  serverConfig: any;
+const execAsync = promisify(exec);
 
-  constructor() {
-    super(os.homedir());
-    // Load the server configuration
-    this.serverConfig = config.get('serverConfig');
+export default class LocalServerHandler extends ServerHandler {
+  constructor(serverConfig: ServerConfig) {
+    super(serverConfig);
   }
 
+  async getSystemInfo(): Promise<SystemInfo> {
+    // Get Python version by executing 'python --version'
+    const getPythonVersion = async (): Promise<string> => {
+      try {
+        const { stdout } = await execAsync('python --version');
+        return stdout.trim();
+      } catch (error) {
+        console.error('Error getting Python version:', error);
+        return 'Unknown';
+      }
+    };
 
-  // Implement the abstract method from ServerHandler
-  getSystemInfo(): Promise<SystemInfo> {
-    // Implementation to get system info on the local server
-    // This is a placeholder, you'll need to implement the logic to retrieve the system info
-    return Promise.resolve({
-      homeFolder: process.env.HOME || '',
+    const pythonVersion = await getPythonVersion();
+
+    return {
+      homeFolder: os.homedir(),
       type: os.type(),
       release: os.release(),
       platform: os.platform(),
-      pythonVersion: '', // You would need to execute a command to get this
+      pythonVersion: pythonVersion,
       cpuArchitecture: os.arch(),
       totalMemory: os.totalmem(),
       freeMemory: os.freemem(),
       uptime: os.uptime(),
-      currentFolder: this.currentDirectory,
-    });
+      currentFolder: process.cwd(),
+    };
   }
 
   executeCommand(command: string, timeout: number = 5000): Promise<{ stdout: string; stderr: string }> {
@@ -170,7 +177,6 @@ export class LocalServerHandler extends ServerHandler {
         return false;
       }
     }
-  
     
     async amendFile(filePath: string, content: string): Promise<boolean> {
       const fullPath = path.join(this.currentDirectory, filePath);

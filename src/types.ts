@@ -13,7 +13,7 @@ export interface SystemInfo {
 
 // Updated ServerConfig interface to include all possible properties
 export interface ServerConfig {
-  connectionString: string;    // Includes both the username and the host
+  host: string;                // Dynamically extracted from connectionString
   privateKeyPath?: string;     // If not the default ~/.ssh/id_rsa or similar
   keyPath?: string;            // Path to the SSH key file
   posix?: boolean;             // Indicates if the server is POSIX-compliant
@@ -21,7 +21,7 @@ export interface ServerConfig {
   port?: number;               // e.g. If not TCP/22 when using SSH
   code?: boolean;              // Whether to use code cmd when using files operations
   username?: string;           // Dynamically extracted from connectionString
-  host?: string;               // Dynamically extracted from connectionString
+  protocol?: string;           // 'ssh'
 }
 
 export interface ServerHandlerInterface {

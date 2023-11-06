@@ -29,6 +29,21 @@ paths:
                   output:
                     type: string
                     description: A message indicating the server was successfully set.
+                  systemInfo: 
+                    type: object
+                    description: Information about the system of the set server.
+        '400':
+          description: Bad request due to invalid input.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error.
+          content:
+            text/plain:
+              schema:
+                type: string  
   /run:
     post:
       summary: Run a command

@@ -6,13 +6,13 @@ import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
 import { json } from 'body-parser';
+import { ServerHandler } from './handlers/ServerHandler';
 
-import ServerHandlerSingleton from './services/serverHandlerInstance';
 import { ServerConfig } from './types';
 
-import serverRoutes from './routes/serverRoutes';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
+import serverRoutes from './routes/serverRoutes';
 import staticFilesRouter from './routes/staticFilesRouter';
 
 // Import the PaginationHandler
@@ -33,17 +33,23 @@ app.use(cors({
 app.use(json());
 
 // Middleware to ensure server is set
-function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
+async function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
   if (!req.serverHandler) {
     const serverConfigs: ServerConfig[] = config.get('serverConfig');
     const serverConfig = serverConfigs[0]; // Default to the first configured
-    req.serverHandler = ServerHandlerSingleton.getInstance(serverConfig);
+    // Extract the host from the serverConfig
+    const host = serverConfig.host;
+    // Use the host to get the instance
+    req.serverHandler = await ServerHandler.getInstance(host);
   }
   next();
 }
 
+
 app.use(ensureServerIsSet, fileRoutes);
 app.use(ensureServerIsSet, commandRoutes);
+app.use(staticFilesRouter);
+app.use(serverRoutes);
 
 // Endpoint to retrieve paginated response
 app.get('/response/:id/:page', (req: Request, res: Response) => {

@@ -1,48 +1,33 @@
-import { Client, ClientChannel } from 'ssh2';
 import * as fs from 'fs';
 import * as path from 'path';
 import SFTPClient from 'ssh2-sftp-client';
 import { ServerHandler } from './ServerHandler';
-import { ServerHandlerInterface, SystemInfo } from '../types';
+import { ServerConfig, ServerHandlerInterface, SystemInfo } from '../types';
+import { Client, ClientChannel } from 'ssh2';
 import { v4 as uuidv4 } from 'uuid';
 
-export class RemoteServerHandler extends ServerHandler implements ServerHandlerInterface {
-  protected currentDirectory: string = '';
+export default class RemoteServerHandler extends ServerHandler implements ServerHandlerInterface {
   private conn: Client | null = null;
 
-  constructor(identifier: string) {
-    super();
-    
-    if (!this.serverConfig) {
-      throw new Error('Server configuration not loaded.');
-    }
+  constructor(serverConfig: ServerConfig) {
+    super(serverConfig);
 
-    const [username, host] = identifier?.split('@') || []; // aka connectionString
-    if (!username || !host) {
-      throw new Error('Invalid connection string format. Expected format: username@host');
-    }
-
-    if (this.serverConfig.connectionString !== identifier) {
-      throw new Error(`Server config does not match the provided connection string: ${identifier}`);
-    }
-
-    this.serverConfig.username = username;
-    this.serverConfig.host = host;
-
+    // The serverConfig should now be loaded by the base class
     this.serverConfig.privateKeyPath = this.getPrivateKeyPath();
     this.conn = new Client();
   }
-
 
   public getCurrentDirectory(): Promise<string> {
     return Promise.resolve(this.currentDirectory);
   }
 
   private getPrivateKeyPath(): string {
+    // Ensure the serverConfig is loaded
     if (!this.serverConfig) {
       throw new Error('Server configuration not loaded.');
-    } 
+    }
 
+    // Use the privateKeyPath from the serverConfig, or default to the user's home directory
     const keyPath = this.serverConfig.privateKeyPath || path.join(process.env.HOME || '', '.ssh', 'id_rsa');
     if (!fs.existsSync(keyPath)) {
       throw new Error(`Private key not found at path: ${keyPath}`);
@@ -51,9 +36,10 @@ export class RemoteServerHandler extends ServerHandler implements ServerHandlerI
   }
 
   private async ensureSshConnection(): Promise<Client> {
+    // Ensure the serverConfig is loaded
     if (!this.serverConfig) {
       throw new Error('Server configuration not loaded.');
-    } 
+    }
 
     if (!this.conn) {
       this.conn = new Client();
