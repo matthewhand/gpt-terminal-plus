@@ -45,33 +45,38 @@ paths:
               schema:
                 type: string  
   /run:
-    post:
-      summary: Run a command
-      operationId: runCommand
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                command:
-                  type: string
-                  description: The command to run.
-                directory:
-                  type: string
-                  description: The directory to set as the current working directory before running the command.
-      responses:
-        '200':
-          description: OK
+      post:
+        summary: Run a command
+        operationId: runCommand
+        requestBody:
+          required: true
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  output:
+                  command:
                     type: string
-                    description: The output of the command.
+                    description: The command to run.
+                  directory:
+                    type: string
+                    description: The directory to set as the current working directory before running the command.
+                  shell:
+                    type: string
+                    description: The shell environment in which to run the command.
+                    required: false
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    output:
+                      type: string
+                      description: The output of the command.  
+
   /list-files:
     post:
       summary: List files in a directory with pagination
