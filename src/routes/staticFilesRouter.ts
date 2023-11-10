@@ -4,13 +4,24 @@ import * as fs from 'fs';
 
 const router = Router();
 
+
+// const filePath = path.join(__dirname, '../../src/public/logo.png');
+
+// fs.access(filePath, fs.constants.R_OK, (err) => {
+//   if (err) {
+//     console.error(`Cannot read file: ${filePath}`);
+//   } else {
+//     console.log(`File is readable: ${filePath}`);
+//   }
+// });
+
 // Serve logo.png
 router.get('/logo.png', (_, res) => {
   const options = {
     root: path.join(__dirname, '../../'),
   };
 
-  const filename = 'logo.png';
+  const filename = 'src/public/logo.png';
   res.sendFile(filename, options, (err) => {
     if (err) {
       console.error(err);

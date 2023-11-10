@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { Server } from 'http'; // Import Server type for TypeScript
 import express, { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
@@ -27,8 +28,23 @@ if (process.env.DEBUG === 'true') {
 
 console.log(`Debug mode is ${process.env.DEBUG === 'true' ? 'ON' : 'OFF'}.`);
 
+// app.use(cors({
+//   origin: ['https://chat.openai.com', '*']
+// }));
 app.use(cors({
-  origin: ['https://chat.openai.com']
+  origin: function (origin, callback) {
+    // allow requests with no origin 
+    // (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Test whether the origin ends with '.com'
+    if (/\.com$/.test(origin)) {
+      return callback(null, true);
+    } else {
+      var message = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(message), false);
+    }
+  }
 }));
 app.use(json());
 
@@ -64,12 +80,25 @@ app.get('/response/:id/:page', (req: Request, res: Response) => {
   }
 });
 
+let server: Server; // Explicitly declare server as type Server
+
 const main = () => {
   const port: number = config.get('port') || 3000;
 
-  const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
-  });
+  // const server = app.listen(port, '0.0.0.0', () => {
+  //   console.log(`Server running on port ${port}`);
+  // });
+
+    const https = require('https');
+    const selfSigned = require('openssl-self-signed-certificate');
+
+    const options = {
+        key: selfSigned.key,
+        cert: selfSigned.cert
+    };
+
+    server = https.createServer(options, app).listen(port);
+    console.log(`HTTPS started on port ${port} (dev only).`);
 
   const shutdown = (signal: 'SIGINT' | 'SIGTERM') => {
     console.log(`Received ${signal}. Shutting down gracefully.`);
