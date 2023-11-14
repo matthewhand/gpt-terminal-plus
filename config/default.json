@@ -4,11 +4,11 @@
         "host": "localhost",
         "code": true,
         "posix": false,
-        "powershell": true
+        "powershell": false
       }
     ],
     "commandTimeout": 180000,
-    "port": 443,
+    "port": 5004,
     "maxResponseSize": 2000
   }
   

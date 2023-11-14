@@ -21,6 +21,23 @@ import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
+// Middleware to check for API token
+function checkAuthToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token == null) return res.sendStatus(401); // if there's no token
+
+    if (token !== process.env.API_TOKEN) {
+        return res.sendStatus(403); // if the token is wrong
+    }
+
+    next(); // if the token is correct
+}
+
+// Apply the middleware to all routes
+app.use(checkAuthToken);
+
 // Conditionally use morgan logger if DEBUG is set to 'true'
 if (process.env.DEBUG === 'true') {
   app.use(morgan('combined'));
@@ -28,24 +45,10 @@ if (process.env.DEBUG === 'true') {
 
 console.log(`Debug mode is ${process.env.DEBUG === 'true' ? 'ON' : 'OFF'}.`);
 
-// app.use(cors({
-//   origin: ['https://chat.openai.com', '*']
-// }));
 app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin 
-    // (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Test whether the origin ends with '.com'
-    if (/\.com$/.test(origin)) {
-      return callback(null, true);
-    } else {
-      var message = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(message), false);
-    }
-  }
+  origin: ['https://chat.openai.com', '*']
 }));
+
 app.use(json());
 
 async function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
@@ -83,22 +86,30 @@ app.get('/response/:id/:page', (req: Request, res: Response) => {
 let server: Server; // Explicitly declare server as type Server
 
 const main = () => {
+
+  // Check if API_TOKEN is set
+  if (!process.env.API_TOKEN) {
+    console.error('ERROR: API_TOKEN is not set. Please set the API_TOKEN environment variable.');
+    process.exit(1); // Exit the process with an error code
+  }
+    
   const port: number = config.get('port') || 3000;
 
-  // const server = app.listen(port, '0.0.0.0', () => {
-  //   console.log(`Server running on port ${port}`);
-  // });
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port}`);
+  });
 
-    const https = require('https');
-    const selfSigned = require('openssl-self-signed-certificate');
+    // TODO option to use https
+    // const https = require('https');
+    // const selfSigned = require('openssl-self-signed-certificate');
 
-    const options = {
-        key: selfSigned.key,
-        cert: selfSigned.cert
-    };
+    // const options = {
+    //     key: selfSigned.key,
+    //     cert: selfSigned.cert
+    // };
 
-    server = https.createServer(options, app).listen(port);
-    console.log(`HTTPS started on port ${port} (dev only).`);
+    // server = https.createServer(options, app).listen(port);
+    // console.log(`HTTPS started on port ${port} (dev only).`);
 
   const shutdown = (signal: 'SIGINT' | 'SIGTERM') => {
     console.log(`Received ${signal}. Shutting down gracefully.`);

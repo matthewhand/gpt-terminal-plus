@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004" # Map the port from your container to the host
+    environment:
+      - NODE_ENV=production
+      - DEBUG=false # Set to true if you want to enable debugging
+    volumes:
+      - .:/usr/src/app # Mount the app directory to the container
+      - /usr/src/app/node_modules # Keep node_modules on a named volume
+    restart: unless-stopped
+
+# Add other services like databases, caching, etc., here as needed.

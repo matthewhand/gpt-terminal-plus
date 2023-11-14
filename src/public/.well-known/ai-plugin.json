@@ -12,7 +12,7 @@
     "url": "http://localhost:5004/openapi.yaml",
     "is_user_authenticated": false
   },
-  "logo_url": "http://localhost:5004/logo.png",
+  "logo_url": "http://localhost/logo.png",
   "contact_email": "matthewhandau@gmail.com",
   "legal_info_url": "http://teamstinky.duckdns.org/legal"
 }
