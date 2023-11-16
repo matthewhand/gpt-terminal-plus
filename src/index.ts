@@ -1,32 +1,24 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { Server } from 'http'; // Import Server type for TypeScript
-import express, { Request, Response, NextFunction } from 'express';
+import { Server } from 'http';
+import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
 import { json } from 'body-parser';
-import { ServerHandler } from './handlers/ServerHandler';
+import fs from 'fs';
+import https from 'https';
 
-import { ServerConfig } from './types';
-
+import { checkAuthToken, ensureServerIsSet } from './middlewares';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
-import staticFilesRouter from './routes/staticFilesRouter';
-
-import { checkAuthToken, ensureServerIsSet } from './middlewares';
-
-// Import the PaginationHandler
-import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
-// Conditionally use morgan logger if DEBUG is set to 'true'
-//if (process.env.DEBUG === 'true') {
-  app.use(morgan('combined'));
-//}
+// Enable logging using morgan
+app.use(morgan('combined'));
 
 console.log(`Debug mode is "${process.env.DEBUG}".`);
 
@@ -36,57 +28,40 @@ app.use(cors({
 
 app.use(json());
 
-// Define all API-related routes under '/api'
-const apiRouter = express.Router();
-apiRouter.use(checkAuthToken); 
-apiRouter.use(ensureServerIsSet);
-apiRouter.use('/files', fileRoutes);
-apiRouter.use('/commands', commandRoutes);
-apiRouter.use('/servers', serverRoutes);
+// Apply middlewares
+app.use(checkAuthToken);
+app.use(ensureServerIsSet);
 
-// Endpoint to retrieve paginated response, now under '/api/response'
-apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
-  const responseId = req.params.id;
-  const page = parseInt(req.params.page, 10);
+// API routes at the root
+app.use('/set-server', serverRoutes); // Example for set-server route
+app.use(fileRoutes);
+app.use(commandRoutes);
 
-  try {
-    const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
-    res.status(200).json({ responseId, page, stdout, stderr, totalPages });
-  } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-  }
-});
+// Serve static files under /public
+app.use('/public', express.static('public'));
 
-app.use('/api', apiRouter); // Mount the API router on '/api'
-app.use(staticFilesRouter); // Serve static files without token check
-
-let server: Server; // Explicitly declare server as type Server
+let server: Server | https.Server;
 
 const main = () => {
-
   // Check if API_TOKEN is set
   if (!process.env.API_TOKEN) {
     console.error('ERROR: API_TOKEN is not set. Please set the API_TOKEN environment variable.');
-    process.exit(1); // Exit the process with an error code
+    process.exit(1);
   }
-    
+
   const port: number = config.get('port') || 5004;
 
-  const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
-  });
+  // Check for SSL configuration
+  if (process.env.SSL_KEY && process.env.SSL_CERT) {
+    const privateKey = fs.readFileSync(process.env.SSL_KEY, 'utf8');
+    const certificate = fs.readFileSync(process.env.SSL_CERT, 'utf8');
+    const credentials = { key: privateKey, cert: certificate };
+    server = https.createServer(credentials, app);
+  } else {
+    server = app.listen(port, '0.0.0.0');
+  }
 
-    // TODO option to use https
-    // const https = require('https');
-    // const selfSigned = require('openssl-self-signed-certificate');
-
-    // const options = {
-    //     key: selfSigned.key,
-    //     cert: selfSigned.cert
-    // };
-
-    // server = https.createServer(options, app).listen(port);
-    // console.log(`HTTPS started on port ${port} (dev only).`);
+  console.log(`Server running on port ${port}${server instanceof https.Server ? ' (HTTPS)' : ''}`);
 
   const shutdown = (signal: 'SIGINT' | 'SIGTERM') => {
     console.log(`Received ${signal}. Shutting down gracefully.`);
