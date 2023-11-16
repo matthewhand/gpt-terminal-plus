@@ -16,34 +16,19 @@ import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
 import staticFilesRouter from './routes/staticFilesRouter';
 
+import { checkAuthToken, ensureServerIsSet } from './middlewares';
+
 // Import the PaginationHandler
 import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
-// Middleware to check for API token
-function checkAuthToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) return res.sendStatus(401); // if there's no token
-
-    if (token !== process.env.API_TOKEN) {
-        return res.sendStatus(403); // if the token is wrong
-    }
-
-    next(); // if the token is correct
-}
-
-// Apply the middleware to all routes
-app.use(checkAuthToken);
-
 // Conditionally use morgan logger if DEBUG is set to 'true'
-if (process.env.DEBUG === 'true') {
+//if (process.env.DEBUG === 'true') {
   app.use(morgan('combined'));
-}
+//}
 
-console.log(`Debug mode is ${process.env.DEBUG === 'true' ? 'ON' : 'OFF'}.`);
+console.log(`Debug mode is "${process.env.DEBUG}".`);
 
 app.use(cors({
   origin: ['https://chat.openai.com', '*']
@@ -51,27 +36,16 @@ app.use(cors({
 
 app.use(json());
 
-async function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
-  try {
-    if (!req.serverHandler) {
-      const serverConfigs: ServerConfig[] = config.get('serverConfig');
-      const serverConfig = serverConfigs[0]; // Default to the first configured server
-      const host = serverConfig.host;
-      req.serverHandler = await ServerHandler.getInstance(host);
-    }
-    next();
-  } catch (error) {
-    next(error); // Pass the error to the next error handling middleware
-  }
-}
+// Define all API-related routes under '/api'
+const apiRouter = express.Router();
+apiRouter.use(checkAuthToken); 
+apiRouter.use(ensureServerIsSet);
+apiRouter.use('/files', fileRoutes);
+apiRouter.use('/commands', commandRoutes);
+apiRouter.use('/servers', serverRoutes);
 
-app.use(ensureServerIsSet, fileRoutes);
-app.use(ensureServerIsSet, commandRoutes);
-app.use(staticFilesRouter);
-app.use(serverRoutes);
-
-// Endpoint to retrieve paginated response
-app.get('/response/:id/:page', (req: Request, res: Response) => {
+// Endpoint to retrieve paginated response, now under '/api/response'
+apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
   const responseId = req.params.id;
   const page = parseInt(req.params.page, 10);
 
@@ -83,6 +57,9 @@ app.get('/response/:id/:page', (req: Request, res: Response) => {
   }
 });
 
+app.use('/api', apiRouter); // Mount the API router on '/api'
+app.use(staticFilesRouter); // Serve static files without token check
+
 let server: Server; // Explicitly declare server as type Server
 
 const main = () => {
@@ -93,7 +70,7 @@ const main = () => {
     process.exit(1); // Exit the process with an error code
   }
     
-  const port: number = config.get('port') || 3000;
+  const port: number = config.get('port') || 5004;
 
   const server = app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);

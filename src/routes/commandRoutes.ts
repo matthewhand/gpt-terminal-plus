@@ -1,8 +1,12 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
 import { ServerConfig } from '../types';
 import config from 'config';
-import { getPaginatedResponse, storeResponse } from '../handlers/PaginationHandler';
+import { ensureServerIsSet } from '../middlewares';
+import Debug from 'debug';
+
+const debug = Debug('app:commandRoutes');
+const router = express.Router();
 
 // Define interfaces for expected request body to improve type safety
 interface RunCommandRequestBody {
@@ -10,50 +14,38 @@ interface RunCommandRequestBody {
   timeout?: number;
 }
 
-const router = express.Router();
-
 // Helper function to get serverHandler
-async function getServerHandler(): Promise<ServerHandler | null> {
-  try {
-    const serverConfig = config.get<ServerConfig>('serverConfig');
-    const serverHandler = await ServerHandler.getInstance(serverConfig.host); // Await the Promise here
-    return serverHandler;
-  } catch (error) {
-    console.error('Failed to initialize serverHandler:', error);
-    return null;
-  }
+async function getServerHandler(): Promise<ServerHandler> {
+  const serverConfigs = ServerHandler.listAvailableServers();
+  const defaultServerConfig = serverConfigs[0]; // Assuming the first server config as default
+  const serverHandler = await ServerHandler.getInstance(defaultServerConfig.host);
+  return serverHandler;
 }
 
-router.post('/run', async (req, res) => {
+router.post('/run', async (req: Request, res: Response) => {
   const { command, timeout }: RunCommandRequestBody = req.body;
-  const serverHandler = await getServerHandler(); 
-  if (!serverHandler) {
-    return res.status(500).json({ error: 'Server handler not initialized' });
+
+  // Validate the command
+  if (!command) {
+    return res.status(400).json({ error: 'Command is required' });
   }
 
-  const effectiveTimeout = timeout || config.get<number>('commandTimeout') || 180000;
-
   try {
-    // Execute the command and get the raw output
+    const serverHandler = await getServerHandler();
+
+    // Use the provided timeout or default to the configured command timeout
+    const effectiveTimeout = timeout ?? config.get<number>('commandTimeout') ?? 180000;
+
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
-    
-    // Store the paginated stdout and stderr and get the response ID
-    const responseId = storeResponse(executionResult.stdout, executionResult.stderr);
 
-    // Retrieve the paginated response
-    const paginatedResult = getPaginatedResponse(responseId, 0);
-
-    // Respond with the paginated output
-    res.status(200).json({
-      responseId,
-      totalPages: paginatedResult.totalPages,
-      currentPage: 0,
-      stdout: paginatedResult.stdout,
-      stderr: paginatedResult.stderr
-    });
+    // Response logic here...
+    res.status(200).json(executionResult);
   } catch (error) {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
+router.use(ensureServerIsSet);
+
 export default router;
+

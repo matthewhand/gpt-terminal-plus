@@ -1,9 +1,10 @@
 import express, { Request, Response } from 'express';
-import Debug from 'debug';
 import { ServerHandler } from '../handlers/ServerHandler';
-
+import { ensureServerIsSet } from '../middlewares';
+import Debug from 'debug';
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
+router.use(ensureServerIsSet);
 
 router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers');

@@ -2,7 +2,7 @@
     "serverConfig": [
       {
         "host": "localhost",
-        "code": true,
+        "code": false,
         "posix": false,
         "powershell": false
       }

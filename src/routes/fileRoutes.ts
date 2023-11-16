@@ -5,8 +5,12 @@ import { escapeRegExp } from '../utils/escapeRegExp';
 import path from 'path';
 import config from 'config';
 import lockfile from 'proper-lockfile';
-
+import { ensureServerIsSet } from '../middlewares';
+import Debug from 'debug';
+const debug = Debug('app:fileRoutes');
 const router = express.Router();
+router.use(ensureServerIsSet);
+
 const serverConfig = config.get<ServerConfig>('serverConfig');
 
 // Helper function to ensure serverHandler is initialized
