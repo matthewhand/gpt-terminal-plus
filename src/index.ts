@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { Server } from 'http'; // Import Server type for TypeScript
-import express, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
@@ -22,7 +22,7 @@ import { getPaginatedResponse } from './handlers/PaginationHandler';
 const app = express();
 
 // Middleware to check for API token
-function checkAuthToken(req, res, next) {
+function checkAuthToken(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -92,7 +92,7 @@ const main = () => {
     console.error('ERROR: API_TOKEN is not set. Please set the API_TOKEN environment variable.');
     process.exit(1); // Exit the process with an error code
   }
-    
+
   const port: number = config.get('port') || 3000;
 
   const server = app.listen(port, '0.0.0.0', () => {
