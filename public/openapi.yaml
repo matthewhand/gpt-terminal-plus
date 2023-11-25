@@ -1,0 +1,391 @@
+openapi: 3.1.0
+info:
+  title: System Info and Command Runner Plugin
+  description: A plugin that allows users to run command line programs after obtaining the system information to accomplish its goal.
+  version: 'v1.1'
+servers:
+  - url: https://terminal.teamstinky.duckdns.org/
+paths:
+  /set-server:
+    post:
+      summary: Set the server to a predefined hostname listed by list-servers.
+      operationId: setServer
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                server:
+                  type: string
+                  description: The server to set.
+      responses:
+        '200':
+          description: The server was successfully set.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  output:
+                    type: string
+                    description: A message indicating the server was successfully set.
+                  systemInfo: 
+                    type: object
+                    description: Information about the system of the set server.
+        '400':
+          description: Bad request due to invalid input.
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error.
+          content:
+            text/plain:
+              schema:
+                type: string  
+  /run:
+      post:
+        summary: Run a command
+        operationId: runCommand
+        x-openai-isConsequential: false
+        required:
+          - command
+          - directory
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  command:
+                    type: string
+                    description: The command to run.
+                  directory:
+                    type: string
+                    description: The directory to set as the current working directory before running the command.
+                  shell:
+                    type: string
+                    description: The shell environment in which to run the command.
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    output:
+                      type: string
+                      description: The output of the command.  
+
+  /list-files:
+    post:
+      summary: List files in a directory with pagination
+      operationId: listFiles
+      x-openai-isConsequential: false
+      required:
+        - directory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+                  description: The directory to list files from.
+                orderBy:
+                  type: string
+                  description: Order files by 'datetime' or 'filename'.
+                  enum: ['datetime', 'filename']
+                limit:
+                  type: integer
+                  description: The maximum number of files to return.
+                  default: 42
+                offset:
+                  type: integer
+                  description: The starting index for pagination.
+                  default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+                    description: The list of files in the directory.
+  /list-servers:
+    get:
+      summary: Get the list of available servers.
+      operationId: listServers
+      x-openai-isConsequential: false
+      responses:
+        '200':
+          description: The list of available servers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListServersResponse'
+
+  /response/{id}/{page}:
+    get:
+      operationId: retrieveExtraResponsePages
+      summary: Use this endpoint to retrieve additional pages of a response when the output is too large for a single response. Provide the responseId of the original response and the page number you want to retrieve. For example, to retrieve the second page of a response with ID 12345, use /response/12345/page/2. 
+      x-openai-isConsequential: false
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The unique ID of the response.
+        - name: page
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The page number to retrieve.
+      responses:
+        '200':
+          description: A specific page of the response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponsePage'
+        '404':
+          description: Response not found.
+  /create-file:
+    post:
+      operationId: createFile
+      x-openai-isConsequential: true
+      summary: Create a file in a specified working directory (overwrites).
+      description: |
+        This endpoint allows the creation or replacement of a file in a specified working directory. If the file already exists, it can be optionally backed up before being replaced. This function is useful for managing files both locally and remotely.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFileRequest'
+      responses:
+        '200':
+          description: The file was created or replaced successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A success message indicating the operation's outcome.
+  /amend-file:
+    post:
+      operationId: amendFile
+      summary: Amend a file in a specified working directory.
+      x-openai-isConsequential: true
+      description: |
+        This endpoint allows the amendment of a file in a specified working directory. The content will be inserted at the specified position.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AmendFileRequest'
+      responses:
+        '200':
+          description: The file was amended successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A success message indicating the operation's outcome.
+  /set-current-folder:
+    post:
+      operationId: setCurrentFolder
+      summary: Set the current directory
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - directory
+              properties:
+                directory:
+                  type: string
+                  description: The directory to set as the current directory
+      responses:
+        200:
+          description: Current directory set successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        400:
+          description: Directory does not exist or is not provided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+  /update-file:
+    post:
+      operationId: updateFile
+      summary: Update a file
+      x-openai-isConsequential: true
+      parameters:
+        - in: body
+          name: filename
+          required: true
+          schema:
+            type: string
+            description: The file to update
+        - in: body
+          name: pattern
+          required: true
+          schema:
+            type: string
+            description: The pattern to search for in the file
+        - in: body
+          name: replacement
+          required: true
+          schema:
+            type: string
+            description: The replacement content for the pattern
+        - in: body
+          name: backup
+          required: false
+          schema:
+            type: boolean
+            description: Whether to create a backup of the file before updating (default true)
+        - in: body
+          name: directory
+          required: false
+          schema:
+            type: string
+            description: The working directory for the file (default to current directory)
+        - in: body
+          name: openInEditor
+          required: false
+          schema:
+            type: boolean
+            default: true
+            description: Whether to open the file at the pattern location in the editor (default true)
+      responses:
+        200:
+          description: File updated successfully
+        400:
+          description: Current folder must be set first or other input error
+        500:
+          description: An error occurred while updating the file
+
+components:
+  schemas:
+    SetServerResponse:
+      type: object
+      properties:
+        output:
+          type: string
+        systemInfo:
+          type: object
+          properties:
+            homeFolder:
+              type: string
+            type:
+              type: string
+            release:
+              type: string
+            platform:
+              type: string
+            cpuCores:
+              type: integer
+            totalMemory:
+              type: integer
+            localTime:
+              type: string
+            currentFolder:
+              type: string
+    CurrentFolderResponse:
+      type: object
+      properties:
+        current_folder:
+          type: string
+          description: The current folder.
+    RunCommandResponse:
+      type: object
+      properties:
+        responseId:
+          type: string
+        page:
+          type: integer
+        numPages:
+          type: integer
+        data:
+          type: string
+    ListServersResponse:
+      type: object
+      properties:
+        servers:
+          type: array
+          items:
+            type: string
+          description: The list of available servers.
+    CreateFileRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: The name of the file to create or replace.
+        content:
+          type: string
+          description: The content to write to the file.
+        backup:
+          type: boolean
+          default: true
+          description: Whether to backup the file if it already exists (defaults to true).
+        directory:
+          type: string
+          default: ""
+          description: The working directory where the file should be created or replaced. 
+    ResponsePage:
+      type: object
+      properties:
+        responseId:
+          type: string
+        page:
+          type: integer
+        data:
+          type: string
+    AmendFileRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+        content:
+          type: string
+        directory:
+          type: string
+      required:
+        - filename
+        - content
+        - position
+

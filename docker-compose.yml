@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004" # Map the port from your container to the host
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+      - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
+      - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
+    volumes:
+      - /usr/src/app/node_modules # Keep node_modules on a named volume
+      - ~/.aws:/root/.aws:ro # Mount the AWS configuration directory
+      - ~/.ssh:/root/.ssh:rw # Mount the SSH directory (rw required for updating host keys)
+      - /etc/hosts:/etc/hosts:ro  # for name resolution
+      - /home/chatgpt/bin:/home/chatgpt/bin # for `oci` binary
+      - /home/chatgpt/lib:/home/chatgpt/lib # for `oci` binary
+      - /home/chatgpt/.oci:/home/chatgpt/.oci:ro # need full path because oci installation hardcodes it
+    restart: unless-stopped
