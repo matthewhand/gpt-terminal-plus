@@ -23,30 +23,34 @@ export abstract class ServerHandler {
     return servers;
   }
 
-public static async getInstance(host: string): Promise<ServerHandler> {
-  if (!host) {
-    host = 'localhost';
-  }
+  public static async getInstance(host: string): Promise<ServerHandler> {
+    if (!host) {
+      throw new Error('Host is undefined.');
+    }
+  
+    const serverConfig = await this.getServerConfig(host);
+    if (!serverConfig) {
+      throw new Error(`Server configuration not found for host: ${host}`);
+    }
+  
+    serverHandlerDebug(`Retrieved server config for host ${host}:`, serverConfig);
 
-  const serverConfig = await this.getServerConfig(host); // Add await here
-  serverHandlerDebug(`Retrieved server config for host ${host}:`, serverConfig);
-
-  if (host === 'localhost') {
-    const { default: LocalServerHandler } = await import('./LocalServerHandler');
-    return new LocalServerHandler(serverConfig);
-  } else {
-    switch (serverConfig.protocol) { // serverConfig is now resolved
-      case 'ssh':
-        const { default: SshServerHandler } = await import('./SshServerHandler');
-        return new SshServerHandler(serverConfig);
-      case 'ssm':
-        const { default: SsmServerHandler } = await import('./SsmServerHandler');
-        return new SsmServerHandler(serverConfig);
-      default:
-        throw new Error(`Unsupported protocol: ${serverConfig.protocol}`);
+    if (host === 'localhost') {
+      const { default: LocalServerHandler } = await import('./LocalServerHandler');
+      return new LocalServerHandler(serverConfig);
+    } else {
+      switch (serverConfig.protocol) { // serverConfig is now resolved
+        case 'ssh':
+          const { default: SshServerHandler } = await import('./SshServerHandler');
+          return new SshServerHandler(serverConfig);
+        case 'ssm':
+          const { default: SsmServerHandler } = await import('./SsmServerHandler');
+          return new SsmServerHandler(serverConfig);
+        default:
+          throw new Error(`Unsupported protocol: ${serverConfig.protocol}`);
+      }
     }
   }
-}
 
   private static async getServerConfig(host: string): Promise<ServerConfig> {
     const servers = this.listAvailableServers();
