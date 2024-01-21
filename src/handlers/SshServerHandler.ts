@@ -49,9 +49,9 @@ private async getSSHConnection(): Promise<Client | null> {
     return this.serverConfig.privateKeyPath || path.join(process.env.HOME || '', '.ssh', 'id_rsa');
   }
 
-  public getCurrentDirectory(): Promise<string> {
-    return Promise.resolve(this.currentDirectory);
-  }
+  // public getCurrentDirectory(): Promise<string> {
+  //   return Promise.resolve(this.currentDirectory);
+  // }
 
   private async ensureSshConnection(): Promise<Client> {
     if (!this.serverConfig) {
@@ -431,9 +431,9 @@ private async executeSystemInfoScript(scriptName: string, command: string): Prom
     });
   }
 
-  public setCurrentDirectory(directory: string): boolean {
-    this.currentDirectory = directory;
-    return true; 
-  }
+  // public setCurrentDirectory(directory: string): boolean {
+  //   this.currentDirectory = directory;
+  //   return true; 
+  // }
 
 }

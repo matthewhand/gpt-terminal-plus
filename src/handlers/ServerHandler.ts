@@ -88,14 +88,20 @@ public static async getInstance(host: string): Promise<ServerHandler> {
     return serverConfig;
   }
 
-  // Abstract methods...
+  setCurrentDirectory(directory: string): boolean {
+    this.currentDirectory = directory;
+    return true;
+  }
+
+  getCurrentDirectory(): Promise<string> {
+    return Promise.resolve(this.currentDirectory);
+  }
+
+  // Abstract methods declarations (to be implemented by derived classes)
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
-  abstract setCurrentDirectory(directory: string): boolean;
-  abstract getCurrentDirectory(): Promise<string>;
   abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
   abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
   abstract updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
   abstract amendFile(filePath: string, content: string): Promise<boolean>;
   abstract getSystemInfo(): Promise<SystemInfo>;
 }
-

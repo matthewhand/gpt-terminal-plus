@@ -4,6 +4,7 @@ import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
+
 router.use(ensureServerIsSet);
 
 router.get('/list-servers', async (req: Request, res: Response) => {
@@ -28,10 +29,10 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   }
 });
 
+
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug(`Received request to set server: ${server}`, { requestBody: req.body });
-  global.selectedServer = server;
 
   try {
     const serverHandler = await ServerHandler.getInstance(server);
@@ -48,11 +49,19 @@ router.post('/set-server', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
-      res.status(500).json({
-        output: 'Error retrieving system info',
-        error: error.message,
-        stack: error.stack  // Include stack trace for better debugging
-      });
+      // Check if the error is due to a client-side issue (e.g., non-existent server)
+      if (error.message === 'Server not in predefined list.') {
+        res.status(400).json({
+          output: error.message
+        });
+      } else {
+        // For server-side errors
+        res.status(500).json({
+          output: 'Error retrieving system info',
+          error: error.message,
+          stack: error.stack  // Include stack trace for better debugging
+        });
+      }
     } else {
       res.status(500).send('An unknown error occurred');
     }

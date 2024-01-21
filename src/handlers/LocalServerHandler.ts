@@ -142,14 +142,14 @@ getDefaultSystemInfo(): SystemInfo {
   }
 
 
-  setCurrentDirectory(directory: string): boolean {
-    if (fs.existsSync(directory)) {
-      this.currentDirectory = directory;
-      return true;
-    } else {
-      return false;
-    }
-  }
+  // setCurrentDirectory(directory: string): boolean {
+  //   if (fs.existsSync(directory)) {
+  //     this.currentDirectory = directory;
+  //     return true;
+  //   } else {
+  //     return false;
+  //   }
+  // }
 
   async listFiles(directory: string, limit = 42, offset = 0, orderBy = 'filename'): Promise<string[]> {
     try {
@@ -281,8 +281,8 @@ getDefaultSystemInfo(): SystemInfo {
       }
     }
 
-  getCurrentDirectory(): Promise<string> {
-    return Promise.resolve(this.currentDirectory);
-  }
+  // getCurrentDirectory(): Promise<string> {
+  //   return Promise.resolve(this.currentDirectory);
+  // }
   
 }
