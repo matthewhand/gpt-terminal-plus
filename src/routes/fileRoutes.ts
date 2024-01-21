@@ -76,7 +76,7 @@ router.post(['/create-file'], async (req, res) => {
 
 router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
-  const serverHandler = await getServerHandler(res); // Added await here
+  const serverHandler = await getServerHandler(res, req);
   if (!serverHandler) return;
 
   // Validate that none of the parameters are empty
@@ -116,7 +116,7 @@ router.post('/update-file', async (req, res) => {
 // Amend a file
 router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
-  const serverHandler = await getServerHandler(res); 
+  const serverHandler = await getServerHandler(res, req); 
   if (!serverHandler) return;
 
   const targetDirectory = directory || await serverHandler.getCurrentDirectory(); 
