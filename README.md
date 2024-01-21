@@ -1,7 +1,6 @@
-
 # gpt-terminal-plus
 
-`gpt-terminal-plus` is a powerful tool designed to facilitate system administration, coding, and general computer tasks through a ChatGPT plugin running locally on a workstation or similar setup. Inspired by and originally based on the [gpt-terminal-plugin](https://github.com/etherlegend/gpt-terminal-plugin), it's an ideal solution for developers and system administrators who require a robust and flexible environment to manage local and remote systems, automate tasks, and enhance their coding workflow.
+`gpt-terminal-plus` is a comprehensive tool designed for system administration, coding, and general computer tasks. It extends the functionality of the ChatGPT plugin to work efficiently in local and remote environments. Building upon the foundation of the [gpt-terminal-plugin](https://github.com/etherlegend/gpt-terminal-plugin), it's tailored for developers, system administrators, and power users who seek a versatile tool for managing systems, automating tasks, and enhancing their coding workflow.
 
 [![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.gg/YvEJg5CC3X)
 [![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
@@ -10,52 +9,50 @@
 
 ## Features
 
-- **Local and Remote System Administration**: Manage your systems with ease, whether they're next door or across the globe.
-- **Coding with VSCode Integration**: Review and edit code with the convenience of launching VSCode directly from the app.
-- **Multi-Environment Configuration**: Tailor the app's settings for different environments with custom configuration files.
-- **Debug Mode**: Activate detailed logging for in-depth troubleshooting and development.
+- **Comprehensive System Administration**: Local and remote system management capabilities, now including AWS SSM support for seamless cloud infrastructure integration.
+- **Enhanced Coding Experience**: Leverage VSCode integration for convenient code reviews and edits directly from the terminal.
+- **Flexible Configuration**: Customize settings for different environments with easy-to-use configuration files.
+- **Debug Mode**: Detailed logging for advanced troubleshooting and development insights.
 
 ## Example Use Cases
 
-- Perform system administration tasks on local and remote hosts via SSH.
-- Edit and review code changes by launching VSCode directly from the terminal.
-- Run applications and automate workflows on your local machine.
-- Develop and test plugins or software components in a local environment.
+- Administer systems locally or remotely, including cloud instances via SSH and AWS SSM.
+- Edit and review code changes using the integrated VSCode functionality.
+- Automate workflows and run applications on local and remote machines.
+- Develop, test, and deploy software components in diverse environments.
 
 ## Configuration
 
-The application can be configured for various environments using the `config/*.json` files. For enabling debug mode and other specific settings, the `.env` file is used.
+Configure the application using the `config/*.json` files. Use the `.env` file for specific settings like debug mode.
 
 ## Getting Started
 
-To get started with `gpt-terminal-plus`, clone the repository and follow the setup instructions for your environment.
-
 ### Prerequisites
 
-- Node.js and npm installed.
-- Access to local or remote systems via SSH (for system administration features).
+- Node.js and npm.
+- Access to local, remote, or cloud systems via SSH or AWS SSM.
 
 ### Installation
 
 1. Clone the repository.
-2. Navigate to the cloned directory and run `npm install` to install dependencies.
-3. Configure your environment settings in the `config/default.json` or create a specific environment file like `config/production.json`.
-4. If necessary, create a `.env` file for additional settings like enabling debug mode.
+2. Run `npm install` in the cloned directory.
+3. Set up environment settings in `config/default.json` or environment-specific files.
+4. Optionally, create a `.env` file for debug mode and other settings.
 
 ### Running the Application
 
-- Start the application with `npm start`.
-- For development purposes, you can use `npm run start:dev` to start the application with nodemon, which will watch for file changes.
+- Use `npm start` for production.
+- For development, `npm run start:dev` starts the app with nodemon.
 
 ## Contributing
 
-Contributions are welcome! We use Jest for test-driven development, so please ensure that new features come with adequate test coverage. Feel free to open issues or submit pull requests to improve the application.
+Contributions, issues, and feature requests are welcome. We follow test-driven development with Jest.
 
 ## TODO
 
-- [x] Publish code to github
-- [ ] Add AWS SSM remote handler
-- [ ] Add some examples of usage like chatgpt logs and/or screenshots
+- [x] AWS SSM remote handler integration and testing.
+- [ ] Update usage examples with logs/screenshots.
+- [ ] Further enhancements and feature additions.
 
 ## Donation
 
