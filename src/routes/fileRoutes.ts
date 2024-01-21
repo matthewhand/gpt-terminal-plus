@@ -3,18 +3,17 @@ import { ServerHandler } from '../handlers/ServerHandler';
 import { ServerConfig } from '../types';
 import { escapeRegExp } from '../utils/escapeRegExp';
 import path from 'path';
-import config from 'config';
 import lockfile from 'proper-lockfile';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
 const debug = Debug('app:fileRoutes');
+
 const router = express.Router();
 router.use(ensureServerIsSet);
 
 // Helper function to ensure serverHandler is initialized and log current server
 async function getServerHandler(req: express.Request, res: Response): Promise<ServerHandler | null> {
   try {
-    // Retrieve the current server configuration from the request
     const currentServerConfig = req.app.locals.currentServerConfig as ServerConfig;
     if (!currentServerConfig || !currentServerConfig.host) {
       throw new Error('Current server configuration is not set.');
@@ -33,7 +32,7 @@ async function getServerHandler(req: express.Request, res: Response): Promise<Se
 // Set the current directory
 router.post('/set-current-folder', async (req, res) => {
   const directory = req.body.directory;
-  const serverHandler = await getServerHandler(res);
+  const serverHandler = await getServerHandler(req, res);
   if (!serverHandler) return;
 
   try {
@@ -47,24 +46,20 @@ router.post('/set-current-folder', async (req, res) => {
     const error = err as Error;
     res.status(500).json({ error: error.message });
   }
-  
 });
 
 // Combined create or replace a file route
 router.post(['/create-file'], async (req, res) => {
   const { filename, content, backup = true, directory } = req.body;
-  const serverHandler = await getServerHandler(res);
+  const serverHandler = await getServerHandler(req, res);
   if (!serverHandler) return;
 
   const targetDirectory = directory || await serverHandler.getCurrentDirectory();
   const fullPath = path.join(targetDirectory, filename);
 
   try {
-    // Lock the file to prevent concurrent writes
     const release = await lockfile.lock(fullPath, { realpath: false });
-
     try {
-      // Perform the file creation or replacement
       const success = await serverHandler.createFile(targetDirectory, filename, content, backup);
       if (success) {
         res.status(200).json({ message: 'File created or replaced successfully.' });
@@ -72,15 +67,12 @@ router.post(['/create-file'], async (req, res) => {
         res.status(400).json({ error: 'Failed to create or replace file.' });
       }
     } finally {
-      // Always release the lock
       await release();
     }
   } catch (err) {
-    // Handle errors
     res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
-
 
 router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
@@ -149,25 +141,6 @@ router.post('/amend-file', async (req, res) => {
   } catch (err) {
     // If locking fails, respond with the error message
     res.status(500).json({ error: err instanceof Error ? err.message : 'Locking failed' });
-  }
-});
-
-// Enhanced list-files route with additional debugging
-router.post('/list-files', async (req, res) => {
-  const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
-  debug('Received list-files request', { directory, orderBy, limit, offset });
-
-  const serverHandler = await getServerHandler(req, res);
-  if (!serverHandler) return;
-
-  try {
-    debug(`Attempting to list files in directory: ${directory} on server: ${serverConfig.host}`);
-    const files = await serverHandler.listFiles(directory, limit, offset, orderBy);
-    debug(`Files listed successfully in directory: ${directory}`, { files });
-    res.status(200).json({ files });
-  } catch (err) {
-    debug(`Error listing files in directory: ${directory}`, { error: err, host: serverConfig.host });
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
 
