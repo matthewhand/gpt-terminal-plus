@@ -116,7 +116,7 @@ router.post('/update-file', async (req, res) => {
 // Amend a file
 router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
-  const serverHandler = await getServerHandler(res, req); 
+  const serverHandler = await getServerHandler(req, res); 
   if (!serverHandler) return;
 
   const targetDirectory = directory || await serverHandler.getCurrentDirectory(); 
