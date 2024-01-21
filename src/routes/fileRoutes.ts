@@ -11,16 +11,20 @@ const debug = Debug('app:fileRoutes');
 const router = express.Router();
 router.use(ensureServerIsSet);
 
-const serverConfig = config.get<ServerConfig>('serverConfig');
-
 // Helper function to ensure serverHandler is initialized and log current server
-async function getServerHandler(res: Response): Promise<ServerHandler | null> {
+async function getServerHandler(req: express.Request, res: Response): Promise<ServerHandler | null> {
   try {
-    const serverHandler = await ServerHandler.getInstance(serverConfig.host);
-    debug(`Server handler initialized for host: ${serverConfig.host}`);
+    // Retrieve the current server configuration from the request
+    const currentServerConfig = req.app.locals.currentServerConfig as ServerConfig;
+    if (!currentServerConfig || !currentServerConfig.host) {
+      throw new Error('Current server configuration is not set.');
+    }
+
+    const serverHandler = await ServerHandler.getInstance(currentServerConfig.host);
+    debug(`Server handler initialized for host: ${currentServerConfig.host}`);
     return serverHandler;
   } catch (error) {
-    debug('Error initializing server handler', { host: serverConfig.host, error });
+    debug('Error initializing server handler', { error });
     res.status(500).json({ error: error instanceof Error ? error.message : 'Server handler not initialized' });
     return null;
   }
@@ -153,7 +157,7 @@ router.post('/list-files', async (req, res) => {
   const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
   debug('Received list-files request', { directory, orderBy, limit, offset });
 
-  const serverHandler = await getServerHandler(res);
+  const serverHandler = await getServerHandler(req, res);
   if (!serverHandler) return;
 
   try {
