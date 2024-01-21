@@ -104,19 +104,25 @@ export default class SsmServerHandler extends ServerHandler {
     }
   }
 
-  getDefaultSystemInfo(): SystemInfo {
-    return {
-      uptime: 0,
-      totalMemory: 0,
-      freeMemory: 0,
-      diskUsage: '',
-      osName: '',
-      osVersion: '',
-      architecture: '',
-      cpuModel: '',
-      currentFolder: this.currentDirectory,
-    };
+  async getSystemInfo(): Promise<SystemInfo> {
+    if (this.serverConfig.posix) {
+      // Existing implementation for getting system info
+      // Make sure to return an object that matches the SystemInfo interface
+      // Remove or modify properties that do not exist in the SystemInfo interface
+    } else {
+      // Return a default or simplified SystemInfo object for non-posix environments
+      return {
+        homeFolder: '',
+        type: '',
+        release: '',
+        platform: '',
+        powershellVersion: '',
+        architecture: '',
+        totalMemory: 0,
+        freeMemory: 0,
+        uptime: 0,
+        currentFolder: this.currentDirectory
+      };
+    }
   }
-
-  // Other abstract methods to be implemented as per ServerHandler's requirements
 }
