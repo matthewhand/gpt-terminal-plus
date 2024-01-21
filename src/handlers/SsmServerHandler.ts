@@ -10,12 +10,6 @@ export default class SsmServerHandler extends ServerHandler {
     this.ssmClient = new AWS.SSM({ region: serverConfig.region || 'us-west-2' });
   }
 
-  /**
-   * Executes a shell command on the SSM instance.
-   * @param command The command to execute.
-   * @returns An object containing stdout and stderr from the command execution.
-   * @throws Error if command execution fails.
-   */
   async executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
     if (!command) {
       throw new Error('No command provided for execution.');
@@ -40,8 +34,6 @@ export default class SsmServerHandler extends ServerHandler {
   }
 
   private sanitizeCommand(command: string): string {
-    // Implement sanitization logic here
-    // For example, escape special shell characters
     return command.replace(/[^a-zA-Z0-9_\-.\s]/g, '');
   }
 
@@ -65,12 +57,6 @@ export default class SsmServerHandler extends ServerHandler {
     throw new Error('Timeout while waiting for command result');
   }
 
-  /**
-   * Retrieves system information from the SSM instance.
-   * Only executes if the server is configured for a POSIX environment.
-   * @returns System information including uptime and memory usage.
-   * @throws Error if unable to retrieve system information.
-   */
   async getSystemInfo(): Promise<SystemInfo> {
     if (this.serverConfig.posix) {
       try {
@@ -89,9 +75,11 @@ export default class SsmServerHandler extends ServerHandler {
         const uptimeInSeconds = parseFloat(uptimeResult.stdout.trim());
         const memoryInfo = memoryResult.stdout.split(/\s+/);
         const diskUsageInfo = diskUsageResult.stdout.split(/\s+/);
-        const osInfo = osInfoResult.stdout.split('\n').reduce((acc, line) => {
+        const osInfo: { [key: string]: string } = osInfoResult.stdout.split('\n').reduce((acc, line) => {
           const [key, value] = line.split('=');
-          acc[key.trim()] = value?.replace(/"/g, '').trim();
+          if (key && value) {
+            acc[key.trim()] = value.replace(/"/g, '').trim();
+          }
           return acc;
         }, {});
         const cpuModel = cpuInfoResult.stdout.split(':')[1].trim();
@@ -99,12 +87,11 @@ export default class SsmServerHandler extends ServerHandler {
         return {
           uptime: uptimeInSeconds,
           totalMemory: parseInt(memoryInfo[1]),
-          usedMemory: parseInt(memoryInfo[2]),
           freeMemory: parseInt(memoryInfo[3]),
           diskUsage: diskUsageInfo[4],
-          osName: osInfo['PRETTY_NAME'],
-          osVersion: osInfo['VERSION_ID'],
-          architecture: osInfo['ARCHITECTURE'] || this.serverConfig.architecture,
+          osName: osInfo['PRETTY_NAME'] || 'Unknown',
+          osVersion: osInfo['VERSION_ID'] || 'Unknown',
+          architecture: osInfo['ARCHITECTURE'] || this.serverConfig.architecture || 'Unknown',
           cpuModel: cpuModel,
           currentFolder: this.currentDirectory,
         };
@@ -113,19 +100,23 @@ export default class SsmServerHandler extends ServerHandler {
         throw error;
       }
     } else {
-      return {
-        uptime: 0,
-        totalMemory: 0,
-        usedMemory: 0,
-        freeMemory: 0,
-        diskUsage: '',
-        osName: '',
-        osVersion: '',
-        architecture: '',
-        cpuModel: '',
-        currentFolder: this.currentDirectory,
-      };
+      return this.getDefaultSystemInfo();
     }
   }
 
+  getDefaultSystemInfo(): SystemInfo {
+    return {
+      uptime: 0,
+      totalMemory: 0,
+      freeMemory: 0,
+      diskUsage: '',
+      osName: '',
+      osVersion: '',
+      architecture: '',
+      cpuModel: '',
+      currentFolder: this.currentDirectory,
+    };
+  }
+
+  // Other abstract methods to be implemented as per ServerHandler's requirements
 }
