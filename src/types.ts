@@ -3,13 +3,14 @@ export interface SystemInfo {
   type: string;
   release: string;
   platform: string;
-  pythonVersion?: string;
-  powershellVersion?: string;
   architecture: string;
   totalMemory: number;
   freeMemory: number;
   uptime: number;
   currentFolder: string;
+  pythonVersion?: string;
+  powershellVersion?: string;
+  cpuModel?: string;
 }
 
 // Updated ServerConfig interface to include all possible properties

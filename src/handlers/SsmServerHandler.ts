@@ -10,7 +10,7 @@ export default class SsmServerHandler extends ServerHandler {
     this.ssmClient = new AWS.SSM({ region: serverConfig.region || 'us-west-2' });
   }
 
-  async executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+  async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     if (!command) {
       throw new Error('No command provided for execution.');
     }
@@ -18,23 +18,24 @@ export default class SsmServerHandler extends ServerHandler {
       throw new Error('Instance ID is undefined. Unable to execute command.');
     }
 
-    const sanitizedCommand = this.sanitizeCommand(command);
-    const fullCommand = this.currentDirectory ? `cd ${this.currentDirectory}; ${sanitizedCommand}` : sanitizedCommand;
+    const documentName = this.serverConfig.posix ? 'AWS-RunShellScript' : 'AWS-RunPowerShellScript';
+    const formattedCommand = this.serverConfig.posix
+      ? (directory ? `cd ${directory}; ${command}` : command)
+      : (directory ? `Set-Location -Path '${directory}'; ${command}` : command);
+
     const params = {
       InstanceIds: [this.serverConfig.instanceId],
-      DocumentName: 'AWS-RunShellScript',
-      Parameters: { commands: [fullCommand] },
+      DocumentName: documentName,
+      Parameters: { commands: [formattedCommand] },
     };
+
     const commandResponse = await this.ssmClient.sendCommand(params).promise();
 
     if (!commandResponse.Command || !commandResponse.Command.CommandId) {
       throw new Error('Failed to retrieve command response or CommandId is undefined. Command execution failed.');
     }
-    return this.fetchCommandResult(commandResponse.Command.CommandId, this.serverConfig.instanceId);
-  }
 
-  private sanitizeCommand(command: string): string {
-    return command.replace(/[^a-zA-Z0-9_\-.\s]/g, '');
+    return await this.fetchCommandResult(commandResponse.Command.CommandId, this.serverConfig.instanceId);
   }
 
   private async fetchCommandResult(commandId: string, instanceId: string): Promise<{ stdout: string; stderr: string }> {
@@ -44,8 +45,8 @@ export default class SsmServerHandler extends ServerHandler {
         CommandId: commandId,
         InstanceId: instanceId,
       }).promise();
-
-      if (['Success', 'Failed'].includes(result.Status)) {
+  
+      if (result.Status && ['Success', 'Failed'].includes(result.Status)) {
         return {
           stdout: result.StandardOutputContent || '',
           stderr: result.StandardErrorContent || ''
@@ -56,62 +57,40 @@ export default class SsmServerHandler extends ServerHandler {
     }
     throw new Error('Timeout while waiting for command result');
   }
+  
+  async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
+    const listCommand = this.serverConfig.posix
+      ? `ls -al ${directory} | tail -n +2`
+      : `Get-ChildItem -Path '${directory}' -File | Select-Object -ExpandProperty Name`;
 
-  async getSystemInfo(): Promise<SystemInfo> {
-    if (this.serverConfig.posix) {
-      try {
-        const uptimeCommand = 'cat /proc/uptime | cut -d " " -f 1';
-        const memoryCommand = 'free -m | grep Mem';
-        const diskUsageCommand = 'df -h | grep /$';
-        const osInfoCommand = 'cat /etc/os-release';
-        const cpuInfoCommand = 'lscpu | grep "Model name"';
+    const { stdout } = await this.executeCommand(listCommand);
+    const files = stdout.split('\n').filter(line => line).slice(offset, offset + limit);
+    return files;
+  }
 
-        const uptimeResult = await this.executeCommand(uptimeCommand);
-        const memoryResult = await this.executeCommand(memoryCommand);
-        const diskUsageResult = await this.executeCommand(diskUsageCommand);
-        const osInfoResult = await this.executeCommand(osInfoCommand);
-        const cpuInfoResult = await this.executeCommand(cpuInfoCommand);
+  async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
+    const filePath = `${directory}/${filename}`;
+    const createCommand = this.serverConfig.posix
+      ? `echo "${content}" > ${filePath}`
+      : `Set-Content -Path '${filePath}' -Value '${content}'`;
 
-        const uptimeInSeconds = parseFloat(uptimeResult.stdout.trim());
-        const memoryInfo = memoryResult.stdout.split(/\s+/);
-        const diskUsageInfo = diskUsageResult.stdout.split(/\s+/);
-        const osInfo: { [key: string]: string } = osInfoResult.stdout.split('\n').reduce((acc, line) => {
-          const [key, value] = line.split('=');
-          if (key && value) {
-            acc[key.trim()] = value.replace(/"/g, '').trim();
-          }
-          return acc;
-        }, {});
-        const cpuModel = cpuInfoResult.stdout.split(':')[1].trim();
+    await this.executeCommand(createCommand);
+    return true;
+  }
 
-        return {
-          uptime: uptimeInSeconds,
-          totalMemory: parseInt(memoryInfo[1]),
-          freeMemory: parseInt(memoryInfo[3]),
-          diskUsage: diskUsageInfo[4],
-          osName: osInfo['PRETTY_NAME'] || 'Unknown',
-          osVersion: osInfo['VERSION_ID'] || 'Unknown',
-          architecture: osInfo['ARCHITECTURE'] || this.serverConfig.architecture || 'Unknown',
-          cpuModel: cpuModel,
-          currentFolder: this.currentDirectory,
-        };
-      } catch (error) {
-        console.error('Error retrieving system info:', error);
-        throw error;
-      }
-    } else {
-      return this.getDefaultSystemInfo();
-    }
+  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
+    // Placeholder implementation
+    return Promise.resolve(false);
+  }
+
+  async amendFile(filePath: string, content: string): Promise<boolean> {
+    // Placeholder implementation
+    return Promise.resolve(false);
   }
 
   async getSystemInfo(): Promise<SystemInfo> {
-    if (this.serverConfig.posix) {
-      // Existing implementation for getting system info
-      // Make sure to return an object that matches the SystemInfo interface
-      // Remove or modify properties that do not exist in the SystemInfo interface
-    } else {
-      // Return a default or simplified SystemInfo object for non-posix environments
-      return {
+    try {
+      let systemInfo: SystemInfo = {
         homeFolder: '',
         type: '',
         release: '',
@@ -123,6 +102,44 @@ export default class SsmServerHandler extends ServerHandler {
         uptime: 0,
         currentFolder: this.currentDirectory
       };
+  
+      if (this.serverConfig.posix) {
+        // POSIX commands
+        const uptimeResult = await this.executeCommand('cat /proc/uptime | cut -d " " -f 1');
+        systemInfo.uptime = parseFloat(uptimeResult.stdout.trim());
+  
+        const memResult = await this.executeCommand('free -m | grep Mem');
+        const memParts = memResult.stdout.split(/\s+/);
+        systemInfo.totalMemory = parseInt(memParts[1]);
+        systemInfo.freeMemory = parseInt(memParts[3]);
+  
+        const osResult = await this.executeCommand('uname -a');
+        systemInfo.type = osResult.stdout.trim();
+  
+        const cpuResult = await this.executeCommand('lscpu | grep "Model name"');
+        systemInfo.cpuModel = cpuResult.stdout.split(':')[1].trim();
+        
+        // Additional commands can be added as needed
+      } else {
+        // Windows commands
+        const systemInfoJson = await this.executeCommand('Get-ComputerInfo | Select-Object CsTotalPhysicalMemory, OsName, OsVersion, CsName, OsArchitecture | ConvertTo-Json');
+        const winSystemInfo = JSON.parse(systemInfoJson.stdout);
+  
+        systemInfo.totalMemory = winSystemInfo.CsTotalPhysicalMemory / (1024 * 1024); // Convert bytes to MB
+        systemInfo.type = winSystemInfo.OsName;
+        systemInfo.release = winSystemInfo.OsVersion;
+        systemInfo.cpuModel = winSystemInfo.CsName;
+        systemInfo.architecture = winSystemInfo.OsArchitecture;
+        
+        // Since Windows does not have an uptime command like Linux, you might need to calculate it differently
+        // For example, you can use the system boot time to calculate uptime
+      }
+  
+      return systemInfo;
+    } catch (error) {
+      console.error('Error retrieving system info:', error);
+      throw error;
     }
   }
+  
 }
