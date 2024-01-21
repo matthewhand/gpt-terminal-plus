@@ -32,11 +32,14 @@ async function getServerHandler(req: express.Request, res: Response): Promise<Se
 // Set the current directory
 router.post('/set-current-folder', async (req, res) => {
   const directory = req.body.directory;
+  debug(`Set current folder request received: ${directory}`);
+
   const serverHandler = await getServerHandler(req, res);
   if (!serverHandler) return;
 
   try {
     const success = await serverHandler.setCurrentDirectory(directory);
+    debug(`Set current folder result: ${success ? 'Success' : 'Failure'}`);
     if (success) {
       res.status(200).json({ output: 'Current directory set to ' + directory });
     } else {
@@ -44,6 +47,7 @@ router.post('/set-current-folder', async (req, res) => {
     }
   } catch (err) {
     const error = err as Error;
+    debug(`Error setting current folder: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -51,6 +55,8 @@ router.post('/set-current-folder', async (req, res) => {
 // Combined create or replace a file route
 router.post(['/create-file'], async (req, res) => {
   const { filename, content, backup = true, directory } = req.body;
+  debug(`Create file request received: ${filename}, in directory: ${directory}`);
+
   const serverHandler = await getServerHandler(req, res);
   if (!serverHandler) return;
 
@@ -58,9 +64,12 @@ router.post(['/create-file'], async (req, res) => {
   const fullPath = path.join(targetDirectory, filename);
 
   try {
+    debug(`Attempting to create/replace file: ${fullPath}`);
     const release = await lockfile.lock(fullPath, { realpath: false });
+
     try {
       const success = await serverHandler.createFile(targetDirectory, filename, content, backup);
+      debug(`Create/replace file result: ${success ? 'Success' : 'Failure'}`);
       if (success) {
         res.status(200).json({ message: 'File created or replaced successfully.' });
       } else {
@@ -70,7 +79,9 @@ router.post(['/create-file'], async (req, res) => {
       await release();
     }
   } catch (err) {
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
+    const error = err as Error;
+    debug(`Error in create/replace file: ${error.message}`);
+    res.status(500).json({ error: error.message });
   }
 });
 
