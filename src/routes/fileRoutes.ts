@@ -13,13 +13,14 @@ router.use(ensureServerIsSet);
 
 const serverConfig = config.get<ServerConfig>('serverConfig');
 
-// Helper function to ensure serverHandler is initialized
+// Helper function to ensure serverHandler is initialized and log current server
 async function getServerHandler(res: Response): Promise<ServerHandler | null> {
   try {
-    // Use the host property from serverConfig to get the instance
     const serverHandler = await ServerHandler.getInstance(serverConfig.host);
+    debug(`Server handler initialized for host: ${serverConfig.host}`);
     return serverHandler;
   } catch (error) {
+    debug('Error initializing server handler', { host: serverConfig.host, error });
     res.status(500).json({ error: error instanceof Error ? error.message : 'Server handler not initialized' });
     return null;
   }
@@ -147,20 +148,23 @@ router.post('/amend-file', async (req, res) => {
   }
 });
 
+// Enhanced list-files route with additional debugging
 router.post('/list-files', async (req, res) => {
   const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
-  const serverHandler = await getServerHandler(res); // Make sure to await the Promise here
+  debug('Received list-files request', { directory, orderBy, limit, offset });
+
+  const serverHandler = await getServerHandler(res);
   if (!serverHandler) return;
 
   try {
-    // Perform the list files operation
-    const files = await serverHandler.listFiles(directory, limit, offset, orderBy); 
+    debug(`Attempting to list files in directory: ${directory} on server: ${serverConfig.host}`);
+    const files = await serverHandler.listFiles(directory, limit, offset, orderBy);
+    debug(`Files listed successfully in directory: ${directory}`, { files });
     res.status(200).json({ files });
   } catch (err) {
-    // If an error occurs, respond with the error message
+    debug(`Error listing files in directory: ${directory}`, { error: err, host: serverConfig.host });
     res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
   }
 });
-
 
 export default router;

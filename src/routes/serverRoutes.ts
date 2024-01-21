@@ -29,7 +29,6 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   }
 });
 
-
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug(`Received request to set server: ${server}`, { requestBody: req.body });
