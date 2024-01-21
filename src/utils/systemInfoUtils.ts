@@ -16,7 +16,7 @@ export function parseSystemInfoOutput(output: string): SystemInfo {
   // Parse the output and return a SystemInfo object
   const [unameInfo, totalMemoryKB, freeMemoryKB, uptimeInfo, homeFolder] = output.split('\n');
 
-  const [platform, release, type, nodeName, cpuArchitecture] = unameInfo.split(' ');
+  const [platform, release, type, nodeName, architecture] = unameInfo.split(' ');
 
   const totalMemory = parseInt(totalMemoryKB) / 1024;  // Convert KB to MB
   const freeMemory = parseInt(freeMemoryKB) / 1024;  // Convert KB to MB
@@ -27,7 +27,7 @@ export function parseSystemInfoOutput(output: string): SystemInfo {
     type,
     release,
     platform,
-    cpuArchitecture,
+    architecture,
     totalMemory,
     freeMemory,
     uptime,

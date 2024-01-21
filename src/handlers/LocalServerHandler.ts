@@ -16,7 +16,7 @@ private psSystemInfoCmd = `
 	$info['type'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
 	$info['release'] = (Get-WmiObject -Class Win32_OperatingSystem).Version
 	$info['platform'] = [System.Environment]::OSVersion.Platform
-	$info['cpuArchitecture'] = [System.Environment]::Is64BitOperatingSystem
+	$info['architecture'] = [System.Environment]::Is64BitOperatingSystem
 	$info['totalMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
 	$info['freeMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)
 	$info['uptime'] = (Get-WmiObject -Class Win32_OperatingSystem).LastBootUpTime
@@ -31,7 +31,7 @@ echo "{
   \"type\": \"$(uname -o | tr -d '\n')\",
   \"release\": \"$(uname -r | tr -d '\n')\",
   \"platform\": \"$(uname -m | tr -d '\n')\",
-  \"cpuArchitecture\": \"$(lscpu | grep Architecture | awk '{print $2}' | tr -d '\n')\",
+  \"architecture\": \"$(lscpu | grep Architecture | awk '{print $2}' | tr -d '\n')\",
   \"totalMemory\": \"$(free -m | grep Mem: | awk '{print $2}' | tr -d '\n')\",
   \"freeMemory\": \"$(free -m | grep Mem: | awk '{print $7}' | tr -d '\n')\",
   \"uptime\": \"$(awk '{print $1}' /proc/uptime | tr -d '\n')\",
@@ -54,7 +54,7 @@ getDefaultSystemInfo(): SystemInfo {
     release: '',
     platform: '',
     powershellVersion: '',
-    cpuArchitecture: '',
+    architecture: '',
     totalMemory: 0,
     freeMemory: 0,
     uptime: 0,
@@ -91,7 +91,7 @@ getDefaultSystemInfo(): SystemInfo {
           release: result.release,
           platform: result.platform.toString(),
           powershellVersion: result.powershellVersion,
-          cpuArchitecture: result.cpuArchitecture ? 'x64' : 'x86',
+          architecture: result.architecture ? 'x64' : 'x86',
           totalMemory: result.totalMemory,
           freeMemory: result.freeMemory,
           uptime: new Date(result.uptime).getTime() / 1000, // Convert to seconds

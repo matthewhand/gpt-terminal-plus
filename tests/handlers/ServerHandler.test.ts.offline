@@ -62,7 +62,7 @@ class TestServerHandler extends ServerHandler {
       arch: '',
       hostname: '',
       pythonVersion: '', 
-      cpuArchitecture: '', 
+      architecture: '', 
       totalMemory: 0, 
       freeMemory: 0, 
       uptime: 0, 

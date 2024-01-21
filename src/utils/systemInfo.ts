@@ -6,7 +6,7 @@ export function getSystemInfo(): string {
   const type = os.type();
   const release = os.release();
   const platform = os.platform();
-  const cpuArchitecture = os.arch();
+  const architecture = os.arch();
   const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   const currentFolder = process.cwd();
@@ -16,7 +16,7 @@ export function getSystemInfo(): string {
     type,
     release,
     platform,
-    cpuArchitecture,
+    architecture,
     totalMemory,
     freeMemory,
     uptime: uptimeSeconds,

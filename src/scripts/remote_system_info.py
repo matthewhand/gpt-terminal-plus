@@ -14,7 +14,7 @@ data = {
   "release": platform.release(),
   "platform": platform.system(),
   "pythonVersion": platform.python_version(),
-  "cpuArchitecture": platform.machine(),
+  "architecture": platform.machine(),
   "totalMemory": os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES"),
   "freeMemory": os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_AVPHYS_PAGES"),
   "uptime": uptime_seconds,

@@ -66,7 +66,7 @@ class TestServerHandler extends ServerHandler {
       arch: 'x64',
       hostname: 'mockhost',
       pythonVersion: '3.8.1',
-      cpuArchitecture: 'x64',
+      architecture: 'x64',
       totalMemory: 8192,
       freeMemory: 4096,
       uptime: 10000,

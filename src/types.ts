@@ -5,7 +5,7 @@ export interface SystemInfo {
   platform: string;
   pythonVersion?: string;
   powershellVersion?: string;
-  cpuArchitecture: string;
+  architecture: string;
   totalMemory: number;
   freeMemory: number;
   uptime: number;

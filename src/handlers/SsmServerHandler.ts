@@ -92,7 +92,7 @@ export default class SsmServerHandler extends ServerHandler {
       type: '',
       release: '',
       platform: '',
-      cpuArchitecture: '',
+      architecture: '',
       totalMemory: 0,
       freeMemory: 0,
       uptime: 0,
