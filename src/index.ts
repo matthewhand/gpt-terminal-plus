@@ -31,9 +31,9 @@ app.use(json());
 
 // Combine all routes into a single router
 const combinedRouter = express.Router();
-combinedRouter.use('/files', fileRoutes);
-combinedRouter.use('/commands', commandRoutes);
-combinedRouter.use('/server', serverRoutes);
+combinedRouter.use('/', fileRoutes);
+combinedRouter.use('/', commandRoutes);
+combinedRouter.use('/', serverRoutes);
 combinedRouter.use('/public', staticFilesRouter);
 
 // Apply authentication and server setting middleware where needed
