@@ -24,12 +24,16 @@ async function getServerHandler(req: express.Request, res: Response): Promise<Se
     return serverHandler;
   } catch (error) {
     debug('Error initializing server handler', { error });
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Server handler not initialized' });
+    res.status(500).json({ 
+      error: 'ServerHandlerInitializationError',
+      message: 'Error initializing server handler',
+      debugInfo: process.env.NODE_ENV === 'development' ? error : undefined
+    });
     return null;
   }
 }
 
-// Set the current directory
+// Example for one route with detailed error handling
 router.post('/set-current-folder', async (req, res) => {
   const directory = req.body.directory;
   debug(`Set current folder request received: ${directory}`);
@@ -43,12 +47,19 @@ router.post('/set-current-folder', async (req, res) => {
     if (success) {
       res.status(200).json({ output: 'Current directory set to ' + directory });
     } else {
-      res.status(400).json({ output: 'Directory does not exist.' });
+      res.status(400).json({ 
+        error: 'DirectoryNotFound',
+        message: 'Directory does not exist.'
+      });
     }
   } catch (err) {
     const error = err as Error;
     debug(`Error setting current folder: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: 'SetCurrentFolderError',
+      message: 'Error setting current folder',
+      debugInfo: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
