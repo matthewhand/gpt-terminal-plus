@@ -37,6 +37,8 @@ router.post('/set-server', async (req: Request, res: Response) => {
     const serverHandler = await ServerHandler.getInstance(server);
     debug(`ServerHandler instance created for server: ${server}`);
 
+    req.app.locals.currentServerConfig = server;
+
     const systemInfo = await serverHandler.getSystemInfo();
     debug(`Retrieved system info for server: ${server}`, { systemInfo });
 
