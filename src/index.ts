@@ -54,7 +54,7 @@ apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
 });
 
 app.use('/public/', staticFilesRouter); // Serve static files
-app.use('/api', apiRouter); // Mount the API router
+app.use(apiRouter); // Mount the API router
 
 // Server initialization
 const startServer = () => {
