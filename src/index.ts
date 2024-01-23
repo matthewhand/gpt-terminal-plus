@@ -24,24 +24,38 @@ import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
-// Standard middlewares
-app.use(morgan('combined'));
-app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
+app.use(cors({
+  origin: ['https://chat.openai.com', '*']
+}));
+
 app.use(json());
 
-// Combine all routes into a single router
-const combinedRouter = express.Router();
-combinedRouter.use('/', fileRoutes);
-combinedRouter.use('/', commandRoutes);
-combinedRouter.use('/', serverRoutes);
-combinedRouter.use('/public', staticFilesRouter);
+// Define all API-related routes under '/'
+const apiRouter = express.Router();
+apiRouter.use(checkAuthToken); 
+apiRouter.use(ensureServerIsSet);
+apiRouter.use(fileRoutes);
+apiRouter.use(commandRoutes);
+apiRouter.use(serverRoutes);
 
-// Apply authentication and server setting middleware where needed
-combinedRouter.use(checkAuthToken);
-combinedRouter.use(ensureServerIsSet);
+// Endpoint to retrieve paginated response, now under '/response'
+apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
+  const responseId = req.params.id;
+  const page = parseInt(req.params.page, 10);
 
-// Use the combined router on the root path
-app.use('/', combinedRouter);
+  try {
+    const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
+    res.status(200).json({ responseId, page, stdout, stderr, totalPages });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+app.use('/public/', staticFilesRouter); // Serve static files without token check
+app.use(apiRouter); // Mount the API router on '/api'
+
+global.selectedServer = 'localhost'; // Defaults to localhost
+// let server: http.Server | https.Server;
 
 // Start server function
 const startServer = () => {
