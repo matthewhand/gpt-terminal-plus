@@ -15,7 +15,7 @@ import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
 import staticFilesRouter from './routes/staticFilesRouter';
 
-import { checkAuthToken } from './middlewares';
+import { checkAuthToken, ensureServerIsSet } from './middlewares';
 import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
