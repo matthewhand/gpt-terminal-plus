@@ -25,9 +25,11 @@ app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
 app.use(json());
 
 const apiRouter = express.Router();
-apiRouter.use(checkAuthToken);
-apiRouter.use(fileRoutes);
-apiRouter.use(commandRoutes);
+apiRouter.use(checkAuthToken); // Apply checkAuthToken to all routes under apiRouter
+
+// Apply ensureServerIsSet middleware to specific routes that need server setting
+apiRouter.use('/files', ensureServerIsSet, fileRoutes);
+apiRouter.use('/commands', ensureServerIsSet, commandRoutes);
 
 apiRouter.get('/response/:id/:page', (req, res) => {
   const responseId = req.params.id;
@@ -42,8 +44,8 @@ apiRouter.get('/response/:id/:page', (req, res) => {
 });
 
 app.use('/public/', staticFilesRouter); 
-app.use('/api', apiRouter);
-app.use('/server', serverRoutes);
+app.use('/api', apiRouter); // Mount the API router on '/api'
+app.use('/server', checkAuthToken, serverRoutes); // Apply checkAuthToken to serverRoutes
 
 const startServer = () => {
   const port = config.get<number>('port') || 5004;
