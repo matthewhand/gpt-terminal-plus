@@ -2,11 +2,13 @@ import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
+
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
 
 // router.use(ensureServerIsSet);
 
+// Endpoint to list available servers
 router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
@@ -22,13 +24,16 @@ router.get('/list-servers', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
+      console.error('Internal Server Error in /list-servers:', error);
       res.status(500).send('Internal Server Error');
     } else {
+      console.error('An unknown error occurred in /list-servers:', error);
       res.status(500).send('An unknown error occurred');
     }
   }
 });
 
+// Endpoint to set the current server
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug(`Received request to set server: ${server}`, { requestBody: req.body });
@@ -50,20 +55,21 @@ router.post('/set-server', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
-      // Check if the error is due to a client-side issue (e.g., non-existent server)
       if (error.message === 'Server not in predefined list.') {
+        console.error('Client-side error in /set-server:', error);
         res.status(400).json({
           output: error.message
         });
       } else {
-        // For server-side errors
+        console.error('Server-side error in /set-server:', error);
         res.status(500).json({
           output: 'Error retrieving system info',
           error: error.message,
-          stack: error.stack  // Include stack trace for better debugging
+          stack: error.stack
         });
       }
     } else {
+      console.error('An unknown error occurred in /set-server:', error);
       res.status(500).send('An unknown error occurred');
     }
   }
