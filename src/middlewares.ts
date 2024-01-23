@@ -1,19 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
 import { ServerHandler } from './handlers/ServerHandler';
 import { ServerConfig } from './types';
-import config from 'config';
+// import config from 'config';
 
 export async function ensureServerIsSet(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.serverHandler) {
-      const serverConfigs: ServerConfig[] = config.get('serverConfig');
-      const serverConfig = serverConfigs[0]; // Default to the first configured server
-      const host = serverConfig.host;
-      req.serverHandler = await ServerHandler.getInstance(host);
+    if (!req.app.locals.currentServerConfig) {
+      return res.status(400).json({
+        error: 'ServerNotConfigured',
+        message: 'Server configuration is required. Please set the server before proceeding.'
+      });
     }
+
+    if (!req.serverHandler) {
+      const currentServerConfig = req.app.locals.currentServerConfig as ServerConfig;
+      req.serverHandler = await ServerHandler.getInstance(currentServerConfig.host);
+    }
+
     next();
   } catch (error) {
-    next(error); // Pass the error to the next error handling middleware
+    res.status(500).json({
+      error: 'ServerError',
+      message: 'Error initializing server handler.'
+    });
   }
 }
 
