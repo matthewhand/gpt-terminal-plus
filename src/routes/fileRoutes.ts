@@ -1,34 +1,25 @@
 import express, { Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
-import { ServerConfig } from '../types';
-import { escapeRegExp } from '../utils/escapeRegExp';
+import ServerConfigManager from './ServerConfigManager';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
-const debug = Debug('app:fileRoutes');
 
+const debug = Debug('app:fileRoutes');
 const router = express.Router();
 router.use(ensureServerIsSet);
 
 // Helper function to ensure serverHandler is initialized and log current server
-async function getServerHandler(req: express.Request, res: Response): Promise<ServerHandler | null> {
+async function getServerHandler(): Promise<ServerHandler | null> {
   try {
-    const currentServerConfig = req.app.locals.currentServerConfig as ServerConfig;
-    if (!currentServerConfig || !currentServerConfig.host) {
-      throw new Error('Current server configuration is not set.');
-    }
-
-    const serverHandler = await ServerHandler.getInstance(currentServerConfig.host);
-    debug(`Server handler initialized for host: ${currentServerConfig.host}`);
+    const configManager = ServerConfigManager.getInstance();
+    const serverConfig = configManager.getServerConfig();
+    const serverHandler = await ServerHandler.getInstance(serverConfig);
+    debug(`Server handler initialized for server: ${serverConfig}`);
     return serverHandler;
   } catch (error) {
     debug('Error initializing server handler', { error });
-    res.status(500).json({ 
-      error: 'ServerHandlerInitializationError',
-      message: 'Error initializing server handler',
-      debugInfo: process.env.NODE_ENV === 'development' ? error : undefined
-    });
     return null;
   }
 }
