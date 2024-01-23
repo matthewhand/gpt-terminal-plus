@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import http from 'http'; 
+import http from 'http';
 import https from 'https';
 import express from 'express';
 import morgan from 'morgan';
@@ -10,47 +10,43 @@ import config from 'config';
 import { json } from 'body-parser';
 import fs from 'fs';
 
+// Import routes
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
 import staticFilesRouter from './routes/staticFilesRouter';
 
+// Import middlewares
 import { checkAuthToken, ensureServerIsSet } from './middlewares';
+
+// Import handlers
 import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
+// Standard middlewares
 app.use(morgan('combined'));
 app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
 app.use(json());
 
-const apiRouter = express.Router();
-apiRouter.use(checkAuthToken); // Apply checkAuthToken to all routes under apiRouter
+// Combine all routes into a single router
+const combinedRouter = express.Router();
+combinedRouter.use('/files', fileRoutes);
+combinedRouter.use('/commands', commandRoutes);
+combinedRouter.use('/server', serverRoutes);
+combinedRouter.use('/public', staticFilesRouter);
 
-// Apply ensureServerIsSet middleware to specific routes that need server setting
-apiRouter.use('/files', ensureServerIsSet, fileRoutes);
-apiRouter.use('/commands', ensureServerIsSet, commandRoutes);
+// Apply authentication and server setting middleware where needed
+combinedRouter.use(checkAuthToken);
+combinedRouter.use(ensureServerIsSet);
 
-apiRouter.get('/response/:id/:page', (req, res) => {
-  const responseId = req.params.id;
-  const page = parseInt(req.params.page, 10);
+// Use the combined router on the root path
+app.use('/', combinedRouter);
 
-  try {
-    const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
-    res.status(200).json({ responseId, page, stdout, stderr, totalPages });
-  } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-  }
-});
-
-app.use('/public/', staticFilesRouter); 
-app.use('/api', apiRouter); // Mount the API router on '/api'
-app.use('/server', checkAuthToken, serverRoutes); // Apply checkAuthToken to serverRoutes
-
+// Start server function
 const startServer = () => {
   const port = config.get<number>('port') || 5004;
   const bindAddress = config.get<string>('bindAddress') || '0.0.0.0';
-
   const httpsEnabled = config.get<boolean>('httpsEnabled');
   const keyPath = config.get<string>('httpsKeyPath');
   const certPath = config.get<string>('httpsCertPath');
@@ -74,6 +70,7 @@ const startServer = () => {
   process.on('SIGTERM', () => shutdown(server, 'SIGTERM'));
 };
 
+// Shutdown function
 const shutdown = (server: http.Server | https.Server, signal: string) => {
   console.log(`Received ${signal}. Shutting down gracefully.`);
   server.close(() => {
