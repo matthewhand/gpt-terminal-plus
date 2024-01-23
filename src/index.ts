@@ -15,14 +15,12 @@ import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
 import staticFilesRouter from './routes/staticFilesRouter';
 
-import { checkAuthToken, ensureServerIsSet } from './middlewares';
-
+import { checkAuthToken } from './middlewares';
 import { getPaginatedResponse } from './handlers/PaginationHandler';
 
 const app = express();
 
 app.use(morgan('combined'));
-console.log(`Debug mode is "${process.env.DEBUG}".`);
 app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
 app.use(json());
 
@@ -34,6 +32,7 @@ apiRouter.use(commandRoutes);
 apiRouter.get('/response/:id/:page', (req, res) => {
   const responseId = req.params.id;
   const page = parseInt(req.params.page, 10);
+
   try {
     const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
     res.status(200).json({ responseId, page, stdout, stderr, totalPages });
@@ -43,21 +42,18 @@ apiRouter.get('/response/:id/:page', (req, res) => {
 });
 
 app.use('/public/', staticFilesRouter); 
-
-// Exclude serverRoutes from ensureServerIsSet middleware
 app.use('/api', apiRouter);
 app.use('/server', serverRoutes);
 
 const startServer = () => {
-  const port = config.get('port') || 5004;
-  const bindAddress = config.get('bindAddress') || '0.0.0.0';
+  const port = config.get<number>('port') || 5004;
+  const bindAddress = config.get<string>('bindAddress') || '0.0.0.0';
 
-  // HTTPS setup
-  const httpsEnabled = config.get('httpsEnabled');
-  const keyPath = config.get('httpsKeyPath');
-  const certPath = config.get('httpsCertPath');
+  const httpsEnabled = config.get<boolean>('httpsEnabled');
+  const keyPath = config.get<string>('httpsKeyPath');
+  const certPath = config.get<string>('httpsCertPath');
 
-  let server;
+  let server: http.Server | https.Server;
 
   if (httpsEnabled && keyPath && certPath) {
     const privateKey = fs.readFileSync(keyPath, 'utf8');
@@ -76,7 +72,7 @@ const startServer = () => {
   process.on('SIGTERM', () => shutdown(server, 'SIGTERM'));
 };
 
-const shutdown = (server, signal) => {
+const shutdown = (server: http.Server | https.Server, signal: string) => {
   console.log(`Received ${signal}. Shutting down gracefully.`);
   server.close(() => {
     console.log('Server closed.');
@@ -86,7 +82,7 @@ const shutdown = (server, signal) => {
   setTimeout(() => {
     console.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
-  }, 10000); // 10 seconds timeout
+  }, 10000);
 };
 
 startServer();
