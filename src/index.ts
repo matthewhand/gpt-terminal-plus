@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import fs from 'fs';
 import http from 'http'; // Import http module
 import https from 'https'; // Import https module
 import express, { Request, Response } from 'express';
