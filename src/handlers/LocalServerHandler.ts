@@ -5,39 +5,12 @@ import { promisify } from 'util';
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo } from '../types';
 import { escapeRegExp } from '../utils/escapeRegExp';
+import { psSystemInfoCmd } from './psSystemInfoCommand'; // Importing PowerShell command
+import { shSystemInfoCmd } from './shSystemInfoCommand'; // Importing Shell command
 
 export default class LocalServerHandler extends ServerHandler {
   // Explicitly type serverConfig as ServerConfig
   protected serverConfig: ServerConfig;
-
-private psSystemInfoCmd = `
-	$info = @{}
-	$info['homeFolder'] = [System.Environment]::GetFolderPath('UserProfile')
-	$info['type'] = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-	$info['release'] = (Get-WmiObject -Class Win32_OperatingSystem).Version
-	$info['platform'] = [System.Environment]::OSVersion.Platform
-	$info['architecture'] = [System.Environment]::Is64BitOperatingSystem
-	$info['totalMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)
-	$info['freeMemory'] = [System.Math]::Round((Get-WmiObject -Class Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)
-	$info['uptime'] = (Get-WmiObject -Class Win32_OperatingSystem).LastBootUpTime
-	$info['currentFolder'] = Get-Location
-	$info['powershellVersion'] = $PSVersionTable.PSVersion.ToString()
-	$info | ConvertTo-Json
-	`;
-
-private shSystemInfoCmd = `
-echo "{
-  \"homeFolder\": \"$HOME\",
-  \"type\": \"$(uname -o | tr -d '\n')\",
-  \"release\": \"$(uname -r | tr -d '\n')\",
-  \"platform\": \"$(uname -m | tr -d '\n')\",
-  \"architecture\": \"$(lscpu | grep Architecture | awk '{print $2}' | tr -d '\n')\",
-  \"totalMemory\": \"$(free -m | grep Mem: | awk '{print $2}' | tr -d '\n')\",
-  \"freeMemory\": \"$(free -m | grep Mem: | awk '{print $7}' | tr -d '\n')\",
-  \"uptime\": \"$(awk '{print $1}' /proc/uptime | tr -d '\n')\",
-  \"currentFolder\": \"$(pwd | tr -d '\n')\"
-}"
-`
 
   private execAsync = promisify(exec);
 
@@ -46,44 +19,37 @@ echo "{
     this.serverConfig = serverConfig;
   }
 
-// Implement this method to return a default SystemInfo object
-getDefaultSystemInfo(): SystemInfo {
-  return {
-    homeFolder: '',
-    type: '',
-    release: '',
-    platform: '',
-    powershellVersion: '',
-    architecture: '',
-    totalMemory: 0,
-    freeMemory: 0,
-    uptime: 0,
-    currentFolder: ''
-    // Provide default values for all SystemInfo properties
-  };
-}
+  getDefaultSystemInfo(): SystemInfo {
+    return {
+      homeFolder: '',
+      type: '',
+      release: '',
+      platform: '',
+      powershellVersion: '',
+      architecture: '',
+      totalMemory: 0,
+      freeMemory: 0,
+      uptime: 0,
+      currentFolder: ''
+    };
+  }
 
   async getSystemInfo(): Promise<SystemInfo> {
     let shellCommand, execShell;
 
     if (this.serverConfig.shell) {
-      if (this.serverConfig.shell === 'powershell') {
-        shellCommand = this.psSystemInfoCmd;
-        execShell = 'powershell';
-      } else {
-        shellCommand = this.shSystemInfoCmd;
-        execShell = this.serverConfig.shell;
-      }
+      shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
+      execShell = this.serverConfig.shell;
     } else {
-      shellCommand = (process.platform === 'win32') ? this.psSystemInfoCmd : this.shSystemInfoCmd;
+      shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
     }
 
     try {
-        const execOptions = execShell ? { shell: execShell } : {};
-        const { stdout } = await this.execAsync(shellCommand, execOptions);
-        try {
+      const execOptions = execShell ? { shell: execShell } : {};
+      const { stdout } = await this.execAsync(shellCommand, execOptions);
 
-      const result = JSON.parse(stdout.trim());
+      try {
+        const result = JSON.parse(stdout.trim());
 
         return {
           homeFolder: result.homeFolder,
@@ -94,14 +60,14 @@ getDefaultSystemInfo(): SystemInfo {
           architecture: result.architecture ? 'x64' : 'x86',
           totalMemory: result.totalMemory,
           freeMemory: result.freeMemory,
-          uptime: new Date(result.uptime).getTime() / 1000, // Convert to seconds
+          uptime: new Date(result.uptime).getTime() / 1000,
           currentFolder: result.currentFolder.Path
         };
 
-        } catch (parseError) {
-            console.error(`Error parsing JSON:`, parseError);
-            return this.getDefaultSystemInfo();
-        }
+      } catch (parseError) {
+        console.error(`Error parsing JSON:`, parseError);
+        return this.getDefaultSystemInfo();
+      }
 
     } catch (error) {
       console.error(`Error getting system information:`, error);

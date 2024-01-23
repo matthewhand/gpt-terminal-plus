@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
-import { ensureServerIsSet } from '../middlewares';
+import ServerConfigManager from './ServerConfigManager';
 import Debug from 'debug';
+
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
 
-// router.use(ensureServerIsSet);
-
+// Endpoint to list available servers
 router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
@@ -29,6 +29,7 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   }
 });
 
+// Endpoint to set the current server
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug(`Received request to set server: ${server}`, { requestBody: req.body });
@@ -37,7 +38,8 @@ router.post('/set-server', async (req: Request, res: Response) => {
     const serverHandler = await ServerHandler.getInstance(server);
     debug(`ServerHandler instance created for server: ${server}`);
 
-    req.app.locals.currentServerConfig = server;
+    const configManager = ServerConfigManager.getInstance();
+    configManager.setServerConfig(server);
 
     const systemInfo = await serverHandler.getSystemInfo();
     debug(`Retrieved system info for server: ${server}`, { systemInfo });
@@ -50,24 +52,14 @@ router.post('/set-server', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
-      // Check if the error is due to a client-side issue (e.g., non-existent server)
-      if (error.message === 'Server not in predefined list.') {
-        res.status(400).json({
-          output: error.message
-        });
-      } else {
-        // For server-side errors
-        res.status(500).json({
-          output: 'Error retrieving system info',
-          error: error.message,
-          stack: error.stack  // Include stack trace for better debugging
-        });
-      }
+      res.status(500).json({
+        output: 'Error retrieving system info',
+        error: error.message
+      });
     } else {
       res.status(500).send('An unknown error occurred');
     }
   }
 });
 
-// Export the router
 export default router;
