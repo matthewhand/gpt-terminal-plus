@@ -354,6 +354,36 @@ public async getSystemInfo(): Promise<SystemInfo> {
   }
 }
 
+// New method to execute command via script
+public async executeCommandViaScript(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
+  const uniqueFilename = `temp_script_${uuidv4()}.sh`;
+  const localScriptPath = path.join('/tmp', uniqueFilename);
+  const remoteScriptPath = `/tmp/${uniqueFilename}`;
+
+  // Write the command to a temporary local script file
+  fs.writeFileSync(localScriptPath, `#!/bin/bash\n${directory ? `cd ${directory}; ` : ''}${command}`);
+  
+  try {
+    // Transfer the script to the remote server
+    await this.transferFile(localScriptPath, remoteScriptPath);
+
+    // Execute the script on the remote server
+    const result = await this.executeRemoteCommand(`bash ${remoteScriptPath}`);
+
+    // Clean up: Delete the temporary script from the remote server
+    await this.deleteFile(remoteScriptPath);
+
+    return result;
+  } catch (error) {
+    console.error('Error executing command via script:', error);
+    throw error;
+  } finally {
+    // Clean up: Delete the local temporary script file
+    fs.unlinkSync(localScriptPath);
+  }
+}
+
+
 private async executeSystemInfoScript(scriptName: string, command: string): Promise<SystemInfo> {
   debug("executeSystemInfoScript called");
   const localScriptPath = `${__dirname}/../scripts/${scriptName}`;

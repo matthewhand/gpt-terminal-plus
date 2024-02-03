@@ -15,8 +15,8 @@ services:
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
     volumes:
       - /usr/src/app/node_modules # Keep node_modules on a named volume
-      - ~/.aws:/root/.aws:ro # Mount the AWS configuration directory
-      - ~/.ssh:/root/.ssh:rw # Mount the SSH directory (rw required for updating host keys)
+      - ../.aws:/root/.aws:ro # Mount the AWS configuration directory
+      - ../.ssh:/root/.ssh:rw # Mount the SSH directory (rw required for updating host keys)
       - /etc/hosts:/etc/hosts:ro  # for name resolution
       - /home/chatgpt/bin:/home/chatgpt/bin # for `oci` binary
       - /home/chatgpt/lib:/home/chatgpt/lib # for `oci` binary

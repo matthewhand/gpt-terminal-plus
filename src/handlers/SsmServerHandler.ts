@@ -1,6 +1,9 @@
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo } from '../types';
 import * as AWS from 'aws-sdk';
+import Debug from 'debug';
+
+}const debug = Debug('app:SsmServerHandler');
 
 export default class SsmServerHandler extends ServerHandler {
   private ssmClient: AWS.SSM;
@@ -8,9 +11,18 @@ export default class SsmServerHandler extends ServerHandler {
   constructor(serverConfig: ServerConfig) {
     super(serverConfig);
     this.ssmClient = new AWS.SSM({ region: serverConfig.region || 'us-west-2' });
+    debug('SSM Server Handler initialized for:', serverConfig.host);
   }
-
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
+
+    debug('Executing command:', command, 'on directory:', directory);
+    if (!command) {
+      throw new Error('No command provided for execution.');
+    }
+    if (!this.serverConfig.instanceId) {
+      throw new Error('Instance ID is undefined. Unable to execute command.');
+    }
+    
     if (!command) {
       throw new Error('No command provided for execution.');
     }
@@ -46,10 +58,11 @@ export default class SsmServerHandler extends ServerHandler {
         InstanceId: instanceId,
       }).promise();
   
-      if (result.Status && ['Success', 'Failed'].includes(result.Status)) {
+      // Check if the command result is available and the status is final
+      if (result && result.Status && ['Success', 'Failed', 'Cancelled', 'TimedOut'].includes(result.Status)) {
         return {
-          stdout: result.StandardOutputContent || '',
-          stderr: result.StandardErrorContent || ''
+          stdout: result.StandardOutputContent ? result.StandardOutputContent.trim() : '',
+          stderr: result.StandardErrorContent ? result.StandardErrorContent.trim() : ''
         };
       }
       retries--;
@@ -106,8 +119,10 @@ export default class SsmServerHandler extends ServerHandler {
       if (this.serverConfig.posix) {
         // POSIX commands
         const uptimeResult = await this.executeCommand('cat /proc/uptime | cut -d " " -f 1');
-        systemInfo.uptime = parseFloat(uptimeResult.stdout.trim());
-  
+        if (uptimeResult && uptimeResult.stdout) {
+          systemInfo.uptime = parseFloat(uptimeResult.stdout.trim());
+        }
+        
         const memResult = await this.executeCommand('free -m | grep Mem');
         const memParts = memResult.stdout.split(/\s+/);
         systemInfo.totalMemory = parseInt(memParts[1]);

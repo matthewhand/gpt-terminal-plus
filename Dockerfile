@@ -25,9 +25,9 @@ COPY . .
 FROM node:18-slim
 
 # OCI
-# Update and install Python, pip, SSH client, and AWS CLI
+# Update and install Python, pip, SSH client, AWS CLI, and less
 RUN apt-get update && \
-    apt-get install -y python3 python3-venv python3-pip openssh-client awscli && \
+    apt-get install -y python3 python3-venv python3-pip openssh-client awscli less && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment and install oci-cli
@@ -48,5 +48,5 @@ COPY --from=builder /usr/src/app ./
 EXPOSE 5004
 
 # Run your application
-#CMD ["npm", "start"]
-CMD ["npx", "ts-node", "src/index.ts"]
+CMD ["npm", "start"]
+#CMD ["npx", "ts-node", "src/index.ts"]
