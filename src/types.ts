@@ -27,6 +27,7 @@ export interface ServerConfig {
   shell?: string;              // 'powershell' | null
   region?: string;             // e.g. us-east-2
   instanceId?: string;         // for SSM
+  homeFolder?: string;         // ~
 }
 
 export interface ServerHandlerInterface {

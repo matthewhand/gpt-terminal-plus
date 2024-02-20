@@ -3,7 +3,7 @@ import { ServerConfig, SystemInfo } from '../types';
 import * as AWS from 'aws-sdk';
 import Debug from 'debug';
 
-}const debug = Debug('app:SsmServerHandler');
+const debug = Debug('app:SsmServerHandler');
 
 export default class SsmServerHandler extends ServerHandler {
   private ssmClient: AWS.SSM;
@@ -92,14 +92,22 @@ export default class SsmServerHandler extends ServerHandler {
   }
 
   async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
-    // Placeholder implementation
-    return Promise.resolve(false);
+    let updateCommand: string;
+    if (this.serverConfig.posix) {
+      updateCommand = backup ? `cp ${filePath}{,.bak} && sed -i 's/${pattern}/${replacement}/g' ${filePath}` : `sed -i 's/${pattern}/${replacement}/g' ${filePath}`;
+    } else {
+      updateCommand = backup ? `Copy-Item -Path ${filePath} -Destination ${filePath}.bak; (Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}` : `(Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}`;
+    }
+    await this.executeCommand(updateCommand);
+    return true;
   }
-
+  
   async amendFile(filePath: string, content: string): Promise<boolean> {
-    // Placeholder implementation
-    return Promise.resolve(false);
+    const amendCommand = this.serverConfig.posix ? `echo "${content}" >> ${filePath}` : `Add-Content ${filePath} '${content}'`;
+    await this.executeCommand(amendCommand);
+    return true;
   }
+  
 
   async getSystemInfo(): Promise<SystemInfo> {
     try {

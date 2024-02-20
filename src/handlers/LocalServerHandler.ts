@@ -1,3 +1,4 @@
+import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
@@ -19,62 +20,67 @@ export default class LocalServerHandler extends ServerHandler {
     this.serverConfig = serverConfig;
   }
 
-  getDefaultSystemInfo(): SystemInfo {
-    return {
-      homeFolder: '',
-      type: '',
-      release: '',
-      platform: '',
-      powershellVersion: '',
-      architecture: '',
-      totalMemory: 0,
-      freeMemory: 0,
-      uptime: 0,
-      currentFolder: ''
-    };
-  }
-
   async getSystemInfo(): Promise<SystemInfo> {
     let shellCommand, execShell;
 
     if (this.serverConfig.shell) {
-      shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
-      execShell = this.serverConfig.shell;
+        shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
+        execShell = this.serverConfig.shell;
     } else {
-      shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
+        shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
     }
 
     try {
-      const execOptions = execShell ? { shell: execShell } : {};
-      const { stdout } = await this.execAsync(shellCommand, execOptions);
+        const execOptions = execShell ? { shell: execShell } : {};
+        const { stdout } = await this.execAsync(shellCommand, execOptions);
 
-      try {
-        const result = JSON.parse(stdout.trim());
+        // Debugging: Log raw stdout
+        console.log("Raw stdout:", stdout);
 
-        return {
-          homeFolder: result.homeFolder,
-          type: result.type,
-          release: result.release,
-          platform: result.platform.toString(),
-          powershellVersion: result.powershellVersion,
-          architecture: result.architecture ? 'x64' : 'x86',
-          totalMemory: result.totalMemory,
-          freeMemory: result.freeMemory,
-          uptime: new Date(result.uptime).getTime() / 1000,
-          currentFolder: result.currentFolder.Path
-        };
-
-      } catch (parseError) {
-        console.error(`Error parsing JSON:`, parseError);
-        return this.getDefaultSystemInfo();
-      }
-
+        try {
+            const result = JSON.parse(stdout.trim());
+            return this.constructSystemInfo(result);
+        } catch (parseError) {
+            console.error(`Error parsing JSON from stdout. Raw output: ${stdout}`, parseError);
+            return this.getDefaultSystemInfo();
+        }
     } catch (error) {
-      console.error(`Error getting system information:`, error);
-      throw error;
+        console.error(`Error getting system information:`, error);
+        return this.getDefaultSystemInfo();
     }
-  }
+}
 
+protected getDefaultSystemInfo(): SystemInfo {
+  return {
+      homeFolder: process.env.HOME || process.env.USERPROFILE || '/',
+      type: process.platform,
+      release: 'N/A',
+      platform: 'N/A',
+      powershellVersion: 'N/A',
+      architecture: process.arch,
+      totalMemory: Math.round(os.totalmem() / 1024 / 1024), // In MB
+      freeMemory: Math.round(os.freemem() / 1024 / 1024), // In MB
+      uptime: process.uptime(), // In seconds
+      currentFolder: process.cwd()
+  };
+}
+
+private constructSystemInfo(rawData: any): SystemInfo {
+    // Construct the SystemInfo object from the parsed JSON data
+    return {
+        homeFolder: rawData.homeFolder || '',
+        type: rawData.type || '',
+        release: rawData.release || '',
+        platform: rawData.platform || '',
+        powershellVersion: rawData.powershellVersion || '',
+        architecture: rawData.architecture || '',
+        totalMemory: rawData.totalMemory || 0,
+        freeMemory: rawData.freeMemory || 0,
+        uptime: rawData.uptime || 0,
+        currentFolder: rawData.currentFolder || ''
+        // Add other fields as necessary, based on your JSON structure
+    };
+}
   async executeCommand(command: string, timeout: number = 5000, directory: string): Promise<{ stdout: string; stderr: string }> {
     const execOptions = {
       timeout,
