@@ -17,24 +17,25 @@ RUN npm install
 # Copy the rest of your application's source code
 COPY . .
 
-# Build your application if necessary
+# No build command is specified; include if necessary
 # RUN npm run build
 
 # Stage 2: Set up the production environment
 # Use a smaller base image
 FROM node:18-slim
 
-# OCI
-# Update and install Python, pip, SSH client, AWS CLI, and less
+# Update system and install dependencies
+# Includes Python, pip, SSH client, AWS CLI, less, and required libraries for pyautogui
 RUN apt-get update && \
-    apt-get install -y python3 python3-venv python3-pip openssh-client awscli less && \
+    apt-get install -y python3 python3-venv python3-pip openssh-client awscli less \
+    python3-tk python3-dev scrot && \
     rm -rf /var/lib/apt/lists/*
 
-# Create a virtual environment and install oci-cli
+# Create a virtual environment and install oci-cli and pyautogui
 RUN python3 -m venv /oci-cli-venv && \
-    /oci-cli-venv/bin/pip install oci-cli
+    /oci-cli-venv/bin/pip install oci-cli pyautogui
 
-# Webapp
+# Webapp setup
 # Update npm
 RUN npm install -g npm@latest
 
