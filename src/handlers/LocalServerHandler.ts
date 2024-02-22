@@ -20,34 +20,43 @@ export default class LocalServerHandler extends ServerHandler {
     this.serverConfig = serverConfig;
   }
 
-  async getSystemInfo(): Promise<SystemInfo> {
-    let shellCommand, execShell;
+// Assuming this method is part of the LocalServerHandler class within src/handlers/LocalServerHandler.ts
+async getSystemInfo(): Promise<SystemInfo> {
+  let shellCommand, execShell;
 
-    if (this.serverConfig.shell) {
-        shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
-        execShell = this.serverConfig.shell;
-    } else {
-        shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
-    }
+  if (this.serverConfig.shell) {
+      shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
+      execShell = this.serverConfig.shell;
+  } else {
+      shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
+  }
 
-    try {
-        const execOptions = execShell ? { shell: execShell } : {};
-        const { stdout } = await this.execAsync(shellCommand, execOptions);
+  try {
+      const execOptions = execShell ? { shell: execShell } : {};
+      const { stdout } = await this.execAsync(shellCommand, execOptions);
 
-        // Debugging: Log raw stdout
-        console.log("Raw stdout:", stdout);
+      // Debugging: Log raw stdout
+      console.log("Raw stdout:", stdout);
 
-        try {
-            const result = JSON.parse(stdout.trim());
-            return this.constructSystemInfo(result);
-        } catch (parseError) {
-            console.error(`Error parsing JSON from stdout. Raw output: ${stdout}`, parseError);
-            return this.getDefaultSystemInfo();
-        }
-    } catch (error) {
-        console.error(`Error getting system information:`, error);
-        return this.getDefaultSystemInfo();
-    }
+      // Pre-parsing transformation to ensure valid JSON
+      const transformedStdout = stdout
+          .trim()
+          .replace(/(\w+):/g, '"$1":') // Ensure keys are quoted
+          .replace(/,\s*}/, '}') // Remove trailing commas before closing braces
+          .replace(/:\s*,/g, ':"",'); // Replace missing values with empty strings
+
+      try {
+          const result = JSON.parse(transformedStdout);
+          console.log("Parsed system info:", result); // Additional logging for debugging
+          return this.constructSystemInfo(result);
+      } catch (parseError) {
+          console.error(`Error parsing JSON from transformed stdout. Transformed output: ${transformedStdout}`, parseError);
+          return this.getDefaultSystemInfo();
+      }
+  } catch (error) {
+      console.error(`Error getting system information:`, error);
+      return this.getDefaultSystemInfo();
+  }
 }
 
 protected getDefaultSystemInfo(): SystemInfo {
