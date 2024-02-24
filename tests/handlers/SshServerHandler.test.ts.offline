@@ -1,0 +1,45 @@
+import SshServerHandler from '../../src/handlers/SshServerHandler';
+import { ServerConfig } from '../../src/types';
+import * as fs from 'fs';
+
+// Mock fs to prevent actual file system operations during tests
+jest.mock('fs', () => ({
+  readFileSync: jest.fn().mockReturnValue("mocked key"),
+}));
+
+// Sample server configuration
+const mockServerConfig: ServerConfig = {
+  host: 'example.com',
+  username: 'testUser',
+  privateKeyPath: '/fake/path/id_rsa',
+  port: 22, // Default SSH port
+  protocol: 'ssh',
+};
+
+describe('SshServerHandler', () => {
+  let sshServerHandler: SshServerHandler;
+
+  beforeAll(() => {
+    // Initialize SshServerHandler with the mock configuration
+    sshServerHandler = new SshServerHandler(mockServerConfig);
+  });
+
+  it('should successfully create an instance', () => {
+    expect(sshServerHandler).toBeDefined();
+  });
+
+  it('should handle executeCommand with a simple echo command', async () => {
+    // Mock the method to avoid actual SSH connections
+    sshServerHandler.executeCommand = jest.fn().mockResolvedValue({
+      stdout: 'test output',
+      stderr: '',
+    });
+
+    const result = await sshServerHandler.executeCommand('echo "Hello, world!"');
+    expect(result.stdout).toBe('test output');
+    expect(result.stderr).toBe('');
+  });
+
+  // Add more tests as needed
+});
+

@@ -28,6 +28,7 @@ export interface ServerConfig {
   region?: string;             // e.g. us-east-2
   instanceId?: string;         // for SSM
   homeFolder?: string;         // ~
+  cleanupScripts?: boolean;    // Delete temporary cmd scripts 
 }
 
 export interface ServerHandlerInterface {

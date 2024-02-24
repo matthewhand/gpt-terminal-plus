@@ -38,12 +38,14 @@ async getSystemInfo(): Promise<SystemInfo> {
       // Debugging: Log raw stdout
       console.log("Raw stdout:", stdout);
 
-      // Pre-parsing transformation to ensure valid JSON
+      // Improved transformation logic here
       const transformedStdout = stdout
-          .trim()
-          .replace(/(\w+):/g, '"$1":') // Ensure keys are quoted
-          .replace(/,\s*}/, '}') // Remove trailing commas before closing braces
-          .replace(/:\s*,/g, ':"",'); // Replace missing values with empty strings
+      .trim()
+      .split('\n')
+      .map(line => line.replace(/(\w+):\s*(.*)/, '"$1": "$2"')) // Ensure keys and values are quoted
+      .join(',')
+      .replace(/,\s*}/, '}') // Remove trailing commas before closing braces
+      .replace(/:\s*,/g, ':"",'); // Replace missing values with empty strings
 
       try {
           const result = JSON.parse(transformedStdout);
