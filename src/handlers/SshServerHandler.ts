@@ -183,20 +183,20 @@ export default class SshServerHandler extends ServerHandler {
     }
   }
 
-  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<void> {
-    if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
-      throw new Error("SSHFileOperations is not initialized.");
-    }
+  // async amendFile(filePath: string, content: string, backup: boolean = true): Promise<void> {
+  //   if (!this.fileOperations) {
+  //     debug('SSHFileOperations not initialized.');
+  //     throw new Error("SSHFileOperations is not initialized.");
+  //   }
 
-    try {
-      await this.fileOperations.amendFile(filePath, content, backup);
-      debug(`File ${filePath} amended successfully.`);
-    } catch (error) {
-      debug(`Error amending file ${filePath}: ${error}`);
-      throw new Error('Failed to amend file.');
-    }
-  }
+  //   try {
+  //     await this.fileOperations.amendFile(filePath, content, backup);
+  //     debug(`File ${filePath} amended successfully.`);
+  //   } catch (error) {
+  //     debug(`Error amending file ${filePath}: ${error}`);
+  //     throw new Error('Failed to amend file.');
+  //   }
+  // }
 
   async executeCommand(command: string, timeout: number = 60000, directory?: string): Promise<{ stdout: string; stderr: string }> {
     if (!this.commandExecutor) {

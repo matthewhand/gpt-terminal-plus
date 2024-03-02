@@ -103,9 +103,21 @@ export abstract class ServerHandler {
 
   // Abstract methods declarations (to be implemented by derived classes)
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
-  abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
-  abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
-  abstract updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
-  abstract amendFile(filePath: string, content: string): Promise<boolean>;
+  async listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]> {
+    throw new Error("listFiles operation is not supported by this server handler.");
+  }
+
+  async createFile(directory: string, filename: string, content: string, backup: boolean = false): Promise<boolean> {
+    throw new Error("createFile operation is not supported by this server handler.");
+  }
+
+  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
+    throw new Error("updateFile operation is not supported by this server handler.");
+  }
+
+  async amendFile(filePath: string, content: string, backup: boolean = false): Promise<boolean> {
+    throw new Error("amendFile operation is not supported by this server handler.");
+  }  
+  
   abstract getSystemInfo(): Promise<SystemInfo>;
 }
