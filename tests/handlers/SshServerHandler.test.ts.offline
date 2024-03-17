@@ -1,13 +1,32 @@
+// Importing necessary modules and types
 import SshServerHandler from '../../src/handlers/SshServerHandler';
 import { ServerConfig } from '../../src/types';
-import * as fs from 'fs';
+import { Client } from 'ssh2'; // Assuming ssh2.Client is used in SshServerHandler
 
-// Mock fs to prevent actual file system operations during tests
+// Mocking the fs module to prevent actual file system operations during tests
 jest.mock('fs', () => ({
-  readFileSync: jest.fn().mockReturnValue("mocked key"),
+  promises: {
+    readFile: jest.fn().mockResolvedValue("mocked key"), // Mocking fs.promises.readFile
+  },
 }));
 
-// Sample server configuration
+// Mocking the ssh2 module, specifically the Client class
+jest.mock('ssh2', () => {
+  return {
+    Client: jest.fn().mockImplementation(() => ({
+      on: jest.fn((event, callback) => {
+        if (event === 'ready') {
+          callback();
+        }
+        return this; // To support chaining
+      }),
+      connect: jest.fn(),
+      end: jest.fn(),
+    })),
+  };
+});
+
+// Sample server configuration for testing
 const mockServerConfig: ServerConfig = {
   host: 'example.com',
   username: 'testUser',
@@ -29,17 +48,21 @@ describe('SshServerHandler', () => {
   });
 
   it('should handle executeCommand with a simple echo command', async () => {
-    // Mock the method to avoid actual SSH connections
-    sshServerHandler.executeCommand = jest.fn().mockResolvedValue({
+    // Prepare the mock for executeCommand to avoid actual SSH connections
+    const mockExecuteCommand = jest.fn().mockResolvedValue({
       stdout: 'test output',
       stderr: '',
     });
+    sshServerHandler.executeCommand = mockExecuteCommand;
 
+    // Execute the command using the mocked method
     const result = await sshServerHandler.executeCommand('echo "Hello, world!"');
+
+    // Validate the expected results
+    expect(mockExecuteCommand).toHaveBeenCalledWith('echo "Hello, world!"', undefined, undefined); // Adjust as per actual signature
     expect(result.stdout).toBe('test output');
     expect(result.stderr).toBe('');
   });
 
-  // Add more tests as needed
+  // Additional tests as needed
 });
-

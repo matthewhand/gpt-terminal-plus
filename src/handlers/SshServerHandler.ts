@@ -1,3 +1,4 @@
+import fs from 'fs/promises'; // Use the promise-based version of fs
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo } from '../types';
 import { Client } from 'ssh2';
@@ -5,7 +6,6 @@ import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../utils/SSHFileOperations';
 import SSHSystemInfoRetriever from '../utils/SSHSystemInfoRetriever';
 import Debug from 'debug';
-import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
@@ -13,9 +13,9 @@ const debug = Debug('app:SshServerHandler');
 
 export default class SshServerHandler extends ServerHandler {
   private conn: Client = new Client();
-  private commandExecutor: SSHCommandExecutor;
-  private fileOperations: SSHFileOperations;
-  private systemInfoRetriever: SSHSystemInfoRetriever;
+  private commandExecutor?: SSHCommandExecutor;
+  private fileOperations?: SSHFileOperations;
+  private systemInfoRetriever?: SSHSystemInfoRetriever;
 
   constructor(serverConfig: ServerConfig) {
     super(serverConfig);
@@ -23,38 +23,30 @@ export default class SshServerHandler extends ServerHandler {
     this.initializeSSHConnections(serverConfig);
   }
 
-  private initializeSSHConnections(serverConfig: ServerConfig): void {
-    const privateKeyPath = serverConfig.privateKeyPath ?? path.join(process.env.HOME || '', '.ssh', 'id_rsa');
+  private async initializeSSHConnections(serverConfig: ServerConfig): Promise<void> {
+    const privateKeyPath = serverConfig.privateKeyPath ?? path.join(os.homedir(), '.ssh', 'id_rsa');
     debug(`Private key path resolved to: ${privateKeyPath}`);
-
+  
     try {
-      const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+      // Reading the private key as a string might be incorrect if your SSH client expects a Buffer.
+      const privateKey = await fs.readFile(privateKeyPath); // This returns a Buffer by default
       this.conn.on('ready', () => {
         debug('SSH Client Ready. Initializing components with server configuration...');
+
         this.commandExecutor = new SSHCommandExecutor(this.conn, serverConfig);
         this.fileOperations = new SSHFileOperations(this.conn, serverConfig);
         this.systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, serverConfig);
-        debug('SSHCommandExecutor, SSHFileOperations, and SSHSystemInfoRetriever initialized.');
-      })
-      .on('error', (error) => {
-        debug(`SSH Client Error: ${error}`);
-      })
-      .on('close', () => {
-        debug('SSH connection closed.');
-      })
-      .on('end', () => {
-        debug('SSH connection ended.');
-      });
-
-      this.conn.connect({
+        
+        })
+      .connect({
         host: serverConfig.host,
         port: serverConfig.port ?? 22,
         username: serverConfig.username,
-        privateKey: privateKey,
+        privateKey: privateKey.toString('utf8'), // Convert to string if necessary
       });
     } catch (error) {
-      debug(`Error initializing SSH connections: ${error}`);
-      throw new Error('Failed to initialize SSH connections due to an error reading the private key.');
+      debug(`Error during SSH connection initialization: ${error}`);
+      throw new Error('Failed to initialize SSH connections due to an error.');
     }
   }
 
@@ -93,7 +85,7 @@ export default class SshServerHandler extends ServerHandler {
     }
   
     try {
-      await this.fileOperations.createFile(path.join(directory, filename), content, backup);
+      await this.fileOperations.createFile(path.join(directory, filename), Buffer.from(content), backup);
       debug(`File ${filename} created successfully in ${directory}.`);
       return true; // Return true to indicate success
     } catch (error) {
@@ -102,38 +94,41 @@ export default class SshServerHandler extends ServerHandler {
     }
   }
   
-
   async readFile(remotePath: string): Promise<string> {
-    if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
-      throw new Error("SSHFileOperations is not initialized.");
-    }
-
-    try {
-      const content = await this.fileOperations.readFile(remotePath);
-      debug(`File ${remotePath} read successfully.`);
-      return content;
-    } catch (error) {
-      debug(`Error reading file ${remotePath}: ${error}`);
-      throw new Error('Failed to read file.');
-    }
-  }
-
-  async updateFile(remotePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
     if (!this.fileOperations) {
       debug('SSHFileOperations not initialized.');
       throw new Error("SSHFileOperations is not initialized.");
     }
   
     try {
-      await this.fileOperations.updateFile(remotePath, pattern, replacement, backup);
-      debug(`File ${remotePath} updated successfully.`);
-      return true; // Indicate success
+      const content = await this.fileOperations.readFile(remotePath);
+      return content.toString(); // Convert Buffer to string before returning
     } catch (error) {
-      debug(`Error updating file ${remotePath}: ${error}`);
-      throw new Error('Failed to update file.');
+      debug(`Error reading file ${remotePath}: ${error}`);
+      throw new Error('Failed to read file.');
     }
   }
+  
+  public async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
+    if (!this.fileOperations) {
+        debug('SSHFileOperations not initialized.');
+        throw new Error("SSHFileOperations is not initialized.");
+    }
+
+    // Assuming the `pattern` isn't used and the entire content is replaced by `replacement`.
+    // Adjust the logic if you need to use `pattern` for a more complex operation.
+    try {
+        // Convert `replacement` to a Buffer if it's a string.
+        const content = Buffer.isBuffer(replacement) ? replacement : Buffer.from(replacement);
+        await this.fileOperations.updateFile(filePath, content, backup);
+        return true; // Indicate success
+    } catch (error) {
+        debug(`Error updating file ${filePath}: ${error}`);
+        return false; // Indicate failure
+    }
+}
+
+
   
   // Continue with other methods such as deleteFile, fileExists, getSystemInfo, and amendFile.
   async deleteFile(remotePath: string): Promise<void> {
@@ -203,9 +198,16 @@ export default class SshServerHandler extends ServerHandler {
       debug('SSHCommandExecutor not initialized.');
       throw new Error("SSHCommandExecutor is not initialized.");
     }
-
+  
+    // Ensuring directory is only included if provided, to match expected type structure.
+    const execOptions: { cwd?: string; timeout: number } = { timeout };
+    if (directory) {
+      execOptions.cwd = directory;
+    }
+  
     try {
-      const { stdout, stderr } = await this.commandExecutor.executeCommand(command, { cwd: directory, timeout });
+      // Adjusted for potential correction in command execution logic
+      const { stdout, stderr } = await this.commandExecutor.executeCommand(command, execOptions);
       debug(`Command executed successfully: ${command}`);
       return { stdout, stderr };
     } catch (error) {

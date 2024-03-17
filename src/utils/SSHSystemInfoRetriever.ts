@@ -35,10 +35,21 @@ class SSHSystemInfoRetriever {
     const localScriptPath = path.join(__dirname, '..', 'scripts', scriptName);
     const uniqueFilename = `remote_system_info_${uuidv4()}.${scriptName.split('.').pop()}`;
     const remoteScriptPath = `/tmp/${uniqueFilename}`;
-
+  
     await this.transferAndExecuteScript(localScriptPath, remoteScriptPath, command);
     const stdout = await this.retrieveScriptOutput(`${remoteScriptPath}.out`);
-    return this.constructSystemInfo(JSON.parse(stdout));
+  
+    // Attempt to parse JSON, handle parsing errors gracefully
+    let parsedOutput;
+    try {
+      parsedOutput = JSON.parse(stdout);
+    } catch (error) {
+      debug(`Error parsing JSON from script output: ${error}`);
+      // Return default system info if JSON parsing fails
+      return this.getDefaultSystemInfo();
+    }
+  
+    return this.constructSystemInfo(parsedOutput);
   }
 
   private async transferAndExecuteScript(localScriptPath: string, remoteScriptPath: string, command: string): Promise<void> {

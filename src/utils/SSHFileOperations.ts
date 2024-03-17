@@ -104,6 +104,25 @@ class SSHFileOperations {
         await sftp.end();
         return fileList.map(file => file.name);
     }
+
+    public async updateFile(remotePath: string, content: Buffer | string, backup: boolean = true): Promise<void> {
+        const sftp = await this.connectSFTP();
+    
+        // Check if a backup is needed and perform it
+        if (backup) {
+            const exists = await this.fileExists(remotePath);
+            if (exists) {
+                const backupPath = `${remotePath}.${Date.now()}.bak`;
+                await sftp.rename(remotePath, backupPath);
+            }
+        }
+    
+        // Ensure content is a Buffer before sending
+        const bufferContent = Buffer.isBuffer(content) ? content : Buffer.from(content);
+        await sftp.put(bufferContent, remotePath);
+        await sftp.end();
+    }
+    
 }
 
 export default SSHFileOperations;

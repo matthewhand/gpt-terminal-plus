@@ -46,7 +46,7 @@ async getSystemInfo(): Promise<SystemInfo> {
       .join(',')
       .replace(/,\s*}/, '}') // Remove trailing commas before closing braces
       .replace(/:\s*,/g, ':"",'); // Replace missing values with empty strings
-
+    
       try {
           const result = JSON.parse(transformedStdout);
           console.log("Parsed system info:", result); // Additional logging for debugging
