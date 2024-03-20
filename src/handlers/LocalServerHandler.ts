@@ -76,22 +76,33 @@ protected getDefaultSystemInfo(): SystemInfo {
   };
 }
 
-private constructSystemInfo(rawData: any): SystemInfo {
-    // Construct the SystemInfo object from the parsed JSON data
-    return {
-        homeFolder: rawData.homeFolder || '',
-        type: rawData.type || '',
-        release: rawData.release || '',
-        platform: rawData.platform || '',
-        powershellVersion: rawData.powershellVersion || '',
-        architecture: rawData.architecture || '',
-        totalMemory: rawData.totalMemory || 0,
-        freeMemory: rawData.freeMemory || 0,
-        uptime: rawData.uptime || 0,
-        currentFolder: rawData.currentFolder || ''
-        // Add other fields as necessary, based on your JSON structure
-    };
+// This function now takes a parameter of type Partial<SystemInfo> and returns a SystemInfo
+private constructSystemInfo(rawData: Partial<SystemInfo>): SystemInfo {
+  // The rawData parameter is now assumed to partially match SystemInfo
+  const defaultInfo: SystemInfo = {
+      homeFolder: '/',
+      type: 'Unknown',
+      release: 'N/A',
+      platform: 'Unknown',
+      architecture: 'Unknown',
+      totalMemory: 0,
+      freeMemory: 0,
+      uptime: 0,
+      currentFolder: '/',
+      // You can set defaults for optional properties if needed
+      pythonVersion: 'N/A',
+      powershellVersion: 'N/A',
+      cpuModel: 'N/A',
+  };
+
+  // Merge the rawData with defaultInfo to ensure all fields of SystemInfo are populated
+  return { ...defaultInfo, ...rawData };
 }
+
+// Example usage
+// const partialInfo: Partial<SystemInfo> = { platform: 'linux', totalMemory: 4096 };
+// const completeInfo: SystemInfo = this.constructSystemInfo(partialInfo);
+
   async executeCommand(command: string, timeout: number = 5000, directory: string): Promise<{ stdout: string; stderr: string }> {
     const execOptions = {
       timeout,

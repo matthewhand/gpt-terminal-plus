@@ -1,1 +1,1 @@
-declare var selectedServer: any;
+declare const selectedServer: string; 

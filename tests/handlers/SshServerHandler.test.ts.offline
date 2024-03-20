@@ -1,68 +1,78 @@
-// Importing necessary modules and types
+// SshServerHandler.test.ts
+import { Client } from 'ssh2';
 import SshServerHandler from '../../src/handlers/SshServerHandler';
 import { ServerConfig } from '../../src/types';
-import { Client } from 'ssh2'; // Assuming ssh2.Client is used in SshServerHandler
 
-// Mocking the fs module to prevent actual file system operations during tests
-jest.mock('fs', () => ({
-  promises: {
-    readFile: jest.fn().mockResolvedValue("mocked key"), // Mocking fs.promises.readFile
-  },
+// Mock fs.promises.readFile to prevent actual file system reads
+jest.mock('fs/promises', () => ({
+  readFile: jest.fn(() => Promise.resolve('mock-private-key')),
 }));
 
-// Mocking the ssh2 module, specifically the Client class
-jest.mock('ssh2', () => {
-  return {
-    Client: jest.fn().mockImplementation(() => ({
-      on: jest.fn((event, callback) => {
-        if (event === 'ready') {
-          callback();
-        }
-        return this; // To support chaining
+// Mock the 'ssh2' module with correct type annotations
+jest.mock('ssh2', () => ({
+  Client: jest.fn().mockImplementation(() => ({
+      on: jest.fn((event, handler) => {
+          if (event === 'ready') {
+              setTimeout(handler, 0); // Simulate an async "ready" event
+          }
+          return this; // 'this' refers to the mock Client instance
       }),
       connect: jest.fn(),
-      end: jest.fn(),
-    })),
-  };
-});
-
-// Sample server configuration for testing
-const mockServerConfig: ServerConfig = {
-  host: 'example.com',
-  username: 'testUser',
-  privateKeyPath: '/fake/path/id_rsa',
-  port: 22, // Default SSH port
-  protocol: 'ssh',
-};
+      exec: jest.fn((command, callback) => {
+          callback(null, {
+              on: jest.fn((event, handler) => {
+                  if (event === 'data') {
+                      handler(Buffer.from('mock output')); // Simulate receiving data
+                  }
+                  return this; // 'this' refers to the stream
+              }),
+              stderr: {
+                  on: jest.fn(),
+              },
+              end: jest.fn(),
+          });
+      }),
+  })),
+}));
 
 describe('SshServerHandler', () => {
   let sshServerHandler: SshServerHandler;
+  const mockServerConfig: ServerConfig = {
+      host: 'mock-host',
+      port: 22,
+      username: 'mock-user',
+      privateKeyPath: '/mock/path/id_rsa',
+  };
 
-  beforeAll(() => {
-    // Initialize SshServerHandler with the mock configuration
-    sshServerHandler = new SshServerHandler(mockServerConfig);
+  beforeEach(() => {
+      // Reset all mocks before each test
+      jest.clearAllMocks();
+      // Create a new instance of SshServerHandler for each test
+      sshServerHandler = new SshServerHandler(mockServerConfig);
   });
 
-  it('should successfully create an instance', () => {
-    expect(sshServerHandler).toBeDefined();
+  it('should successfully create an instance and initialize', async () => {
+      // Call initialize and expect it not to throw
+      await expect(sshServerHandler.initialize()).resolves.not.toThrow();
+      // Verify that 'connect' was called with the correct arguments
+      expect(Client.prototype.connect).toHaveBeenCalledWith({
+          host: 'mock-host',
+          port: 22,
+          username: 'mock-user',
+          privateKey: 'mock-private-key',
+      });
   });
 
-  it('should handle executeCommand with a simple echo command', async () => {
-    // Prepare the mock for executeCommand to avoid actual SSH connections
-    const mockExecuteCommand = jest.fn().mockResolvedValue({
-      stdout: 'test output',
-      stderr: '',
-    });
-    sshServerHandler.executeCommand = mockExecuteCommand;
-
-    // Execute the command using the mocked method
-    const result = await sshServerHandler.executeCommand('echo "Hello, world!"');
-
-    // Validate the expected results
-    expect(mockExecuteCommand).toHaveBeenCalledWith('echo "Hello, world!"', undefined, undefined); // Adjust as per actual signature
-    expect(result.stdout).toBe('test output');
-    expect(result.stderr).toBe('');
+  it('should execute a simple echo command', async () => {
+      // Define a mock command
+      const command = 'echo "Hello, world!"';
+      // Execute the command using the SshServerHandler instance
+      const result = await sshServerHandler.executeCommand(command);
+      // Expect the stdout to match the mocked output
+      expect(result.stdout).toBe('mock output');
+      // Adjust based on your implementation details for stderr
+      expect(result.stderr).toBeUndefined();
   });
 
-  // Additional tests as needed
+  // Add more tests as needed for other methods and error handling scenarios
 });

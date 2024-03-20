@@ -5,7 +5,7 @@
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "outDir": "dist",
+    "outDir": "./dist",
     "types": ["jest", "node"],
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
@@ -16,5 +16,10 @@
   "files": [
     "src/types/express.d.ts",
     "src/global.d.ts"
-  ]
+  ],
+  "paths": {
+    "@handlers/*": ["src/handlers/*"],
+    "@utils/*": ["src/utils/*"]
+  }
+  
 }

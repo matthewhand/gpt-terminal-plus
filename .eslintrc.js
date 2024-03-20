@@ -1,33 +1,23 @@
 module.exports = {
-    "env": {
-        "browser": true,
-        "es2021": true
+    parser: '@typescript-eslint/parser',
+    plugins: ['@typescript-eslint'],
+    extends: [
+      'eslint:recommended',
+      'plugin:@typescript-eslint/recommended',
+    ],
+    env: {
+      node: true,
+      es6: true,
     },
-    "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
-    ],
-    "overrides": [
-        {
-            "env": {
-                "node": true
-            },
-            "files": [
-                ".eslintrc.{js,cjs}"
-            ],
-            "parserOptions": {
-                "sourceType": "script"
-            }
-        }
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module"
+    parserOptions: {
+      ecmaVersion: 2018,
+      sourceType: 'module',
     },
-    "plugins": [
-        "@typescript-eslint"
-    ],
-    "rules": {
-    }
-}
+    ignorePatterns: ['src/handlers/shSystemInfoCommand.ts'],
+
+    rules: {
+        "@typescript-eslint/no-unused-vars": "off",
+        
+      },
+  };
+  

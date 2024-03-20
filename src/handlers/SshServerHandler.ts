@@ -1,4 +1,4 @@
-import fs from 'fs/promises'; // Use the promise-based version of fs
+import fs from 'fs/promises';
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo } from '../types';
 import { Client } from 'ssh2';
@@ -13,45 +13,64 @@ const debug = Debug('app:SshServerHandler');
 
 export default class SshServerHandler extends ServerHandler {
   private conn: Client = new Client();
-  private commandExecutor?: SSHCommandExecutor;
-  private fileOperations?: SSHFileOperations;
-  private systemInfoRetriever?: SSHSystemInfoRetriever;
+  private commandExecutor: SSHCommandExecutor;
+  private fileOperations: SSHFileOperations;
+  private systemInfoRetriever: SSHSystemInfoRetriever;
 
   constructor(serverConfig: ServerConfig) {
-    super(serverConfig);
-    debug(`Initializing SshServerHandler with serverConfig: ${JSON.stringify(serverConfig, null, 2)}`);
-    this.initializeSSHConnections(serverConfig);
+      super(serverConfig);
+      debug(`Initializing SshServerHandler with serverConfig: ${JSON.stringify(serverConfig, null, 2)}`);
+      this.commandExecutor = new SSHCommandExecutor(this.conn, serverConfig);
+      this.fileOperations = new SSHFileOperations(this.conn, serverConfig);
+      this.systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, serverConfig);
   }
 
-  private async initializeSSHConnections(serverConfig: ServerConfig): Promise<void> {
-    const privateKeyPath = serverConfig.privateKeyPath ?? path.join(os.homedir(), '.ssh', 'id_rsa');
-    debug(`Private key path resolved to: ${privateKeyPath}`);
+  async initialize(): Promise<void> {
+      const privateKeyPath = this.serverConfig.privateKeyPath ?? path.join(os.homedir(), '.ssh', 'id_rsa');
+      try {
+          const privateKey = await fs.readFile(privateKeyPath);
+          this.conn.on('ready', () => {
+              debug('SSH Client is ready.');
+              // Initialization logic can be placed here if needed
+          }).on('error', (err) => {
+              debug(`SSH Client error: ${err.message}`);
+          }).connect({
+              host: this.serverConfig.host,
+              port: this.serverConfig.port ?? 22,
+              username: this.serverConfig.username,
+              privateKey: privateKey,
+          });
+
+          // Correctly handle the promise for 'ready' event
+          await new Promise<void>((resolve, reject) => {
+              this.conn.on('ready', () => resolve());
+              this.conn.on('error', (err) => reject(err));
+          });
+      } catch (error) {
+          debug(`Error during SSH connection initialization: ${error}`);
+          throw new Error('Failed to initialize SSH connections due to an error.');
+      }
+  }
+
+  async executeCommand(command: string, timeout: number = 60000, directory?: string): Promise<{ stdout: string; stderr: string }> {
+    // Wrap options in an object to match the updated implementation
+    const options = { cwd: directory, timeout };
+    
+    // Call the executeCommand of SSHCommandExecutor with the options object
+    const executionResult = await this.commandExecutor.executeCommand(command, options);
   
-    try {
-      // Reading the private key as a string might be incorrect if your SSH client expects a Buffer.
-      const privateKey = await fs.readFile(privateKeyPath); // This returns a Buffer by default
-      this.conn.on('ready', () => {
-        debug('SSH Client Ready. Initializing components with server configuration...');
-
-        this.commandExecutor = new SSHCommandExecutor(this.conn, serverConfig);
-        this.fileOperations = new SSHFileOperations(this.conn, serverConfig);
-        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, serverConfig);
-        
-        })
-      .connect({
-        host: serverConfig.host,
-        port: serverConfig.port ?? 22,
-        username: serverConfig.username,
-        privateKey: privateKey.toString('utf8'), // Convert to string if necessary
-      });
-    } catch (error) {
-      debug(`Error during SSH connection initialization: ${error}`);
-      throw new Error('Failed to initialize SSH connections due to an error.');
+    // Check if a timeout occurred and handle it accordingly
+    if ('timeout' in executionResult && executionResult.timeout) {
+      // Handle the timeout case here, e.g., by logging a warning
+      console.warn('Command execution timed out.');
     }
+  
+    // Return the result without the timeout property to match the expected signature
+    return { stdout: executionResult.stdout, stderr: executionResult.stderr };
   }
 
-  // Updated listFiles method
-  async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
+// Updated listFiles method
+async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
     debug(`Listing files in directory: ${directory}, limit: ${limit}, offset: ${offset}, orderBy: ${orderBy}`);
     if (!this.fileOperations) {
       debug('SSHFileOperations not initialized.');
@@ -193,26 +212,4 @@ export default class SshServerHandler extends ServerHandler {
   //   }
   // }
 
-  async executeCommand(command: string, timeout: number = 60000, directory?: string): Promise<{ stdout: string; stderr: string }> {
-    if (!this.commandExecutor) {
-      debug('SSHCommandExecutor not initialized.');
-      throw new Error("SSHCommandExecutor is not initialized.");
-    }
-  
-    // Ensuring directory is only included if provided, to match expected type structure.
-    const execOptions: { cwd?: string; timeout: number } = { timeout };
-    if (directory) {
-      execOptions.cwd = directory;
-    }
-  
-    try {
-      // Adjusted for potential correction in command execution logic
-      const { stdout, stderr } = await this.commandExecutor.executeCommand(command, execOptions);
-      debug(`Command executed successfully: ${command}`);
-      return { stdout, stderr };
-    } catch (error) {
-      debug(`Error executing command ${command}: ${error}`);
-      throw new Error('Failed to execute command.');
-    }
-  }
 }

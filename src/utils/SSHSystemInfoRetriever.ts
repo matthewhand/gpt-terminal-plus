@@ -101,7 +101,8 @@ class SSHSystemInfoRetriever {
     });
   }
 
-  private constructSystemInfo(rawData: any): SystemInfo {
+  private constructSystemInfo(rawData: Partial<SystemInfo>): SystemInfo {
+    // Explicitly specify that rawData is a Partial<SystemInfo>
     // Ensure you validate/transform rawData before directly assigning it
     return {
       homeFolder: rawData.homeFolder || '/',
@@ -113,6 +114,7 @@ class SSHSystemInfoRetriever {
       freeMemory: rawData.freeMemory || 0,
       uptime: rawData.uptime || 0,
       currentFolder: rawData.currentFolder || '/',
+      // Include other fields as necessary
     };
   }
 

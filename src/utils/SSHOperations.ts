@@ -22,16 +22,16 @@ class SSHOperations {
             let stdout = '';
             let stderr = '';
 
-            stream.on('data', (data) => {
+            stream.on('data', (data: Buffer) => { // Specify Buffer as the type for data
                 stdout += data.toString();
             });
 
-            stream.stderr.on('data', (data) => {
+            stream.stderr.on('data', (data: Buffer) => { // Specify Buffer as the type for data
                 stderr += data.toString();
             });
 
             return new Promise((resolve, reject) => {
-                stream.on('close', (code) => {
+                stream.on('close', (code: number) => { // Specify number as the type for code
                     if (code === 0) resolve({ stdout, stderr });
                     else reject(new Error(`Command exited with code ${code}: ${stderr}`));
                 });
@@ -41,7 +41,7 @@ class SSHOperations {
             throw error;
         }
     }
-
+    
     async amendFile(remoteFilePath: string, content: string, backup: boolean = true): Promise<void> {
         const tmpFilePath = `/tmp/${path.basename(remoteFilePath)}.${Date.now()}`;
         const originalContent = await this.readFile(remoteFilePath);

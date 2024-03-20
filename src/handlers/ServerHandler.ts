@@ -39,13 +39,15 @@ export abstract class ServerHandler {
       const { default: LocalServerHandler } = await import('./LocalServerHandler');
       return new LocalServerHandler(serverConfig);
     } else {
-      switch (serverConfig.protocol) { // serverConfig is now resolved
-        case 'ssh':
+      switch (serverConfig.protocol) {
+        case 'ssh': {
           const { default: SshServerHandler } = await import('./SshServerHandler');
           return new SshServerHandler(serverConfig);
-        case 'ssm':
+        }
+        case 'ssm': {
           const { default: SsmServerHandler } = await import('./SsmServerHandler');
           return new SsmServerHandler(serverConfig);
+        }
         default:
           throw new Error(`Unsupported protocol: ${serverConfig.protocol}`);
       }
