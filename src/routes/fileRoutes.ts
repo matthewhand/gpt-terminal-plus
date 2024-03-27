@@ -1,6 +1,4 @@
 import express, { Response } from 'express';
-import { ServerHandler } from '../handlers/ServerHandler';
-import ServerConfigManager from './ServerConfigManager';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import { ensureServerIsSet } from '../middlewares';
@@ -11,12 +9,6 @@ const debug = Debug('app:fileRoutes');
 const router = express.Router();
 router.use(ensureServerIsSet);
 
-async function getServerHandler(): Promise<ServerHandler> {
-  const configManager = ServerConfigManager.getInstance();
-  const serverConfig = configManager.getServerConfig();
-  return ServerHandler.getInstance(serverConfig);
-}
-
 const handleServerError = (error: unknown, res: Response, debugContext: string) => {
   const errorMsg = error instanceof Error ? error.message : 'Unknown error';
   debug(`${debugContext}: ${errorMsg}`);
@@ -24,10 +16,11 @@ const handleServerError = (error: unknown, res: Response, debugContext: string) 
 };
 
 router.post('/set-current-folder', async (req, res) => {
-  const directory = req.body.directory;
+  const { directory } = req.body;
   try {
-    const serverHandler = await getServerHandler();
-    const success = await serverHandler.setCurrentDirectory(directory);
+    // Type assertion here
+    const serverHandler = req.serverHandler!;
+    const success = serverHandler.setCurrentDirectory(directory);
     res.status(success ? 200 : 400).json({ 
       output: success ? `Current directory set to ${directory}` : 'Directory does not exist.'
     });
@@ -39,7 +32,8 @@ router.post('/set-current-folder', async (req, res) => {
 router.post(['/create-file'], async (req, res) => {
   const { filename, content, backup = true, directory } = req.body;
   try {
-    const serverHandler = await getServerHandler();
+    // Type assertion here
+    const serverHandler = req.serverHandler!;
     const targetDirectory = directory || await serverHandler.getCurrentDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
@@ -59,7 +53,8 @@ router.post(['/create-file'], async (req, res) => {
 router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   try {
-    const serverHandler = await getServerHandler();
+    // Type assertion here
+    const serverHandler = req.serverHandler!;
     const targetDirectory = directory || await serverHandler.getCurrentDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath);
@@ -79,7 +74,8 @@ router.post('/update-file', async (req, res) => {
 router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
   try {
-    const serverHandler = await getServerHandler();
+    // Type assertion here
+    const serverHandler = req.serverHandler!;
     const targetDirectory = directory || await serverHandler.getCurrentDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });

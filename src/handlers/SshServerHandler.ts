@@ -26,12 +26,12 @@ export default class SshServerHandler extends ServerHandler {
   }
 
   async initialize(): Promise<void> {
+      debug(`Attempting to initialize SSH connection with configuration: ${JSON.stringify(this.serverConfig)}`);
       const privateKeyPath = this.serverConfig.privateKeyPath ?? path.join(os.homedir(), '.ssh', 'id_rsa');
       try {
           const privateKey = await fs.readFile(privateKeyPath);
           this.conn.on('ready', () => {
-              debug('SSH Client is ready.');
-              // Initialization logic can be placed here if needed
+              debug('SSH Client is ready. Connection established successfully.');
           }).on('error', (err) => {
               debug(`SSH Client error: ${err.message}`);
           }).connect({
@@ -41,55 +41,56 @@ export default class SshServerHandler extends ServerHandler {
               privateKey: privateKey,
           });
 
-          // Correctly handle the promise for 'ready' event
           await new Promise<void>((resolve, reject) => {
-              this.conn.on('ready', () => resolve());
-              this.conn.on('error', (err) => reject(err));
+              this.conn.on('ready', () => {
+                debug('SSH Client ready event triggered.');
+                resolve();
+              });
+              this.conn.on('error', (err) => {
+                debug(`SSH Client error event triggered: ${err.message}`);
+                reject(err);
+              });
           });
       } catch (error) {
           debug(`Error during SSH connection initialization: ${error}`);
-          throw new Error('Failed to initialize SSH connections due to an error.');
+          throw new Error('Failed to initialize SSH connection due to an error.');
       }
   }
 
   async executeCommand(command: string, timeout: number = 60000, directory?: string): Promise<{ stdout: string; stderr: string }> {
-    // Wrap options in an object to match the updated implementation
+    debug(`Executing command: ${command}, Timeout: ${timeout}, Directory: ${directory}`);
     const options = { cwd: directory, timeout };
     
-    // Call the executeCommand of SSHCommandExecutor with the options object
     const executionResult = await this.commandExecutor.executeCommand(command, options);
   
-    // Check if a timeout occurred and handle it accordingly
     if ('timeout' in executionResult && executionResult.timeout) {
-      // Handle the timeout case here, e.g., by logging a warning
-      console.warn('Command execution timed out.');
+      debug('Command execution timed out.');
     }
   
-    // Return the result without the timeout property to match the expected signature
     return { stdout: executionResult.stdout, stderr: executionResult.stderr };
   }
 
-// Updated listFiles method
-async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
-    debug(`Listing files in directory: ${directory}, limit: ${limit}, offset: ${offset}, orderBy: ${orderBy}`);
+  async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
+    debug(`Listing files in directory: ${directory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
     if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
+      debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
 
     try {
       const allFiles = await this.fileOperations.listFiles(directory);
+      debug(`Files listed successfully in directory: ${directory}`);
 
-      // Placeholder for orderBy implementation, assuming allFiles is an array of filenames
       let orderedFiles = allFiles;
       if (orderBy === "datetime") {
-        // Implement sorting by datetime if metadata available
-        debug('Ordering by datetime not implemented.');
+        debug('Ordering by datetime not implemented yet.');
       } else {
-        orderedFiles = allFiles.sort();
+        orderedFiles.sort();
+        debug('Files sorted by filename.');
       }
 
       const slicedFiles = orderedFiles.slice(offset, offset + limit);
+      debug(`Files sliced according to limit and offset. Count: ${slicedFiles.length}`);
       return slicedFiles;
     } catch (error) {
       debug(`Error listing files in ${directory}: ${error}`);
@@ -98,8 +99,9 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
   }
 
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
+    debug(`Attempting to create file: ${filename} in directory: ${directory} with backup: ${backup}`);
     if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
+      debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
   
@@ -114,13 +116,15 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
   }
   
   async readFile(remotePath: string): Promise<string> {
+    debug(`Attempting to read file: ${remotePath}`);
     if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
+      debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
   
     try {
       const content = await this.fileOperations.readFile(remotePath);
+      debug(`File ${remotePath} read successfully.`);
       return content.toString(); // Convert Buffer to string before returning
     } catch (error) {
       debug(`Error reading file ${remotePath}: ${error}`);
@@ -129,30 +133,27 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
   }
   
   public async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
+    debug(`Attempting to update file: ${filePath} with pattern: ${pattern} and replacement: ${replacement}, backup: ${backup}`);
     if (!this.fileOperations) {
-        debug('SSHFileOperations not initialized.');
-        throw new Error("SSHFileOperations is not initialized.");
+      debug('SSHFileOperations not initialized. Throwing error.');
+      throw new Error("SSHFileOperations is not initialized.");
     }
 
-    // Assuming the `pattern` isn't used and the entire content is replaced by `replacement`.
-    // Adjust the logic if you need to use `pattern` for a more complex operation.
     try {
-        // Convert `replacement` to a Buffer if it's a string.
-        const content = Buffer.isBuffer(replacement) ? replacement : Buffer.from(replacement);
-        await this.fileOperations.updateFile(filePath, content, backup);
-        return true; // Indicate success
+      const content = Buffer.isBuffer(replacement) ? replacement : Buffer.from(replacement);
+      await this.fileOperations.updateFile(filePath, content, backup);
+      debug(`File ${filePath} updated successfully.`);
+      return true; // Indicate success
     } catch (error) {
-        debug(`Error updating file ${filePath}: ${error}`);
-        return false; // Indicate failure
+      debug(`Error updating file ${filePath}: ${error}`);
+      return false; // Indicate failure
     }
-}
+  }
 
-
-  
-  // Continue with other methods such as deleteFile, fileExists, getSystemInfo, and amendFile.
   async deleteFile(remotePath: string): Promise<void> {
+    debug(`Attempting to delete file: ${remotePath}`);
     if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
+      debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
 
@@ -166,14 +167,15 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
   }
 
   async fileExists(remotePath: string): Promise<boolean> {
+    debug(`Checking if file exists: ${remotePath}`);
     if (!this.fileOperations) {
-      debug('SSHFileOperations not initialized.');
+      debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
 
     try {
       const exists = await this.fileOperations.fileExists(remotePath);
-      debug(`File ${remotePath} exists check: ${exists}`);
+      debug(`File exists check for ${remotePath}: ${exists}`);
       return exists;
     } catch (error) {
       debug(`Error checking if file ${remotePath} exists: ${error}`);
@@ -182,8 +184,9 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
   }
 
   async getSystemInfo(): Promise<SystemInfo> {
+    debug('Attempting to retrieve system information.');
     if (!this.systemInfoRetriever) {
-      debug('SSHSystemInfoRetriever not initialized.');
+      debug('SSHSystemInfoRetriever not initialized. Throwing error.');
       throw new Error("SSHSystemInfoRetriever is not initialized.");
     }
 
@@ -196,20 +199,5 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
       throw new Error('Failed to retrieve system information.');
     }
   }
-
-  // async amendFile(filePath: string, content: string, backup: boolean = true): Promise<void> {
-  //   if (!this.fileOperations) {
-  //     debug('SSHFileOperations not initialized.');
-  //     throw new Error("SSHFileOperations is not initialized.");
-  //   }
-
-  //   try {
-  //     await this.fileOperations.amendFile(filePath, content, backup);
-  //     debug(`File ${filePath} amended successfully.`);
-  //   } catch (error) {
-  //     debug(`Error amending file ${filePath}: ${error}`);
-  //     throw new Error('Failed to amend file.');
-  //   }
-  // }
-
 }
+     

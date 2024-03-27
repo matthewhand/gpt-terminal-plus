@@ -13,22 +13,25 @@ export interface SystemInfo {
   cpuModel?: string;
 }
 
-// Updated ServerConfig interface to include all possible properties
 export interface ServerConfig {
-  host: string;                // Dynamically extracted from connectionString
-  privateKeyPath?: string;     // If not the default ~/.ssh/id_rsa or similar
-  keyPath?: string;            // Path to the SSH key file
-  posix?: boolean;             // Indicates if the server is POSIX-compliant
-  systemInfo?: 'python';       // Indicates if additional remote information should be fetched and how
-  port?: number;               // e.g. If not TCP/22 when using SSH
-  code?: boolean;              // Whether to use code cmd when using files operations
-  username?: string;           // Dynamically extracted from connectionString
-  protocol?: 'ssh' | 'ssm';    // Supported protocols
-  shell?: string;              // 'powershell' | null
-  region?: string;             // e.g. us-east-2
-  instanceId?: string;         // for SSM
-  homeFolder?: string;         // ~
-  cleanupScripts?: boolean;    // Delete temporary cmd scripts 
+  host: string;
+  privateKeyPath?: string;
+  keyPath?: string;
+  posix?: boolean;
+  systemInfo?: 'python' | 'bash';
+  port?: number;
+  code?: boolean;
+  username?: string;
+  protocol?: 'ssh' | 'ssm';
+  shell?: 'bash' | 'powershell' | null;
+  region?: string;
+  instanceId?: string;
+  homeFolder?: string;
+  cleanupScripts?: boolean;
+  // New flags for execution strategy control
+  useAdvancedExecution?: boolean; // Determines if advanced execution strategy should be used
+  useScreen?: boolean;             // Use 'screen' for command execution
+  useSftpTransfer?: boolean;       // Transfer command scripts via SFTP
 }
 
 export interface ServerHandlerInterface {
@@ -38,16 +41,14 @@ export interface ServerHandlerInterface {
   updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
   amendFile(filePath: string, content: string): Promise<boolean>;
   getSystemInfo(): Promise<SystemInfo>;
-  // fileExists(filePath: string): boolean;
   listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
 }
 
-// Define an interface for the AppConfig that now includes all the properties
 export interface AppConfig {
-  serverConfig: ServerConfig[]; // Reflects the new structure with an array of ServerConfig
-  commandTimeout: number;      // Time in milliseconds for command execution timeout
-  maxResponse: number;         // Maximum size of the response
-  port: number;                // Port number for the application to listen on
+  serverConfig: ServerConfig[];
+  commandTimeout: number;
+  maxResponse: number;
+  port: number;
 }
 
 export interface ResponsePage {
@@ -59,5 +60,5 @@ export interface ResponsePage {
 export interface PaginatedResponse {
   stdout: string[];
   stderr: string[];
-  timestamp: number; // Timestamp for cleanup purposes
+  timestamp: number;
 }

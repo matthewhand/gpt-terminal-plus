@@ -1,7 +1,6 @@
+// src/routes/commandRoutes.ts
 import express, { Request, Response } from 'express';
-import { ServerHandler } from '../handlers/ServerHandler';
-import ServerConfigManager from './ServerConfigManager';
-import config from 'config';
+import { ServerConfigUtils } from '../utils/ServerConfigUtils';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
 
@@ -15,25 +14,29 @@ interface RunCommandRequestBody {
 
 router.post('/run', async (req: Request, res: Response) => {
   const { command, timeout }: RunCommandRequestBody = req.body;
-
   if (!command) {
     return res.status(400).json({ error: 'Command is required' });
   }
 
   try {
-    const configManager = ServerConfigManager.getInstance();
-    const serverConfig = configManager.getServerConfig();
-    const serverHandler = await ServerHandler.getInstance(serverConfig);
-
-    const effectiveTimeout = timeout ?? config.get<number>('commandTimeout') ?? 180000;
+    // Use the serverHandler directly from the request, set by ensureServerIsSet middleware
+    const serverHandler = req.serverHandler;
+    if (!serverHandler) {
+      throw new Error('Server handler not set. Please ensure server is properly configured.');
+    }
+    
+    // Execute the command using the server handler
+    const effectiveTimeout = timeout ?? 180000; // Use a default timeout if not provided
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
     res.status(200).json(executionResult);
   } catch (error) {
+    debug(`Error executing command: ${error}`);
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
+// Ensure the server is set for each request in this route
 router.use(ensureServerIsSet);
 
 export default router;

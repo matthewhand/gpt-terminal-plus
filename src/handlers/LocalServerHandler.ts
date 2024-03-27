@@ -10,9 +10,7 @@ import { psSystemInfoCmd } from './psSystemInfoCommand'; // Importing PowerShell
 import { shSystemInfoCmd } from './shSystemInfoCommand'; // Importing Shell command
 
 export default class LocalServerHandler extends ServerHandler {
-  // Explicitly type serverConfig as ServerConfig
   protected serverConfig: ServerConfig;
-
   private execAsync = promisify(exec);
 
   constructor(serverConfig: ServerConfig) {
@@ -20,46 +18,34 @@ export default class LocalServerHandler extends ServerHandler {
     this.serverConfig = serverConfig;
   }
 
-// Assuming this method is part of the LocalServerHandler class within src/handlers/LocalServerHandler.ts
-async getSystemInfo(): Promise<SystemInfo> {
-  let shellCommand, execShell;
+  async getSystemInfo(): Promise<SystemInfo> {
+    let shellCommand, execShell;
 
-  if (this.serverConfig.shell) {
-      shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
-      execShell = this.serverConfig.shell;
-  } else {
-      shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
+    if (this.serverConfig.shell) {
+        shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
+        execShell = this.serverConfig.shell;
+    } else {
+        shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
+    }
+
+    try {
+        const execOptions = execShell ? { shell: execShell } : {};
+        const { stdout } = await this.execAsync(shellCommand, execOptions);
+
+        // Initialize the accumulator with a specific type
+        const systemInfoObj = stdout.trim().split('\n').reduce((acc: {[key: string]: string}, line) => {
+          const [key, value] = line.split(':').map(part => part.trim());
+          acc[key] = value;
+          return acc;
+        }, {});
+
+        console.log("Object system info:", systemInfoObj);
+        return this.constructSystemInfo(systemInfoObj);
+    } catch (error) {
+        console.error(`Error getting system information:`, error);
+        return this.getDefaultSystemInfo();
+    }
   }
-
-  try {
-      const execOptions = execShell ? { shell: execShell } : {};
-      const { stdout } = await this.execAsync(shellCommand, execOptions);
-
-      // Debugging: Log raw stdout
-      console.log("Raw stdout:", stdout);
-
-      // Improved transformation logic here
-      const transformedStdout = stdout
-      .trim()
-      .split('\n')
-      .map(line => line.replace(/(\w+):\s*(.*)/, '"$1": "$2"')) // Ensure keys and values are quoted
-      .join(',')
-      .replace(/,\s*}/, '}') // Remove trailing commas before closing braces
-      .replace(/:\s*,/g, ':"",'); // Replace missing values with empty strings
-    
-      try {
-          const result = JSON.parse(transformedStdout);
-          console.log("Parsed system info:", result); // Additional logging for debugging
-          return this.constructSystemInfo(result);
-      } catch (parseError) {
-          console.error(`Error parsing JSON from transformed stdout. Transformed output: ${transformedStdout}`, parseError);
-          return this.getDefaultSystemInfo();
-      }
-  } catch (error) {
-      console.error(`Error getting system information:`, error);
-      return this.getDefaultSystemInfo();
-  }
-}
 
 protected getDefaultSystemInfo(): SystemInfo {
   return {

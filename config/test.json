@@ -1,12 +1,18 @@
 {
-    "serverConfig": [
-      {
-        "host": "localhost",
-        "code": true,
-        "posix": false
-      }
-    ],
-    "commandTimeout": 180000,
-    "maxResponseSize": 2000
+  "serverConfig": [
+    {
+      "host": "localhost",
+      "code": true,
+      "posix": false
+    }
+  ],
+  "commandTimeout": 180000,
+  "maxResponseSize": 2000,
+  "testSshServer": {
+    "enable": false,
+    "host": "test-ssh-server.example.com",
+    "username": "testUser",
+    "privateKeyPath": "/path/to/test/privateKey",
+    "port": 22
   }
-  
+}
