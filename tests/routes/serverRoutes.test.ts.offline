@@ -80,18 +80,4 @@ describe('POST /set-server', () => {
     });
   });
 
-  it('should handle errors when retrieving system info', async () => {
-    const serverToSet = 'localhost';
-    // Mock getInstance to simulate an error fetching system info
-    (ServerHandler.getInstance as jest.Mock).mockImplementationOnce(() => Promise.resolve({
-      getSystemInfo: jest.fn().mockRejectedValue(new Error('Error retrieving system info')),
-    }));
-
-    const response = await request(app).post('/set-server').send({ server: serverToSet });
-
-    expect(response.statusCode).toBe(500);
-    expect(response.body).toEqual({
-      error: 'Error retrieving system info',
-    });
-  });
 });

@@ -22,7 +22,7 @@ export interface ServerConfig {
   port?: number;
   code?: boolean;
   username?: string;
-  protocol?: 'ssh' | 'ssm';
+  protocol?: 'ssh' | 'ssm' | 'local' | 'localhost'; // TODO choose one
   shell?: 'bash' | 'powershell' | null;
   region?: string;
   instanceId?: string;
@@ -35,13 +35,16 @@ export interface ServerConfig {
 }
 
 export interface ServerHandlerInterface {
-  setCurrentDirectory(directory: string): boolean;
+  identifier: string;
+  getServerConfig(): ServerConfig;
   executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }>;
+  getSystemInfo(): Promise<SystemInfo>;
+  setCurrentDirectory(directory: string): boolean;
+  getCurrentDirectory(): Promise<string>;
+  listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
   createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
   updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
   amendFile(filePath: string, content: string): Promise<boolean>;
-  getSystemInfo(): Promise<SystemInfo>;
-  listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
 }
 
 export interface AppConfig {

@@ -119,5 +119,3 @@ it('should throw an error if serverConfig is not defined in the config', () => {
   // Now we expect the function to throw, not the constructor directly
   expect(instantiateWithNonLocalhostConfig).toThrow('No matching server configuration found for localhost.');
 });
-
-});

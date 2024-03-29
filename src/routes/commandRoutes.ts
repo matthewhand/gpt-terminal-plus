@@ -1,7 +1,7 @@
 // src/routes/commandRoutes.ts
 import express, { Request, Response } from 'express';
-import { ServerConfigUtils } from '../utils/ServerConfigUtils';
-import { ensureServerIsSet } from '../middlewares';
+import { getSelectedServer } from '../utils/GlobalStateHelper'; // Adjust the import path as necessary
+import { ServerConfigUtils } from '../utils/ServerConfigUtils'; // Assuming this utility can fetch server handlers
 import Debug from 'debug';
 
 const debug = Debug('app:commandRoutes');
@@ -19,13 +19,15 @@ router.post('/run', async (req: Request, res: Response) => {
   }
 
   try {
-    // Use the serverHandler directly from the request, set by ensureServerIsSet middleware
-    const serverHandler = req.serverHandler;
+    // Retrieve the selected server's handler directly using the stored global server setting
+    const selectedServer = getSelectedServer();
+    const serverHandler = await ServerConfigUtils.getInstance(selectedServer);
+
     if (!serverHandler) {
-      throw new Error('Server handler not set. Please ensure server is properly configured.');
+      throw new Error(`Server handler not set for ${selectedServer}. Please ensure the server is properly configured.`);
     }
     
-    // Execute the command using the server handler
+    // Execute the command using the retrieved server handler
     const effectiveTimeout = timeout ?? 180000; // Use a default timeout if not provided
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
@@ -35,8 +37,5 @@ router.post('/run', async (req: Request, res: Response) => {
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
-
-// Ensure the server is set for each request in this route
-router.use(ensureServerIsSet);
 
 export default router;

@@ -8,7 +8,12 @@ import { getPrivateKey } from './sshUtilities';
 const debug = Debug('app:SSHCommandExecutor');
 
 interface CommandExecutionStrategy {
-  executeCommand(config: ServerConfig, client: Client, command: string, options?: { cwd?: string, timeout?: number, filePath?: string, fileContent?: string }): Promise<{ stdout: string; stderr: string; timeout?: boolean }>;
+  executeCommand(
+    config: ServerConfig, 
+    client: Client, 
+    command: string, 
+    options?: { cwd?: string, timeout?: number, filePath?: string, fileContent?: string }
+  ): Promise<{ stdout: string; stderr: string; timeout?: boolean }>;
 }
 
 class SimpleExecutionStrategy implements CommandExecutionStrategy {

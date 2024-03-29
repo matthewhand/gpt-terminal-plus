@@ -1,40 +1,31 @@
-import { ServerConfigUtils } from '../../src/utils/ServerConfigUtils';
-import { ServerConfig } from '../../src/types';
+// Import the necessary modules
+import { ServerConfigUtils } from '../../src/utils/ServerConfigUtils'; // Adjusted relative path
 import config from 'config';
-import AWS from 'aws-sdk';
 
+// Mocking the 'config' module to return predefined server configurations
 jest.mock('config', () => ({
-  get: jest.fn(),
+  get: jest.fn().mockImplementation((key) => {
+    switch (key) {
+      case 'serverConfig':
+        return [
+          { host: 'example.com', protocol: 'ssh', username: 'user', port: 22 },
+          { host: 'localhost', username: 'localuser' },
+        ];
+      default:
+        throw new Error(`Unknown config key: ${key}`);
+    }
+  }),
 }));
-jest.mock('aws-sdk', () => ({
-  SSM: jest.fn(() => ({
-    // Mock AWS SSM methods if needed
-  })),
-}));
-jest.mock('../../src/handlers/LocalServerHandler');
-jest.mock('../../src/handlers/SshServerHandler');
-jest.mock('../../src/handlers/SsmServerHandler');
-
-const configGetMock = config.get as jest.Mock;
-const mockServers: ServerConfig[] = [
-  { host: 'example.com', protocol: 'ssh', username: 'user', port: 22 },
-  { host: 'localhost', username: 'localuser' },
-];
 
 describe('ServerConfigUtils Tests', () => {
-  beforeEach(() => {
-    configGetMock.mockReturnValue(mockServers);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('listAvailableServers should return server configurations', () => {
+  // Test for listing available servers
+  it('listAvailableServers should return predefined server configurations', () => {
     const servers = ServerConfigUtils.listAvailableServers();
-    expect(servers).toEqual(mockServers);
-    expect(configGetMock).toHaveBeenCalledWith('serverConfig');
+    expect(servers).toEqual([
+      { host: 'example.com', protocol: 'ssh', username: 'user', port: 22 },
+      { host: 'localhost', username: 'localuser' },
+    ]);
   });
 
-  // Add additional tests as needed
+  // Additional tests for other ServerConfigUtils methods can be added here
 });

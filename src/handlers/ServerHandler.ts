@@ -1,29 +1,41 @@
 import { ServerConfig, SystemInfo } from '../types';
 import debug from 'debug';
+import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 
 const serverHandlerDebug = debug('app:ServerHandler');
 
 export abstract class ServerHandler {
-  protected currentDirectory: string = "";
+  public identifier: string;
+
   protected serverConfig: ServerConfig;
-  protected identifier: string;
 
   constructor(serverConfig: ServerConfig) {
     this.serverConfig = serverConfig;
     this.identifier = `${serverConfig.username}@${serverConfig.host}`;
+    serverHandlerDebug(`ServerHandler created for ${this.identifier}`);
+  }
+
+  // Implement getServerConfig() directly in the abstract class
+  getServerConfig(): ServerConfig {
+    return this.serverConfig;
   }
 
   setCurrentDirectory(directory: string): boolean {
-    this.currentDirectory = directory;
+    setCurrentFolder(directory); // Utilizing GlobalStateHelper
+    serverHandlerDebug(`Current directory set globally to ${directory}`);
     return true;
   }
 
-  getCurrentDirectory(): Promise<string> {
-    return Promise.resolve(this.currentDirectory);
+  async getCurrentDirectory(): Promise<string> {
+    const directory = getCurrentFolder(); // Utilizing GlobalStateHelper
+    serverHandlerDebug(`Retrieving current directory globally: ${directory}`);
+    return directory;
   }
 
-  // Abstract methods declarations (to be implemented by derived classes)
+  // Abstract method declarations
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
+
+  // Provided implementations for methods not supported by this server handler remain unchanged
   async listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]> {
     throw new Error("Operation not supported by this server handler.");
   }
@@ -39,6 +51,6 @@ export abstract class ServerHandler {
   async amendFile(filePath: string, content: string, backup: boolean = false): Promise<boolean> {
     throw new Error("Operation not supported by this server handler.");
   }  
-  
+
   abstract getSystemInfo(): Promise<SystemInfo>;
 }

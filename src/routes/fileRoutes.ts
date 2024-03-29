@@ -1,13 +1,11 @@
 import express, { Response } from 'express';
 import path from 'path';
 import lockfile from 'proper-lockfile';
-import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
 import { escapeRegExp } from '../utils/escapeRegExp'; // Ensure this is correctly imported
 
 const debug = Debug('app:fileRoutes');
 const router = express.Router();
-router.use(ensureServerIsSet);
 
 const handleServerError = (error: unknown, res: Response, debugContext: string) => {
   const errorMsg = error instanceof Error ? error.message : 'Unknown error';

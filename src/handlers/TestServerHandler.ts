@@ -3,6 +3,8 @@ import { ServerConfig, SystemInfo } from '../../src/types';
 
 // Mock implementation of ServerHandler for testing
 class TestServerHandler extends ServerHandler {
+  private currentDirectory: string = '/'; // Defaulting to root, adjust as needed
+
   constructor(serverConfig: ServerConfig) {
 
     // Check if the serverConfig is empty or undefined
