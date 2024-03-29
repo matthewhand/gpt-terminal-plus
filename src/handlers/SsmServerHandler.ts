@@ -61,7 +61,7 @@ export default class SsmServerHandler extends ServerHandler {
                 };
             }
             retries--;
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 20000)); // TODO make configuration
         }
         throw new Error('Timeout while waiting for command result');
     }
