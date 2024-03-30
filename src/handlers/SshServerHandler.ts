@@ -68,7 +68,6 @@ export default class SshServerHandler extends ServerHandler {
   public constructor(serverConfig: ServerConfig) {
       super(serverConfig);
       this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
-      // Initialize the file operations and system info retriever here
       this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
       this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
   }
@@ -268,4 +267,5 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
       };
     }
   }
+
 }
