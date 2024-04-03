@@ -1,0 +1,30 @@
+import SSHConnectionManager from '../../src/managers/SSHConnectionManager';
+import { ServerConfig } from '../../src/types';
+
+describe('SSHConnectionManager', () => {
+  let sshManager: SSHConnectionManager;
+  const mockServerConfig: ServerConfig = {
+    host: 'test-host',
+    port: 22,
+    username: 'test-user',
+    privateKeyPath: '/path/to/private/key',
+  };
+
+  beforeAll(async () => {
+    // Initialize SSHConnectionManager with mock configuration
+    sshManager = await SSHConnectionManager.getInstance(mockServerConfig);
+  });
+
+  it('executes a command successfully', async () => {
+    const command = 'echo "Hello World"';
+    const output = await sshManager.executeCommand(command);
+    expect(output).toBe('Command output expected');
+    // Add additional assertions as necessary
+  });
+
+  // Add more tests for file operations and other functionalities
+
+  afterAll(() => {
+    sshManager.disconnect();
+  });
+});

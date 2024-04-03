@@ -1,184 +1,127 @@
-/**
- * SSHConnectionManager: A Comprehensive Tool for Managing SSH Connections
- *
- * Overview:
- * The SSHConnectionManager class is designed to simplify and encapsulate the complexities
- * of managing SSH connections to remote servers. It provides a robust and flexible API
- * for establishing SSH connections, executing commands, and performing file operations
- * securely over SSH. By abstracting the details of the ssh2 library and SSH protocol
- * interactions, it offers a streamlined and intuitive interface for developers.
- *
- * Key Features:
- * - Connection Lifecycle Management: Supports connecting and disconnecting to and from
- *   remote servers, including handling of connection readiness and error events.
- * - Singleton Pattern: Ensures a single instance of the connection manager per server
- *   configuration, optimizing resource usage and simplifying connection handling.
- * - Command Execution: Facilitates executing commands on the remote server, capturing
- *   output and errors, and providing asynchronous command execution capabilities.
- * - File Operations: Offers a suite of methods for remote file management, including
- *   listing files, uploading and downloading files, leveraging the SFTP protocol
- *   for secure file transfer.
- * - Reconnection Support: Implements a method for reconnecting to the server, enhancing
- *   reliability and ease of use in long-running applications or scripts.
- * - Connection Status Checking: Includes a method to check the current status of the
- *   SSH connection, allowing for responsive application logic based on connection state.
- *
- * Usage:
- * The SSHConnectionManager class is intended to be instantiated with specific server
- * configurations, and then used to perform various SSH-based operations. It abstracts
- * the lower-level details of SSH connection setup and management, command execution,
- * and file transfer protocols, presenting a clear and concise API to the developer.
- *
- * By providing a comprehensive toolset for SSH interaction within a single, unified
- * class, the SSHConnectionManager significantly reduces the complexity of remote server
- * management tasks, making it an invaluable asset for applications that require
- * sophisticated SSH capabilities.
- */
-import { Client } from "ssh2";
-import Debug from "debug";
-import { ServerConfig } from "../types";
+import { Client } from 'ssh2';
+import Debug from 'debug';
+import { ServerConfig, SystemInfo } from '../types';
+import fs from 'fs/promises';
+import SSHCommandExecutor from '../utils/SSHCommandExecutor';
+import SSHFileOperations from '../utils/SSHFileOperations';
 
-const debug = Debug("app:SSHConnectionManager");
+// Initialize Debug for logging
+const debug = Debug('app:SSHConnectionManager');
 
 class SSHConnectionManager {
-  private static instances: Record<string, SSHConnectionManager> = {};
-  constructor(private serverConfig: ServerConfig) {
-    this.conn = new Client();
-    this.conn.on("ready", () => debug("Connection ready"));
-    this.conn.on("error", (err) => debug(`Connection error: ${err.message}`));
-    this.conn.connect({
-      host: serverConfig.host,
-      port: serverConfig.port,
-      username: serverConfig.username,
-      password: serverConfig.password
-    });
-  }
+    // A static property to hold instances of connection managers indexed by server identifiers
+    private static instances: Record<string, SSHConnectionManager> = {};
 
-  public static getInstance(serverConfig: ServerConfig): SSHConnectionManager {
-    const identifier = `${serverConfig.host}:${serverConfig.port}`;
-    if (!this.instances[identifier]) {
-      this.instances[identifier] = new SSHConnectionManager(serverConfig);
+    // Properties for the SSH client, command executor, and file operations utilities
+    private conn: Client;
+    private commandExecutor: SSHCommandExecutor | null = null;
+    private fileOperations: SSHFileOperations | null = null;
+    private serverConfig: ServerConfig;
+
+    // Private constructor to enforce singleton pattern
+    private constructor(serverConfig: ServerConfig) {
+        this.conn = new Client();
+        this.serverConfig = serverConfig;
+        this.initializeUtilities();
+        this.setupListeners();
+        this.connect();
     }
-    return this.instances[identifier];
-  }
 
-  // Additional methods for managing the connection lifecycle can be added here.
+    // Initializes utilities for command execution and file operations
+    private initializeUtilities() {
+        this.commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
+        this.fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
+    }
+
+    // Sets up event listeners for the SSH client to log various connection states
+    private setupListeners() {
+        this.conn.on('ready', () => debug('SSH Connection is ready.'))
+                 .on('error', (err) => debug(`SSH Connection error: ${err.message}`))
+                 .on('end', () => debug('SSH Connection has ended.'));
+    }
+
+    // Connects to the SSH server using the provided server configuration
+    private async connect() {
+        try {
+            // Attempt to read the private key from a path, falling back to a default if not specified
+            const privateKeyPath = this.serverConfig.privateKeyPath ?? 'path/to/default/privateKey';
+            const privateKey = await fs.readFile(privateKeyPath);
+            this.conn.connect({
+                host: this.serverConfig.host,
+                port: this.serverConfig.port || 22,
+                username: this.serverConfig.username,
+                privateKey: privateKey.toString(),
+            });
+        } catch (error) {
+            debug(`Error connecting to SSH server: ${error}`);
+        }
+    }
+
+    // Static method to get an instance of SSHConnectionManager for a given server configuration
+    public static async getInstance(serverConfig: ServerConfig): Promise<SSHConnectionManager> {
+        const identifier = `${serverConfig.host}:${serverConfig.port}`;
+        if (!this.instances[identifier]) {
+            const instance = new SSHConnectionManager(serverConfig);
+            this.instances[identifier] = instance;
+        }
+        return this.instances[identifier];
+    }
+
+    // Executes a command on the remote SSH server and returns the result
+    public async executeCommand(command: string, options?: { cwd?: string; timeout?: number; }): Promise<{ stdout: string; stderr: string; }> {
+        if (!this.commandExecutor) {
+            throw new Error('Command executor is not initialized.');
+        }
+        return this.commandExecutor.executeCommand(command, options);
+    }
+
+    // Lists files in a specified directory on the remote server
+    public async listFiles(directory: string): Promise<string[]> {
+        if (!this.fileOperations) {
+            throw new Error('File operations utility is not initialized.');
+        }
+        return this.fileOperations.listFiles(directory);
+    }
+
+    // Updates a file on the remote server with the provided content
+    public async updateFile(remotePath: string, content: string, backup: boolean = true): Promise<void> {
+        if (!this.fileOperations) {
+            throw new Error('File operations utility is not initialized.');
+        }
+        await this.fileOperations.updateFile(remotePath, content, backup);
+    }
+
+    // Uploads a local file to the remote server
+    public async uploadFile(localPath: string, remotePath: string): Promise<void> {
+        if (!this.fileOperations) {
+            throw new Error('File operations utility is not initialized.');
+        }
+        await this.fileOperations.uploadFile(localPath, remotePath);
+    }
+
+    // Downloads a file from the remote server to the local filesystem
+    public async downloadFile(remotePath: string, localPath: string): Promise<void> {
+        if (!this.fileOperations) {
+            throw new Error('File operations utility is not initialized.');
+        }
+        await this.fileOperations.downloadFile(remotePath, localPath);
+    }
+
+    // Placeholder for a method to retrieve system information from the remote server
+    public async getSystemInfo(): Promise<SystemInfo> {
+        throw new Error('Method getSystemInfo() is not implemented.');
+    }
+
+    // Disconnects the SSH connection
+    public disconnect(): void {
+        debug('Disconnecting from SSH server.');
+        this.conn.end();
+    }
+
+    // Checks if the SSH connection is currently active
+    public isConnected(): boolean {
+        return this.conn !== null;
+    }
 }
 
 export default SSHConnectionManager;
-  // Establishes a new SSH connection based on the provided server configuration
-  connect() {
-    if (!this.conn) this.conn = new Client();
-    return new Promise((resolve, reject) => {
-      this.conn.on('ready', () => {
-        debug('SSH connection established.');
-        resolve(true);
-      }).on('error', (err) => {
-        debug('Error establishing SSH connection:', err);
-        reject(err);
-      }).connect({
-        host: this.serverConfig.host,
-        port: this.serverConfig.port,
-        username: this.serverConfig.username,
-        password: this.serverConfig.password,
-      });
-    });
-  }
-
-  // Disconnects the current SSH connection
-  disconnect() {
-    if (this.conn) {
-      this.conn.end();
-      debug('SSH connection closed.');
-    }
-  }
-
-  // Reconnects the SSH connection with the current server configuration
-  async reconnect() {
-    this.disconnect();
-    await this.connect();
-    debug('SSH connection re-established.');
-  }
-
-  // Checks if the SSH connection is currently active
-  isConnected() {
-    return this.conn && this.conn.connected;
-  }
-
-  // Executes a command on the remote server via the SSH connection
-  async executeCommand(command: string): Promise<string> {
-    if (!this.isConnected()) {
-      throw new Error('SSH connection is not established.');
-    }
-    return new Promise((resolve, reject) => {
-      this.conn.exec(command, (err, stream) => {
-        if (err) reject(err);
-        let data = '';
-        stream.on('data', (chunk) => { data += chunk.toString(); }).on('close', () => {
-          debug('Command executed:', command);
-          resolve(data);
-        });
-      });
-    });
-  }
-
-  // Retrieves a list of files from the specified directory on the remote server
-  async listFiles(directory: string): Promise<string[]> {
-    if (!this.isConnected()) {
-      throw new Error('SSH connection is not established.');
-    }
-    return new Promise((resolve, reject) => {
-      this.conn.sftp((err, sftp) => {
-        if (err) reject(err);
-        sftp.readdir(directory, (err, list) => {
-          if (err) {
-            reject(err);
-          } else {
-            const filenames = list.map((file) => file.filename);
-            resolve(filenames);
-          }
-        });
-      });
-    });
-  }
-
-  // Uploads a file to the specified directory on the remote server
-  async uploadFile(localPath: string, remotePath: string): Promise<void> {
-    if (!this.isConnected()) {
-      throw new Error('SSH connection is not established.');
-    }
-    return new Promise((resolve, reject) => {
-      this.conn.sftp((err, sftp) => {
-        if (err) reject(err);
-        sftp.fastPut(localPath, remotePath, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            debug('File uploaded successfully:', remotePath);
-            resolve();
-          }
-        });
-      });
-    });
-  }
-
-  // Downloads a file from the remote server to the specified local path
-  async downloadFile(remotePath: string, localPath: string): Promise<void> {
-    if (!this.isConnected()) {
-      throw new Error('SSH connection is not established.');
-    }
-    return new Promise((resolve, reject) => {
-      this.conn.sftp((err, sftp) => {
-        if (err) reject(err);
-        sftp.fastGet(remotePath, localPath, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            debug('File downloaded successfully:', localPath);
-            resolve();
-          }
-        });
-      });
-    });
-  }
-

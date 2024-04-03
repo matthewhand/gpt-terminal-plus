@@ -35,8 +35,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment and install oci-cli and pyautogui
+#RUN python3 -m venv /oci-cli-venv && \
+#    /oci-cli-venv/bin/pip install oci-cli pyautogui
 RUN python3 -m venv /oci-cli-venv && \
-    /oci-cli-venv/bin/pip install oci-cli pyautogui
+    /oci-cli-venv/bin/pip install oci-cli
 
 # Webapp setup
 # Update npm

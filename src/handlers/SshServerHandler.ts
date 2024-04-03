@@ -156,25 +156,25 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
     }
   }
   
-  async readFile(filePath: string): Promise<string> {
-    const fullFilePath = path.isAbsolute(filePath) ? filePath : path.join(getCurrentFolder(), filePath);
-    debug(`Attempting to read file: ${fullFilePath}`);
+//   async readFile(filePath: string): Promise<string> {
+//     const fullFilePath = path.isAbsolute(filePath) ? filePath : path.join(getCurrentFolder(), filePath);
+//     debug(`Attempting to read file: ${fullFilePath}`);
 
-    if (!this._fileOperations) {
-        const error = new Error("SSHFileOperations is not initialized.");
-        debug(error.message);
-        throw error;
-    }
+//     if (!this._fileOperations) {
+//         const error = new Error("SSHFileOperations is not initialized.");
+//         debug(error.message);
+//         throw error;
+//     }
 
-    try {
-        const content = await this._fileOperations.readFile(fullFilePath); // Corrected line
-        debug(`File ${fullFilePath} read successfully.`);
-        return content.toString(); // Ensuring the returned value is a string
-    } catch (error) {
-        debug(`Error reading file ${fullFilePath}: ${error}`);
-        throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-}  
+//     try {
+//         const content = await this._fileOperations.readFile(fullFilePath); // Corrected line
+//         debug(`File ${fullFilePath} read successfully.`);
+//         return content.toString(); // Ensuring the returned value is a string
+//     } catch (error) {
+//         debug(`Error reading file ${fullFilePath}: ${error}`);
+//         throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+//     }
+// }  
     public async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
     debug(`Attempting to update file: ${filePath} with pattern: ${pattern} and replacement: ${replacement}, backup: ${backup}`);
     if (!this._fileOperations) {

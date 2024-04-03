@@ -6,9 +6,7 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "validate": "npm-run-all --parallel lint test",
-    "lint": "eslint . --ext .ts",
     "build": "tsc && cp src/scripts/**/* dist/scripts/",
-    "build:sh": "tsc && cp -r src/scripts/ dist/",
     "start": "tsc && node dist/index.js",
     "start:dev": "nodemon --exec ts-node src/index.ts",
     "test": "cross-env DEBUG=ServerHandler jest --verbose --runInBand",
