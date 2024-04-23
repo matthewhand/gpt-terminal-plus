@@ -10,11 +10,12 @@ servers:
   - url: https://terminal.teamstinky.duckdns.org/
 paths:
   /set-server:
+  /set-server:
     post:
-      summary: Set the active server for subsequent operations and optionally fetch system information.
+      summary: Set the active server and manage alias settings.
       description: >
-        Configures the server context for all subsequent API calls and can optionally retrieve system information
-        upon setting the server. This feature allows for immediate verification and assessment of the server's state.
+        Configures the server context for all subsequent API calls and can optionally reset any stored aliases
+        based on user preference. This ensures a fresh environment for each session if required.
       operationId: setServer
       x-openai-isConsequential: false
       requestBody:
@@ -31,9 +32,13 @@ paths:
                   type: boolean
                   description: Whether to retrieve system information upon setting the server. Defaults to true.
                   default: true
+                resetAliases:
+                  type: boolean
+                  description: Whether to reset any stored aliases before starting the session. Defaults to false.
+                  default: false
       responses:
         "200":
-          description: The server was successfully set, and optionally, system information was retrieved.
+          description: The server was successfully set, with system information retrieved and aliases managed according to preferences.
           content:
             application/json:
               schema:
@@ -45,18 +50,6 @@ paths:
                   systemInfo:
                     type: object
                     description: Information about the system of the set server, provided if 'getSystemInfo' is true.
-        "400":
-          description: Bad request due to invalid input.
-          content:
-            text/plain:
-              schema:
-                type: string
-        "500":
-          description: Internal server error.
-          content:
-            text/plain:
-              schema:
-                type: string
   /run:
     post:
       summary: Execute a command on the configured server.
