@@ -1,14 +1,20 @@
 openapi: 3.1.0
 info:
   title: System Info and Command Runner Plugin
-  description: A plugin that allows users to run command line programs after obtaining the system information to accomplish its goal.
-  version: 'v1.1'
+  description: >
+    This API provides a comprehensive suite of tools for running command-line operations and managing system information.
+    It is designed to interact seamlessly with remote servers, enabling users to set the server environment,
+    execute commands, manage files, and retrieve system information efficiently and securely.
+  version: v1.1
 servers:
   - url: https://terminal.teamstinky.duckdns.org/
 paths:
   /set-server:
     post:
-      summary: Set the server to a predefined hostname listed by list-servers.
+      summary: Set the active server for subsequent operations and optionally fetch system information.
+      description: >
+        Configures the server context for all subsequent API calls and can optionally retrieve system information
+        upon setting the server. This feature allows for immediate verification and assessment of the server's state.
       operationId: setServer
       x-openai-isConsequential: false
       requestBody:
@@ -21,9 +27,13 @@ paths:
                 server:
                   type: string
                   description: The server to set.
+                getSystemInfo:
+                  type: boolean
+                  description: Whether to retrieve system information upon setting the server. Defaults to true.
+                  default: true
       responses:
-        '200':
-          description: The server was successfully set.
+        "200":
+          description: The server was successfully set, and optionally, system information was retrieved.
           content:
             application/json:
               schema:
@@ -32,114 +42,84 @@ paths:
                   output:
                     type: string
                     description: A message indicating the server was successfully set.
-                  systemInfo: 
+                  systemInfo:
                     type: object
-                    description: Information about the system of the set server.
-        '400':
+                    description: Information about the system of the set server, provided if 'getSystemInfo' is true.
+        "400":
           description: Bad request due to invalid input.
           content:
             text/plain:
               schema:
                 type: string
-        '500':
+        "500":
           description: Internal server error.
           content:
             text/plain:
               schema:
-                type: string  
+                type: string
   /run:
-      post:
-        summary: Run a command
-        operationId: runCommand
-        x-openai-isConsequential: false
-        required:
-          - command
-          - directory
-        requestBody:
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  command:
-                    type: string
-                    description: The command to run.
-                  directory:
-                    type: string
-                    description: The directory to set as the current working directory before running the command.
-                  shell:
-                    type: string
-                    description: The shell environment in which to run the command.
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    output:
-                      type: string
-                      description: The output of the command.  
-
-  /list-files:
     post:
-      summary: List files in a directory with pagination
-      operationId: listFiles
+      summary: Execute a command on the configured server.
+      description: >
+        Executes a specified command in a given directory and shell environment on the currently set server.
+        This endpoint is ideal for running shell commands remotely and retrieving the output directly through the API.
+        It supports dynamic command execution, providing flexibility and powerful interaction with the server's OS.
+      operationId: runCommand
       x-openai-isConsequential: false
-      required:
-        - directory
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - command
+                - directory
               properties:
+                command:
+                  type: string
+                  description: The command to run.
                 directory:
                   type: string
-                  description: The directory to list files from.
-                orderBy:
+                  description: The directory to set as the current working directory before running the command.
+                shell:
                   type: string
-                  description: Order files by 'datetime' or 'filename'.
-                  enum: ['datetime', 'filename']
-                limit:
-                  type: integer
-                  description: The maximum number of files to return.
-                  default: 42
-                offset:
-                  type: integer
-                  description: The starting index for pagination.
-                  default: 0
+                  description: The shell environment in which to run the command.
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  files:
-                    type: array
-                    items:
-                      type: string
-                    description: The list of files in the directory.
+                  output:
+                    type: string
+                    description: The output of the command.
+
   /list-servers:
     get:
-      summary: Get the list of available servers.
+      summary: Retrieve a list of all available servers.
+      description: >
+        Provides a list of servers that are available for connection and command execution. This endpoint is useful
+        for clients to query available servers to ensure commands are sent to an operational and accessible server.
       operationId: listServers
       x-openai-isConsequential: false
       responses:
-        '200':
+        "200":
           description: The list of available servers.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ListServersResponse'
+                $ref: "#/components/schemas/ListServersResponse"
 
   /response/{id}/{page}:
     get:
+      summary: Fetch additional pages of a previously executed command's output.
+      description: >
+        Retrieves extra pages from the output of a command that exceeded the single response size limit. This is
+        crucial for handling large outputs systematically, allowing the client to paginate through results as needed.
       operationId: retrieveExtraResponsePages
-      summary: Use this endpoint to retrieve additional pages of a response when the output is too large for a single response. Provide the responseId of the original response and the page number you want to retrieve. For example, to retrieve the second page of a response with ID 12345, use /response/12345/page/2. 
       x-openai-isConsequential: false
       parameters:
         - name: id
@@ -155,66 +135,23 @@ paths:
             type: integer
           description: The page number to retrieve.
       responses:
-        '200':
+        "200":
           description: A specific page of the response.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResponsePage'
-        '404':
+                $ref: "#/components/schemas/ResponsePage"
+        "404":
           description: Response not found.
-  /create-file:
+
+  /set-current-directory:
     post:
-      operationId: createFile
-      x-openai-isConsequential: true
-      summary: Create a file in a specified working directory (overwrites).
-      description: |
-        This endpoint allows the creation or replacement of a file in a specified working directory. If the file already exists, it can be optionally backed up before being replaced. This function is useful for managing files both locally and remotely.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateFileRequest'
-      responses:
-        '200':
-          description: The file was created or replaced successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: A success message indicating the operation's outcome.
-  /amend-file:
-    post:
-      operationId: amendFile
-      summary: Amend a file in a specified working directory.
-      x-openai-isConsequential: true
-      description: |
-        This endpoint allows the amendment of a file in a specified working directory. The content will be inserted at the specified position.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AmendFileRequest'
-      responses:
-        '200':
-          description: The file was amended successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: A success message indicating the operation's outcome.
-  /set-current-folder:
-    post:
-      operationId: setCurrentFolder
-      summary: Set the current directory
+      summary: Set the working directory for command execution.
+      description: >
+        Sets the current working directory for executing commands. This ensures that all commands run subsequently
+        are executed in the context of the specified directory, mimicking the behavior of changing directories in a
+        traditional shell environment.
+      operationId: setCurrentDirectory
       x-openai-isConsequential: false
       requestBody:
         required: true
@@ -227,10 +164,10 @@ paths:
               properties:
                 directory:
                   type: string
-                  description: The directory to set as the current directory
+                  description: The directory to set as the current directory.
       responses:
-        200:
-          description: Current directory set successfully
+        "200":
+          description: Current directory set successfully.
           content:
             application/json:
               schema:
@@ -238,8 +175,8 @@ paths:
                 properties:
                   message:
                     type: string
-        400:
-          description: Directory does not exist or is not provided
+        "400":
+          description: Directory does not exist or is not provided.
           content:
             application/json:
               schema:
@@ -247,111 +184,175 @@ paths:
                 properties:
                   error:
                     type: string
+  /execute-command:
+    post:
+      summary: Execute a command on the SSM managed server.
+      description: >
+        Executes a specified shell command on a managed server via SSM. This method allows specifying the command,
+        the timeout, and the directory from which the command should be executed.
+      operationId: executeSsmCommand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  description: The command line instruction to be executed.
+                timeout:
+                  type: number
+                  description: Optional timeout in milliseconds for the command execution.
+                  default: null
+                directory:
+                  type: string
+                  description: Optional. The directory from which the command should be executed.
+      responses:
+        "200":
+          description: Command executed successfully with output returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stdout:
+                    type: string
+                  stderr:
+                    type: string
+
+  /list-files:
+    get:
+      summary: List files in a specified directory.
+      description: >
+        Lists files from a specified directory on a server managed via SSM. This endpoint supports pagination and ordering
+        of the file listing results.
+      parameters:
+        - name: directory
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The directory to list the files from.
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 42
+          description: The maximum number of files to return.
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: The offset for file listing, used for pagination.
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            enum: [datetime, filename]
+            default: filename
+          description: The criteria to order the files by.
+      responses:
+        "200":
+          description: File listing retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /create-file:
+    post:
+      summary: Create or replace a file on the SSM managed server.
+      description: >
+        Creates a new file or replaces an existing file in the specified directory with the provided content.
+        This endpoint allows optionally backing up the existing file before overwriting.
+      operationId: createSsmFile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFileRequest'
+      responses:
+        "200":
+          description: File created or replaced successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request, possibly due to invalid inputs or missing required fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
   /update-file:
     post:
-      operationId: updateFile
-      summary: Update a file
-      x-openai-isConsequential: true
-      parameters:
-        - in: body
-          name: filename
-          required: true
-          schema:
-            type: string
-            description: The file to update
-        - in: body
-          name: pattern
-          required: true
-          schema:
-            type: string
-            description: The pattern to search for in the file
-        - in: body
-          name: replacement
-          required: true
-          schema:
-            type: string
-            description: The replacement content for the pattern
-        - in: body
-          name: backup
-          required: false
-          schema:
-            type: boolean
-            description: Whether to create a backup of the file before updating (default true)
-        - in: body
-          name: directory
-          required: false
-          schema:
-            type: string
-            description: The working directory for the file (default to current directory)
-        - in: body
-          name: openInEditor
-          required: false
-          schema:
-            type: boolean
-            default: true
-            description: Whether to open the file at the pattern location in the editor (default true)
+      summary: Update an existing file on the SSM managed server.
+      description: >
+        Updates an existing file at the specified path by replacing specified patterns with new content.
+        Optionally backs up the file before making changes.
+      operationId: updateSsmFile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                  description: The full path of the file to update.
+                pattern:
+                  type: string
+                  description: The text pattern to be replaced in the file.
+                replacement:
+                  type: string
+                  description: The new text to replace the pattern.
+                backup:
+                  type: boolean
+                  description: Whether to back up the file before updating. Defaults to true.
+                  default: true
       responses:
-        200:
-          description: File updated successfully
-        400:
-          description: Current folder must be set first or other input error
-        500:
-          description: An error occurred while updating the file
-
+        "200":
+          description: File updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "400":
+          description: Bad request, such as incorrect file path or pattern data.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 components:
   schemas:
-    SetServerResponse:
-      type: object
-      properties:
-        output:
-          type: string
-        systemInfo:
-          type: object
-          properties:
-            homeFolder:
-              type: string
-            type:
-              type: string
-            release:
-              type: string
-            platform:
-              type: string
-            cpuCores:
-              type: integer
-            totalMemory:
-              type: integer
-            localTime:
-              type: string
-            currentFolder:
-              type: string
-    CurrentFolderResponse:
-      type: object
-      properties:
-        current_folder:
-          type: string
-          description: The current folder.
-    RunCommandResponse:
-      type: object
-      properties:
-        responseId:
-          type: string
-        page:
-          type: integer
-        numPages:
-          type: integer
-        data:
-          type: string
-    ListServersResponse:
-      type: object
-      properties:
-        servers:
-          type: array
-          items:
-            type: string
-          description: The list of available servers.
     CreateFileRequest:
       type: object
       properties:
+        directory:
+          type: string
+          description: The directory where the file will be created or replaced.
         filename:
           type: string
           description: The name of the file to create or replace.
@@ -360,32 +361,5 @@ components:
           description: The content to write to the file.
         backup:
           type: boolean
-          default: true
-          description: Whether to backup the file if it already exists (defaults to true).
-        directory:
-          type: string
-          default: ""
-          description: The working directory where the file should be created or replaced. 
-    ResponsePage:
-      type: object
-      properties:
-        responseId:
-          type: string
-        page:
-          type: integer
-        data:
-          type: string
-    AmendFileRequest:
-      type: object
-      properties:
-        filename:
-          type: string
-        content:
-          type: string
-        directory:
-          type: string
-      required:
-        - filename
-        - content
-        - position
-
+          description: Whether to backup the existing file before creating or replacing the new one. Defaults to false.
+          default: false
