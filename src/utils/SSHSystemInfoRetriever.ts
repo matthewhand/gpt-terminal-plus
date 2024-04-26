@@ -1,8 +1,8 @@
+import { ServerConfig, SystemInfo } from '../types';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { SystemInfo } from '../types';
 import SFTPClient from 'ssh2-sftp-client';
 import { v4 as uuidv4 } from 'uuid';
 const debug = Debug('app:SSHSystemInfoRetriever');
@@ -11,12 +11,12 @@ const PYTHON_SCRIPT = 'remote_system_info.py';
 const BASH_SCRIPT = 'remote_system_info.sh';
 
 class SSHSystemInfoRetriever {
-    private serverConfig: any;
     private sshClient: Client;
+    private serverConfig: ServerConfig;
 
-    constructor(serverConfig: any, sshClient: Client) {
-        this.serverConfig = serverConfig;
+    constructor(sshClient: Client, serverConfig: ServerConfig) {
         this.sshClient = sshClient;
+        this.serverConfig = serverConfig;
     }
 
     public async getSystemInfo(): Promise<SystemInfo> {
@@ -49,7 +49,7 @@ class SSHSystemInfoRetriever {
         const sftp = new SFTPClient();
         await sftp.connect({
             host: this.serverConfig.host,
-            port: 22,
+            port: this.serverConfig.port || 22,
             username: this.serverConfig.username,
             privateKey: fs.readFileSync(this.serverConfig.privateKeyPath || path.join(process.env.HOME || '', '.ssh', 'id_rsa')),
         });
@@ -70,13 +70,16 @@ class SSHSystemInfoRetriever {
         return new Promise((resolve, reject) => {
             this.sshClient.exec(command, (err, stream) => {
                 if (err) reject(err);
-
+    
                 let stdout = '';
                 let stderr = '';
-                stream.on('data', (data) => { stdout += data.toString(); });
-                stream.stderr.on('data', (data) => { stderr += data.toString(); });
-
-                stream.on('close', (code) => {
+                // Explicitly type 'data' as Buffer
+                stream.on('data', (data: Buffer) => { stdout += data.toString(); });
+                // Explicitly type 'data' as Buffer for stderr
+                stream.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+    
+                // Explicitly type 'code' as number
+                stream.on('close', (code: number) => {
                     if (code === 0) resolve({ stdout, stderr });
                     else reject(new Error(`Remote command exited with code ${code}`));
                 });

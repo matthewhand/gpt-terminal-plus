@@ -4,7 +4,7 @@ export default class ServerConfigManager {
   private currentServerConfig: string;
 
   private constructor() {
-    this.currentServerConfig = 'defaultServer'; // Initialize with default or from environment/config file
+    this.currentServerConfig = 'localhost';
   }
 
   public static getInstance(): ServerConfigManager {

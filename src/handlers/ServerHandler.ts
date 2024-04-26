@@ -3,6 +3,7 @@ import config from 'config';
 import { ServerConfig, SystemInfo } from '../types';
 import debug from 'debug';
 const serverHandlerDebug = debug('app:ServerHandler');
+import { v4 as uuidv4 } from 'uuid';
 
 export abstract class ServerHandler {
   protected currentDirectory: string = "";
@@ -12,6 +13,31 @@ export abstract class ServerHandler {
   constructor(serverConfig: ServerConfig) {
     this.serverConfig = serverConfig;
     this.identifier = `${serverConfig.username}@${serverConfig.host}`;
+  }
+
+    /**
+     * Generates a unique response ID for each operation.
+     * @returns A string representing a unique response ID.
+     */
+    protected generateResponseId(): string {
+      return uuidv4();  // Generates a unique ID for each response
+  }
+
+  /**
+   * Applies pagination to the provided list of items and returns a paginated response.
+   * @param items The list of items to paginate.
+   * @param totalCount The total count of items across all pages.
+   * @param limit The number of items per page.
+   * @returns An object containing the paginated items, total pages, and a response ID.
+   */
+  protected paginateResponse<T>(items: T[], totalCount: number, limit: number): { items: T[], totalPages: number, responseId: string } {
+      const totalPages = Math.ceil(totalCount / limit);
+      const responseId = this.generateResponseId();
+      return {
+          items,
+          totalPages,
+          responseId
+      };
   }
 
   // Method to list available servers
@@ -92,18 +118,42 @@ export abstract class ServerHandler {
     return serverConfig;
   }
 
-  setCurrentDirectory(directory: string): boolean {
+  setWorkingDirectory(directory: string): boolean {
     this.currentDirectory = directory;
     return true;
   }
 
-  getCurrentDirectory(): Promise<string> {
+  getWorkingDirectory(): Promise<string> {
     return Promise.resolve(this.currentDirectory);
   }
 
-  // Abstract methods declarations (to be implemented by derived classes)
-  abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
-  abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<string[]>;
+  /**
+   * Executes a command on the server and returns the results.
+   * @param command The command to be executed.
+   * @param options An object containing optional parameters:
+   *                - timeout: The maximum time in milliseconds to wait for the command to complete.
+   *                - directory: The directory from which the command should be executed.
+   *                - linesPerPage: The number of lines per page if output needs pagination.
+   * @returns A promise that resolves to an object containing command output details,
+   *          and optionally pagination details if linesPerPage is provided.
+   */
+  abstract executeCommand(
+    command: string,
+    options: {
+      timeout?: number,
+      directory?: string,
+      linesPerPage?: number
+    }
+  ): Promise<{
+    stdout?: string,
+    stderr?: string,
+    pages?: string[],
+    totalPages?: number,
+    responseId?: string
+  }>;
+  // Ensure listFiles is similarly flexible if necessary
+  abstract listFiles(directory: string, limit: number, offset: number, orderBy: string): Promise<{ items: string[], totalPages: number, responseId: string }>;
+
   abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
   abstract updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
   abstract amendFile(filePath: string, content: string): Promise<boolean>;

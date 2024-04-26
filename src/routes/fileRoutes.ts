@@ -23,13 +23,33 @@ const handleServerError = (error: unknown, res: Response, debugContext: string) 
   res.status(500).json({ error: errorMsg });
 };
 
-router.post('/set-current-folder', async (req, res) => {
+router.get(['/list-files', '/browse-files'], async (req, res) => {
+  // Explicitly cast directory to string to ensure type compatibility
+  const directory = String(req.query.directory);
+  const limit = parseInt(req.query.limit as string) || 10;
+  const offset = parseInt(req.query.offset as string) || 0;
+  const orderBy = String(req.query.orderBy || 'filename');
+
+  if (!directory) {
+    return res.status(400).json({ error: 'Directory parameter is required' });
+  }
+
+  try {
+    const serverHandler = await getServerHandler();
+    const files = await serverHandler.listFiles(directory, limit, offset, orderBy);
+    res.json(files);
+  } catch (err) {
+    handleServerError(err, res, 'Error listing files');
+  }
+});
+
+router.post(['/set-working-directory', '/change-dir'], async (req, res) => {
   const directory = req.body.directory;
   try {
     const serverHandler = await getServerHandler();
-    const success = await serverHandler.setCurrentDirectory(directory);
+    const success = await serverHandler.setWorkingDirectory(directory);
     res.status(success ? 200 : 400).json({ 
-      output: success ? `Current directory set to ${directory}` : 'Directory does not exist.'
+      output: success ? `Working directory set to ${directory}` : 'Directory does not exist.'
     });
   } catch (err) {
     handleServerError(err, res, 'Error setting current folder');
@@ -40,7 +60,7 @@ router.post(['/create-file'], async (req, res) => {
   const { filename, content, backup = true, directory } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
@@ -60,7 +80,7 @@ router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath);
     try {
@@ -80,7 +100,7 @@ router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {

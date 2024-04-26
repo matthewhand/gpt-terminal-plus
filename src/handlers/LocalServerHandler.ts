@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { v4 as uuidv4 } from 'uuid';
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo } from '../types';
 import { escapeRegExp } from '../utils/escapeRegExp';
@@ -90,38 +91,39 @@ private constructSystemInfo(rawData: any): SystemInfo {
         // Add other fields as necessary, based on your JSON structure
     };
 }
-  async executeCommand(command: string, timeout: number = 5000, directory: string): Promise<{ stdout: string; stderr: string }> {
-    const execOptions = {
+async executeCommand(command: string, options: { timeout?: number, directory?: string, linesPerPage?: number } = {}): Promise<{ stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string }> {
+  const { timeout = 5000, directory = '', linesPerPage = 100 } = options;
+  const execOptions = {
       timeout,
-      cwd: directory || this.currentDirectory,
-      shell: this.serverConfig.shell || undefined
-    };
+      cwd: directory || process.cwd(),
+      shell: this.serverConfig.shell ? this.serverConfig.shell.toString() : undefined
+  };
 
-    try {
+  try {
       const { stdout, stderr } = await this.execAsync(command, execOptions);
-      return { stdout, stderr };
-    } catch (error) {
-      if (error instanceof Error) {
-        // Handle specific error types if needed, e.g., timeout or execution errors
-        if (error.message.includes('ETIMEOUT')) {
-          // Handle timeout-specific logic
-          throw new Error('Command execution timed out.');
-        }
-        if (error.message.includes('EACCES')) {
-          // Handle permission-related errors
-          throw new Error('Permission denied while executing the command.');
-        }
-        // Add more specific error types as needed
 
-        // Generic error handler for other cases
-        throw new Error(`Error executing command: ${error.message}`);
-      } else {
-        // Handle non-Error exceptions
-        throw new Error('An unknown error occurred while executing the command.');
+      if (linesPerPage > 0) {
+          const output = stdout + (stderr ? `\nErrors:\n${stderr}` : '');
+          const lines = output.split('\n');
+          const pages = [];
+          for (let i = 0; i < lines.length; i += linesPerPage) {
+              pages.push(lines.slice(i, i + linesPerPage).join('\n'));
+          }
+          return {
+              stdout,  // Optional: include raw stdout for completeness
+              stderr,  // Optional: include raw stderr for completeness
+              pages,
+              totalPages: pages.length,
+              responseId: this.generateResponseId()
+          };
       }
-    }
-  }
 
+      return { stdout, stderr };
+  } catch (error) {
+      console.error('Error executing command:', error);
+      throw new Error('Failed to execute command');
+  }
+}
 
   // setCurrentDirectory(directory: string): boolean {
   //   if (fs.existsSync(directory)) {
@@ -132,63 +134,69 @@ private constructSystemInfo(rawData: any): SystemInfo {
   //   }
   // }
 
-  async listFiles(directory: string, limit = 42, offset = 0, orderBy = 'filename'): Promise<string[]> {
+  async listFiles(directory: string, limit = 42, offset = 0, orderBy = 'filename'): Promise<{ items: string[]; totalPages: number; responseId: string }> {
     try {
-      // Debug: Log the input parameters
-      if (process.env.DEBUG === 'true') {
-        console.log(`Listing files with parameters - Directory: ${directory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
-      }
-  
-      const fullPaths = await fs.promises.readdir(directory, { withFileTypes: true });
-      
-      // Debug: Log the full paths retrieved
-      if (process.env.DEBUG === 'true') {
-        console.log('Full paths retrieved:', fullPaths);
-      }
-  
-      let fileNames = fullPaths.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
-    
-      if (orderBy === 'datetime') {
-        const filesWithStats = await Promise.all(fileNames.map(async fileName => {
-          const fullPath = path.join(directory, fileName);
-          const stats = await fs.promises.stat(fullPath);
-          return { name: fileName, mtime: stats.mtime };
-        }));
-      
-        // Log filesWithStats before sorting
-        console.log('Before sorting:', filesWithStats);
-      
-        fileNames = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
-      
-        // Log fileNames after sorting
-        console.log('After sorting:', fileNames);
-      } else {
-        fileNames.sort();
-      }
-        
-      // Debug: Print the filenames before pagination
-      if (process.env.DEBUG === 'true') {
-        console.log('Files found:', fileNames);
-      }
-  
-      // Perform the slice operation to paginate the file names
-      const paginatedFiles = fileNames.slice(offset, offset + limit);
-  
-      // Debug: Print the paginated files
-      if (process.env.DEBUG === 'true') {
-        console.log(`Paginated files (offset: ${offset}, limit: ${limit}):`, paginatedFiles);
-      }
-  
-      // Return the paginated list of files
-      return paginatedFiles;
-  
+        // Debug: Log the input parameters
+        if (process.env.DEBUG === 'true') {
+            console.log(`Listing files with parameters - Directory: ${directory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
+        }
+
+        const fullPaths = await fs.promises.readdir(directory, { withFileTypes: true });
+
+        // Debug: Log the full paths retrieved
+        if (process.env.DEBUG === 'true') {
+            console.log('Full paths retrieved:', fullPaths);
+        }
+
+        let fileNames = fullPaths.filter(dirent => dirent.isFile()).map(dirent => dirent.name);
+
+        if (orderBy === 'datetime') {
+            const filesWithStats = await Promise.all(fileNames.map(async fileName => {
+                const fullPath = path.join(directory, fileName);
+                const stats = await fs.promises.stat(fullPath);
+                return { name: fileName, mtime: stats.mtime };
+            }));
+
+            // Log filesWithStats before sorting
+            console.log('Before sorting:', filesWithStats);
+
+            fileNames = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
+
+            // Log fileNames after sorting
+            console.log('After sorting:', fileNames);
+        } else {
+            fileNames.sort();
+        }
+
+        // Debug: Print the filenames before pagination
+        if (process.env.DEBUG === 'true') {
+            console.log('Files found:', fileNames);
+        }
+
+        // Calculate total pages
+        const totalPages = Math.ceil(fileNames.length / limit);
+        // Perform the slice operation to paginate the file names
+        const paginatedFiles = fileNames.slice(offset, offset + limit);
+
+        // Debug: Print the paginated files
+        if (process.env.DEBUG === 'true') {
+            console.log(`Paginated files (offset: ${offset}, limit: ${limit}):`, paginatedFiles);
+        }
+
+        // Return the paginated list of files with a unique response ID
+        return {
+            items: paginatedFiles,
+            totalPages: totalPages,
+            responseId: uuidv4() // Generate a unique ID for this operation
+        };
+
     } catch (error) {
-      if (process.env.DEBUG === 'true') {
-        console.error('Error listing files:', error);
-      }
-      throw error;
+        if (process.env.DEBUG === 'true') {
+            console.error('Error listing files:', error);
+        }
+        throw error; // Ensure to re-throw the error to maintain error propagation
     }
-  }
+}
       
     async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
       const filePath = path.join(directory, filename);

@@ -19,12 +19,12 @@ export interface ServerConfig {
   privateKeyPath?: string;     // If not the default ~/.ssh/id_rsa or similar
   keyPath?: string;            // Path to the SSH key file
   posix?: boolean;             // Indicates if the server is POSIX-compliant
-  systemInfo?: 'python';       // Indicates if additional remote information should be fetched and how
+  systemInfo?: 'python';       // DEPRECATED - use shell instead
   port?: number;               // e.g. If not TCP/22 when using SSH
   code?: boolean;              // Whether to use code cmd when using files operations
   username?: string;           // Dynamically extracted from connectionString
   protocol?: 'ssh' | 'ssm';    // Supported protocols
-  shell?: string;              // 'powershell' | null
+  shell?: string;              // 'powershell' | 'python' | null (assumed sh)
   region?: string;             // e.g. us-east-2
   instanceId?: string;         // for SSM
   homeFolder?: string;         // ~
@@ -59,4 +59,9 @@ export interface PaginatedResponse {
   stdout: string[];
   stderr: string[];
   timestamp: number; // Timestamp for cleanup purposes
+}
+
+export interface CommandOptions {
+  cwd?: string;
+  timeout?: number;  // Include timeout in the interface if used
 }
