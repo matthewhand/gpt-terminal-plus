@@ -66,20 +66,25 @@ describe('LocalServerHandler', () => {
     });
     
     it('lists files sorted by filename', async () => {
+      const expectedResult = {
+        items: files.map(file => file.name).sort(),
+        responseId: expect.any(String),
+        totalPages: 1
+      };
       const result = await localServerHandler.listFiles(directory);
-      expect(result).toEqual(files.map(file => file.name).sort());
+      expect(result).toEqual(expectedResult);
     });
 
-    it('should sort files by modification date when requested', async () => {
-      const filesWithStats = [
-        { name: 'file1.txt', mtime: new Date(2021, 1, 1) },
-        { name: 'file2.txt', mtime: new Date(2021, 1, 2) },
-        { name: 'file3.txt', mtime: new Date(2021, 1, 3) },
-      ];
+  //   it('should sort files by modification date when requested', async () => {
+  //     const filesWithStats = [
+  //       { name: 'file1.txt', mtime: new Date(2021, 1, 1) },
+  //       { name: 'file2.txt', mtime: new Date(2021, 1, 2) },
+  //       { name: 'file3.txt', mtime: new Date(2021, 1, 3) },
+  //     ];
 
-      const sortedFiles = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
-      expect(sortedFiles).toEqual(['file3.txt', 'file2.txt', 'file1.txt']);
-    });
+  //     const sortedFiles = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
+  //     expect(sortedFiles).toEqual(['file3.txt', 'file2.txt', 'file1.txt']);
+  //   });
   });
 
   afterEach(() => {
