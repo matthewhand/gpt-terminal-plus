@@ -83,7 +83,7 @@ async listFiles(directory: string, limit: number = 42, offset: number = 0, order
     ? `ls -al ${directory} | tail -n +2`
     : `Get-ChildItem -Path '${directory}' -File | Select-Object -ExpandProperty Name`;
 
-  const { stdout } = await this.executeCommand(listCommand);
+  const { stdout } = await this.executeCommand(listCommand, {});
   let files = stdout?.split('\n').filter(line => line.trim().length > 0) || [];
 
   if (orderBy === 'datetime') {
@@ -114,7 +114,7 @@ async updateFile(filePath: string, pattern: string, replacement: string, backup:
     ? (backup ? `cp ${filePath}{,.bak} && sed -i 's/${pattern}/${replacement}/g' ${filePath}` : `sed -i 's/${pattern}/${replacement}/g' ${filePath}`)
     : (backup ? `Copy-Item -Path ${filePath} -Destination ${filePath}.bak; (Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}` : `(Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}`);
   
-  await this.executeCommand(updateCommand);
+  await this.executeCommand(updateCommand, {});
   return true;
 }
 
@@ -122,7 +122,7 @@ async amendFile(filePath: string, content: string): Promise<boolean> {
   const amendCommand = this.serverConfig.posix
     ? `echo "${content}" >> ${filePath}`
     : `Add-Content ${filePath} '${content}'`;
-  await this.executeCommand(amendCommand);
+  await this.executeCommand(amendCommand, {});
   return true;
 }
 
@@ -146,26 +146,56 @@ async createFile(directory: string, filename: string, content: string, backup: b
   }
 }
 
-async uploadAndExecuteScript(scriptContent: string, scriptExtension: string, directory?: string): Promise<string> {
-  // Creates a unique temporary filename and path for the script.
-  const tempFileName = `${uuidv4()}${scriptExtension}`;
-  const tempDirectory = directory || this.serverConfig.posix ? '/tmp' : this.serverConfig.homeFolder || '.';
-  const tempFilePath = path.join(tempDirectory, tempFileName);
-
-  try {
-    // Handles file creation and command execution.
-    await this.createFile(tempDirectory, tempFileName, scriptContent, false);
-    const executeCommand = this.getExecuteCommand(tempFilePath);
-    const { stdout, stderr } = await this.executeCommand(executeCommand, { directory: tempDirectory });
-
-    // Error handling: checks for script output and cleans up regardless of outcome.
-    if (!stdout) throw new Error(`Script did not produce output. stderr: ${stderr}`);
-    return stdout;
-  } catch (error) {
-    debug('Error during script execution:', error);
-    throw error;  // Rethrow to maintain error handling outside this function
-  } finally {
-    // Ensures cleanup of temporary files.
-    await this.executeCommand(`rm -f ${tempFilePath}`, { directory: tempDirectory });
+async executeCommand(
+  command: string,
+  options: {
+      timeout?: number,
+      directory?: string,
+      linesPerPage?: number
   }
+): Promise<{
+  stdout?: string,
+  stderr?: string,
+  pages?: string[],
+  totalPages?: number,
+  responseId?: string
+}> {
+  // Use the utility function to execute command
+  const { stdout, stderr } = await ssmUtils.executeCommand(
+      this.ssmClient,
+      command,
+      this.serverConfig.instanceId as string,  // Ensure instanceId is never undefined
+      'AWS-RunShellScript', // Default document name, adjust as necessary
+      options.timeout || 30,  // Default timeout
+      options.directory || '/'  // Default directory
+  );
+
+  const pages = [];
+  if (options.linesPerPage && stdout) {
+      const lines = stdout.split('\n');
+      for (let i = 0; i < lines.length; i += options.linesPerPage) {
+          pages.push(lines.slice(i, i + options.linesPerPage).join('\n'));
+      }
+  }
+
+  return {
+      stdout,
+      stderr,
+      pages,
+      totalPages: pages.length,
+      responseId: uuidv4()
+  };
+}
+
+async getSystemInfo(): Promise<SystemInfo> {
+  const scriptExtension = ssmUtils.determineScriptExtension(this.serverConfig.shell as string);
+  const scriptPath = `src/scripts/remote_system_info${scriptExtension}`;
+
+  const command = ssmUtils.getExecuteCommand(this.serverConfig.shell as string, scriptPath);
+  const { stdout } = await this.executeCommand(command, {});
+
+  return JSON.parse(stdout as string) as SystemInfo;
+}
+
+
 }
