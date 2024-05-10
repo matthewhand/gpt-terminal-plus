@@ -118,10 +118,10 @@ export abstract class ServerHandler {
     return serverConfig;
   }
 
-  setWorkingDirectory(directory: string): boolean {
-    this.currentDirectory = directory;
-    return true;
-  }
+  setWorkingDirectory(directory: string, callback: (success: boolean) => void): void {
+    // Simulate immediate success
+    callback(true);
+}
 
   getWorkingDirectory(): Promise<string> {
     return Promise.resolve(this.currentDirectory);

@@ -173,6 +173,28 @@ export class SshServerHandler extends ServerHandler {
             return false;
         }
     }
+
+    async setWorkingDirectory(directory: string): Promise<boolean> {
+        const checkDirCommand = this.serverConfig.posix ? `cd ${directory} && pwd` : `cd /d ${directory} && echo %cd%`;
+    
+        try {
+            const { stdout, stderr } = await this.commandExecutor.runCommand(checkDirCommand);
+            const currentDir = stdout.trim();
+            if (!stderr && (
+                this.serverConfig.posix ? 
+                currentDir === directory : 
+                currentDir.replace(/\\$/, '').toLowerCase() === directory.toLowerCase().replace(/\\$/, '')
+            )) {
+                this.currentDirectory = directory;
+                return true;
+            }
+            return false;
+        } catch (error) {
+            debugLog(`Error setting working directory: ${error}`);
+            return false;
+        }
+    }
+            
 }
 
 export default SshServerHandler;

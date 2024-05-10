@@ -18,16 +18,21 @@ class SSHFileOperations {
     public async createFile(remotePath: string, content: Buffer, backup: boolean = false): Promise<void> {
         const sftp = await this.connectSFTP();
         if (backup) {
-            const exists = await this.fileExists(remotePath, sftp);
-            if (exists) {
-                const backupPath = `${remotePath}.${Date.now()}.bak`;
-                await sftp.rename(remotePath, backupPath);
+            try {
+                const exists = await this.fileExists(remotePath, sftp);
+                if (exists) {
+                    const backupPath = `${remotePath}.${Date.now()}.bak`;
+                    await sftp.rename(remotePath, backupPath);
+                }
+            } catch (error) {
+                debug(`Backup failed for ${remotePath}, error: ${error}`);
+                // Optionally, handle or rethrow the error depending on your use case
+                // throw new Error(`Backup failed: ${error}`);
             }
         }
         await sftp.put(content, remotePath);
         await sftp.end();
     }
-
     public async readFile(remotePath: string): Promise<Buffer> {
         const sftp = await this.connectSFTP();
         // const data = await sftp.get(remotePath, { encoding: null }); // Ensure Buffer is returned
@@ -101,20 +106,24 @@ class SSHFileOperations {
             const exists = await this.fileExists(remotePath, sftp);
             if (exists) {
                 const backupPath = `${remotePath}.${Date.now()}.bak`;
-                await sftp.rename(remotePath, backupPath);
-                debug(`Backup created: ${backupPath}`);
+                try {
+                    await sftp.rename(remotePath, backupPath);
+                    debug(`Backup created: ${backupPath}`);
+                } catch (error) {
+                    debug(`Backup failed for ${remotePath}, proceeding without backup: ${error}`);
+                    // Optionally, handle or rethrow the error depending on your use case
+                }
             }
         }
-
+    
         let existingContent = "";
         try {
-            // const buffer = await sftp.get(remotePath, { encoding: 'utf8' });
             const buffer = await sftp.get(remotePath);
             existingContent = buffer.toString();
         } catch (error) {
             debug(`Error retrieving existing content, assuming file might not exist: ${error}`);
         }
-
+    
         const amendedContent = existingContent + content;
         await sftp.put(Buffer.from(amendedContent), remotePath);
         await sftp.end();
