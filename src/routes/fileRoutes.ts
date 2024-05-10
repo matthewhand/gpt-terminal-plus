@@ -45,11 +45,18 @@ router.get(['/list-files', '/browse-files'], async (req, res) => {
 
 router.post(['/set-working-directory', '/change-dir'], async (req, res) => {
   const directory = req.body.directory;
+  if (!directory) {
+    return res.status(400).json({ error: 'Directory parameter is missing.' });
+  }
+
   try {
     const serverHandler = await getServerHandler();
-    const success = await serverHandler.setWorkingDirectory(directory);
-    res.status(success ? 200 : 400).json({ 
-      output: success ? `Working directory set to ${directory}` : 'Directory does not exist.'
+    serverHandler.setWorkingDirectory(directory, (success) => {
+      if (success) {
+        res.status(200).json({ output: `Working directory set to ${directory}` });
+      } else {
+        res.status(400).json({ error: 'Directory does not exist.' });
+      }
     });
   } catch (err) {
     handleServerError(err, res, 'Error setting current folder');
