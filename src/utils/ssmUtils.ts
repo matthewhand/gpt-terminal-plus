@@ -27,8 +27,9 @@ export const executeCommand = async (
     command: string,
     instanceId: string,
     documentName: string,
-    timeout: number = 30,  // Correct placement of default parameter
-    directory?: string
+    timeout: number = 60,  // Increased default timeout
+    directory?: string,
+    retries: number = 3    // Default retries set to 3
 ): Promise<{ stdout?: string; stderr?: string; pages?: string[]; totalPages?: number; responseId?: string }> => {
     if (!command) {
         debug(`Error: No command provided for execution.`);
@@ -47,26 +48,56 @@ export const executeCommand = async (
         TimeoutSeconds: timeout
     };
 
-    const commandResponse = await ssmClient.sendCommand(params).promise();
-    if (!commandResponse.Command || !commandResponse.Command.CommandId) {
-        debug(`Failed to retrieve command response or CommandId is undefined.`);
-        throw new Error('Failed to retrieve command response or CommandId is undefined.');
-    }
+    let attempt = 0;
+    while (attempt < retries) {
+        try {
+            const commandResponse = await ssmClient.sendCommand(params).promise();
+            if (!commandResponse.Command || !commandResponse.Command.CommandId) {
+                debug(`Failed to retrieve command response or CommandId is undefined.`);
+                throw new Error('Failed to retrieve command response or CommandId is undefined.');
+            }
 
-    const result = await ssmClient.getCommandInvocation({
-        CommandId: commandResponse.Command.CommandId,
-        InstanceId: instanceId,
-    }).promise();
+            const result = await ssmClient.getCommandInvocation({
+                CommandId: commandResponse.Command.CommandId,
+                InstanceId: instanceId,
+            }).promise();
 
-    if (result && result.StandardOutputContent) {
-        return {
-            stdout: result.StandardOutputContent,
-            stderr: result.StandardErrorContent
-        };
-    } else {
-        debug(`Command execution failed with status: ${result.Status}`);
-        throw new Error(`Command execution failed with status: ${result.Status}`);
+            if (result && result.StandardOutputContent) {
+                const pages = paginateOutput(result.StandardOutputContent);
+
+                return {
+                    stdout: result.StandardOutputContent,
+                    stderr: result.StandardErrorContent,
+                    pages,
+                    totalPages: pages.length,
+                    responseId: uuidv4()
+                };
+            } else {
+                debug(`Command execution failed with status: ${result.Status}`);
+                throw new Error(`Command execution failed with status: ${result.Status}`);
+            }
+        } catch (error) {
+            if (attempt >= retries - 1) {
+                debug(`Command execution failed after ${retries} attempts.`);
+                throw error;
+            }
+            attempt++;
+            debug(`Attempt ${attempt}: Command failed, retrying...`, error);
+            await new Promise(resolve => setTimeout(resolve, 5000));  // Wait for 5 seconds before retrying
+        }
     }
+    throw new Error("Command execution failed after retries");
+};
+
+const paginateOutput = (stdout: string, linesPerPage: number = 100): string[] => {
+    const pages: string[] = [];
+    if (stdout) {
+        const lines = stdout.split('\n');
+        for (let i = 0; i < lines.length; i += linesPerPage) {
+            pages.push(lines.slice(i, i + linesPerPage).join('\n'));
+        }
+    }
+    return pages;
 };
 
 export const createTempScript = async (

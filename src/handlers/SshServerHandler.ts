@@ -43,6 +43,7 @@ export class SshServerHandler extends ServerHandler {
                 port: this.serverConfig.port || 22,
                 username: this.serverConfig.username,
                 privateKey: this.loadPrivateKey()
+                // debug: (info) => console.log(info)  // Enable debug logging
             });
         } catch (error: unknown) {
             const errorMsg = error instanceof Error ? error.message : 'Unknown error during SSH connection setup';
