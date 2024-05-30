@@ -1,0 +1,58 @@
+// Function: executeCommand
+async executeCommand(command: string, options: { timeout?: number, directory?: string, linesPerPage?: number } = {}): Promise<{ stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string }> {
+  const effectiveTimeout = options.timeout || 30;
+  const commandToRun = options.directory ? `cd ${options.directory} && ${command}` : command;
+
+  try {
+      const { stdout, stderr } = await this.commandExecutor.runCommand(commandToRun, { timeout: effectiveTimeout });
+
+      if (options.linesPerPage && stdout) {
+          const lines = stdout.split('\n');
+          const pages = [];
+          for (let i = 0; i < lines.length; i += options.linesPerPage) {
+              pages.push(lines.slice(i, i + options.linesPerPage).join('\n'));
+          }
+          return {
+              stdout,
+              stderr,
+              pages,
+              totalPages: pages.length,
+              responseId: uuidv4()
+          };
+      }
+
+      return {
+          stdout,
+          stderr,
+          responseId: uuidv4()
+      };
+  } catch (error) {
+      throw error;
+  }
+}
+
+// Function: listFiles
+async listFiles(directory: string, limit: number = 10, offset: number = 0, orderBy: string = 'filename'): Promise<{ items: string[], totalPages: number, responseId: string }> {
+  try {
+      const files = await this.fileOperations.folderListing(directory);
+      const totalFiles = await this.fileOperations.countFiles(directory);
+      const totalPages = Math.ceil(totalFiles / limit);
+      return {
+          items: files,
+          totalPages,
+          responseId: uuidv4()
+      };
+  } catch (error) {
+      throw new Error('Failed to list files');
+  }
+}
+
+// Function: createFile
+async createFile(directory: string, filename: string, content: string, backup: boolean = false): Promise<boolean> {
+  try {
+      await this.fileOperations.createFile(`${directory}/${filename}`, Buffer.from(content), backup);
+      return true;
+  } catch (error) {
+      return false;
+  }
+}

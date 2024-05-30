@@ -1,0 +1,93 @@
+// Function: executeCommand
+async executeCommand(
+  command: string,
+  options: {
+    timeout?: number,
+    directory?: string,
+    linesPerPage?: number,
+    retries?: number,
+    waitTime?: number
+  }
+): Promise<{
+  stdout?: string,
+  stderr?: string,
+  pages?: string[],
+  totalPages?: number,
+  responseId?: string
+}> {
+  const { stdout, stderr, responseId } = await ssmUtils.executeCommand(
+    this.ssmClient,
+    command,
+    this.serverConfig.instanceId as string,
+    'AWS-RunShellScript',
+    options.timeout || 60,
+    options.directory || this.currentDirectory || '/',
+    options.retries || 3
+  );
+
+  let attempt = 0;
+  const maxAttempts = options.retries || 3;
+  const waitTime = options.waitTime || 5000;
+
+  while (attempt < maxAttempts) {
+    const commandInvocation = await this.ssmClient.getCommandInvocation({
+      CommandId: responseId as string,
+      InstanceId: this.serverConfig.instanceId as string
+    }).promise();
+
+    if (commandInvocation.Status === 'InProgress') {
+      attempt++;
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    } else if (commandInvocation.Status === 'Success') {
+      const pages = this.paginateOutput(stdout as string, options.linesPerPage);
+      return {
+        stdout,
+        stderr,
+        pages,
+        totalPages: pages.length,
+        responseId: uuidv4()
+      };
+    } else {
+      throw new Error(`Command execution failed with status: ${commandInvocation.Status}`);
+    }
+  }
+
+  throw new Error(`Command execution failed after ${maxAttempts} attempts.`);
+}
+
+// Function: listFiles
+async listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: string = "filename"): Promise<{ items: string[]; totalPages: number; responseId: string }> {
+  const listCommand = this.serverConfig.posix
+    ? `ls -al ${directory} | tail -n +2`
+    : `Get-ChildItem -Path '${directory}' -File | Select-Object -ExpandProperty Name`;
+
+  const { stdout } = await this.executeCommand(listCommand, {});
+  let files = stdout?.split('\n').filter(line => line.trim().length > 0) || [];
+
+  if (orderBy === 'datetime') {
+    files = await this.sortFilesByDate(directory, files);
+  } else {
+    files.sort();
+  }
+
+  const paginatedFiles = files.slice(offset, offset + limit);
+  const totalPages = Math.ceil(files.length / limit);
+  const responseId = uuidv4();
+
+  return { items: paginatedFiles, totalPages, responseId };
+}
+
+// Function: createFile
+async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
+  try {
+    const filePath = path.join(directory, filename);
+    if (backup) {
+      const backupPath = `${filePath}.bak`;
+      fs.copyFileSync(filePath, backupPath);
+    }
+    fs.writeFileSync(filePath, content);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
