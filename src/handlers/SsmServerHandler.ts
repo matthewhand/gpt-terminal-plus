@@ -64,15 +64,19 @@ export default class SsmServerHandler extends ServerHandler {
     const tempFilePath = path.join(tempDirectory, tempFileName);
 
     try {
+      debug(`Creating temporary script at: ${tempFilePath}`);
       await this.createFile(tempDirectory, tempFileName, scriptContent, false);
       const executeCommand = this.getExecuteCommand(tempFilePath);
+      debug(`Executing script: ${executeCommand}`);
       const { stdout, stderr } = await this.executeCommand(executeCommand, { directory: tempDirectory });
 
       if (!stdout) {
+        debug(`Script did not produce output. stderr: ${stderr}`);
         throw new Error(`Script did not produce output. stderr: ${stderr}`);
       }
 
       await this.executeCommand(`rm -f ${tempFilePath}`, { directory: tempDirectory });
+      debug(`Temporary script ${tempFilePath} deleted.`);
       return stdout;
     } catch (error) {
       await this.executeCommand(`rm -f ${tempFilePath}`, { directory: tempDirectory });
@@ -94,6 +98,7 @@ export default class SsmServerHandler extends ServerHandler {
       ? `ls -al ${directory} | tail -n +2`
       : `Get-ChildItem -Path '${directory}' -File | Select-Object -ExpandProperty Name`;
 
+    debug(`Listing files in directory: ${directory}`);
     const { stdout } = await this.executeCommand(listCommand, {});
     let files = stdout?.split('\n').filter(line => line.trim().length > 0) || [];
 
@@ -139,6 +144,7 @@ export default class SsmServerHandler extends ServerHandler {
       ? (backup ? `cp ${filePath}{,.bak} && sed -i 's/${pattern}/${replacement}/g' ${filePath}` : `sed -i 's/${pattern}/${replacement}/g' ${filePath}`)
       : (backup ? `Copy-Item -Path ${filePath} -Destination ${filePath}.bak; (Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}` : `(Get-Content ${filePath}) -replace '${pattern}', '${replacement}' | Set-Content ${filePath}`);
 
+    debug(`Updating file: ${filePath} with pattern: ${pattern} and replacement: ${replacement}`);
     await this.executeCommand(updateCommand, {});
     return true;
   }
@@ -151,8 +157,9 @@ export default class SsmServerHandler extends ServerHandler {
    */
   async amendFile(filePath: string, content: string): Promise<boolean> {
     const amendCommand = this.serverConfig.posix
-      ? `echo "${content}" >> ${filePath}`
+      ? `echo \"${content}\" >> ${filePath}`
       : `Add-Content ${filePath} '${content}'`;
+    debug(`Appending content to file: ${filePath}`);
     await this.executeCommand(amendCommand, {});
     return true;
   }
@@ -171,14 +178,16 @@ export default class SsmServerHandler extends ServerHandler {
       if (backup) {
         const backupPath = `${filePath}.bak`;
         fs.copyFileSync(filePath, backupPath);
+        debug(`Backup created for file: ${filePath} at ${backupPath}`);
       }
       fs.writeFileSync(filePath, content);
+      debug(`File created at: ${filePath}`);
       return true;
     } catch (error) {
       if (error instanceof Error) {
-        console.error("Error creating file:", error.message);
+        debug(`Error creating file: ${error.message}`);
       } else {
-        console.error("An unexpected error occurred:", error);
+        debug(`An unexpected error occurred: ${error}`);
       }
       return false;
     }
@@ -191,8 +200,8 @@ export default class SsmServerHandler extends ServerHandler {
    * @param {number} [options.timeout=60] - The maximum time in seconds to wait for the command to complete.
    * @param {string} [options.directory] - The directory from which the command should be executed.
    * @param {number} [options.linesPerPage] - The number of lines per page if output needs pagination.
-   * @param {number} [options.retries=3] - The number of times to retry the command if it fails.
-   * @param {number} [options.waitTime=5000] - The wait time in milliseconds between retries.
+   * @param {number} [options.retries=10] - The number of times to retry the command if it fails.
+   * @param {number} [options.waitTime=6000] - The wait time in milliseconds between retries.
    * @returns {Promise<{stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string}>} A promise that resolves to an object containing command output details and optionally pagination details if linesPerPage is provided.
    */
   async executeCommand(
@@ -203,7 +212,7 @@ export default class SsmServerHandler extends ServerHandler {
       linesPerPage?: number,
       retries?: number,
       waitTime?: number
-    }
+    } = {}
   ): Promise<{
     stdout?: string,
     stderr?: string,
@@ -211,47 +220,92 @@ export default class SsmServerHandler extends ServerHandler {
     totalPages?: number,
     responseId?: string
   }> {
-    const { stdout, stderr, responseId } = await ssmUtils.executeCommand(
-      this.ssmClient,
-      command,
-      this.serverConfig.instanceId as string,
-      'AWS-RunShellScript',
-      options.timeout || 60,
-      options.directory || this.currentDirectory || '/',
-      options.retries || 3
-    );
+    debug('Executing command:', command, 'on directory:', options.directory);
 
-    let attempt = 0;
-    const maxAttempts = options.retries || 3;
-    const waitTime = options.waitTime || 5000;
-
-    while (attempt < maxAttempts) {
-      const commandInvocation = await this.ssmClient.getCommandInvocation({
-        CommandId: responseId as string,
-        InstanceId: this.serverConfig.instanceId as string
-      }).promise();
-
-      debug(`Attempt ${attempt}: Command status: ${commandInvocation.Status}`);
-
-      if (commandInvocation.Status === 'InProgress') {
-        attempt++;
-        debug(`Attempt ${attempt}: Command still in progress, waiting ${waitTime}ms...`);
-        await new Promise(resolve => setTimeout(resolve, waitTime));
-      } else if (commandInvocation.Status === 'Success') {
-        const pages = this.paginateOutput(stdout as string, options.linesPerPage);
-        return {
-          stdout,
-          stderr,
-          pages,
-          totalPages: pages.length,
-          responseId: uuidv4()
-        };
-      } else {
-        throw new Error(`Command execution failed with status: ${commandInvocation.Status}`);
-      }
+    if (!command) {
+      throw new Error('No command provided for execution.');
+    }
+    if (!this.serverConfig.instanceId) {
+      throw new Error('Instance ID is undefined. Unable to execute command.');
     }
 
-    throw new Error(`Command execution failed after ${maxAttempts} attempts.`);
+    const documentName = this.serverConfig.posix ? 'AWS-RunShellScript' : 'AWS-RunPowerShellScript';
+    const formattedCommand = this.serverConfig.posix
+      ? (options.directory ? `cd ${options.directory}; ${command}` : command)
+      : (options.directory ? `Set-Location -Path '${options.directory}'; ${command}` : command);
+
+    const params = {
+      InstanceIds: [this.serverConfig.instanceId],
+      DocumentName: documentName,
+      Parameters: { commands: [formattedCommand] },
+      TimeoutSeconds: options.timeout || 60
+    };
+
+    const commandResponse = await this.ssmClient.sendCommand(params).promise();
+
+    if (!commandResponse.Command || !commandResponse.Command.CommandId) {
+      throw new Error('Failed to retrieve command response or CommandId is undefined. Command execution failed.');
+    }
+
+    return await this.fetchCommandResult(commandResponse.Command.CommandId, this.serverConfig.instanceId, options.linesPerPage, options.retries, options.waitTime);
+  }
+
+  /**
+   * Fetches the result of a command execution from AWS SSM.
+   * @param {string} commandId - The ID of the command to fetch the result for.
+   * @param {string} instanceId - The ID of the instance the command was executed on.
+   * @param {number} [linesPerPage] - The number of lines per page if output needs pagination.
+   * @param {number} [retries=10] - The number of times to retry fetching the command result.
+   * @param {number} [waitTime=6000] - The wait time in milliseconds between retries.
+   * @returns {Promise<{ stdout: string; stderr: string; pages?: string[]; totalPages?: number; responseId?: string }>} A promise that resolves to an object containing the command output and pagination details if applicable.
+   */
+  private async fetchCommandResult(
+    commandId: string,
+    instanceId: string,
+    linesPerPage?: number,
+    retries: number = 10,
+    waitTime: number = 6000
+  ): Promise<{ stdout: string; stderr: string; pages?: string[]; totalPages?: number; responseId?: string }> {
+    let attempt = 0;
+
+    while (attempt < retries) {
+      const result = await this.ssmClient.getCommandInvocation({
+        CommandId: commandId,
+        InstanceId: instanceId,
+      }).promise();
+
+      if (result && result.Status && ['Success', 'Failed', 'Cancelled', 'TimedOut'].includes(result.Status)) {
+        const stdout = result.StandardOutputContent || '';
+        const stderr = result.StandardErrorContent || '';
+
+        if (linesPerPage && linesPerPage > 0) {
+          const allOutput = `${stdout}\n${stderr}`.trim();
+          const lines = allOutput.split('\n');
+          const totalPages = Math.ceil(lines.length / linesPerPage);
+          const pages = [];
+
+          for (let i = 0; i < lines.length; i += linesPerPage) {
+            pages.push(lines.slice(i, i + linesPerPage).join('\n'));
+          }
+
+          return {
+            stdout,
+            stderr,
+            pages,
+            totalPages,
+            responseId: uuidv4()
+          };
+        }
+
+        return { stdout, stderr };
+      }
+
+      debug(`Attempt ${attempt + 1}: Command status: ${result.Status}, retrying in ${waitTime / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+      attempt++;
+      waitTime *= 2; // Exponential backoff
+    }
+    throw new Error('Timeout while waiting for command result');
   }
 
   /**
