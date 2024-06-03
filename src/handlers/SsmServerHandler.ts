@@ -66,6 +66,19 @@ export default class SsmServerHandler extends ServerHandler {
     try {
       debug(`Creating temporary script at: ${tempFilePath}`);
       await this.createFile(tempDirectory, tempFileName, scriptContent, false);
+      debug(`File created at: ${tempFilePath}`);
+
+      // Adding a delay to ensure the file system has registered the new file
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Retrieve folder listing and contents of the script for debugging purposes
+      if (debug.enabled) {
+        const { stdout: listOutput } = await this.executeCommand(`ls -l ${tempDirectory}`, { directory: tempDirectory });
+        debug(`Files in ${tempDirectory}: ${listOutput}`);
+        const { stdout: catOutput } = await this.executeCommand(`cat ${tempFilePath}`, { directory: tempDirectory });
+        debug(`Contents of ${tempFilePath}: ${catOutput}`);
+      }
+
       const executeCommand = this.getExecuteCommand(tempFilePath);
       debug(`Executing script: ${executeCommand}`);
       const { stdout, stderr } = await this.executeCommand(executeCommand, { directory: tempDirectory });
@@ -330,10 +343,10 @@ export default class SsmServerHandler extends ServerHandler {
    * @returns {Promise<SystemInfo>} A promise that resolves to an object containing system information.
    */
   async getSystemInfo(): Promise<SystemInfo> {
-    const scriptExtension = ssmUtils.determineScriptExtension(this.serverConfig.shell as string);
+    const scriptExtension = this.determineScriptExtension();
     const scriptPath = `src/scripts/remote_system_info${scriptExtension}`;
 
-    const command = ssmUtils.getExecuteCommand(this.serverConfig.shell as string, scriptPath);
+    const command = this.getExecuteCommand(scriptPath);
     const { stdout } = await this.executeCommand(command, {});
 
     return JSON.parse(stdout as string) as SystemInfo;

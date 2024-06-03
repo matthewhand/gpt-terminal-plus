@@ -87,7 +87,7 @@ private constructSystemInfo(rawData: any): SystemInfo {
         totalMemory: rawData.totalMemory || 0,
         freeMemory: rawData.freeMemory || 0,
         uptime: rawData.uptime || 0,
-        currentFolder: rawData.currentFolder || ''
+        currentFolder: rawData.defaultFolder || ''
         // Add other fields as necessary, based on your JSON structure
     };
 }
@@ -125,9 +125,9 @@ async executeCommand(command: string, options: { timeout?: number, directory?: s
   }
 }
 
-  // setCurrentDirectory(directory: string): boolean {
+  // setDefaultDirectory(directory: string): boolean {
   //   if (fs.existsSync(directory)) {
-  //     this.currentDirectory = directory;
+  //     this.defaultDirectory = directory;
   //     return true;
   //   } else {
   //     return false;
@@ -217,7 +217,7 @@ async executeCommand(command: string, options: { timeout?: number, directory?: s
     }
   
     async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
-      const fullPath = path.join(this.currentDirectory, filePath);
+      const fullPath = path.join(this.defaultDirectory, filePath);
       try {
         if (process.env.DEBUG === 'true') {
           console.log('Updating file:', fullPath);
@@ -256,7 +256,7 @@ async executeCommand(command: string, options: { timeout?: number, directory?: s
     }
     
     async amendFile(filePath: string, content: string): Promise<boolean> {
-      const fullPath = path.join(this.currentDirectory, filePath);
+      const fullPath = path.join(this.defaultDirectory, filePath);
       try {
         const fileContent = fs.readFileSync(fullPath, 'utf8');
         const amendedContent = fileContent + content;
@@ -270,8 +270,8 @@ async executeCommand(command: string, options: { timeout?: number, directory?: s
       }
     }
 
-  // getCurrentDirectory(): Promise<string> {
-  //   return Promise.resolve(this.currentDirectory);
+  // getdefaultDirectory(): Promise<string> {
+  //   return Promise.resolve(this.defaultDirectory);
   // }
   
 }

@@ -43,7 +43,7 @@ router.get(['/list-files', '/browse-files'], async (req, res) => {
   }
 });
 
-router.post(['/set-working-directory', '/change-dir'], async (req, res) => {
+router.post(['/set-default-directory', '/change-dir'], async (req, res) => {
   const directory = req.body.directory;
   if (!directory) {
     return res.status(400).json({ error: 'Directory parameter is missing.' });
@@ -51,9 +51,9 @@ router.post(['/set-working-directory', '/change-dir'], async (req, res) => {
 
   try {
     const serverHandler = await getServerHandler();
-    serverHandler.setWorkingDirectory(directory, (success) => {
+    serverHandler.setDefaultDirectory(directory, (success) => {
       if (success) {
-        res.status(200).json({ output: `Working directory set to ${directory}` });
+        res.status(200).json({ output: `Default directory set to ${directory}` });
       } else {
         res.status(400).json({ error: 'Directory does not exist.' });
       }
@@ -67,7 +67,7 @@ router.post(['/create-file'], async (req, res) => {
   const { filename, content, backup = true, directory } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
+    const targetDirectory = directory || await serverHandler.getDefaultDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
@@ -87,7 +87,7 @@ router.post('/update-file', async (req, res) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
+    const targetDirectory = directory || await serverHandler.getDefaultDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath);
     try {
@@ -107,7 +107,7 @@ router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
   try {
     const serverHandler = await getServerHandler();
-    const targetDirectory = directory || await serverHandler.getWorkingDirectory();
+    const targetDirectory = directory || await serverHandler.getDefaultDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {

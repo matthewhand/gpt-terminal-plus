@@ -135,14 +135,14 @@ paths:
         "404":
           description: Response not found.
 
-  /set-working-directory:
+  /set-default-directory:
     post:
-      summary: Set the working directory for command execution.
+      summary: Set the default directory for command execution.
       description: >
-        Sets the current working directory for executing commands. This ensures that all commands run subsequently
+        Sets the default working directory for executing commands. This ensures that all commands run subsequently
         are executed in the context of the specified directory, mimicking the behavior of changing directories in a
         traditional shell environment.
-      operationId: setWorkingDirectory
+      operationId: setDefaultDirectory
       x-openai-isConsequential: false
       requestBody:
         required: true

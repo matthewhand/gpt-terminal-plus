@@ -6,7 +6,7 @@ const serverHandlerDebug = debug('app:ServerHandler');
 import { v4 as uuidv4 } from 'uuid';
 
 export abstract class ServerHandler {
-  protected currentDirectory: string = "";
+  protected defaultDirectory: string = "";
   protected serverConfig: ServerConfig;
   protected identifier: string;
 
@@ -15,12 +15,12 @@ export abstract class ServerHandler {
     this.identifier = `${serverConfig.username}@${serverConfig.host}`;
   }
 
-    /**
-     * Generates a unique response ID for each operation.
-     * @returns A string representing a unique response ID.
-     */
-    protected generateResponseId(): string {
-      return uuidv4();  // Generates a unique ID for each response
+  /**
+   * Generates a unique response ID for each operation.
+   * @returns A string representing a unique response ID.
+   */
+  protected generateResponseId(): string {
+    return uuidv4();  // Generates a unique ID for each response
   }
 
   /**
@@ -31,13 +31,13 @@ export abstract class ServerHandler {
    * @returns An object containing the paginated items, total pages, and a response ID.
    */
   protected paginateResponse<T>(items: T[], totalCount: number, limit: number): { items: T[], totalPages: number, responseId: string } {
-      const totalPages = Math.ceil(totalCount / limit);
-      const responseId = this.generateResponseId();
-      return {
-          items,
-          totalPages,
-          responseId
-      };
+    const totalPages = Math.ceil(totalCount / limit);
+    const responseId = this.generateResponseId();
+    return {
+      items,
+      totalPages,
+      responseId
+    };
   }
 
   // Method to list available servers
@@ -53,12 +53,12 @@ export abstract class ServerHandler {
     if (!host) {
       throw new Error('Host is undefined.');
     }
-  
+
     const serverConfig = await this.getServerConfig(host);
     if (!serverConfig) {
       throw new Error(`Server configuration not found for host: ${host}`);
     }
-  
+
     serverHandlerDebug(`Retrieved server config for host ${host}:`, serverConfig);
 
     if (host === 'localhost') {
@@ -93,7 +93,6 @@ export abstract class ServerHandler {
       };
 
       try {
-
         const response = await ec2.describeInstances(params).promise();
         if (!response.Reservations || response.Reservations.length === 0) {
           throw new Error(`No EC2 instance found with name '${host}'`);
@@ -118,13 +117,16 @@ export abstract class ServerHandler {
     return serverConfig;
   }
 
-  setWorkingDirectory(directory: string, callback: (success: boolean) => void): void {
+  setDefaultDirectory(directory: string, callback: (success: boolean) => void): void {
+    serverHandlerDebug(`Setting default directory to ${directory}`);
+    this.defaultDirectory = directory;
     // Simulate immediate success
     callback(true);
-}
+  }
 
-  getWorkingDirectory(): Promise<string> {
-    return Promise.resolve(this.currentDirectory);
+  getDefaultDirectory(): Promise<string> {
+    serverHandlerDebug(`Getting default directory: ${this.defaultDirectory}`);
+    return Promise.resolve(this.defaultDirectory);
   }
 
   /**
@@ -151,7 +153,7 @@ export abstract class ServerHandler {
     totalPages?: number,
     responseId?: string
   }>;
-  // Ensure listFiles is similarly flexible if necessary
+
   abstract listFiles(directory: string, limit: number, offset: number, orderBy: string): Promise<{ items: string[], totalPages: number, responseId: string }>;
 
   abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;

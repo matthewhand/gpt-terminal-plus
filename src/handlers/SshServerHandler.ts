@@ -175,7 +175,7 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
-    async setWorkingDirectory(directory: string): Promise<boolean> {
+    async setDefaultDirectory(directory: string): Promise<boolean> {
         const checkDirCommand = this.serverConfig.posix ? `cd ${directory} && pwd` : `cd /d ${directory} && echo %cd%`;
     
         try {
@@ -186,7 +186,7 @@ export class SshServerHandler extends ServerHandler {
                 currentDir === directory : 
                 currentDir.replace(/\\$/, '').toLowerCase() === directory.toLowerCase().replace(/\\$/, '')
             )) {
-                this.currentDirectory = directory;
+                this.defaultDirectory = directory;
                 return true;
             }
             return false;
