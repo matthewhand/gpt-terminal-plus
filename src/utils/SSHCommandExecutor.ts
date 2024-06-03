@@ -93,6 +93,15 @@ class SSHCommandExecutor {
     }
 
     /**
+     * Escapes special characters in the command to prevent shell expansion issues.
+     * @param {string} command - The command to escape.
+     * @returns {string} - The escaped command.
+     */
+    private escapeCommand(command: string): string {
+        return command.replace('*', '\\*');
+    }
+
+    /**
      * Run a command on the remote server.
      * @param {string} command - The command to run.
      * @param {Object} [options] - Optional settings for command execution.
@@ -102,7 +111,8 @@ class SSHCommandExecutor {
      */
     public async runCommand(command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string }> {
         await this.ensureConnected(); // Ensure connection before running the command
-        const commandToRun = options.cwd ? `cd ${options.cwd} && ${command}` : command;
+        const escapedCommand = this.escapeCommand(command);
+        const commandToRun = options.cwd ? `cd ${options.cwd} && ${escapedCommand}` : escapedCommand;
 
         return new Promise((resolve, reject) => {
             this.sshClient.exec(commandToRun, (err, stream) => {

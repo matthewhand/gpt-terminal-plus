@@ -1,9 +1,6 @@
 import { Client } from 'ssh2';
 import Debug from 'debug';
 import { promisify } from 'util';
-import * as fs from 'fs';
-import * as path from 'path';
-// import { SFTPClient } from 'ssh2-sftp-client';
 
 const debug = Debug('app:SSHOperations');
 
@@ -22,6 +19,15 @@ class SSHOperations {
     }
 
     /**
+     * Escapes special characters in the command to prevent shell expansion issues.
+     * @param {string} command - The command to escape.
+     * @returns {string} - The escaped command.
+     */
+    private escapeCommand(command: string): string {
+        return command.replace('*', '\\*');
+    }
+
+    /**
      * Execute a command on the remote server.
      * @param {string} command - The command to execute.
      * @param {Object} [options] - Additional options.
@@ -32,7 +38,8 @@ class SSHOperations {
         const exec = promisify(this.sshClient.exec.bind(this.sshClient));
         try {
             const { cwd } = options;
-            const fullCommand = cwd ? `cd ${cwd} && ${command}` : command;
+            const escapedCommand = this.escapeCommand(command);
+            const fullCommand = cwd ? `cd ${cwd} && ${escapedCommand}` : escapedCommand;
             const stream = await exec(fullCommand);
             let stdout = '';
             let stderr = '';
@@ -57,6 +64,7 @@ class SSHOperations {
         }
     }
 
+    // Uncomment and implement these methods if needed for file operations
     // /**
     //  * Append content to a file on the remote server.
     //  * @param {string} remoteFilePath - The remote file path.
@@ -68,14 +76,14 @@ class SSHOperations {
     //     const tmpFilePath = `/tmp/${path.basename(remoteFilePath)}.${Date.now()}`;
     //     const originalContent = await this.readFile(remoteFilePath);
     //     const newContent = originalContent + '\n' + content;
-
+    // 
     //     if (backup) {
     //         await this.executeCommand(`cp ${remoteFilePath} ${tmpFilePath}`);
     //     }
-
+    // 
     //     await this.writeFile(remoteFilePath, newContent);
     // }
-
+    //
     // /**
     //  * Read a file from the remote server.
     //  * @param {string} remoteFilePath - The remote file path.
@@ -85,7 +93,7 @@ class SSHOperations {
     //     const { stdout } = await this.executeCommand(`cat ${remoteFilePath}`);
     //     return stdout;
     // }
-
+    //
     // /**
     //  * Write content to a file on the remote server.
     //  * @param {string} remoteFilePath - The remote file path.
@@ -98,7 +106,6 @@ class SSHOperations {
     //     await this.transferFile(tmpFilePath, remoteFilePath);
     //     fs.unlinkSync(tmpFilePath);
     // }
-
 }
 
 export default SSHOperations;
