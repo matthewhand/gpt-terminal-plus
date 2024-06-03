@@ -3,12 +3,13 @@ import { Client } from 'ssh2';
 import { ServerConfig, SystemInfo } from '../types';
 import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../utils/SSHFileOperations';
-import SSHSystemInfoRetriever from '../utils/SSHSystemInfoRetriever';
 import { ServerHandler } from './ServerHandler';
 import debug from 'debug';
 import { join } from 'path';
 import { homedir } from 'os';
 import { readFileSync } from 'fs';
+import { SystemInfoRetriever } from '../interfaces/SystemInfoRetriever';
+import SSHSystemInfoRetriever from '../utils/SSHSystemInfoRetriever';
 
 const debugLog = debug('app:SshServerHandler');
 
@@ -16,7 +17,7 @@ export class SshServerHandler extends ServerHandler {
     private sshClient: Client;
     private commandExecutor: SSHCommandExecutor;
     private fileOperations: SSHFileOperations;
-    private systemInfoRetriever: SSHSystemInfoRetriever;
+    private systemInfoRetriever: SystemInfoRetriever;
 
     /**
      * Constructor for SshServerHandler.
@@ -28,7 +29,7 @@ export class SshServerHandler extends ServerHandler {
         this.setupSSHClient();
         this.commandExecutor = new SSHCommandExecutor(this.sshClient, this.serverConfig);
         this.fileOperations = new SSHFileOperations(this.sshClient, this.serverConfig);
-        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.sshClient, this.serverConfig);
+        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.serverConfig);
     }
 
     /**
@@ -50,7 +51,6 @@ export class SshServerHandler extends ServerHandler {
                 port: this.serverConfig.port || 22,
                 username: this.serverConfig.username,
                 privateKey: this.loadPrivateKey()
-                // debug: (info) => console.log(info)  // Enable debug logging
             });
         } catch (error: unknown) {
             const errorMsg = error instanceof Error ? error.message : 'Unknown error during SSH connection setup';
@@ -94,14 +94,14 @@ export class SshServerHandler extends ServerHandler {
                     stderr,
                     pages,
                     totalPages: pages.length,
-                    responseId: uuidv4()  // Ensuring each session has a unique response ID
+                    responseId: uuidv4()
                 };
             }
 
             return {
                 stdout,
                 stderr,
-                responseId: uuidv4()  // Ensuring a unique response ID for tracking
+                responseId: uuidv4()
             };
         } catch (error) {
             debugLog(`Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -131,20 +131,73 @@ export class SshServerHandler extends ServerHandler {
     private initializeUtilities(): void {
         this.commandExecutor = new SSHCommandExecutor(this.sshClient, this.serverConfig);
         this.fileOperations = new SSHFileOperations(this.sshClient, this.serverConfig);
-        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.sshClient, this.serverConfig);
+        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.serverConfig);
     }
 
-    /**
+     /**
      * Retrieves system information from the remote server.
      * @returns {Promise<SystemInfo>} - The system information.
      */
-    async getSystemInfo(): Promise<SystemInfo> {
+     async getSystemInfo(): Promise<SystemInfo> {
         debugLog("Retrieving system information from the remote server");
+
+        const localScriptPath = join(__dirname, '..', 'scripts', this.systemInfoRetriever.getSystemInfoScript()); // Local script path
+        let remoteScriptPath = `/tmp/${this.systemInfoRetriever.getSystemInfoScript()}`; // Default remote script path for POSIX
+
         try {
-            return await this.systemInfoRetriever.getSystemInfo();
+            // Check if the /tmp directory exists for POSIX systems, if not use the home directory
+            if (this.serverConfig.posix) {
+                const tmpExists = await this.checkRemotePathExists('/tmp');
+                if (!tmpExists) {
+                    remoteScriptPath = `${this.serverConfig.homeFolder}/${this.systemInfoRetriever.getSystemInfoScript()}`;
+                }
+            } else {
+                // For non-POSIX systems, use the home directory
+                remoteScriptPath = `${this.serverConfig.homeFolder}/${this.systemInfoRetriever.getSystemInfoScript()}`;
+            }
+
+            // Transfer the script to the remote server
+            await this.fileOperations.createFile(remoteScriptPath, Buffer.from(await this.readLocalFile(localScriptPath)), false);
+
+            const command = this.serverConfig.shell === 'powershell' ? `powershell -File ${remoteScriptPath}` : `bash ${remoteScriptPath}`;
+            const result = await this.executeCommand(command, { timeout: 60 });
+
+            // Clean up the script after execution (optional)
+            await this.fileOperations.deleteFile(remoteScriptPath);
+
+            return JSON.parse(result.stdout || '{}');
         } catch (error) {
             debugLog(`Error retrieving system info: ${error}`);
             return this.systemInfoRetriever.getDefaultSystemInfo();
+        }
+    }
+
+    /**
+     * Reads a local file and returns its content as a string.
+     * @param {string} filePath - The path of the file to read.
+     * @returns {Promise<string>} - The content of the file.
+     */
+    private async readLocalFile(filePath: string): Promise<string> {
+        const fs = require('fs').promises;
+        try {
+            return await fs.readFile(filePath, 'utf8');
+        } catch (error) {
+            debugLog(`Error reading local file ${filePath}: ${error}`);
+            throw new Error(`Failed to read local file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * Checks if a remote path exists.
+     * @param {string} remotePath - The remote path to check.
+     * @returns {Promise<boolean>} - True if the path exists, otherwise false.
+     */
+    private async checkRemotePathExists(remotePath: string): Promise<boolean> {
+        try {
+            return await this.fileOperations.fileExists(remotePath);
+        } catch (error) {
+            debugLog(`Error checking remote path ${remotePath}: ${error}`);
+            return false;
         }
     }
 
@@ -239,13 +292,13 @@ export class SshServerHandler extends ServerHandler {
      */
     async setDefaultDirectory(directory: string): Promise<boolean> {
         const checkDirCommand = this.serverConfig.posix ? `cd ${directory} && pwd` : `cd /d ${directory} && echo %cd%`;
-    
+
         try {
             const { stdout, stderr } = await this.commandExecutor.runCommand(checkDirCommand);
             const currentDir = stdout.trim();
             if (!stderr && (
-                this.serverConfig.posix ? 
-                currentDir === directory : 
+                this.serverConfig.posix ?
+                currentDir === directory :
                 currentDir.replace(/\\$/, '').toLowerCase() === directory.toLowerCase().replace(/\\$/, '')
             )) {
                 this.defaultDirectory = directory;
