@@ -65,7 +65,6 @@ paths:
               type: object
               required:
                 - command
-                - directory
               properties:
                 command:
                   type: string

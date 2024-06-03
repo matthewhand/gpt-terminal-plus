@@ -18,6 +18,10 @@ export class SshServerHandler extends ServerHandler {
     private fileOperations: SSHFileOperations;
     private systemInfoRetriever: SSHSystemInfoRetriever;
 
+    /**
+     * Constructor for SshServerHandler.
+     * @param {ServerConfig} serverConfig - The server configuration.
+     */
     constructor(serverConfig: ServerConfig) {
         super(serverConfig);
         this.sshClient = new Client();
@@ -27,6 +31,9 @@ export class SshServerHandler extends ServerHandler {
         this.systemInfoRetriever = new SSHSystemInfoRetriever(this.sshClient, this.serverConfig);
     }
 
+    /**
+     * Sets up the SSH client with event listeners.
+     */
     private setupSSHClient(): void {
         this.sshClient.on('ready', () => {
             debugLog("SSH Client is ready");
@@ -52,16 +59,26 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
-    async executeCommand(command: string, options: { timeout?: number, directory?: string, linesPerPage?: number } = {}): Promise<{
+    /**
+     * Executes a command on the remote server.
+     * @param {string} command - The command to run.
+     * @param {object} options - The options for command execution.
+     * @param {number} [options.timeout] - The timeout for the command execution.
+     * @param {string} [options.directory] - The directory to set as the current working directory.
+     * @param {string} [options.path] - The path to set as the current working directory.
+     * @param {number} [options.linesPerPage] - The number of lines per page for paginated output.
+     * @returns {Promise<object>} - The result of the command execution.
+     */
+    async executeCommand(command: string, options: { timeout?: number, directory?: string, path?: string, linesPerPage?: number } = {}): Promise<{
         stdout?: string,
         stderr?: string,
         pages?: string[],
         totalPages?: number,
         responseId?: string
     }> {
-        // Method implementation
         const effectiveTimeout = options.timeout || 30;
-        const commandToRun = options.directory ? `cd ${options.directory} && ${command}` : command;
+        const workingDir = options.directory || options.path;
+        const commandToRun = workingDir ? `cd ${workingDir} && ${command}` : command;
 
         try {
             const { stdout, stderr } = await this.commandExecutor.runCommand(commandToRun, { timeout: effectiveTimeout });
@@ -92,7 +109,10 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
-
+    /**
+     * Loads the private key from the specified path or default path.
+     * @returns {Buffer} - The loaded private key.
+     */
     private loadPrivateKey(): Buffer {
         const defaultKeyPath = join(homedir(), '.ssh', 'id_rsa');
         const keyPath = this.serverConfig.privateKeyPath || defaultKeyPath;
@@ -105,12 +125,19 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Initializes utility classes for SSH operations.
+     */
     private initializeUtilities(): void {
         this.commandExecutor = new SSHCommandExecutor(this.sshClient, this.serverConfig);
         this.fileOperations = new SSHFileOperations(this.sshClient, this.serverConfig);
         this.systemInfoRetriever = new SSHSystemInfoRetriever(this.sshClient, this.serverConfig);
     }
-    // This part of the code handles system information retrieval and other file operations
+
+    /**
+     * Retrieves system information from the remote server.
+     * @returns {Promise<SystemInfo>} - The system information.
+     */
     async getSystemInfo(): Promise<SystemInfo> {
         debugLog("Retrieving system information from the remote server");
         try {
@@ -121,6 +148,14 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Lists files in a remote directory.
+     * @param {string} directory - The remote directory path.
+     * @param {number} [limit=10] - The maximum number of files to return.
+     * @param {number} [offset=0] - The offset for file listing.
+     * @param {string} [orderBy='filename'] - The criteria to order the files by.
+     * @returns {Promise<object>} - The list of files and pagination info.
+     */
     async listFiles(directory: string, limit: number = 10, offset: number = 0, orderBy: string = 'filename'): Promise<{ items: string[], totalPages: number, responseId: string }> {
         debugLog(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}, orderBy: ${orderBy}`);
         try {
@@ -138,6 +173,14 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Creates a file on the remote server.
+     * @param {string} directory - The remote directory path.
+     * @param {string} filename - The name of the file to create.
+     * @param {string} content - The content to write to the file.
+     * @param {boolean} [backup=false] - Whether to create a backup if the file already exists.
+     * @returns {Promise<boolean>} - Whether the file was created successfully.
+     */
     async createFile(directory: string, filename: string, content: string, backup: boolean = false): Promise<boolean> {
         debugLog(`Creating file at ${directory}/${filename} with backup: ${backup}`);
         try {
@@ -149,6 +192,14 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Updates a file on the remote server.
+     * @param {string} filePath - The remote file path.
+     * @param {string} pattern - The pattern to replace.
+     * @param {string} replacement - The replacement text.
+     * @param {boolean} [backup=true] - Whether to create a backup of the existing file.
+     * @returns {Promise<boolean>} - Whether the file was updated successfully.
+     */
     async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
         debugLog(`Updating file at ${filePath} with pattern: ${pattern}`);
         try {
@@ -162,6 +213,12 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Appends content to a file on the remote server.
+     * @param {string} filePath - The remote file path.
+     * @param {string} content - The content to append.
+     * @returns {Promise<boolean>} - Whether the file was amended successfully.
+     */
     async amendFile(filePath: string, content: string): Promise<boolean> {
         debugLog(`Amending file at ${filePath}`);
         try {
@@ -175,6 +232,11 @@ export class SshServerHandler extends ServerHandler {
         }
     }
 
+    /**
+     * Sets the default working directory on the remote server.
+     * @param {string} directory - The directory to set as the default.
+     * @returns {Promise<boolean>} - Whether the default directory was set successfully.
+     */
     async setDefaultDirectory(directory: string): Promise<boolean> {
         const checkDirCommand = this.serverConfig.posix ? `cd ${directory} && pwd` : `cd /d ${directory} && echo %cd%`;
     
@@ -195,7 +257,6 @@ export class SshServerHandler extends ServerHandler {
             return false;
         }
     }
-            
 }
 
 export default SshServerHandler;
