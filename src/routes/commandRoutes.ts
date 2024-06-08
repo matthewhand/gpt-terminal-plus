@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
-import ServerConfigManager from './ServerConfigManager';
+import ServerConfigManager from '../config/ServerConfigManager';
 import config from 'config';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
@@ -24,7 +24,12 @@ const handleCommand = async (req: Request, res: Response) => {
   try {
     const configManager = ServerConfigManager.getInstance();
     const serverConfig = configManager.getServerConfig();
-    const serverHandler = await ServerHandler.getInstance(serverConfig);
+
+    if (!serverConfig) {
+      throw new Error('Server configuration is null or undefined');
+    }
+
+    const serverHandler = await ServerHandler.getInstance(serverConfig.host);
 
     const effectiveTimeout = timeout ?? config.get<number>('commandTimeout') ?? 180000;
     const options = {
@@ -34,7 +39,7 @@ const handleCommand = async (req: Request, res: Response) => {
     const executionResult = await serverHandler.executeCommand(command, options);
 
     res.status(200).json(executionResult);
-  } catch (error: any) { // Changed from implicit 'unknown' to 'any' for broader type handling
+  } catch (error: any) { 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     debug(`Error executing command: ${errorMessage}`);
     res.status(500).json({ error: errorMessage });

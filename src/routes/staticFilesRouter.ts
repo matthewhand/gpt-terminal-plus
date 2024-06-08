@@ -15,4 +15,3 @@ router.get('/openapi.yaml', (_, res) => {
 });
 
 export default router;
-

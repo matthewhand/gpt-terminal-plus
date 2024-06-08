@@ -1,15 +1,23 @@
 import AWS from 'aws-sdk';
 import config from 'config';
-import { ServerConfig, SystemInfo } from '../types';
+import { CommandConfig, ServerConfig, SystemInfo } from '../types';
 import debug from 'debug';
 const serverHandlerDebug = debug('app:ServerHandler');
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Abstract class representing a server handler.
+ * @abstract
+ */
 export abstract class ServerHandler {
   protected defaultDirectory: string = "";
   protected serverConfig: ServerConfig;
   protected identifier: string;
 
+  /**
+   * Creates an instance of ServerHandler.
+   * @param {ServerConfig} serverConfig - The server configuration.
+   */
   constructor(serverConfig: ServerConfig) {
     this.serverConfig = serverConfig;
     this.identifier = `${serverConfig.username}@${serverConfig.host}`;
@@ -17,7 +25,7 @@ export abstract class ServerHandler {
 
   /**
    * Generates a unique response ID for each operation.
-   * @returns A string representing a unique response ID.
+   * @returns {string} A string representing a unique response ID.
    */
   protected generateResponseId(): string {
     return uuidv4();  // Generates a unique ID for each response
@@ -25,10 +33,11 @@ export abstract class ServerHandler {
 
   /**
    * Applies pagination to the provided list of items and returns a paginated response.
-   * @param items The list of items to paginate.
-   * @param totalCount The total count of items across all pages.
-   * @param limit The number of items per page.
-   * @returns An object containing the paginated items, total pages, and a response ID.
+   * @template T
+   * @param {T[]} items - The list of items to paginate.
+   * @param {number} totalCount - The total count of items across all pages.
+   * @param {number} limit - The number of items per page.
+   * @returns {{ items: T[], totalPages: number, responseId: string }} An object containing the paginated items, total pages, and a response ID.
    */
   protected paginateResponse<T>(items: T[], totalCount: number, limit: number): { items: T[], totalPages: number, responseId: string } {
     const totalPages = Math.ceil(totalCount / limit);
@@ -40,7 +49,12 @@ export abstract class ServerHandler {
     };
   }
 
-  // Method to list available servers
+  /**
+   * Lists available servers from the configuration.
+   * @static
+   * @returns {ServerConfig[]} An array of server configurations.
+   * @throws {Error} If no server configurations are available.
+   */
   public static listAvailableServers(): ServerConfig[] {
     const servers: ServerConfig[] = config.get('serverConfig');
     if (!servers || servers.length === 0) {
@@ -49,6 +63,27 @@ export abstract class ServerHandler {
     return servers;
   }
 
+  /**
+   * Lists available commands from the configuration.
+   * @static
+   * @returns {CommandConfig[]} An array of command configurations.
+   * @throws {Error} If no command configurations are available.
+   */
+  public static listAvailableCommands(): CommandConfig[] {
+    const commands: CommandConfig[] = config.get('commands');
+    if (!commands || commands.length === 0) {
+      throw new Error('No command configurations available.');
+    }
+    return commands;
+  }
+
+  /**
+   * Retrieves a ServerHandler instance for the specified host.
+   * @static
+   * @param {string} host - The host to retrieve the server handler for.
+   * @returns {Promise<ServerHandler>} A promise that resolves to a ServerHandler instance.
+   * @throws {Error} If the host is undefined or the server configuration is not found.
+   */
   public static async getInstance(host: string): Promise<ServerHandler> {
     if (!host) {
       throw new Error('Host is undefined.');
@@ -78,7 +113,14 @@ export abstract class ServerHandler {
     }
   }
 
-  private static async getServerConfig(host: string): Promise<ServerConfig> {
+  /**
+   * Retrieves the server configuration for the specified host.
+   * @static
+   * @param {string} host - The host to retrieve the server configuration for.
+   * @returns {Promise<ServerConfig>} A promise that resolves to a ServerConfig object.
+   * @throws {Error} If the server configuration is not found or an error occurs while retrieving the instance ID.
+   */
+  public static async getServerConfig(host: string): Promise<ServerConfig> {
     const servers = this.listAvailableServers();
     const serverConfig = servers.find(configItem => configItem.host === host);
     if (!serverConfig) {
@@ -117,13 +159,22 @@ export abstract class ServerHandler {
     return serverConfig;
   }
 
-  setDefaultDirectory(directory: string, callback: (success: boolean) => void): void {
+  /**
+   * Sets the default directory.
+   * @param {string} directory - The directory to set as the default.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the success of the operation.
+   */
+  async setDefaultDirectory(directory: string): Promise<boolean> {
     serverHandlerDebug(`Setting default directory to ${directory}`);
     this.defaultDirectory = directory;
     // Simulate immediate success
-    callback(true);
+    return Promise.resolve(true);
   }
 
+  /**
+   * Gets the default directory.
+   * @returns {Promise<string>} A promise that resolves to the default directory.
+   */
   getDefaultDirectory(): Promise<string> {
     serverHandlerDebug(`Getting default directory: ${this.defaultDirectory}`);
     return Promise.resolve(this.defaultDirectory);
@@ -131,13 +182,13 @@ export abstract class ServerHandler {
 
   /**
    * Executes a command on the server and returns the results.
-   * @param command The command to be executed.
-   * @param options An object containing optional parameters:
-   *                - timeout: The maximum time in milliseconds to wait for the command to complete.
-   *                - directory: The directory from which the command should be executed.
-   *                - linesPerPage: The number of lines per page if output needs pagination.
-   * @returns A promise that resolves to an object containing command output details,
-   *          and optionally pagination details if linesPerPage is provided.
+   * @abstract
+   * @param {string} command - The command to be executed.
+   * @param {Object} options - An object containing optional parameters:
+   * @param {number} [options.timeout] - The maximum time in milliseconds to wait for the command to complete.
+   * @param {string} [options.directory] - The directory from which the command should be executed.
+   * @param {number} [options.linesPerPage] - The number of lines per page if output needs pagination.
+   * @returns {Promise<{ stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string }>} A promise that resolves to an object containing command output details, and optionally pagination details if linesPerPage is provided.
    */
   abstract executeCommand(
     command: string,
@@ -154,10 +205,52 @@ export abstract class ServerHandler {
     responseId?: string
   }>;
 
+  /**
+   * Lists files in the specified directory.
+   * @abstract
+   * @param {string} directory - The directory to list files in.
+   * @param {number} limit - The maximum number of files to return.
+   * @param {number} offset - The offset for pagination.
+   * @param {string} orderBy - The order by criteria.
+   * @returns {Promise<{ items: string[], totalPages: number, responseId: string }>} A promise that resolves to an object containing the list of files, total pages, and a response ID.
+   */
   abstract listFiles(directory: string, limit: number, offset: number, orderBy: string): Promise<{ items: string[], totalPages: number, responseId: string }>;
 
+  /**
+   * Creates a file with the specified content.
+   * @abstract
+   * @param {string} directory - The directory to create the file in.
+   * @param {string} filename - The name of the file to create.
+   * @param {string} content - The content to write to the file.
+   * @param {boolean} backup - Whether to create a backup of the existing file.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the success of the operation.
+   */
   abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
+
+  /**
+   * Updates a file by replacing a pattern with a replacement string.
+   * @abstract
+   * @param {string} filePath - The path of the file to update.
+   * @param {string} pattern - The text pattern to be replaced.
+   * @param {string} replacement - The new text to replace the pattern.
+   * @param {boolean} backup - Whether to create a backup of the file before updating.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the success of the operation.
+   */
   abstract updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
+
+  /**
+   * Appends content to a file.
+   * @abstract
+   * @param {string} filePath - The path of the file to append content to.
+   * @param {string} content - The content to append to the file.
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the success of the operation.
+   */
   abstract amendFile(filePath: string, content: string): Promise<boolean>;
+
+  /**
+   * Retrieves system information.
+   * @abstract
+   * @returns {Promise<SystemInfo>} A promise that resolves to an object containing system information.
+   */
   abstract getSystemInfo(): Promise<SystemInfo>;
 }

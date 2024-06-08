@@ -13,7 +13,6 @@ export interface SystemInfo {
   cpuModel?: string;
 }
 
-// Updated ServerConfig interface to include all possible properties
 export interface ServerConfig {
   host: string;                // Dynamically extracted from connectionString
   privateKeyPath?: string;     // If not the default ~/.ssh/id_rsa or similar
@@ -28,6 +27,15 @@ export interface ServerConfig {
   region?: string;             // e.g. us-east-2
   instanceId?: string;         // for SSM
   homeFolder?: string;         // ~
+  containerId?: number;        // Container ID for LXC commands
+  tasks?: string[];            // List of tasks to be performed
+}
+
+// New CommandConfig interface
+export interface CommandConfig {
+  name: string;
+  command: string;
+  shell?: string;  // Optional shell type
 }
 
 export interface ServerHandlerInterface {

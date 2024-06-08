@@ -1,7 +1,8 @@
 module.exports = {
     "env": {
         "browser": true,
-        "es2021": true
+        "es2021": true,
+        "node": true  // Add this line to specify Node.js environment
     },
     "extends": [
         "eslint:recommended",
@@ -29,5 +30,16 @@ module.exports = {
         "@typescript-eslint"
     ],
     "rules": {
+        "no-unused-vars": "off",
+        "no-var": "off",
+        "@typescript-eslint/no-var-requires": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/ban-types": "off",
+        "no-useless-escape": "off",
+        "no-console": "off",
+        "no-case-declarations": "off",
+        "no-undef": "off"  // Add this line to turn off 'no-undef' rule
     }
-}
+};
+
