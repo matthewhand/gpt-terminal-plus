@@ -40,7 +40,7 @@ class SSHOperations {
             const { cwd } = options;
             const escapedCommand = this.escapeCommand(command);
             const fullCommand = cwd ? `cd ${cwd} && ${escapedCommand}` : escapedCommand;
-            const stream = await exec(fullCommand);
+            const stream = await exec(fullCommand).catch(error => { debug(`Error executing command: ${command}`, error); throw error; });
             let stdout = '';
             let stderr = '';
 

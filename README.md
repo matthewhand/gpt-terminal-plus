@@ -3,7 +3,6 @@
 `gpt-terminal-plus` is a comprehensive tool designed for system administration, coding, and general computer tasks. It extends the functionality of the ChatGPT plugin to work efficiently in local and remote environments. Building upon the foundation of the [gpt-terminal-plugin](https://github.com/etherlegend/gpt-terminal-plugin), it's tailored for developers, system administrators, and power users who seek a versatile tool for managing systems, automating tasks, and enhancing their coding workflow.
 
 [![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.gg/YvEJg5CC3X)
-[![Donate with Stripe](https://img.shields.io/badge/Donate%20with-Stripe-blue.svg)](https://buy.stripe.com/00g14peASeEd7xCcMM)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 ![Node.js CI](https://github.com/matthewhand/gpt-terminal-plus/actions/workflows/node.js.yml/badge.svg)
     <a href="https://github.com/matthewhand/gpt-terminal-plus" target="_blank">
@@ -55,17 +54,6 @@ Contributions, issues, and feature requests are welcome. We follow test-driven d
 - [x] AWS SSM remote handler integration and testing.
 - [ ] Update usage examples with logs/screenshots.
 - [ ] Further enhancements and feature additions.
-
-## Donation
-
-If you find this project useful, you can support its development by making a donation. Think of it as buying me a coffee. Click on the button below to make a donation. 
-
-<img src="https://github.com/matthewhand/stripe-payment/raw/main/qr_00g14peASeEd7xCcMM.png" width="150" />
-
-Or send to my Ethereum (ETH) wallet
-`0xDf994CeA5a0a11397C938cd903259E8496DA15f5`
-
-<img src="https://github.com/matthewhand/stripe-payment/raw/main/etherium-qrcode-receive.png" width="150" />
 
 ## License
 

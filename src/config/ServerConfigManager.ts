@@ -37,7 +37,7 @@ class ServerConfigManager {
     try {
       if (fs.existsSync(this.configFilePath)) {
         const data = fs.readFileSync(this.configFilePath, 'utf-8');
-        return JSON.parse(data);
+        try { return JSON.parse(data); } catch (error) { debug("Error parsing server config:", error); return null; }
       } else {
         debug('Server config file not found.');
         return null;

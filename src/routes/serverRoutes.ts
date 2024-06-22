@@ -128,8 +128,8 @@ router.post('/set-server', async (req: Request<{}, {}, { server: string, getSyst
 
     // Retrieve the available commands for this server
     const commands = await ServerHandler.listAvailableCommands();
-    // TODO const relevantCommands = commands.filter(command => tasks.includes(command.name));
-    const relevantCommands = commands;
+    // TODO const relevantCommands = (commands || []).filter(command => (tasks || []).includes(command.name));
+    const relevantCommands = (commands || []).filter(command => (tasks || []).includes(command.name));
     debug('Filtered available commands', { relevantCommands });
 
     // Attempt to retrieve system information if requested
