@@ -1,13 +1,22 @@
 {
-    "serverConfig": [
-      {
-        "host": "localhost",
-        "code": false,
-        "posix": true
-      }
-    ],
-    "commandTimeout": 180000,
-    "port": 5004,
-    "maxResponseSize": 2000
-  }
-  
+  "serverConfig": [
+    {
+      "host": "localhost",
+      "code": false,
+      "posix": true
+    }
+  ],
+  "commands": [
+    {
+      "name": "listFiles",
+      "command": "ls -la"
+    },
+    {
+      "name": "getSystemInfo",
+      "command": "uname -a"
+    }
+  ],
+  "commandTimeout": 180000,
+  "port": 5004,
+  "maxResponseSize": 2000
+}

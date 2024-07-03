@@ -70,10 +70,16 @@ export abstract class ServerHandler {
    * @throws {Error} If no command configurations are available.
    */
   public static listAvailableCommands(): CommandConfig[] {
-    const commands: CommandConfig[] = config.get('commands');
-    if (!commands || commands.length === 0) {
-      throw new Error('No command configurations available.');
+    const commands = config.get('commands');
+
+    if (typeof commands !== 'object' || commands === null) {
+      return [];
     }
+
+    if (!Array.isArray(commands)) {
+      return [];
+    }
+
     return commands;
   }
 
@@ -162,22 +168,21 @@ export abstract class ServerHandler {
   /**
    * Sets the default directory.
    * @param {string} directory - The directory to set as the default.
-   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating the success of the operation.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating success.
    */
   async setDefaultDirectory(directory: string): Promise<boolean> {
     serverHandlerDebug(`Setting default directory to ${directory}`);
     this.defaultDirectory = directory;
-    // Simulate immediate success
-    return Promise.resolve(true);
+    return true;
   }
 
   /**
    * Gets the default directory.
    * @returns {Promise<string>} A promise that resolves to the default directory.
    */
-  getDefaultDirectory(): Promise<string> {
+  async getDefaultDirectory(): Promise<string> {
     serverHandlerDebug(`Getting default directory: ${this.defaultDirectory}`);
-    return Promise.resolve(this.defaultDirectory);
+    return this.defaultDirectory;
   }
 
   /**
@@ -254,3 +259,5 @@ export abstract class ServerHandler {
    */
   abstract getSystemInfo(): Promise<SystemInfo>;
 }
+
+

@@ -14,6 +14,9 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# After npm install, attempt to fix vulnerabilities
+RUN npm audit fix
+
 # Copy the rest of your application's source code
 COPY . .
 
@@ -34,6 +37,7 @@ RUN apt-get update && \
 # Create a virtual environment and install oci-cli and pyautogui
 RUN python3 -m venv /oci-cli-venv && \
     /oci-cli-venv/bin/pip install oci-cli pyautogui
+
 
 # Webapp setup
 # Update npm
