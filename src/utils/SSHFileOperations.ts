@@ -14,21 +14,11 @@ class SSHFileOperations {
     private sshClient: Client;
     private serverConfig: ServerConfig;
 
-    /**
-     * Constructor for SSHFileOperations.
-     * @param {Client} sshClient - The SSH client.
-     * @param {ServerConfig} serverConfig - The server configuration.
-     */
     constructor(sshClient: Client, serverConfig: ServerConfig) {
         this.sshClient = sshClient;
         this.serverConfig = serverConfig;
     }
 
-    /**
-     * Connects to the SFTP server.
-     * @returns {Promise<SFTPClient>} - The connected SFTP client.
-     * @throws {Error} - If the connection to the SFTP server fails.
-     */
     private async connectSFTP(): Promise<SFTPClient> {
         const defaultKeyPath = path.join(process.env.HOME || '', '.ssh', 'id_rsa');
         const keyPath = this.serverConfig.privateKeyPath || defaultKeyPath;
@@ -50,14 +40,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Creates a file on the remote server.
-     * @param {string} remotePath - The remote path where the file will be created.
-     * @param {Buffer} content - The content to be written to the file.
-     * @param {boolean} [backup=false] - Whether to create a backup if the file already exists.
-     * @returns {Promise<void>}
-     * @throws {Error} - If creating the file fails.
-     */
     public async createFile(remotePath: string, content: Buffer, backup: boolean = false): Promise<void> {
         const sftp = await this.connectSFTP();
         try {
@@ -75,19 +57,13 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Reads a file from the remote server.
-     * @param {string} remotePath - The remote path of the file to be read.
-     * @returns {Promise<Buffer>} - The content of the file.
-     * @throws {Error} - If reading the file fails.
-     */
     public async readFile(remotePath: string): Promise<Buffer> {
         const sftp = await this.connectSFTP();
         try {
             debug(`Reading file at ${remotePath}`);
             const data = await sftp.get(remotePath);
             debug(`Read file at ${remotePath}`);
-            return data as Buffer; // Ensure Buffer is returned
+            return data as Buffer;
         } catch (error) {
             debug(`Error reading file at ${remotePath}: ${error}`);
             throw new Error(`Failed to read file at ${remotePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -96,25 +72,11 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Updates a file on the remote server.
-     * @param {string} remotePath - The remote path of the file to be updated.
-     * @param {Buffer} content - The new content to be written to the file.
-     * @param {boolean} [backup=true] - Whether to create a backup of the existing file.
-     * @returns {Promise<void>}
-     * @throws {Error} - If updating the file fails.
-     */
     public async updateFile(remotePath: string, content: Buffer, backup: boolean = true): Promise<void> {
         debug(`Updating file at ${remotePath} with backup=${backup}`);
         await this.createFile(remotePath, content, backup);
     }
 
-    /**
-     * Deletes a file from the remote server.
-     * @param {string} remotePath - The remote path of the file to be deleted.
-     * @returns {Promise<void>}
-     * @throws {Error} - If deleting the file fails.
-     */
     public async deleteFile(remotePath: string): Promise<void> {
         const sftp = await this.connectSFTP();
         try {
@@ -129,12 +91,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Checks if a file exists on the remote server.
-     * @param {string} remotePath - The remote path of the file.
-     * @param {SFTPClient} [sftp=null] - Optional SFTP client instance.
-     * @returns {Promise<boolean>} - Whether the file exists.
-     */
     public async fileExists(remotePath: string, sftp: SFTPClient | null = null): Promise<boolean> {
         const isSftpProvided = sftp !== null;
         sftp = sftp || await this.connectSFTP();
@@ -151,12 +107,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Lists files in a remote directory.
-     * @param {string} remotePath - The remote directory path.
-     * @returns {Promise<string[]>} - The list of file names.
-     * @throws {Error} - If listing files fails.
-     */
     public async folderListing(remotePath: string): Promise<string[]> {
         const sftp = await this.connectSFTP();
         try {
@@ -172,12 +122,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Counts the number of files in a remote directory.
-     * @param {string} remotePath - The remote directory path.
-     * @returns {Promise<number>} - The number of files.
-     * @throws {Error} - If counting files fails.
-     */
     public async countFiles(remotePath: string): Promise<number> {
         const sftp = await this.connectSFTP();
         try {
@@ -193,14 +137,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Amends a file on the remote server by appending content to it.
-     * @param {string} remotePath - The remote path of the file.
-     * @param {string} content - The content to append.
-     * @param {boolean} [backup=true] - Whether to create a backup of the existing file.
-     * @returns {Promise<void>}
-     * @throws {Error} - If amending the file fails.
-     */
     public async amendFile(remotePath: string, content: string, backup: boolean = true): Promise<void> {
         const sftp = await this.connectSFTP();
         try {
@@ -229,13 +165,6 @@ class SSHFileOperations {
         }
     }
 
-    /**
-     * Backs up a file on the remote server.
-     * @param {string} remotePath - The remote path of the file.
-     * @param {SFTPClient} sftp - The SFTP client instance.
-     * @returns {Promise<void>}
-     * @throws {Error} - If backing up the file fails.
-     */
     private async backupFile(remotePath: string, sftp: SFTPClient): Promise<void> {
         try {
             debug(`Backing up file at ${remotePath}`);

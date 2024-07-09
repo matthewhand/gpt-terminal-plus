@@ -29,6 +29,7 @@ export interface ServerConfig {
   homeFolder?: string;         // ~
   containerId?: number;        // Container ID for LXC commands
   tasks?: string[];            // List of tasks to be performed
+  scriptFolder?: string;       // Specify where to store temporary scripts on remote server
 }
 
 // New CommandConfig interface

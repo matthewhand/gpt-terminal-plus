@@ -27,17 +27,17 @@ COPY . .
 # Use a smaller base image
 FROM node:18-slim
 
-# Update system and install dependencies
-# Includes Python, pip, SSH client, AWS CLI, less, and required libraries for pyautogui
-RUN apt-get update && \
-    apt-get install -y python3 python3-venv python3-pip openssh-client awscli less \
-    python3-tk python3-dev scrot && \
-    rm -rf /var/lib/apt/lists/*
-
-# Create a virtual environment and install oci-cli and pyautogui
-RUN python3 -m venv /oci-cli-venv && \
-    /oci-cli-venv/bin/pip install oci-cli pyautogui
-
+# TODO include AWS/OCI/Python as needed...
+## Update system and install dependencies
+## Includes Python, pip, SSH client, AWS CLI, less, and required libraries for pyautogui
+#RUN apt-get update && \
+#    apt-get install -y python3 python3-venv python3-pip openssh-client awscli less \
+#    python3-tk python3-dev scrot && \
+#    rm -rf /var/lib/apt/lists/*
+#
+## Create a virtual environment and install oci-cli and pyautogui
+#RUN python3 -m venv /oci-cli-venv && \
+#    /oci-cli-venv/bin/pip install oci-cli pyautogui
 
 # Webapp setup
 # Update npm

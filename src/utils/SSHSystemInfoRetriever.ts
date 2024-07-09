@@ -51,6 +51,13 @@ class SSHSystemInfoRetriever implements SystemInfoRetriever {
             currentFolder: '/'
         };
     }
+
+    public async determineRemoteScriptFolder(): Promise<string> {
+        // TODO smarter logic
+        const remoteScriptFolder = '/tmp';
+        return remoteScriptFolder;
+    }
+
 }
 
 export default SSHSystemInfoRetriever;

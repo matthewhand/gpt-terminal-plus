@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Client } from 'ssh2';
 import { ServerConfig, SystemInfo } from '../types';
-import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../utils/SSHFileOperations';
 import { ServerHandler } from './ServerHandler';
 import debug from 'debug';
@@ -15,9 +14,8 @@ const debugLog = debug('app:SshServerHandler');
 
 export class SshServerHandler extends ServerHandler {
     private sshClient: Client;
-    private commandExecutor: SSHCommandExecutor;
     private fileOperations: SSHFileOperations;
-    private systemInfoRetriever: SystemInfoRetriever;
+    private systemInfoRetriever: SSHSystemInfoRetriever;
 
     /**
      * Constructor for SshServerHandler.
@@ -26,19 +24,18 @@ export class SshServerHandler extends ServerHandler {
     constructor(serverConfig: ServerConfig) {
         super(serverConfig);
         this.sshClient = new Client();
-        this.setupSSHClient();
-        this.commandExecutor = new SSHCommandExecutor(this.sshClient, this.serverConfig);
-        this.fileOperations = new SSHFileOperations(this.sshClient, this.serverConfig);
+        this.fileOperations = new SSHFileOperations(this.sshClient, serverConfig);
         this.systemInfoRetriever = new SSHSystemInfoRetriever(this.serverConfig);
+        this.setupSSHClient();
     }
 
     /**
      * Sets up the SSH client with event listeners.
      */
     private setupSSHClient(): void {
-        this.sshClient.on('ready', () => {
+        this.sshClient.on('ready', async () => {
             debugLog("SSH Client is ready");
-            this.initializeUtilities();
+            await this.initializeUtilities();
         }).on('error', (err: Error) => {
             debugLog(`SSH Client Error: ${err.message}`);
         }).on('close', () => {
@@ -56,56 +53,6 @@ export class SshServerHandler extends ServerHandler {
             const errorMsg = error instanceof Error ? error.message : 'Unknown error during SSH connection setup';
             debugLog(`Failed to connect SSH client: ${errorMsg}`);
             console.error('SSH connection failed:', errorMsg);
-        }
-    }
-
-    /**
-     * Executes a command on the remote server.
-     * @param {string} command - The command to run.
-     * @param {object} options - The options for command execution.
-     * @param {number} [options.timeout] - The timeout for the command execution.
-     * @param {string} [options.directory] - The directory to set as the current working directory.
-     * @param {string} [options.path] - The path to set as the current working directory.
-     * @param {number} [options.linesPerPage] - The number of lines per page for paginated output.
-     * @returns {Promise<object>} - The result of the command execution.
-     */
-    async executeCommand(command: string, options: { timeout?: number, directory?: string, path?: string, linesPerPage?: number } = {}): Promise<{
-        stdout?: string,
-        stderr?: string,
-        pages?: string[],
-        totalPages?: number,
-        responseId?: string
-    }> {
-        const effectiveTimeout = options.timeout || 30;
-        const workingDir = options.directory || options.path;
-        const commandToRun = workingDir ? `cd ${workingDir} && ${command}` : command;
-
-        try {
-            const { stdout, stderr } = await this.commandExecutor.runCommand(commandToRun, { timeout: effectiveTimeout });
-
-            if (options.linesPerPage && stdout) {
-                const lines = stdout.split('\n');
-                const pages = [];
-                for (let i = 0; i < lines.length; i += options.linesPerPage) {
-                    pages.push(lines.slice(i, i + options.linesPerPage).join('\n'));
-                }
-                return {
-                    stdout,
-                    stderr,
-                    pages,
-                    totalPages: pages.length,
-                    responseId: uuidv4()
-                };
-            }
-
-            return {
-                stdout,
-                stderr,
-                responseId: uuidv4()
-            };
-        } catch (error) {
-            debugLog(`Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            throw error;
         }
     }
 
@@ -128,42 +75,151 @@ export class SshServerHandler extends ServerHandler {
     /**
      * Initializes utility classes for SSH operations.
      */
-    private initializeUtilities(): void {
-        this.commandExecutor = new SSHCommandExecutor(this.sshClient, this.serverConfig);
-        this.fileOperations = new SSHFileOperations(this.sshClient, this.serverConfig);
-        this.systemInfoRetriever = new SSHSystemInfoRetriever(this.serverConfig);
+    private async initializeUtilities(): Promise<void> {
+        const remoteScriptFolder = await this.systemInfoRetriever.determineRemoteScriptFolder();
+        this.serverConfig.scriptFolder = remoteScriptFolder;
+        debugLog(`Initialized utilities with remote script folder: ${remoteScriptFolder}`);
     }
 
-     /**
+    /**
+     * Creates a temporary script file on the remote server.
+     * @param {string} content - The content of the script.
+     * @returns {Promise<string>} - The path to the temporary script file.
+     */
+    private async createRemoteTempFile(content: string): Promise<string> {
+        const tempFileName = `temp_script_${Date.now()}.sh`;
+        const tempFilePath = `${this.serverConfig.scriptFolder}/${tempFileName}`;
+
+        await this.fileOperations.createFile(tempFilePath, Buffer.from(content), false);
+        debugLog(`Created remote temp file: ${tempFilePath}`);
+        return tempFilePath;
+    }
+
+    /**
+     * Executes a command on the remote server.
+     * @param {string} command - The command to run.
+     * @param {object} options - The options for command execution.
+     * @param {number} [options.timeout] - The timeout for the command execution.
+     * @param {string} [options.directory] - The directory to set as the current working directory.
+     * @param {number} [options.linesPerPage] - The number of lines per page for paginated output.
+     * @returns {Promise<object>} - The result of the command execution.
+     */
+    public async executeCommand(command: string, options: { timeout?: number, directory?: string, linesPerPage?: number } = {}): Promise<{
+        stdout?: string,
+        stderr?: string,
+        pages?: string[],
+        totalPages?: number,
+        responseId?: string
+    }> {
+        debugLog(`Executing command: ${command} with options: ${JSON.stringify(options)}`);
+        const scriptContent = options.directory ? `cd ${options.directory} && ${command}` : command;
+        const remoteTempFilePath = await this.createRemoteTempFile(scriptContent);
+
+        const shell = this.serverConfig.shell || 'bash';
+        const execCommand = `${shell} ${remoteTempFilePath}`;
+
+        const { stdout, stderr } = await this.runCommandWithRetries(execCommand, { timeout: options.timeout });
+
+        const pages: string[] = [];
+        let totalPages = 0;
+        if (options.linesPerPage && stdout) {
+            const lines = stdout.split('\n');
+            for (let i = 0; i < lines.length; i += options.linesPerPage) {
+                pages.push(lines.slice(i, i + options.linesPerPage).join('\n'));
+            }
+            totalPages = pages.length;
+        }
+
+        await this.fileOperations.deleteFile(remoteTempFilePath);
+        debugLog(`Command execution completed with responseId: ${uuidv4()}`);
+
+        return {
+            stdout,
+            stderr,
+            pages,
+            totalPages,
+            responseId: uuidv4()
+        };
+    }
+
+    /**
+     * Runs a command with retries in case of failure.
+     * @param {string} command - The command to run.
+     * @param {object} options - The options for command execution.
+     * @param {number} [options.timeout] - The timeout for the command execution.
+     * @returns {Promise<object>} - The result of the command execution.
+     */
+    private async runCommandWithRetries(command: string, options: { timeout?: number } = {}): Promise<{ stdout: string, stderr: string }> {
+        const retries = 3;
+        const delay = 5000;
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                debugLog(`Running command attempt ${attempt}: ${command}`);
+                return await this.runCommand(command, options);
+            } catch (error) {
+                debugLog(`Attempt ${attempt} to run command failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                if (attempt === retries) {
+                    throw new Error('All command execution attempts failed');
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+        throw new Error('Command execution failed after retries');
+    }
+
+    /**
+     * Runs a command on the remote server.
+     * @param {string} command - The command to run.
+     * @param {object} options - The options for command execution.
+     * @param {number} [options.timeout] - The timeout for the command execution.
+     * @returns {Promise<object>} - The result of the command execution.
+     */
+    private runCommand(command: string, options: { timeout?: number } = {}): Promise<{ stdout: string, stderr: string }> {
+        // TODO handle timeout
+        return new Promise((resolve, reject) => {
+            this.sshClient.exec(command, (err, stream) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                let stdout = '';
+                let stderr = '';
+                stream.on('data', (data: Buffer) => { stdout += data.toString(); });
+                stream.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+                stream.on('close', (code: number) => {
+                    debugLog(`Command stream closed with code: ${code}`);
+                    if (code === 0) {
+                        resolve({ stdout, stderr });
+                    } else {
+                        reject(new Error(`Remote command exited with code ${code}`));
+                    }
+                });
+            });
+        });
+    }
+
+    /**
      * Retrieves system information from the remote server.
      * @returns {Promise<SystemInfo>} - The system information.
      */
-     async getSystemInfo(): Promise<SystemInfo> {
+    async getSystemInfo(): Promise<SystemInfo> {
         debugLog("Retrieving system information from the remote server");
 
-        const localScriptPath = join(__dirname, '..', 'scripts', this.systemInfoRetriever.getSystemInfoScript()); // Local script path
-        let remoteScriptPath = `/tmp/${this.systemInfoRetriever.getSystemInfoScript()}`; // Default remote script path for POSIX
+        const localScriptPath = join(__dirname, '..', 'scripts', this.systemInfoRetriever.getSystemInfoScript());
+        const remoteScriptPath = `${this.serverConfig.scriptFolder}/${this.systemInfoRetriever.getSystemInfoScript()}`;
 
         try {
-            // Check if the /tmp directory exists for POSIX systems, if not use the home directory
-            if (this.serverConfig.posix) {
-                const tmpExists = await this.checkRemotePathExists('/tmp');
-                if (!tmpExists) {
-                    remoteScriptPath = `${this.serverConfig.homeFolder}/${this.systemInfoRetriever.getSystemInfoScript()}`;
-                }
-            } else {
-                // For non-POSIX systems, use the home directory
-                remoteScriptPath = `${this.serverConfig.homeFolder}/${this.systemInfoRetriever.getSystemInfoScript()}`;
-            }
-
-            // Transfer the script to the remote server
             await this.fileOperations.createFile(remoteScriptPath, Buffer.from(await this.readLocalFile(localScriptPath)), false);
+            debugLog(`Transferred system info script to remote path: ${remoteScriptPath}`);
 
-            const command = this.serverConfig.shell === 'powershell' ? `powershell -File ${remoteScriptPath}` : `bash ${remoteScriptPath}`;
+            const shell = this.serverConfig.shell || 'bash';
+            const command = shell === 'powershell' ? `powershell -File ${remoteScriptPath}` : `${shell} ${remoteScriptPath}`;
             const result = await this.executeCommand(command, { timeout: 60 });
 
-            // Clean up the script after execution (optional)
             await this.fileOperations.deleteFile(remoteScriptPath);
+            debugLog(`Deleted remote system info script: ${remoteScriptPath}`);
 
             return JSON.parse(result.stdout || '{}');
         } catch (error) {
@@ -180,24 +236,12 @@ export class SshServerHandler extends ServerHandler {
     private async readLocalFile(filePath: string): Promise<string> {
         const fs = require('fs').promises;
         try {
-            return await fs.readFile(filePath, 'utf8');
+            const content = await fs.readFile(filePath, 'utf8');
+            debugLog(`Read local file: ${filePath}`);
+            return content;
         } catch (error) {
             debugLog(`Error reading local file ${filePath}: ${error}`);
             throw new Error(`Failed to read local file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-
-    /**
-     * Checks if a remote path exists.
-     * @param {string} remotePath - The remote path to check.
-     * @returns {Promise<boolean>} - True if the path exists, otherwise false.
-     */
-    private async checkRemotePathExists(remotePath: string): Promise<boolean> {
-        try {
-            return await this.fileOperations.fileExists(remotePath);
-        } catch (error) {
-            debugLog(`Error checking remote path ${remotePath}: ${error}`);
-            return false;
         }
     }
 
@@ -215,6 +259,7 @@ export class SshServerHandler extends ServerHandler {
             const files = await this.fileOperations.folderListing(directory);
             const totalFiles = await this.fileOperations.countFiles(directory);
             const totalPages = Math.ceil(totalFiles / limit);
+            debugLog(`Listed ${files.length} files from directory: ${directory}`);
             return {
                 items: files,
                 totalPages: totalPages,
@@ -238,6 +283,7 @@ export class SshServerHandler extends ServerHandler {
         debugLog(`Creating file at ${directory}/${filename} with backup: ${backup}`);
         try {
             await this.fileOperations.createFile(`${directory}/${filename}`, Buffer.from(content), backup);
+            debugLog(`File created at ${directory}/${filename}`);
             return true;
         } catch (error) {
             debugLog(`Error creating file: ${error}`);
@@ -259,6 +305,7 @@ export class SshServerHandler extends ServerHandler {
             const content = await this.fileOperations.readFile(filePath);
             const newContent = content.toString().replace(new RegExp(pattern, 'g'), replacement);
             await this.fileOperations.updateFile(filePath, Buffer.from(newContent), backup);
+            debugLog(`File updated at ${filePath}`);
             return true;
         } catch (error) {
             debugLog(`Error updating file: ${error}`);
@@ -278,6 +325,7 @@ export class SshServerHandler extends ServerHandler {
             const existingContent = await this.fileOperations.readFile(filePath);
             const newContent = existingContent.toString() + content;
             await this.fileOperations.updateFile(filePath, Buffer.from(newContent), false);
+            debugLog(`File amended at ${filePath}`);
             return true;
         } catch (error) {
             debugLog(`Error amending file: ${error}`);
@@ -294,15 +342,18 @@ export class SshServerHandler extends ServerHandler {
         const checkDirCommand = this.serverConfig.posix ? `cd ${directory} && pwd` : `cd /d ${directory} && echo %cd%`;
 
         try {
-            const { stdout, stderr } = await this.commandExecutor.runCommand(checkDirCommand);
-            const currentDir = stdout.trim();
-            if (!stderr && (
-                this.serverConfig.posix ?
-                currentDir === directory :
-                currentDir.replace(/\\$/, '').toLowerCase() === directory.toLowerCase().replace(/\\$/, '')
-            )) {
-                this.defaultDirectory = directory;
-                return true;
+            const { stdout, stderr } = await this.executeCommand(checkDirCommand);
+            if (stdout) { 
+                const currentDir = stdout.trim();
+                debugLog(`Set default directory: ${currentDir}`);
+                if (!stderr && (
+                    this.serverConfig.posix ?
+                    currentDir === directory :
+                    currentDir.replace(/\\$/, '').toLowerCase() === directory.toLowerCase().replace(/\\$/, '')
+                )) {
+                    super.setDefaultDirectory(directory);
+                    return true;
+                }
             }
             return false;
         } catch (error) {
