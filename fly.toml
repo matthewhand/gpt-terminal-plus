@@ -6,6 +6,7 @@ primary_region = "syd"
 
 [env]
   PORT = "5004"
+  NODE_ENV = "production"
 
 [http_service]
   internal_port = 5004
@@ -37,7 +38,16 @@ primary_region = "syd"
     timeout = "5s"
 
 [[vm]]
-  memory = "2gb"  # TODO reduce to 512MB for free tier
+  #memory = "2gb"  # TODO reduce to 256MB for free tier
+  #memory = "1024mb"  
+  memory = "256mb"  # free tier eligible
   cpu_kind = "shared"
   cpus = 1
+  swap_size_mb = 1024
+
+
+# 3 GB free tier persist storage.. doesnt replicate, isnt highly available...
+[[mounts]]
+source = "mydata1"
+destination = "/data"
 

@@ -23,6 +23,11 @@ app.use(morgan('combined'));
 app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
 app.use(bodyParser.json());
 
+// Health check endpoint
+app.get('/health', (_, res) => {
+  res.status(200).send('OK');
+});
+
 // API Router setup
 const apiRouter = express.Router();
 apiRouter.use(checkAuthToken); // Only applying the checkAuthToken middleware globally
