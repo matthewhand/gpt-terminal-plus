@@ -14,13 +14,12 @@ import bodyParser from 'body-parser';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
-import staticFilesRouter from './routes/staticFilesRouter';
-import { checkAuthToken } from './middlewares'; // Removed ensureServerIsSet middleware
+// import staticFilesRouter from './routes/staticFilesRouter';
+import { checkAuthToken } from './middlewares'; 
 
 const app = express();
 
 app.use(morgan('combined'));
-app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
 app.use(bodyParser.json());
 
 // Health check endpoint
@@ -30,6 +29,8 @@ app.get('/health', (_, res) => {
   res.set('Expires', '0');
   res.status(200).send('OK');
 });
+
+app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
 
 // API Router setup
 const apiRouter = express.Router();
