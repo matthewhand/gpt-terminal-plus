@@ -1,7 +1,7 @@
 import config from 'config';
 import { SystemInfo } from '../../src/types';
 import { ServerConfig } from '../../src/types'; // Import the ServerConfig type
-import { ServerHandler } from '../../src/handlers/ServerHandler';
+import ServerHandler from '../../src/handlers/ServerHandler';
 
 // Mock a serverConfig object
 const mockServerConfig: ServerConfig = {

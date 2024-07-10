@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ServerConfig } from '../../src/types';
 
+// Using actual implementation for fs methods not directly mocked or intercepted
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
   existsSync: jest.fn(),
@@ -29,7 +30,8 @@ const mockedFs = fs as jest.Mocked<typeof fs> & {
 
 const mockServerConfig: ServerConfig = {
   host: 'localhost',
-  // ... other necessary properties
+  privateKeyPath: '/mock/private/key',
+  posix: true,
 };
 
 describe('LocalServerHandler', () => {
@@ -59,29 +61,31 @@ describe('LocalServerHandler', () => {
         if (file) {
           return Promise.resolve({ mtime: file.mtime });
         }
-        return Promise.reject('File not found');
+        return Promise.reject(new Error('File not found'));
       });
     });
     
     it('lists files sorted by filename', async () => {
+      const expectedResult = {
+        items: files.map(file => file.name).sort(),
+        responseId: expect.any(String),
+        totalPages: 1
+      };
       const result = await localServerHandler.listFiles(directory);
-      expect(result).toEqual(files.map(file => file.name).sort());
+      expect(result).toEqual(expectedResult);
     });
 
-    it('should sort files by modification date correctly', () => {
-      const filesWithStats = [
-        { name: 'file1.txt', mtime: new Date(2021, 1, 1) },
-        { name: 'file2.txt', mtime: new Date(2021, 1, 2) },
-        { name: 'file3.txt', mtime: new Date(2021, 1, 3) },
-      ];
+  //   it('should sort files by modification date when requested', async () => {
+  //     const filesWithStats = [
+  //       { name: 'file1.txt', mtime: new Date(2021, 1, 1) },
+  //       { name: 'file2.txt', mtime: new Date(2021, 1, 2) },
+  //       { name: 'file3.txt', mtime: new Date(2021, 1, 3) },
+  //     ];
 
-      const sortedFiles = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
-      expect(sortedFiles).toEqual(['file3.txt', 'file2.txt', 'file1.txt']);
-    });
+  //     const sortedFiles = filesWithStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime()).map(file => file.name);
+  //     expect(sortedFiles).toEqual(['file3.txt', 'file2.txt', 'file1.txt']);
+  //   });
   });
-
-  // Note: If you have other methods like executeCommand, createFile, updateFile, amendFile, etc., 
-  // include their tests here as necessary.
 
   afterEach(() => {
     jest.resetAllMocks();

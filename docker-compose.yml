@@ -13,6 +13,7 @@ services:
       - API_TOKEN=${API_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
+      - PYTHONPATH=/opt/oracle-cli/lib/python3.10/site-packages:$PYTHONPATH
     volumes:
       - /usr/src/app/node_modules # Keep node_modules on a named volume
       - ../.aws:/root/.aws:ro # Mount the AWS configuration directory
@@ -20,5 +21,6 @@ services:
       - /etc/hosts:/etc/hosts:ro  # for name resolution
       - /home/chatgpt/bin:/home/chatgpt/bin # for `oci` binary
       - /home/chatgpt/lib:/home/chatgpt/lib # for `oci` binary
+      - /mnt/models/lib/oracle-cli:/opt/oracle-cli
       - /home/chatgpt/.oci:/home/chatgpt/.oci:ro # need full path because oci installation hardcodes it
     restart: unless-stopped

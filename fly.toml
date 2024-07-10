@@ -1,0 +1,43 @@
+
+app = "gpt-terminal-plus"
+primary_region = "syd"
+
+[build]
+
+[env]
+  PORT = "5004"
+
+[http_service]
+  internal_port = 5004
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[services]]
+  internal_port = 5004
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.http_checks]]
+    interval = "10s"
+    grace_period = "10s"
+    method = "get"
+    path = "/health"
+    protocol = "http"
+    restart_limit = 0
+    timeout = "5s"
+
+[[vm]]
+  memory = "2gb"  # TODO reduce to 512MB for free tier
+  cpu_kind = "shared"
+  cpus = 1
+

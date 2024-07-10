@@ -20,5 +20,5 @@ data = {
   "uptime": uptime_seconds,
   "currentFolder": os.getcwd()
 }
-json_response = json.dumps(data)
+json_response = json.dumps(data, ensure_ascii=False)
 print(json_response)
