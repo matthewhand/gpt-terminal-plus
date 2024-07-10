@@ -20,11 +20,14 @@ import { checkAuthToken } from './middlewares'; // Removed ensureServerIsSet mid
 const app = express();
 
 app.use(morgan('combined'));
-app.use(cors({ origin: ['https://chat.openai.com', '*'] }));
+app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
 app.use(bodyParser.json());
 
 // Health check endpoint
 app.get('/health', (_, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.status(200).send('OK');
 });
 
@@ -35,7 +38,7 @@ apiRouter.use(fileRoutes);
 apiRouter.use(commandRoutes);
 apiRouter.use(serverRoutes);
 
-app.use('/public/', staticFilesRouter); // Serve static files using staticFilesRouter
+// app.use('/public/', staticFilesRouter); // Serve static files using staticFilesRouter
 app.use(apiRouter); // Mounting the API router to the app
 
 // Server initialization logic
