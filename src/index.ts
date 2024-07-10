@@ -28,6 +28,11 @@ app.use(cors({
 }));
 app.use(bodyParser.json()); // Use bodyParser.json() instead of json()
 
+// Health check endpoint
+app.get('/health', (_, res) => {
+  res.status(200).send('OK');
+});
+
 // API Router
 const apiRouter = express.Router();
 apiRouter.use(checkAuthToken); 
@@ -53,7 +58,7 @@ apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
   }
 });
 
-app.use('/public/', staticFilesRouter); // Serve static files
+// TODO no longer need static files? ...  app.use('/health/', staticFilesRouter); // Serve static files
 app.use(apiRouter); // Mount the API router
 
 // Server initialization

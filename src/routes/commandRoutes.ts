@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
-import ServerConfigManager from '../config/ServerConfigManager';
+import ServerConfigManager from '../managers/ServerConfigManager';
 import config from 'config';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';

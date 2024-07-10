@@ -4,8 +4,8 @@ import path from 'path';
 import lockfile from 'proper-lockfile';
 import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
-import { escapeRegExp } from '../utils/escapeRegExp'; // Ensure this is correctly imported
-import ServerConfigManager from '../config/ServerConfigManager';
+import { escapeRegExp } from '../utils/escapeRegExp';
+import ServerConfigManager from '../managers/ServerConfigManager';
 
 const debug = Debug('app:fileRoutes');
 const router = express.Router();
@@ -102,7 +102,7 @@ router.get(['/list-files', '/browse-files'], async (req: Request, res: Response)
  *       400:
  *         description: Bad request, directory parameter is missing or invalid
  */
-router.post(['/set-default-directory', '/change-dir'], async (req: Request, res: Response) => {
+router.post(['/set-default-directory', '/change-directory'], async (req: Request, res: Response) => {
   const { directory } = req.body;
 
   if (!directory) {

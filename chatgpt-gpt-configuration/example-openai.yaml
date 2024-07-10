@@ -109,7 +109,7 @@ paths:
         "404":
           description: Response not found.
 
-  /set-default-directory:
+  /change-directory:
     post:
       summary: Set the default directory for command execution.
       description: >
@@ -196,7 +196,7 @@ paths:
 
 
   /list-files:
-    get:
+    post:
       summary: List files in a specified directory.
       description: >
         Lists files from a specified directory on a server managed via SSM. This endpoint supports pagination and ordering
@@ -245,6 +245,7 @@ paths:
       description: >
         Creates a new file or replaces an existing file in the specified directory with the provided content.
         This endpoint allows optionally backing up the existing file before overwriting.
+        Note: there is a technical limitation of 3KB file size.
       operationId: createFile
       requestBody:
         required: true

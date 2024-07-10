@@ -178,7 +178,7 @@ export default class SsmServerHandler extends ServerHandler {
   }
 
   /**
-   * Creates a file with the specified content.
+   * Creates a file with the specified content on the remote server.
    * @param {string} directory - The directory where the file should be created.
    * @param {string} filename - The name of the file to be created.
    * @param {string} content - The content to write to the file.
@@ -188,12 +188,26 @@ export default class SsmServerHandler extends ServerHandler {
   async createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
     try {
       const filePath = path.join(directory, filename);
+
       if (backup) {
-        const backupPath = `${filePath}.bak`;
-        fs.copyFileSync(filePath, backupPath);
-        debug(`Backup created for file: ${filePath} at ${backupPath}`);
+        // Check if the file exists before creating a backup
+        const checkFileCommand = `[ -f ${filePath} ] && echo 'File exists' || echo 'File does not exist'`;
+        const { stdout = '' } = await this.executeCommand(checkFileCommand, { directory });
+
+        if (stdout.trim() === 'File exists') {
+          await this.executeCommand(`cp ${filePath} ${filePath}.bak`, { directory });
+          debug(`Backup created for file: ${filePath} at ${filePath}.bak`);
+        } else {
+          debug(`File does not exist: ${filePath}. Skipping backup.`);
+        }
       }
-      fs.writeFileSync(filePath, content);
+
+      // Escape single quotes in the content
+      const escapedContent = content.replace(/'/g, "'\\''");
+
+      // Use cat to create the file with the escaped content
+      const createCommand = `echo '${escapedContent}' > ${filePath}`;
+      await this.executeCommand(createCommand, { directory });
       debug(`File created at: ${filePath}`);
       return true;
     } catch (error) {

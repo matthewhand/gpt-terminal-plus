@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { ServerHandler } from '../handlers/ServerHandler';
 import Debug from 'debug';
 import { CommandConfig, ServerConfig } from '../types';
-import ServerConfigManager from '../config/ServerConfigManager';
+import ServerConfigManager from '../managers/ServerConfigManager';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
