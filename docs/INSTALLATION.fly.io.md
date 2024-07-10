@@ -47,7 +47,9 @@ To set all the secrets from your  file, run the  script:
 
 Finally, deploy the application with the following command:
 
+`fly deploy -a gpt-terminal-plus-xx`
 
+(change xx to something unique)
 
 Run  to get started.
 
