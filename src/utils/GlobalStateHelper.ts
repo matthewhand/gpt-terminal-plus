@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 const defaultServer = process.env.DEFAULT_SERVER || 'localhost'; // Use environment variable or default to 'localhost'
-const stateFilePath = path.join(__dirname, '..', 'data', 'globalState.json');
+// const stateFilePath = path.join(__dirname, '..', 'data', 'globalState.json');
+const stateFilePath = path.join('/data', 'globalState.json'); // TODO convert into envvar
 
 interface GlobalState {
   selectedServer: string;
