@@ -2,7 +2,7 @@ import * as os from 'os';
 
 // Assuming the correct relative paths based on your project structure
 import { ServerHandler } from '../handlers/ServerHandler'; // Adjusted path
-import { ServerConfig, SystemInfo } from '../types'; // Adjusted path
+import { ServerConfig, SystemInfo } from '../types/index'; // Adjusted path
 import * as AWS from 'aws-sdk';
 import Debug from 'debug';
 
