@@ -5,7 +5,7 @@ import SFTPClient from 'ssh2-sftp-client';
 import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { ServerConfig } from '../types';
+import { ServerConfig } from '../types/index';
 
 const debug = Debug('app:SSHCommandExecutor');
 

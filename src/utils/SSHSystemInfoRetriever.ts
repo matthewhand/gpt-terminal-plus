@@ -19,7 +19,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { ServerConfig, SystemInfo } from '../types';
+import { ServerConfig, SystemInfo } from '../types/index';
 import SFTPClient from 'ssh2-sftp-client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -29,6 +29,7 @@ const debug = Debug('app:SSHSystemInfoRetriever');
 // Constants for script names
 const PYTHON_SCRIPT = 'remote_system_info.py';
 const BASH_SCRIPT = 'remote_system_info.sh';
+const POWERSHELL_SCRIPT = 'remote_system_info.ps1';
 
 class SSHSystemInfoRetriever {
   private sshClient: Client;
@@ -108,7 +109,7 @@ class SSHSystemInfoRetriever {
 
     await sftp.put(localScriptPath, remoteScriptPath);
     await this.executeRemoteCommand(`${command} ${remoteScriptPath} > ${remoteScriptPath}.out`);
-    if (this.serverConfig.cleanupScripts !== false) {
+    if (this.serverConfig.cleanupScripts !== undefined && this.serverConfig.cleanupScripts !== false) {
       await this.executeRemoteCommand(`rm -f ${remoteScriptPath} ${remoteScriptPath}.out`);
     }
     await sftp.end();
@@ -189,7 +190,7 @@ class SSHSystemInfoRetriever {
    * 
    * @returns {SystemInfo} A default SystemInfo object.
    */
-  private getDefaultSystemInfo(): SystemInfo {
+  public getDefaultSystemInfo(): SystemInfo {
     return {
       homeFolder: '/',
       type: 'Unknown',
@@ -202,6 +203,28 @@ class SSHSystemInfoRetriever {
       currentFolder: '/',
     };
   }
+
+    public async determineRemoteScriptFolder(): Promise<string> {
+        // TODO smarter logic
+        const remoteScriptFolder = '/tmp';
+        return remoteScriptFolder;
+    }
+
+       /**
+     * Returns the script based on the shell type.
+     * @returns {string} - The script to be executed.
+     */
+    public getSystemInfoScript(): string {
+        switch (this.serverConfig.shell) {
+            case 'powershell':
+                return POWERSHELL_SCRIPT;
+            case 'python':
+                return PYTHON_SCRIPT;
+            default:
+                return BASH_SCRIPT;
+        }
+    }
+
 }
 
 export default SSHSystemInfoRetriever;

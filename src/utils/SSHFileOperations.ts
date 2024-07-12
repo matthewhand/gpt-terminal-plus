@@ -4,7 +4,7 @@ import path from 'path';
 import SFTPClient from 'ssh2-sftp-client';
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { ServerConfig } from '../types';
+import { ServerConfig } from '../types/index';
 
 const debug = Debug('app:SSHFileOperations');
 
@@ -148,6 +148,64 @@ class SSHFileOperations {
         await sftp.put(bufferContent, remotePath);
         await sftp.end();
     }
+
+    /**
+     * Read a file from the remote server.
+     * @param {string} remotePath - The remote path of the file.
+     * @returns {Promise<Buffer>}
+     */
+    public async readFile(remotePath: string): Promise<Buffer> {
+        const sftp = await this.connectSFTP();
+        try {
+            const data = await sftp.get(remotePath);
+            return data as Buffer; // Ensure Buffer is returned
+        } finally {
+            await sftp.end();
+        }
+    }
+
+        /**
+     * Lists files in a remote directory.
+     * @param {string} remotePath - The remote directory path.
+     * @returns {Promise<string[]>} - The list of file names.
+     * @throws {Error} - If listing files fails.
+     */
+    public async folderListing(remotePath: string): Promise<string[]> {
+        const sftp = await this.connectSFTP();
+        try {
+            debug(`Listing files in directory ${remotePath}`);
+            const fileList = await sftp.list(remotePath);
+            debug(`Listed files in directory ${remotePath}`);
+            return fileList.map(file => file.name);
+        } catch (error) {
+            debug(`Error listing files in directory ${remotePath}: ${error}`);
+            throw new Error(`Failed to list files in directory ${remotePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            await sftp.end();
+        }
+    }
+
+    /**
+     * Counts the number of files in a remote directory.
+     * @param {string} remotePath - The remote directory path.
+     * @returns {Promise<number>} - The number of files.
+     * @throws {Error} - If counting files fails.
+     */
+    public async countFiles(remotePath: string): Promise<number> {
+        const sftp = await this.connectSFTP();
+        try {
+            debug(`Counting files in directory ${remotePath}`);
+            const fileList = await sftp.list(remotePath);
+            debug(`Counted files in directory ${remotePath}`);
+            return fileList.length;
+        } catch (error) {
+            debug(`Error counting files in directory ${remotePath}: ${error}`);
+            throw new Error(`Failed to count files in directory ${remotePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            await sftp.end();
+        }
+    }
+
     
 }
     

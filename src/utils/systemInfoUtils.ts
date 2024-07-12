@@ -1,5 +1,5 @@
 // src/utils/systemInfoUtils.ts
-import { SystemInfo } from '../types';
+import { SystemInfo } from '../types/index';
 
 export function getSystemInfoCommand(): string {
   // Construct the command string to fetch system info

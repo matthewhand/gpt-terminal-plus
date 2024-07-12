@@ -5,6 +5,7 @@ import SshServerHandler from '../handlers/SshServerHandler';
 import SsmServerHandler from '../handlers/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
+import { paginateResponse, PaginatedResponse } from '../utils/PaginationUtils';
 
 const serverHandlerDebug = Debug('app:ServerConfigUtils');
 
@@ -54,5 +55,17 @@ export class ServerConfigUtils {
     } else {
       throw new Error(`Server config for host '${host}' not found.`);
     }
+  }
+
+  // List files method utilizing the pagination utility
+  public static async listFiles(host: string, directory: string, limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<PaginatedResponse<string>> {
+    const handler = await this.getInstance(host);
+    const { stdout } = await handler.executeCommand(`ls -l ${directory} | tail -n +${offset + 1} | head -n ${limit}`);
+    const items = stdout.split('\n').filter(line => line).map(line => {
+      const parts = line.split(/\s+/);
+      return parts.pop() || "";
+    });
+
+    return paginateResponse(items, limit, offset);
   }
 }
