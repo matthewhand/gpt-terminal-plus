@@ -1,4 +1,4 @@
-import { ResponsePage, PaginatedResponse } from '../types';
+import { ResponsePage, PaginatedResponse } from '../types/index';
 import config from 'config';
 import debugLib from 'debug';
 import { v4 as uuidv4 } from 'uuid'; // Using 'uuid' for unique ID generation

@@ -1,5 +1,5 @@
 import { ServerHandler } from '../../src/handlers/ServerHandler';
-import { ServerConfig, SystemInfo } from '../../src/types';
+import { ServerConfig, SystemInfo } from '../../src/types/index';
 
 // Mock implementation of ServerHandler for testing
 class TestServerHandler extends ServerHandler {

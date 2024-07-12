@@ -48,7 +48,7 @@
 
 import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 import { ServerHandler } from './ServerHandler';
-import { ServerConfig, SystemInfo } from '../types';
+import { ServerConfig, SystemInfo } from '../types/index';
 import { Client } from 'ssh2';
 import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../utils/SSHFileOperations';

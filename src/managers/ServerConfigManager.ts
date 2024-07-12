@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { ServerConfig } from '../types';
+import { ServerConfig } from '../types/index';
 import Debug from 'debug';
 
 const debug = Debug('app:ServerConfigManager');
