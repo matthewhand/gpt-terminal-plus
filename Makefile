@@ -1,7 +1,8 @@
 # Makefile
 
 # Define variables for commands
-DOCKER_COMPOSE = docker-compose
+#DOCKER_COMPOSE = docker-compose # v1 syntax
+DOCKER_COMPOSE = docker compose
 DOCKER_BUILD = $(DOCKER_COMPOSE) build
 DOCKER_UP = $(DOCKER_COMPOSE) up -d
 
@@ -23,11 +24,6 @@ down:
 	@echo "Stopping and removing Docker containers..."
 	@$(DOCKER_COMPOSE) down
 
-# Clean up
-clean:
-	@echo "Removing Docker images..."
-	@docker rmi $$(docker images -q)
-
 # Help
 help:
 	@echo "Makefile for managing the Docker container"
@@ -36,9 +32,8 @@ help:
 	@echo "  make build  - Build the Docker image"
 	@echo "  make up     - Start the Docker container"
 	@echo "  make down   - Stop and remove the Docker container"
-	@echo "  make clean  - Remove Docker images"
 	@echo "  make help   - Display this help message"
 	@echo ""
 
-.PHONY: build up down clean help
+.PHONY: build up down help
 
