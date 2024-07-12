@@ -39,7 +39,7 @@ router.get('/list-servers', async (req: Request, res: Response) => {
 
   try {
     const servers = ServerConfigUtils.listAvailableServers();
-    debug('Listing available servers', { servers: servers.map(server => server.host) });
+    debug('Listing available servers', { servers: servers.map((server: any) => server.host) });
     res.json({ servers });
   } catch (error) {
     debug('Error in /list-servers', {
