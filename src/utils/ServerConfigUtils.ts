@@ -1,6 +1,6 @@
 // src/utils/ServerConfigUtils.ts
 import config from 'config';
-import { ServerConfig, ServerHandlerInterface } from '../types'; // Ensure this interface is correctly defined
+import { ServerConfig, ServerHandlerInterface } from '../types/index'; // Ensure this interface is correctly defined
 import SshServerHandler from '../handlers/SshServerHandler';
 import SsmServerHandler from '../handlers/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
