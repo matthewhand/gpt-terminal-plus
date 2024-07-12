@@ -20,7 +20,6 @@ import { checkAuthToken } from './middlewares';
 const app = express();
 
 app.use(morgan('combined'));
-app.use(bodyParser.json());
 
 // Health check endpoint
 app.get('/health', (_, res) => {
@@ -30,7 +29,9 @@ app.get('/health', (_, res) => {
   res.status(200).send('OK');
 });
 
+// Use CORS to limit to ChatGPT referred clients
 app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
+app.use(bodyParser.json());
 
 // API Router setup
 const apiRouter = express.Router();
