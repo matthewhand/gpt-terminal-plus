@@ -4,7 +4,7 @@ import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { ServerHandler } from './ServerHandler';
-import { ServerConfig, SystemInfo } from '../types';
+import { ServerConfig, SystemInfo } from '../types/index';
 import { escapeRegExp } from '../utils/escapeRegExp';
 import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 import { psSystemInfoCmd } from './psSystemInfoCommand'; // Importing PowerShell command
