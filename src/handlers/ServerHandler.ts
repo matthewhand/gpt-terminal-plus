@@ -1,4 +1,4 @@
-import { ServerConfig, SystemInfo } from '../types';
+import { ServerConfig, SystemInfo } from '../types/index';
 import debug from 'debug';
 import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 
