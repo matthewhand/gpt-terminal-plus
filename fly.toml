@@ -38,7 +38,8 @@ primary_region = "syd"
     timeout = "5s"
 
 [[vm]]
-  memory = "256mb"  # free tier eligible
+  #memory = "256mb"  # free tier eligible
+  memory = "1024mb"
   cpu_kind = "shared"
   cpus = 1
   swap_size_mb = 1024
