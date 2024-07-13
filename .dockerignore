@@ -125,9 +125,4 @@ dist
 # Windows
 Thumbs.db
 
-# Ignore everything in the config directory
-config/*
-
-# But not these
-
 
