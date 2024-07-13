@@ -1,54 +1,7 @@
-/**
- * The SshServerHandler class encapsulates the management of SSH connections to remote servers,
- * offering a comprehensive suite of functionalities to execute commands, manage files, and retrieve
- * system information. It leverages the SSH2 library for establishing secure shell connections, providing
- * a high-level API for interacting with remote servers. This class is designed with a focus on ease of use,
- * security, and extensibility, making it a valuable tool for applications that require remote server management
- * capabilities.
- *
- * Key Components:
- * - SSHCommandExecutor: Facilitates the execution of commands on the remote server. This component is responsible
- *   for sending commands over the SSH connection and capturing the output, handling both stdout and stderr streams.
- *
- * - SSHFileOperations: Provides a set of methods for performing file operations on the remote server. This includes
- *   creating, reading, updating, and deleting files, as well as checking for their existence and listing directory contents.
- *   It uses the SFTP protocol for secure file transfer between the local and remote systems.
- *
- * - SSHSystemInfoRetriever: Executes specific commands on the remote server to gather system information such as OS type,
- *   architecture, memory usage, and more. The retrieved information is parsed and returned in a structured format.
- *
- * Core Methods:
- * - getInstance(serverConfig): A static method that ensures a singleton instance of SshServerHandler per server configuration.
- *   This approach prevents multiple connections to the same server, conserving resources and simplifying connection management.
- *
- * - executeCommand(command, timeout): Executes the specified command on the remote server. It allows for setting a custom
- *   execution timeout and handles command execution asynchronously, returning a promise that resolves with the command's output.
- *
- * - createFile(directory, filename, content, backup): Creates or replaces a file on the remote server with the provided content.
- *   It supports optional file backup before overwrite operations, enhancing data safety.
- *
- * - readFile(filePath): Reads the content of a specified file from the remote server, returning the file's contents as a string.
- *
- * - updateFile(filePath, pattern, replacement, backup): Updates a file on the remote server by replacing specified patterns
- *   within the file's content. Similar to createFile, it supports backing up the original file.
- *
- * - deleteFile(remotePath): Deletes a specified file from the remote server, ensuring that file management capabilities
- *   are comprehensive and aligned with common file operation needs.
- *
- * - fileExists(remotePath): Checks whether a specified file exists on the remote server, returning a boolean to indicate
- *   the existence of the file.
- *
- * - getSystemInfo(): Retrieves detailed system information from the remote server, including OS details, memory usage,
- *   and uptime. This method is crucial for applications that require insights into the server's state and configuration.
- *
- * This class abstracts the complexity of SSH and SFTP interactions into a coherent and easy-to-use interface, making it
- * a cornerstone for building robust applications that manage or interact with remote servers over SSH.
- */
-
-
 import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
+import { createPaginatedResponse } from '../utils/PaginationUtils';
 import { ServerHandler } from './ServerHandler';
-import { ServerConfig, SystemInfo } from '../types/index';
+import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/index';
 import { Client } from 'ssh2';
 import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../utils/SSHFileOperations';
@@ -58,7 +11,15 @@ import path from 'path';
 
 const debug = Debug('app:SshServerHandler');
 
-export default class SshServerHandler extends ServerHandler {
+/**
+ * The SshServerHandler class encapsulates the management of SSH connections to remote servers,
+ * offering a comprehensive suite of functionalities to execute commands, manage files, and retrieve
+ * system information. It leverages the SSH2 library for establishing secure shell connections, providing
+ * a high-level API for interacting with remote servers. This class is designed with a focus on ease of use,
+ * security, and extensibility, making it a valuable tool for applications that require remote server management
+ * capabilities.
+ */
+export default class SshServerHandler extends ServerHandler implements ServerHandlerInterface {
   private static instances: Record<string, SshServerHandler> = {};
   private _commandExecutor: SSHCommandExecutor | null = null;
   private _fileOperations: SSHFileOperations | null = null;
@@ -66,86 +27,113 @@ export default class SshServerHandler extends ServerHandler {
   private conn: Client = new Client();
 
   public constructor(serverConfig: ServerConfig) {
-      super(serverConfig);
-      this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
-      this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
-      this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
+    super(serverConfig);
+    this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
+    this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
+    this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
   }
 
-
-    // Singleton instance getter
-    // Adjusted getInstance to support parameterized instantiation
-    public static async getInstance(serverConfig: ServerConfig): Promise<SshServerHandler> {
-      const identifier = `${serverConfig.host}:${serverConfig.port}`;
-      if (!this.instances[identifier]) {
-          const instance = new SshServerHandler(serverConfig);
-          this.instances[identifier] = instance;
-      }
-      return this.instances[identifier];
+  /**
+   * Singleton instance getter.
+   * Ensures a single instance of SshServerHandler per server configuration.
+   * @param serverConfig - The server configuration.
+   * @returns A promise that resolves to the SshServerHandler instance.
+   */
+  public static async getInstance(serverConfig: ServerConfig): Promise<SshServerHandler> {
+    const identifier = `${serverConfig.host}:${serverConfig.port}`;
+    if (!this.instances[identifier]) {
+      const instance = new SshServerHandler(serverConfig);
+      this.instances[identifier] = instance;
+    }
+    return this.instances[identifier];
   }
 
-// Updated executeCommand method with enhanced error handling and debugging
-public async executeCommand(command: string, timeout: number = 60000): Promise<{ stdout: string; stderr: string }> {
-  debug(`Preparing to execute command: ${command} with timeout: ${timeout}`);
-  
-  if (!this._commandExecutor) {
+  /**
+   * Executes a command on the remote server.
+   * @param command - The command to execute.
+   * @param timeout - Optional timeout for the command execution.
+   * @returns The command's stdout and stderr output.
+   */
+  public async executeCommand(command: string, timeout: number = 60000): Promise<{ stdout: string; stderr: string }> {
+    debug(`Preparing to execute command: ${command} with timeout: ${timeout}`);
+
+    if (!this._commandExecutor) {
       const error = new Error('SSHCommandExecutor is not initialized.');
       debug(`Execution attempt failed: ${error.message}`);
       throw error;
-  }
+    }
 
-  try {
+    try {
       const result = await this._commandExecutor.executeCommand(command, { timeout });
       debug(`Command executed successfully. Command: ${command}, Result: ${JSON.stringify(result)}`);
       return result;
-  } catch (error) {
+    } catch (error) {
       const errorMessage = `Error executing command: "${command}". Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
       debug(errorMessage);
       throw new Error(errorMessage);
-  }
-}
-
-    async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<string[]> {
-        const targetDirectory = directory || getCurrentFolder();
-        debug(`Listing files in directory: ${targetDirectory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
-        
-        if (!this._fileOperations) {
-            const error = new Error("SSHFileOperations is not initialized.");
-            debug(`Listing files failed: ${error.message}`);
-            throw error;
-        }
-    
-        try {
-            const allFiles = await this._fileOperations.listFiles(targetDirectory);
-            debug(`Files listed successfully in directory: ${targetDirectory}. Total files: ${allFiles.length}`);
-    
-            const orderedFiles = [...allFiles];
-            if (orderBy === "datetime") {
-                debug('Ordering by datetime not implemented yet. Defaulting to filename sorting.');
-                orderedFiles.sort(); // Placeholder for future implementation
-            } else {
-                orderedFiles.sort(); // Assuming it sorts by filename for now
-            }
-    
-            const slicedFiles = orderedFiles.slice(offset, offset + limit);
-            debug(`Files sliced according to limit and offset. Returned files count: ${slicedFiles.length}`);
-    
-            // Optionally update the current folder in the global state
-            setCurrentFolder(targetDirectory);
-            return slicedFiles;
-        } catch (error) {
-            debug(`Error listing files in ${targetDirectory}: ${error}`);
-            throw new Error(`Failed to list files: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
     }
-    
+  }
+
+  /**
+   * Lists files in a specified directory on the remote server.
+   * @param directory - The directory to list files in.
+   * @param limit - Maximum number of files to return.
+   * @param offset - Number of files to skip before starting to collect the result set.
+   * @param orderBy - Criteria to order files by.
+   * @returns A paginated response containing files in the directory.
+   */
+  async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: "datetime" | "filename" = "filename"): Promise<PaginatedResponse> {
+    const targetDirectory = directory || getCurrentFolder();
+    debug(`Listing files in directory: ${targetDirectory}, Limit: ${limit}, Offset: ${offset}, OrderBy: ${orderBy}`);
+
+    if (!this._fileOperations) {
+      const error = new Error("SSHFileOperations is not initialized.");
+      debug(`Listing files failed: ${error.message}`);
+      throw error;
+    }
+
+    try {
+      const allFiles = await this._fileOperations.listFiles(targetDirectory);
+      debug(`Files listed successfully in directory: ${targetDirectory}. Total files: ${allFiles.length}`);
+
+      const orderedFiles = [...allFiles];
+      if (orderBy === "datetime") {
+        debug('Ordering by datetime not implemented yet. Defaulting to filename sorting.');
+        orderedFiles.sort(); 
+      } else {
+        orderedFiles.sort();
+      }
+
+      const paginatedResponse = createPaginatedResponse(orderedFiles, limit, offset);
+      debug(`Files paginated according to limit and offset. Returned files count: ${paginatedResponse.items.length}`);
+
+      setCurrentFolder(targetDirectory);
+      return paginatedResponse;
+    } catch (error) {
+      debug(`Error listing files in ${targetDirectory}: ${error}`);
+      throw new Error(`Failed to list files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  async amendFile(filePath: string, content: string, backup: boolean = false): Promise<boolean> {
+    throw new Error("This operation is not supported by the current server handler.");
+  }
+
+  /**
+   * Creates a file in the specified directory on the remote server.
+   * @param directory - The directory to create the file in.
+   * @param filename - The name of the file to create.
+   * @param content - The content to write to the file.
+   * @param backup - Whether to create a backup of the file if it exists.
+   * @returns True if the file is created successfully.
+   */
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
     debug(`Attempting to create file: ${filename} in directory: ${directory} with backup: ${backup}`);
     if (!this._fileOperations) {
       debug('SSHFileOperations not initialized. Throwing error.');
       throw new Error("SSHFileOperations is not initialized.");
     }
-  
+
     try {
       await this._fileOperations.createFile(path.join(directory, filename), Buffer.from(content), backup);
       debug(`File ${filename} created successfully in ${directory}.`);
@@ -155,27 +143,41 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
       throw new Error('Failed to create file.');
     }
   }
-  
-//   async readFile(filePath: string): Promise<string> {
-//     const fullFilePath = path.isAbsolute(filePath) ? filePath : path.join(getCurrentFolder(), filePath);
-//     debug(`Attempting to read file: ${fullFilePath}`);
 
-//     if (!this._fileOperations) {
-//         const error = new Error("SSHFileOperations is not initialized.");
-//         debug(error.message);
-//         throw error;
-//     }
+  /**
+   * Reads the content of a specified file from the remote server.
+   * @param filePath - The path of the file to read.
+   * @returns The content of the file as a string.
+   */
+  async readFile(filePath: string): Promise<string> {
+    const fullFilePath = path.isAbsolute(filePath) ? filePath : path.join(getCurrentFolder(), filePath);
+    debug(`Attempting to read file: ${fullFilePath}`);
 
-//     try {
-//         const content = await this._fileOperations.readFile(fullFilePath); // Corrected line
-//         debug(`File ${fullFilePath} read successfully.`);
-//         return content.toString(); // Ensuring the returned value is a string
-//     } catch (error) {
-//         debug(`Error reading file ${fullFilePath}: ${error}`);
-//         throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-//     }
-// }  
-    public async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
+    if (!this._fileOperations) {
+      const error = new Error("SSHFileOperations is not initialized.");
+      debug(error.message);
+      throw error;
+    }
+
+    try {
+      const content = await this._fileOperations.readFile(fullFilePath);
+      debug(`File ${fullFilePath} read successfully.`);
+      return content.toString(); // Ensuring the returned value is a string
+    } catch (error) {
+      debug(`Error reading file ${fullFilePath}: ${error}`);
+      throw new Error(`Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Updates a file on the remote server by replacing a pattern with a replacement string.
+   * @param filePath - The path of the file to update.
+   * @param pattern - The pattern to replace.
+   * @param replacement - The replacement string.
+   * @param backup - Whether to create a backup of the file before updating.
+   * @returns True if the file is updated successfully.
+   */
+  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = false): Promise<boolean> {
     debug(`Attempting to update file: ${filePath} with pattern: ${pattern} and replacement: ${replacement}, backup: ${backup}`);
     if (!this._fileOperations) {
       debug('SSHFileOperations not initialized. Throwing error.');
@@ -193,6 +195,10 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
     }
   }
 
+  /**
+   * Deletes a specified file from the remote server.
+   * @param remotePath - The path of the file to delete.
+   */
   async deleteFile(remotePath: string): Promise<void> {
     debug(`Attempting to delete file: ${remotePath}`);
     if (!this._fileOperations) {
@@ -209,6 +215,11 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
     }
   }
 
+  /**
+   * Checks whether a specified file exists on the remote server.
+   * @param remotePath - The path of the file to check.
+   * @returns True if the file exists, false otherwise.
+   */
   async fileExists(remotePath: string): Promise<boolean> {
     debug(`Checking if file exists: ${remotePath}`);
     if (!this._fileOperations) {
@@ -226,6 +237,10 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
     }
   }
 
+  /**
+   * Retrieves detailed system information from the remote server.
+   * @returns A promise that resolves to the system information.
+   */
   async getSystemInfo(): Promise<SystemInfo> {
     debug('Attempting to retrieve system information.');
     // Check if _systemInfoRetriever is initialized
@@ -245,7 +260,7 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
         // Include other fields as necessary with placeholder values
       };
     }
-  
+
     try {
       const systemInfo = await this._systemInfoRetriever.getSystemInfo();
       debug('System information retrieved successfully:', systemInfo);
@@ -267,5 +282,4 @@ public async executeCommand(command: string, timeout: number = 60000): Promise<{
       };
     }
   }
-
 }

@@ -1,5 +1,3 @@
-
-// Exporting all types from their respective files
 export * from './systemInfo';
 export * from './serverConfig';
 export * from './commandConfig';

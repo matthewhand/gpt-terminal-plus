@@ -72,21 +72,20 @@ router.post('/update-file', async (req, res) => {
 router.post('/amend-file', async (req, res) => {
   const { filename, content, directory = "" } = req.body;
   try {
-    // Type assertion here
-    const serverHandler = req.serverHandler!;
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
-    const fullPath = path.join(targetDirectory, filename);
-    const release = await lockfile.lock(fullPath, { realpath: false });
-    try {
-      const success = await serverHandler.amendFile(fullPath, content);
-      res.status(success ? 200 : 400).json({ 
-        message: success ? 'File amended successfully.' : 'Failed to amend file.'
-      });
-    } finally {
-      await release();
-    }
+      const serverHandler = req.serverHandler!;
+      const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+      const fullPath = path.join(targetDirectory, filename);
+      const release = await lockfile.lock(fullPath, { realpath: false });
+      try {
+          const success = await serverHandler.amendFile(fullPath, content);
+          res.status(success ? 200 : 400).json({
+              message: success ? 'File amended successfully.' : 'Failed to amend file.'
+          });
+      } finally {
+          await release();
+      }
   } catch (err) {
-    handleServerError(err, res, 'Error amending file');
+      handleServerError(err, res, 'Error amending file');
   }
 });
 

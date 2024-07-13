@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import Debug from 'debug';
+
+const debug = Debug('app:GlobalStateHelper');
 
 const defaultServer = process.env.DEFAULT_SERVER || 'localhost'; // Use environment variable or default to 'localhost'
-// const stateFilePath = path.join(__dirname, '..', 'data', 'globalState.json');
 const stateFilePath = path.join('/data', 'globalState.json'); // TODO convert into envvar
 
 interface GlobalState {
@@ -15,6 +17,7 @@ const ensureDataDirExists = (): void => {
   const dataDir = path.dirname(stateFilePath);
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
+    debug(`Data directory created at: ${dataDir}`);
   }
 };
 
@@ -33,6 +36,7 @@ const getGlobalState = (): GlobalState => {
   // Initialize state with default values if the state file does not exist
   const initState = { selectedServer: defaultServer, currentFolder: '/' };
   fs.writeFileSync(stateFilePath, JSON.stringify(initState, null, 2), 'utf8');
+  debug(`Initial global state created with default values.`);
   return initState;
 };
 
@@ -42,9 +46,27 @@ const setGlobalState = (updates: Partial<GlobalState>): void => {
   const newState = { ...currentState, ...updates };
   ensureDataDirExists();
   fs.writeFileSync(stateFilePath, JSON.stringify(newState, null, 2), 'utf8');
+  debug(`Global state updated: ${JSON.stringify(newState, null, 2)}`);
 };
 
-export const getSelectedServer = (): string => getGlobalState().selectedServer;
-export const setSelectedServer = (server: string): void => setGlobalState({ selectedServer: server });
-export const getCurrentFolder = (): string => getGlobalState().currentFolder;
-export const setCurrentFolder = (folder: string): void => setGlobalState({ currentFolder: folder });
+export const getSelectedServer = (): string => {
+  const selectedServer = getGlobalState().selectedServer;
+  debug(`Selected server retrieved: ${selectedServer}`);
+  return selectedServer;
+};
+
+export const setSelectedServer = (server: string): void => {
+  setGlobalState({ selectedServer: server });
+  debug(`Selected server set to: ${server}`);
+};
+
+export const getCurrentFolder = (): string => {
+  const currentFolder = getGlobalState().currentFolder;
+  debug(`Current folder retrieved: ${currentFolder}`);
+  return currentFolder;
+};
+
+export const setCurrentFolder = (folder: string): void => {
+  setGlobalState({ currentFolder: folder });
+  debug(`Current folder set to: ${folder}`);
+};
