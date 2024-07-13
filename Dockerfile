@@ -39,6 +39,7 @@ RUN npm ci --only=production
 
 # Copy built application
 COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/config ./config
 
 # Verify copied files
 RUN echo "Contents of ./dist in production image:"
