@@ -8,6 +8,7 @@ import SSHFileOperations from '../utils/SSHFileOperations';
 import SSHSystemInfoRetriever from '../utils/SSHSystemInfoRetriever';
 import Debug from 'debug';
 import path from 'path';
+import fs from 'fs/promises'; // Importing fs module
 
 const debug = Debug('app:SshServerHandler');
 
@@ -25,12 +26,54 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
   private _fileOperations: SSHFileOperations | null = null;
   private _systemInfoRetriever: SSHSystemInfoRetriever | null = null;
   private conn: Client = new Client();
+  private isConnected = false;
 
   public constructor(serverConfig: ServerConfig) {
     super(serverConfig);
-    this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
-    this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
-    this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
+    this.initializeSSHClient();
+  }
+
+  private initializeSSHClient() {
+    debug(`Initializing SSH client for ${this.serverConfig.host}`);
+    this.conn.on('ready', () => {
+      this.isConnected = true;
+      debug('SSH Connection is ready.');
+      this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
+      this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
+      this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
+    }).on('error', (err) => {
+      this.isConnected = false;
+      if (err instanceof Error) {
+        debug(`SSH Connection error: ${err.message}`);
+      } else {
+        debug(`SSH Connection error: ${JSON.stringify(err)}`);
+      }
+    }).on('end', () => {
+      this.isConnected = false;
+      debug('SSH Connection has ended.');
+    });
+
+    this.connect();
+  }
+
+  private async connect() {
+    try {
+      const privateKeyPath = this.serverConfig.privateKeyPath ?? 'path/to/default/privateKey';
+      const privateKey = await fs.readFile(privateKeyPath);
+      debug(`Connecting to ${this.serverConfig.host} with username ${this.serverConfig.username}`);
+      this.conn.connect({
+        host: this.serverConfig.host,
+        port: this.serverConfig.port || 22,
+        username: this.serverConfig.username,
+        privateKey: privateKey.toString(),
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        debug(`Error connecting to SSH server: ${error.message}`);
+      } else {
+        debug(`Error connecting to SSH server: ${JSON.stringify(error)}`);
+      }
+    }
   }
 
   /**
@@ -56,6 +99,12 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
    */
   public async executeCommand(command: string, timeout: number = 60000): Promise<{ stdout: string; stderr: string }> {
     debug(`Preparing to execute command: ${command} with timeout: ${timeout}`);
+
+    if (!this.isConnected) {
+      const error = new Error('SSH client is not connected.');
+      debug(`Execution attempt failed: ${error.message}`);
+      throw error;
+    }
 
     if (!this._commandExecutor) {
       const error = new Error('SSHCommandExecutor is not initialized.');
@@ -99,7 +148,7 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
       const orderedFiles = [...allFiles];
       if (orderBy === "datetime") {
         debug('Ordering by datetime not implemented yet. Defaulting to filename sorting.');
-        orderedFiles.sort(); 
+        orderedFiles.sort();
       } else {
         orderedFiles.sort();
       }
