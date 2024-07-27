@@ -5,7 +5,7 @@ import Debug from 'debug';
 const debug = Debug('app:GlobalStateHelper');
 
 const defaultServer = process.env.DEFAULT_SERVER || 'localhost'; // Use environment variable or default to 'localhost'
-const stateFilePath = path.join('/data', 'globalState.json'); // TODO convert into envvar
+const stateFilePath = path.join('/data', 'globalState.json'); // TODO: convert into envvar
 
 interface GlobalState {
   selectedServer: string;
@@ -25,13 +25,26 @@ const ensureDataDirExists = (): void => {
 const getGlobalState = (): GlobalState => {
   ensureDataDirExists();
   if (fs.existsSync(stateFilePath)) {
-    const rawData = fs.readFileSync(stateFilePath, 'utf8');
-    const data = JSON.parse(rawData);
-    // Ensure that selectedServer defaults to localhost if not set
-    return {
-      selectedServer: data.selectedServer || defaultServer,
-      currentFolder: data.currentFolder || '/',
-    };
+    try {
+      const rawData = fs.readFileSync(stateFilePath, 'utf8');
+      const data = JSON.parse(rawData);
+      // Ensure that selectedServer defaults to localhost if not set
+      return {
+        selectedServer: data.selectedServer || defaultServer,
+        currentFolder: data.currentFolder || '/',
+      };
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        debug(`Error reading or parsing global state file: ${error.message}`);
+      } else {
+        debug(`Error reading global state file: ${String(error)}`);
+      }
+      // Initialize state with default values if there's an error reading/parsing the file
+      const initState = { selectedServer: defaultServer, currentFolder: '/' };
+      fs.writeFileSync(stateFilePath, JSON.stringify(initState, null, 2), 'utf8');
+      debug(`Initial global state created with default values due to error.`);
+      return initState;
+    }
   }
   // Initialize state with default values if the state file does not exist
   const initState = { selectedServer: defaultServer, currentFolder: '/' };
