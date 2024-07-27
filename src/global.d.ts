@@ -3,6 +3,8 @@ declare const selectedServer: string;
 declare global {
   // Define a custom global variable
   var shouldRunSshTests: boolean;
+
+
 }
 
 // This file must be a module to allow the 'declare global' syntax.
