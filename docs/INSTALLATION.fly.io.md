@@ -1,55 +1,69 @@
-# Fly.io Installation Guide
+# Installing `gpt-terminal-plus` on Fly.io
 
-## Step 1: Install flyctl
+## Prerequisites
 
-To install the flyctl command-line tool, follow these steps:
+1. **Install the Fly.io CLI**:
+    - Follow the instructions at [Fly.io CLI Installation](https://fly.io/docs/hands-on/install-flyctl/).
 
-### On macOS or Linux
+2. **Authenticate the Fly.io CLI**:
+    ```bash
+    flyctl auth login
+    ```
 
+3. **Ensure Docker is Installed and Running**:
+    - Follow the instructions at [Docker Installation](https://docs.docker.com/get-docker/).
 
+## Steps
 
-### On Windows
+1. **Clone the Repository**:
+    ```bash
+    git clone https://github.com/matthewhand/gpt-terminal-plus.git
+    cd gpt-terminal-plus
+    ```
 
-Download the installer from [Fly.io](https://fly.io/docs/hands-on/install-flyctl/).
+2. **Create a New Fly.io App**:
+    ```bash
+    flyctl apps create gpt-terminal-plus
+    ```
 
-## Step 2: Add flyctl to your PATH
+3. **Initialize Fly.io Configuration**:
+    ```bash
+    flyctl launch
+    ```
 
-After installing, add  to your PATH:
+4. **Deploy the App to Fly.io**:
+    ```bash
+    flyctl deploy
+    ```
 
+5. **Check Status and Logs**:
+    ```bash
+    flyctl status
+    flyctl logs
+    ```
 
+## Configuration
 
-Add these lines to your For detailed system information, you can run the system info script located at ~/scripts/system_info.sh. This script provides hardware details, Docker summaries, and more. (investigate folder for more relevant server scripts) (or similar file) to make the change permanent.
+- **Update the `fly.toml` File**:
+    - Customize as necessary for your deployment needs.
+  
+- **Set Environment Variables**:
+    - Configure environment variables in the Fly.io dashboard for your app.
 
-To apply the changes immediately:
+## Troubleshooting
 
-For detailed system information, you can run the system info script located at ~/scripts/system_info.sh. This script provides hardware details, Docker summaries, and more. (investigate folder for more relevant server scripts)
+### Common Errors
 
-## Step 3: Log in to Fly.io
+1. **Deployment Fails**:
+    - Check the build logs for detailed error messages.
 
-To log in to your Fly.io account, use the following command:
+2. **Missing Environment Variables**:
+    - Ensure all required environment variables are set in the Fly.io dashboard.
 
+3. **Docker Issues**:
+    - Ensure Docker is installed and running properly.
 
+### Additional Resources
 
-This will open a browser window for you to authenticate. After successful authentication, you should see a message similar to:
-
-
-
-## Step 4: Set Secrets from .env File
-
-To set all the secrets from your  file, run the  script:
-
-1. Ensure your  file is correctly set up in the project root directory.
-2. Run the script to set all the secrets in Fly.io:
-
-
-
-## Step 5: Deploy the Application
-
-Finally, deploy the application with the following command:
-
-`fly deploy -a gpt-terminal-plus-xx`
-
-(change xx to something unique)
-
-Run  to get started.
-
+- [Fly.io Documentation](https://fly.io/docs/)
+- [Docker Documentation](https://docs.docker.com/)

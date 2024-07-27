@@ -3,30 +3,34 @@
 `gpt-terminal-plus` is a comprehensive tool designed for system administration, coding, and general computer tasks. It extends the functionality of the ChatGPT plugin to work efficiently in local and remote environments. Building upon the foundation of the [gpt-terminal-plugin](https://github.com/etherlegend/gpt-terminal-plugin), it's tailored for developers, system administrators, and power users who seek a versatile tool for managing systems, automating tasks, and enhancing their coding workflow.
 
 [![Join our Discord server](https://img.shields.io/badge/Discord-Join%20Server-7289da.svg)](https://discord.gg/YvEJg5CC3X)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Node.js CI](https://github.com/matthewhand/gpt-terminal-plus/actions/workflows/node.js.yml/badge.svg)
-    <a href="https://github.com/matthewhand/gpt-terminal-plus" target="_blank">
-        <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
+<a href="https://github.com/matthewhand/gpt-terminal-plus" target="_blank">
+    <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Quick Start Guide](#quick-start-guide)
+- [Advanced Usage](#advanced-usage)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [FAQ](#faq)
+- [License](#license)
+
+## Introduction
+
+`gpt-terminal-plus` is designed to streamline system administration and development workflows, providing a powerful tool for both local and remote environments. Whether you're managing cloud infrastructure or editing code, `gpt-terminal-plus` offers a robust set of features to enhance your productivity.
 
 ## Features
 
-- **Comprehensive System Administration**: Local and remote system management capabilities, now including AWS SSM support for seamless cloud infrastructure integration.
-- **Enhanced Coding Experience**: Leverage VSCode integration for convenient code reviews and edits directly from the terminal.
-- **Flexible Configuration**: Customize settings for different environments with easy-to-use configuration files.
-- **Debug Mode**: Detailed logging for advanced troubleshooting and development insights.
+- **Comprehensive System Administration**: Manage systems locally or remotely, with support for SSH and AWS SSM.
+- **Enhanced Coding Experience**: Integrated with VSCode for seamless code reviews and edits directly from the terminal.
+- **Flexible Configuration**: Easily configure settings for different environments.
+- **Debug Mode**: Detailed logging for advanced troubleshooting and insights.
 
-## Example Use Cases
-
-- Administer systems locally or remotely, including cloud instances via SSH and AWS SSM.
-- Edit and review code changes using the integrated VSCode functionality.
-- Automate workflows and run applications on local and remote machines.
-- Develop, test, and deploy software components in diverse environments.
-
-## Configuration
-
-Configure the application using the `config/*.json` files. Use the `.env` file for specific settings like debug mode.
-
-## Getting Started
+## Quick Start Guide
 
 ### Prerequisites
 
@@ -35,25 +39,60 @@ Configure the application using the `config/*.json` files. Use the `.env` file f
 
 ### Installation
 
-1. Clone the repository.
-2. Run `npm install` in the cloned directory.
-3. Set up environment settings in `config/default.json` or environment-specific files.
-4. Optionally, create a `.env` file for debug mode and other settings.
+1. **Clone the Repository**:
+    ```bash
+    git clone https://github.com/matthewhand/gpt-terminal-plus.git
+    cd gpt-terminal-plus
+    ```
 
-### Running the Application
+2. **Install Dependencies**:
+    ```bash
+    npm install
+    ```
 
-- Use `npm start` for production.
-- For development, `npm run start:dev` starts the app with nodemon.
+3. **Set Up Configuration**:
+    - Edit `config/default.json` or create environment-specific files.
+    - Optionally, create a `.env` file for debug mode and other settings.
+
+4. **Running the Application**:
+    - For production:
+      ```bash
+      npm start
+      ```
+    - For development:
+      ```bash
+      npm run start:dev
+      ```
+
+## Advanced Usage
+
+### System Administration
+
+- **SSH Management**: Connect and manage remote servers using SSH.
+- **AWS SSM Integration**: Seamlessly manage AWS instances with SSM.
+
+### Coding and Development
+
+- **VSCode Integration**: Edit and review code directly from the terminal.
+
+## Configuration
+
+- Configure the application using `config/*.json` files.
+- Use the `.env` file for specific settings like debug mode.
 
 ## Contributing
 
-Contributions, issues, and feature requests are welcome. We follow test-driven development with Jest.
+We welcome contributions, issues, and feature requests. Please follow our guidelines for contributing and ensure all tests pass before submitting a pull request.
 
-## TODO
+## FAQ
 
-- [x] AWS SSM remote handler integration and testing.
-- [ ] Update usage examples with logs/screenshots.
-- [ ] Further enhancements and feature additions.
+### How do I set up SSH connections?
+
+- Ensure your SSH keys are properly configured and accessible.
+
+### How do I enable debug mode?
+
+- Create a `.env` file with `DEBUG=true`.
 
 ## License
 
