@@ -3,7 +3,7 @@ import Debug from 'debug';
 import { ServerConfig, SystemInfo } from '../types/index';
 import fs from 'fs/promises';
 import SSHCommandExecutor from '../utils/SSHCommandExecutor';
-import SSHFileOperations from '../utils/SSHFileOperations';
+import SSHFileOperations from '../../utils/SSHFileOperations';
 
 // Initialize Debug for logging
 const debug = Debug('app:SSHConnectionManager');
