@@ -18,12 +18,12 @@ export default class SsmServerHandler extends ServerHandler {
 
     /**
      * Constructs a new SsmServerHandler.
-     * @param serverConfig - Configuration details for the SSM server.
+     * @param ServerConfig - Configuration details for the SSM server.
      */
-    constructor(serverConfig: ServerConfig) {
-        super(serverConfig);
-        this.ssmClient = new AWS.SSM({ region: serverConfig.region || 'us-west-2' });
-        debug('SSM Server Handler initialized for:', serverConfig.host);
+    constructor(ServerConfig: ServerConfig) {
+        super(ServerConfig);
+        this.ssmClient = new AWS.SSM({ region: ServerConfig.region || 'us-west-2' });
+        debug('SSM Server Handler initialized for:', ServerConfig.host);
     }
 
     /**
@@ -42,19 +42,19 @@ export default class SsmServerHandler extends ServerHandler {
             throw error;
         }
 
-        if (!this.serverConfig.instanceId) {
+        if (!this.ServerConfig.instanceId) {
             const error = new Error('Instance ID is undefined. Unable to execute command.');
             debug(error.message);
             throw error;
         }
 
-        const documentName = this.serverConfig.posix ? 'AWS-RunShellScript' : 'AWS-RunPowerShellScript';
-        const formattedCommand = this.serverConfig.posix
+        const documentName = this.ServerConfig.posix ? 'AWS-RunShellScript' : 'AWS-RunPowerShellScript';
+        const formattedCommand = this.ServerConfig.posix
             ? (directory ? `cd ${directory}; ${command}` : command)
             : (directory ? `Set-Location -Path '${directory}'; ${command}` : command);
 
         const params = {
-            InstanceIds: [this.serverConfig.instanceId],
+            InstanceIds: [this.ServerConfig.instanceId],
             DocumentName: documentName,
             Parameters: { commands: [formattedCommand] },
         };
@@ -69,7 +69,7 @@ export default class SsmServerHandler extends ServerHandler {
         }
 
         debug('Command sent to SSM successfully', commandResponse.Command);
-        return await this.fetchCommandResult(commandResponse.Command.CommandId, this.serverConfig.instanceId);
+        return await this.fetchCommandResult(commandResponse.Command.CommandId, this.ServerConfig.instanceId);
     }
 
     /**
@@ -199,10 +199,10 @@ export default class SsmServerHandler extends ServerHandler {
      * @returns System information.
      */
     async getSystemInfo(): Promise<SystemInfo> {
-        const command = this.serverConfig.posix ? 'uname -a && df -h && free -m' : 'Get-CimInstance Win32_OperatingSystem | Format-List *';
+        const command = this.ServerConfig.posix ? 'uname -a && df -h && free -m' : 'Get-CimInstance Win32_OperatingSystem | Format-List *';
         const { stdout } = await this.executeCommand(command);
 
-        if (this.serverConfig.posix) {
+        if (this.ServerConfig.posix) {
             const lines = stdout.split('\n');
             const systemInfo = {
                 os: lines[0] || 'Unknown',

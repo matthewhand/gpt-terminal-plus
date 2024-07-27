@@ -8,17 +8,17 @@ import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } f
 class TestServerHandler extends ServerHandler implements ServerHandlerInterface {
   private currentDirectory: string = '/'; // Defaulting to root, adjust as needed
 
-  constructor(serverConfig: ServerConfig) {
-    // Check if the serverConfig is empty or undefined
-    if (!serverConfig || Object.keys(serverConfig).length === 0) {
+  constructor(ServerConfig: ServerConfig) {
+    // Check if the ServerConfig is empty or undefined
+    if (!ServerConfig || Object.keys(ServerConfig).length === 0) {
       throw new Error('Server configuration is not defined in the config.');
     }
 
     // Check if the host is not 'localhost'
-    if (serverConfig.host !== 'localhost') {
+    if (ServerConfig.host !== 'localhost') {
       throw new Error('No matching server configuration found for localhost.');
     }
-    super(serverConfig);
+    super(ServerConfig);
     // Set the currentDirectory or any other initial setup
     this.currentDirectory = '/mock/directory';
   }

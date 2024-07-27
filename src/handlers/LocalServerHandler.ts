@@ -37,8 +37,8 @@ import { shSystemInfoCmd } from './shSystemInfoCommand'; // Importing Shell comm
 export default class LocalServerHandler extends ServerHandler implements ServerHandlerInterface {
     private execAsync = promisify(exec);
 
-    constructor(serverConfig: ServerConfig) {
-        super(serverConfig);
+    constructor(ServerConfig: ServerConfig) {
+        super(ServerConfig);
     }
 
     /**
@@ -48,9 +48,9 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
     async getSystemInfo(): Promise<SystemInfo> {
         let shellCommand, execShell;
 
-        if (this.serverConfig.shell) {
-            shellCommand = this.serverConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
-            execShell = this.serverConfig.shell;
+        if (this.ServerConfig.shell) {
+            shellCommand = this.ServerConfig.shell === 'powershell' ? psSystemInfoCmd : shSystemInfoCmd;
+            execShell = this.ServerConfig.shell;
         } else {
             shellCommand = process.platform === 'win32' ? psSystemInfoCmd : shSystemInfoCmd;
         }
@@ -113,7 +113,7 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
         const execOptions = {
             timeout,
             cwd: directory || getCurrentFolder(), // Use GlobalStateHelper for current directory
-            shell: this.serverConfig.shell || undefined
+            shell: this.ServerConfig.shell || undefined
         };
 
         try {

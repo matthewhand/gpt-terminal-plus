@@ -11,11 +11,11 @@ const serverHandlerDebug = debug('app:ServerHandler');
 export abstract class ServerHandler implements ServerHandlerInterface {
     public identifier: string;
 
-    protected serverConfig: ServerConfig;
+    protected ServerConfig: ServerConfig;
 
-    constructor(serverConfig: ServerConfig) {
-        this.serverConfig = serverConfig;
-        this.identifier = `${serverConfig.username}@${serverConfig.host}`;
+    constructor(ServerConfig: ServerConfig) {
+        this.ServerConfig = ServerConfig;
+        this.identifier = `${ServerConfig.username}@${ServerConfig.host}`;
         serverHandlerDebug(`ServerHandler created for ${this.identifier}`);
     }
 
@@ -24,7 +24,7 @@ export abstract class ServerHandler implements ServerHandlerInterface {
      * @returns The server configuration.
      */
     getServerConfig(): ServerConfig {
-        return this.serverConfig;
+        return this.ServerConfig;
     }
 
     /**

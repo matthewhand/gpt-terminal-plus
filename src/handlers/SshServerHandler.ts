@@ -28,19 +28,19 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
   private conn: Client = new Client();
   private isConnected = false;
 
-  public constructor(serverConfig: ServerConfig) {
-    super(serverConfig);
+  public constructor(ServerConfig: ServerConfig) {
+    super(ServerConfig);
     this.initializeSSHClient();
   }
 
   private initializeSSHClient() {
-    debug(`Initializing SSH client for ${this.serverConfig.host}`);
+    debug(`Initializing SSH client for ${this.ServerConfig.host}`);
     this.conn.on('ready', () => {
       this.isConnected = true;
       debug('SSH Connection is ready.');
-      this._commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
-      this._fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
-      this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.serverConfig);
+      this._commandExecutor = new SSHCommandExecutor(this.conn, this.ServerConfig);
+      this._fileOperations = new SSHFileOperations(this.conn, this.ServerConfig);
+      this._systemInfoRetriever = new SSHSystemInfoRetriever(this.conn, this.ServerConfig);
     }).on('error', (err) => {
       this.isConnected = false;
       if (err instanceof Error) {
@@ -58,13 +58,13 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
 
   private async connect() {
     try {
-      const privateKeyPath = this.serverConfig.privateKeyPath ?? 'path/to/default/privateKey';
+      const privateKeyPath = this.ServerConfig.privateKeyPath ?? 'path/to/default/privateKey';
       const privateKey = await fs.readFile(privateKeyPath);
-      debug(`Connecting to ${this.serverConfig.host} with username ${this.serverConfig.username}`);
+      debug(`Connecting to ${this.ServerConfig.host} with username ${this.ServerConfig.username}`);
       this.conn.connect({
-        host: this.serverConfig.host,
-        port: this.serverConfig.port || 22,
-        username: this.serverConfig.username,
+        host: this.ServerConfig.host,
+        port: this.ServerConfig.port || 22,
+        username: this.ServerConfig.username,
         privateKey: privateKey.toString(),
       });
     } catch (error) {
@@ -79,13 +79,13 @@ export default class SshServerHandler extends ServerHandler implements ServerHan
   /**
    * Singleton instance getter.
    * Ensures a single instance of SshServerHandler per server configuration.
-   * @param serverConfig - The server configuration.
+   * @param ServerConfig - The server configuration.
    * @returns A promise that resolves to the SshServerHandler instance.
    */
-  public static async getInstance(serverConfig: ServerConfig): Promise<SshServerHandler> {
-    const identifier = `${serverConfig.host}:${serverConfig.port}`;
+  public static async getInstance(ServerConfig: ServerConfig): Promise<SshServerHandler> {
+    const identifier = `${ServerConfig.host}:${ServerConfig.port}`;
     if (!this.instances[identifier]) {
-      const instance = new SshServerHandler(serverConfig);
+      const instance = new SshServerHandler(ServerConfig);
       this.instances[identifier] = instance;
     }
     return this.instances[identifier];
