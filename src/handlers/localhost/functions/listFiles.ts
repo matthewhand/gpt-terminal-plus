@@ -52,8 +52,9 @@ export async function listFiles(directory: string, limit: number = 42, offset: n
 
     return response;
 
-  } catch (error) {
-    // Log and rethrow the error for further handling
+  } catch (err) {
+    // Explicitly type the error as `Error`
+    const error = err as Error;
     debug(`Error executing command: ${error.message}`);
     throw new Error(`Error listing files: ${error.message}`);
   }

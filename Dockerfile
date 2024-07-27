@@ -1,51 +1,64 @@
-# Stage 1: Build the application
+# Stage 1: Build Stage
 FROM node:18 AS builder
 
-# Update npm to the latest version
+# Set NODE_ENV to development to install dev dependencies
+ENV NODE_ENV=development
+
+# Install the latest version of npm globally
 RUN npm install -g npm@latest
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /usr/src/app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install all dependencies, including devDependencies
+# Install all dependencies, including dev dependencies
 RUN npm install
 
-# Install TypeScript and ts-node globally
-RUN npm install -g typescript ts-node
+# Install TypeScript globally
+RUN npm install -g typescript
 
-# Verify TypeScript and ts-node installation
+# Verify tsc installation and version
 RUN tsc -v || echo "tsc not found"
-RUN ts-node -v || echo "ts-node not found"
 RUN which tsc || echo "tsc path not found"
-RUN which ts-node || echo "ts-node path not found"
 
-# Copy the rest of your application's source code
+# Copy the rest of the application code
 COPY . .
 
-# Verify application source files
-RUN echo "Contents of /usr/src/app:"
-RUN ls -la /usr/src/app
+# Compile TypeScript files and capture output in a log file
+RUN tsc > tsc_output.log 2>&1 || { echo 'TypeScript compilation failed'; cat tsc_output.log; exit 1; }
 
-# Stage 2: Set up the production environment
+# Print the contents of /usr/src/app/dist after compilation
+RUN echo "Contents of /usr/src/app/dist after compilation:"
+RUN ls -latr /usr/src/app/dist
+
+# Stage 2: Production Stage
 FROM node:18-slim
-
-# Set the working directory in the container
-WORKDIR /usr/src/app
-
-# Copy only the necessary files
-COPY --from=builder /usr/src/app /usr/src/app
-
-# Install production dependencies only
-RUN npm ci --only=production
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
+ENV SUPPRESS_NO_CONFIG_WARNING=true
 
-# Expose the port the app runs on
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy only the compiled JavaScript files and production dependencies from the builder stage
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/package*.json ./
+
+# Copy configuration files
+COPY --from=builder /usr/src/app/config ./config
+
+# Print the contents of /usr/src/app/dist after copying from builder
+RUN echo "Contents of /usr/src/app/dist in production stage:"
+RUN ls -latr /usr/src/app/dist
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Expose the necessary port
 EXPOSE 5004
 
-# Run your application using ts-node
-CMD ["ts-node", "src/index.ts"]
+# Run the application
+CMD ["node", "dist/index.js"]
