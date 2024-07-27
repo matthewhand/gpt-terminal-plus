@@ -4,7 +4,7 @@ dotenv.config();
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
-import express from 'express';
+import express, { Request, Response, Router } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
@@ -21,13 +21,13 @@ const app = express();
 
 app.use(morgan('combined'));
 
-// Health check endpoint
-app.get('/health', (_, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.status(200).send('OK');
-});
+// Health check endpoint - no auth required
+// app.get('/health', (req: Request, res: Response) => {
+//   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+//   res.set('Pragma', 'no-cache');
+//   res.set('Expires', '0');
+//   res.status(200).send('OK');
+// });
 
 // Use CORS to limit to ChatGPT referred clients
 app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
