@@ -20,6 +20,10 @@ export const checkAuthToken = (req: Request, res: Response, next: NextFunction):
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
+    if (req.path === '/health') {
+        return next(); // Skip auth for health check
+    }
+
     if (token == null) {
         debugMiddleware('No authorization token provided');
         res.sendStatus(401); // if there's no token
