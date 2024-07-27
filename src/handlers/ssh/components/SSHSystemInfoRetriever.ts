@@ -33,17 +33,17 @@ const POWERSHELL_SCRIPT = 'remote_system_info.ps1';
 
 class SSHSystemInfoRetriever {
   private sshClient: Client;
-  private serverConfig: ServerConfig;
+  private ServerConfig: ServerConfig;
 
   /**
    * Constructor for SSHSystemInfoRetriever class.
    * 
    * @param {Client} sshClient - SSH Client instance.
-   * @param {ServerConfig} serverConfig - Configuration for SSH server.
+   * @param {ServerConfig} ServerConfig - Configuration for SSH server.
    */
-  constructor(sshClient: Client, serverConfig: ServerConfig) {
+  constructor(sshClient: Client, ServerConfig: ServerConfig) {
     this.sshClient = sshClient;
-    this.serverConfig = serverConfig;
+    this.ServerConfig = ServerConfig;
   }
 
   /**
@@ -52,7 +52,7 @@ class SSHSystemInfoRetriever {
    * @returns {Promise<SystemInfo>} A Promise that resolves to a SystemInfo object containing system information.
    */
   public async getSystemInfo(): Promise<SystemInfo> {
-    const scriptType = this.serverConfig.systemInfo === 'python' ? PYTHON_SCRIPT : BASH_SCRIPT;
+    const scriptType = this.ServerConfig.systemInfo === 'python' ? PYTHON_SCRIPT : BASH_SCRIPT;
     const command = scriptType === PYTHON_SCRIPT ? 'python3' : 'bash';
     try {
       return await this.executeSystemInfoScript(scriptType, command);
@@ -101,15 +101,15 @@ class SSHSystemInfoRetriever {
   private async transferAndExecuteScript(localScriptPath: string, remoteScriptPath: string, command: string): Promise<void> {
     const sftp = new SFTPClient();
     await sftp.connect({
-      host: this.serverConfig.host,
-      port: this.serverConfig.port ?? 22,
-      username: this.serverConfig.username,
+      host: this.ServerConfig.host,
+      port: this.ServerConfig.port ?? 22,
+      username: this.ServerConfig.username,
       privateKey: await this.getPrivateKey(),
     });
 
     await sftp.put(localScriptPath, remoteScriptPath);
     await this.executeRemoteCommand(`${command} ${remoteScriptPath} > ${remoteScriptPath}.out`);
-    if (this.serverConfig.cleanupScripts !== undefined && this.serverConfig.cleanupScripts !== false) {
+    if (this.ServerConfig.cleanupScripts !== undefined && this.ServerConfig.cleanupScripts !== false) {
       await this.executeRemoteCommand(`rm -f ${remoteScriptPath} ${remoteScriptPath}.out`);
     }
     await sftp.end();
@@ -122,7 +122,7 @@ class SSHSystemInfoRetriever {
    */
   private async getPrivateKey(): Promise<Buffer> {
     try {
-      return await fs.readFile(this.serverConfig.privateKeyPath ?? path.join(process.env.HOME || '', '.ssh', 'id_rsa'));
+      return await fs.readFile(this.ServerConfig.privateKeyPath ?? path.join(process.env.HOME || '', '.ssh', 'id_rsa'));
     } catch (error) {
       debug(`Failed to read private key: ${error}`);
       throw new Error(`Failed to read private key: ${error}`);
@@ -215,7 +215,7 @@ class SSHSystemInfoRetriever {
      * @returns {string} - The script to be executed.
      */
     public getSystemInfoScript(): string {
-        switch (this.serverConfig.shell) {
+        switch (this.ServerConfig.shell) {
             case 'powershell':
                 return POWERSHELL_SCRIPT;
             case 'python':
