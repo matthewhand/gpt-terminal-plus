@@ -1,17 +1,42 @@
 import config from 'config';
 import { ServerConfig, ServerHandlerInterface } from '../types/index';
 import SshServerHandler from '../handlers/SshServerHandler';
-import SsmServerHandler from '../handlers/SsmServerHandler';
+import { SsmServerModule } from '../handlers/ssm/SsmServerModule';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
+import * as AWS from 'aws-sdk'; // Add this line
 
 const serverHandlerDebug = Debug('app:ServerConfigUtils');
+
+// Define a default configuration
+const defaultServerConfig: ServerConfig[] = [
+  {
+    host: "localhost",
+    privateKeyPath: "/path/to/private/key",
+    keyPath: "/path/to/key",
+    posix: true,
+    systemInfo: "python",
+    port: 22,
+    code: true,
+    username: "user",
+    protocol: "ssh",
+    shell: "/bin/bash",
+    region: "us-west-2",
+    instanceId: "i-1234567890abcdef0",
+    homeFolder: "/home/user",
+    containerId: 1,
+    tasks: ["task1", "task2"],
+    scriptFolder: "/scripts",
+    defaultFolder: "/home/user",
+    ssmClient: new AWS.SSM() // No changes needed here
+  }
+];
 
 /**
  * Utility class for managing server configurations and handlers.
  */
 export class ServerConfigUtils {
-    private static serverConfigs: ServerConfig[] = config.get<ServerConfig[]>('serverConfig') || [];
+    private static serverConfigs: ServerConfig[] = config.has('serverConfig') ? config.get<ServerConfig[]>('serverConfig') : defaultServerConfig;
     private static instances: Record<string, ServerHandlerInterface> = {};
 
     /**
@@ -50,7 +75,7 @@ export class ServerConfigUtils {
             case 'ssh':
                 return await SshServerHandler.getInstance(serverConfig);
             case 'ssm':
-                return new SsmServerHandler(serverConfig);
+                return new SsmServerModule(serverConfig.ssmClient as AWS.SSM, serverConfig.instanceId as string);
             case 'local':
                 return new LocalServerHandler(serverConfig);
             default:
