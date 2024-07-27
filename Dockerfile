@@ -13,19 +13,21 @@ COPY package*.json ./
 # Install all dependencies, including devDependencies
 RUN npm install
 
-# Verify TypeScript installation
+# Install TypeScript and ts-node globally
+RUN npm install -g typescript ts-node
+
+# Verify TypeScript and ts-node installation
 RUN tsc -v || echo "tsc not found"
+RUN ts-node -v || echo "ts-node not found"
 RUN which tsc || echo "tsc path not found"
+RUN which ts-node || echo "ts-node path not found"
 
 # Copy the rest of your application's source code
 COPY . .
 
-# Build the application
-RUN npm run build
-
-# Verify build output
-RUN echo "Contents of ./dist after build:"
-RUN ls -la ./dist
+# Verify application source files
+RUN echo "Contents of /usr/src/app:"
+RUN ls -la /usr/src/app
 
 # Stage 2: Set up the production environment
 FROM node:18-slim
@@ -33,21 +35,17 @@ FROM node:18-slim
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
-# Copy only the production dependencies
-COPY --from=builder /usr/src/app/package*.json ./
+# Copy only the necessary files
+COPY --from=builder /usr/src/app /usr/src/app
+
+# Install production dependencies only
 RUN npm ci --only=production
 
-# Copy the built application and necessary files
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/config ./config
-
-# Verify copied files
-RUN echo "Contents of ./dist in production image:"
-RUN ls -la ./dist
+# Set NODE_ENV to production
+ENV NODE_ENV=production
 
 # Expose the port the app runs on
 EXPOSE 5004
 
-# Run your application
-CMD ["npm", "start"]
-EOF && cd /home/chatgpt/gpt-terminal-plus && git add Dockerfile && git commit -m "chore: update Dockerfile to use npm install in build stage and npm ci in production stage"
+# Run your application using ts-node
+CMD ["ts-node", "src/index.ts"]
