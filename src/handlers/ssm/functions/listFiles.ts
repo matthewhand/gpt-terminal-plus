@@ -1,6 +1,6 @@
 import { createPaginatedResponse } from '../../../utils/PaginationUtils';
 import { PaginatedResponse } from '../../../types/response';
-import { executeCommand } from '../../../utils/SSHCommandExecutor';
+import executeCommand from '../../../utils/SSHCommandExecutor';
 
 export async function listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: string = 'filename'): Promise<PaginatedResponse> {
   const command = `ls -la ${directory}`;
