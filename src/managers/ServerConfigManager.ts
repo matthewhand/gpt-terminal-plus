@@ -11,11 +11,11 @@ const debug = Debug('app:ServerConfigManager');
 class ServerConfigManager {
   private static instance: ServerConfigManager;
   private configFilePath: string;
-  private serverConfig: ServerConfig | null;
+  private ServerConfig: ServerConfig | null;
 
   private constructor() {
-    this.configFilePath = path.join(__dirname, '../../serverConfig.json');
-    this.serverConfig = this.loadServerConfig();
+    this.configFilePath = path.join(__dirname, '../../ServerConfig.json');
+    this.ServerConfig = this.loadServerConfig();
   }
 
   /**
@@ -67,7 +67,7 @@ class ServerConfigManager {
    * @returns {ServerConfig | null} The current server configuration or null if not set.
    */
   public getServerConfig(): ServerConfig | null {
-    return this.serverConfig;
+    return this.ServerConfig;
   }
 
   /**
@@ -75,7 +75,7 @@ class ServerConfigManager {
    * @param {ServerConfig} config - The new server configuration to set.
    */
   public setServerConfig(config: ServerConfig): void {
-    this.serverConfig = config;
+    this.ServerConfig = config;
     this.saveServerConfig(config);
   }
 }

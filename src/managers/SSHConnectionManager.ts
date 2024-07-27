@@ -16,12 +16,12 @@ class SSHConnectionManager {
     private conn: Client;
     private commandExecutor: SSHCommandExecutor | null = null;
     private fileOperations: SSHFileOperations | null = null;
-    private serverConfig: ServerConfig;
+    private ServerConfig: ServerConfig;
 
     // Private constructor to enforce singleton pattern
-    private constructor(serverConfig: ServerConfig) {
+    private constructor(ServerConfig: ServerConfig) {
         this.conn = new Client();
-        this.serverConfig = serverConfig;
+        this.ServerConfig = ServerConfig;
         this.initializeUtilities();
         this.setupListeners();
         this.connect();
@@ -29,8 +29,8 @@ class SSHConnectionManager {
 
     // Initializes utilities for command execution and file operations
     private initializeUtilities() {
-        this.commandExecutor = new SSHCommandExecutor(this.conn, this.serverConfig);
-        this.fileOperations = new SSHFileOperations(this.conn, this.serverConfig);
+        this.commandExecutor = new SSHCommandExecutor(this.conn, this.ServerConfig);
+        this.fileOperations = new SSHFileOperations(this.conn, this.ServerConfig);
     }
 
     // Sets up event listeners for the SSH client to log various connection states
@@ -44,12 +44,12 @@ class SSHConnectionManager {
     private async connect() {
         try {
             // Attempt to read the private key from a path, falling back to a default if not specified
-            const privateKeyPath = this.serverConfig.privateKeyPath ?? 'path/to/default/privateKey';
+            const privateKeyPath = this.ServerConfig.privateKeyPath ?? 'path/to/default/privateKey';
             const privateKey = await fs.readFile(privateKeyPath);
             this.conn.connect({
-                host: this.serverConfig.host,
-                port: this.serverConfig.port || 22,
-                username: this.serverConfig.username,
+                host: this.ServerConfig.host,
+                port: this.ServerConfig.port || 22,
+                username: this.ServerConfig.username,
                 privateKey: privateKey.toString(),
             });
         } catch (error) {
@@ -58,10 +58,10 @@ class SSHConnectionManager {
     }
 
     // Static method to get an instance of SSHConnectionManager for a given server configuration
-    public static async getInstance(serverConfig: ServerConfig): Promise<SSHConnectionManager> {
-        const identifier = `${serverConfig.host}:${serverConfig.port}`;
+    public static async getInstance(ServerConfig: ServerConfig): Promise<SSHConnectionManager> {
+        const identifier = `${ServerConfig.host}:${ServerConfig.port}`;
         if (!this.instances[identifier]) {
-            const instance = new SSHConnectionManager(serverConfig);
+            const instance = new SSHConnectionManager(ServerConfig);
             this.instances[identifier] = instance;
         }
         return this.instances[identifier];
