@@ -7,10 +7,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5004:5004" # Map the port from your container to the host
+    env_file:
+      - .env
     environment:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
       - PYTHONPATH=/opt/oracle-cli/lib/python3.10/site-packages:$PYTHONPATH
