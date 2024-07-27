@@ -10,20 +10,22 @@ const router = express.Router();
  * Interface for the expected request body to improve type safety
  */
 interface RunCommandRequestBody {
-  command: string;
-  timeout?: number;
+  body: {
+    command: string;
+    timeout?: number;
+  }
 }
 
 /**
  * Handler to execute a command on the selected server
  */
-const executeCommandHandler = async (req: Request, res: Response) => {
-  const { command, timeout }: RunCommandRequestBody = req.body;
+const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) => {
+  const { command, timeout } = req.body;
 
   // Validate the command
   if (!command) {
     debug('Command is required but not provided.');
-    return res.status(400).json({ error: 'Command is required' });
+    return (res as any).status(400).json({ error: 'Command is required' });
   }
 
   try {
@@ -43,11 +45,11 @@ const executeCommandHandler = async (req: Request, res: Response) => {
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
     debug(`Command executed successfully: ${JSON.stringify(executionResult)}`);
-    res.status(200).json(executionResult);
+    (res as any).status(200).json(executionResult);
   } catch (error) {
     const errorMessage = `Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`;
     debug(errorMessage);
-    res.status(500).json({ error: errorMessage });
+    (res as any).status(500).json({ error: errorMessage });
   }
 };
 
