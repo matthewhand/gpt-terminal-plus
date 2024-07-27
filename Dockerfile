@@ -11,10 +11,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install all dependencies, including devDependencies
-RUN npm ci
-
-# Install TypeScript globally
-RUN npm install -g typescript
+RUN npm install
 
 # Verify TypeScript installation
 RUN tsc -v || echo "tsc not found"
@@ -53,3 +50,4 @@ EXPOSE 5004
 
 # Run your application
 CMD ["npm", "start"]
+EOF && cd /home/chatgpt/gpt-terminal-plus && git add Dockerfile && git commit -m "chore: update Dockerfile to use npm install in build stage and npm ci in production stage"
