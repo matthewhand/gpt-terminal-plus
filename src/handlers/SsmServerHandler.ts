@@ -35,11 +35,17 @@ export default class SsmServerHandler extends ServerHandler {
      */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
         debug('Executing command:', command, 'on directory:', directory);
+        
         if (!command) {
-            throw new Error('No command provided for execution.');
+            const error = new Error('No command provided for execution.');
+            debug(error.message);
+            throw error;
         }
+
         if (!this.serverConfig.instanceId) {
-            throw new Error('Instance ID is undefined. Unable to execute command.');
+            const error = new Error('Instance ID is undefined. Unable to execute command.');
+            debug(error.message);
+            throw error;
         }
 
         const documentName = this.serverConfig.posix ? 'AWS-RunShellScript' : 'AWS-RunPowerShellScript';
@@ -53,12 +59,16 @@ export default class SsmServerHandler extends ServerHandler {
             Parameters: { commands: [formattedCommand] },
         };
 
+        debug('Sending command to SSM', params);
         const commandResponse = await this.ssmClient.sendCommand(params).promise();
 
         if (!commandResponse.Command || !commandResponse.Command.CommandId) {
-            throw new Error('Failed to retrieve command response or CommandId is undefined. Command execution failed.');
+            const error = new Error('Failed to retrieve command response or CommandId is undefined. Command execution failed.');
+            debug(error.message);
+            throw error;
         }
 
+        debug('Command sent to SSM successfully', commandResponse.Command);
         return await this.fetchCommandResult(commandResponse.Command.CommandId, this.serverConfig.instanceId);
     }
 
