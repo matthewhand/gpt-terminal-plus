@@ -3,10 +3,11 @@ app = "gpt-terminal-plus"
 primary_region = "syd"
 
 [build]
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "5004"
-  NODE_ENV = "production"
+  # NODE_ENV cannot be set to production here because TypeScript (tsc) needs to compile the JavaScript files during the Docker build process.
 
 [http_service]
   internal_port = 5004
