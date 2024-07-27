@@ -16,6 +16,10 @@ RUN npm ci
 # Install TypeScript globally
 RUN npm install -g typescript
 
+# Verify TypeScript installation
+RUN tsc -v || echo "tsc not found"
+RUN which tsc || echo "tsc path not found"
+
 # Copy the rest of your application's source code
 COPY . .
 
