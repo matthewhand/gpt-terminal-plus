@@ -3,9 +3,9 @@ import { createPaginatedResponse } from '../utils/PaginationUtils';
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/index';
 import { Client } from 'ssh2';
-import SSHCommandExecutor from '../utils/SSHCommandExecutor';
-import SSHFileOperations from '../utils/SSHFileOperations';
-import SSHSystemInfoRetriever from '../utils/SSHSystemInfoRetriever';
+import SSHCommandExecutor from './ssh/components/SSHCommandExecutor';
+import SSHFileOperations from './ssh/components/SSHFileOperations';
+import SSHSystemInfoRetriever from './ssh/components/SSHSystemInfoRetriever';
 import Debug from 'debug';
 import path from 'path';
 import fs from 'fs/promises'; // Importing fs module
