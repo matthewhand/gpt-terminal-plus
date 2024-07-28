@@ -57,6 +57,28 @@ jest.mock('../../src/handlers/ServerHandler', () => {
   };
 });
 
+jest.mock('../../src/utils/ServerConfigUtils', () => ({
+  __esModule: true,
+  ServerConfigUtils: {
+    getServerConfig: jest.fn((host: string) => {
+      const serverConfig = mockServers.find(server => server.host === host);
+      if (!serverConfig) {
+        throw new Error('Server not in predefined list.');
+      }
+      return serverConfig;
+    }),
+    getInstance: jest.fn(async (host: string) => {
+      const serverConfig = mockServers.find(server => server.host === host);
+      if (!serverConfig) {
+        throw new Error('Server not in predefined list.');
+      }
+      return {
+        getSystemInfo: jest.fn().mockResolvedValue(mockSystemInfo),
+      };
+    }),
+  },
+}));
+
 describe('Server Routes', () => {
   const app = express();
   app.use(express.json());

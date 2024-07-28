@@ -1,7 +1,7 @@
 /**
  * Server Routes Module
  * ====================
- * 
+ *
  * Overview:
  * ---------
  * This module defines the HTTP endpoints for server-related operations within the application,
@@ -10,18 +10,18 @@
  * server configurations and state. A significant aspect of this module is its use of a global state
  * helper to set and retrieve the currently selected server, ensuring a consistent server context
  * across different parts of the application.
- * 
+ *
  * ----------
  * 1. GET /list-servers
  *    Lists all available servers configured in the application. It retrieves server information from the
  *    ServerConfigUtils module and returns it in a structured JSON format.
- * 
+ *
  * 2. POST /set-server
  *    Sets the currently active server for the application. It accepts a server identifier in the request body,
  *    updates the global state accordingly, retrieves the server handler for the specified server, and attempts to
  *    fetch system information for the newly selected server. This endpoint is crucial for operations that require
  *    context about the current server, such as executing commands or retrieving system information.
- * 
+ *
  */
 
 import express, { Request, Response } from 'express';
@@ -64,6 +64,17 @@ router.post('/set-server', async (req: Request, res: Response) => {
   debug(`Received request to set server: ${server}`, { requestBody: req.body });
 
   try {
+    // Validate the server before setting it
+    const serverConfig = ServerConfigUtils.getServerConfig(server);
+    if (!serverConfig) {
+      throw new Error('Server not in predefined list.');
+    }
+
+    // Validate that the protocol is defined
+    if (!serverConfig.protocol) {
+      throw new Error('Unsupported protocol: undefined');
+    }
+
     // Set the selected server using the global state helper
     setSelectedServer(server);
     debug(`Server set to ${server} using global state helper.`);
