@@ -1,3 +1,6 @@
+cd /home/chatgpt/gpt-terminal-plus
+
+cat << 'EOF' > docs/INSTALLATION.local-docker.md
 # Installing `gpt-terminal-plus` Locally with Docker
 
 ## Prerequisites
@@ -24,8 +27,8 @@
     ```
     Example output:
     ```plaintext
-    time="2024-07-28T00:58:20Z" level=warning msg="The "NODE_ENV" variable is not set. Defaulting to a blank string."
-    time="2024-07-28T00:58:20Z" level=warning msg="The "PYTHONPATH" variable is not set. Defaulting to a blank string."
+    time="2024-07-28T00:58:20Z" level=warning msg="The \"NODE_ENV\" variable is not set. Defaulting to a blank string."
+    time="2024-07-28T00:58:20Z" level=warning msg="The \"PYTHONPATH\" variable is not set. Defaulting to a blank string."
      Container gpt-terminal-plus-app-1  Recreate
      Container gpt-terminal-plus-app-1  Recreated
      Container gpt-terminal-plus-app-1  Starting
@@ -110,3 +113,8 @@
 
 - [Docker Documentation](https://docs.docker.com/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
+EOF
+
+git add docs/INSTALLATION.local-docker.md
+git commit -m "docs: update INSTALLATION.local-docker.md with Docker and Docker Compose instructions and example output"
+git push origin main
