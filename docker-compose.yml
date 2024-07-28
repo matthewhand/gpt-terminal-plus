@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5004:5004" # Map the port from your container to the host
+      - "5005:5004" # Map the port from your container to the host
     env_file:
       - .env
     environment:
