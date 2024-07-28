@@ -69,10 +69,9 @@ For detailed installation instructions, refer to the following documentation fil
     {
       "port": 5004,
       "local": {
-        "enabled": true
+        "code": true
       },
       "ssh": {
-        "enabled": true,
         "hosts": [
           {
             "name": "example-ssh-server",
@@ -84,7 +83,6 @@ For detailed installation instructions, refer to the following documentation fil
         ]
       },
       "ssm": {
-        "enabled": true,
         "region": "us-east-1",
         "targets": [
           {
@@ -121,7 +119,6 @@ Example `local` configuration with `code`:
 ```json
 {
   "local": {
-    "enabled": true,
     "code": true
   }
 }
@@ -137,13 +134,7 @@ We welcome contributions, issues, and feature requests. Please follow our guidel
 
 ## FAQ
 
-### How do I set up SSH connections?
-
-- Ensure your SSH keys are properly configured and accessible.
-
-### How do I enable debug mode?
-
-- Update `.env` file with `DEBUG=true`.
+Refer to the [FAQ](docs/FAQ.md) for frequently asked questions.
 
 ## License
 
