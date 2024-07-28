@@ -50,6 +50,63 @@
 - **Set Environment Variables**:
     - Configure environment variables in the Fly.io dashboard for your app.
 
+## Verification
+
+After deploying the app, confirm the installation by checking the following:
+
+1. **Check Application Status**:
+    ```bash
+    flyctl status -a gpt-terminal-plus
+    ```
+    Example output:
+    ```plaintext
+    App
+      Name     = gpt-terminal-plus
+      Owner    = personal
+      Hostname = gpt-terminal-plus.fly.dev
+
+    Machines
+    PROCESS ID              VERSION REGION  STATE   CHECKS               LAST UPDATED
+    app     17811eddb69948  59      syd     started 1 total, 1 warning   2024-07-28T00:40:56Z
+    ```
+
+2. **Check Logs**:
+    ```bash
+    flyctl logs -a gpt-terminal-plus
+    ```
+    Example output:
+    ```plaintext
+    2024-07-28T00:40:56.000 app[gpt-terminal-plus] syd [info] Starting app...
+    2024-07-28T00:41:00.000 app[gpt-terminal-plus] syd [info] App started successfully
+    ```
+
+3. **Verify Application Directory**:
+    - List the contents of the expected application directory (e.g., `/app`):
+    ```bash
+    flyctl ssh console -a gpt-terminal-plus -C "ls -la /app"
+    ```
+    Example output:
+    ```plaintext
+    total 172
+    drwxr-xr-x   5 root root   4096 Jul 28 00:39 .
+    drwxr-xr-x   3 root root   4096 Jul 27 20:03 ..
+    drwxr-xr-x   2 root root   4096 Jul 27 19:48 config
+    drwxr-xr-x  10 root root   4096 Jul 28 00:39 dist
+    drwxr-xr-x 128 root root   4096 Jul 28 00:39 node_modules
+    -rw-rw-r--   1 root root 150621 Jul 28 00:39 package-lock.json
+    -rw-rw-r--   1 root root   1760 Jul 28 00:10 package.json
+    ```
+
+4. **Check Node.js Process**:
+    ```bash
+    flyctl ssh console -a gpt-terminal-plus -C "ps aux | grep node"
+    ```
+    Example output:
+    ```plaintext
+    root         1  0.0  0.1   4508   804 ?        Ss   00:40   0:00 /bin/sh -c node /app/dist/index.js
+    root        10  0.1  0.3 123456  6789 ?        Sl   00:40   0:00 node /app/dist/index.js
+    ```
+
 ## Troubleshooting
 
 ### Common Errors
