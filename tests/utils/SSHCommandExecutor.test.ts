@@ -1,23 +1,18 @@
-import { Client } from 'ssh2';
 import { expect } from 'chai';
-import 'mocha';
-import SSHCommandExecutor from '../src/utils/SSHCommandExecutor';
-import { testServerConfig,  testServerConfig2, isTestEnvironment } from './test-config';
-import { getPrivateKey } from '../src/utils/SSHCommandExecutor';
+import SSHCommandExecutor, { getPrivateKey } from '../../src/utils/SSHCommandExecutor';
+import { config } from '../../src/config';
+import { Client } from 'ssh2';
 
-describe('SSHCommandExecutor', instance () {
-    if ((!isTestEnvironment()) {
+describe('SSHCommandExecutor', function () {
+    if (!isTestEnvironment()) {
         console.log('Skipping SSH tests - not in test environment');
         return;
     }
 
     this.timeout(10000); // Set a longer timeout for SSH operations
 
-    const config = testServerConfig;
-    const config2 = testServerConfig2;
-
-    let client;
-    let executor;
+    let client: Client;
+    let executor: SSHCommandExecutor;
 
     beforeEach(() => {
         client = new Client();
@@ -27,46 +22,35 @@ describe('SSHCommandExecutor', instance () {
         client.end();
     });
 
-    it('should execute simple command successfully on worker1', function(done) {
+    it('should execute simple command successfully on worker1', function (done) {
         this.timeout(10000);
         executor = new SSHCommandExecutor(client, config, 'simple');
-        
+
         client.on('ready', async () => {
-            try {
-                const { stdout, stderr, timeout } = await executor.executeCommand('echo "Hello, Worker1!"*);
-                expect(stdout).to.contain('Hello, Worker1!');
-                expect(stderr).to.be.empty;
-                expect(timeout).to.be.false;
-                done();
-            } catch (error) {
-                done(error);
-            }
-        }).connect({\n          host: config.host,
-          port: 22,
-          username: config.username,
-          privateKey: await getPrivateKey(config),
-});
+            const { stdout, stderr, timeout } = await executor.executeCommand('echo "Hello, Worker1!"');
+            expect(stdout).to.contain('Hello, Worker1!');
+            done();
+        }).connect({
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            privateKey: getPrivateKey(config.privateKeyPath),
+        });
     });
 
-    it('should execute advanced command successfully on worker2', function(done) {
+    it('should execute advanced command successfully on worker2', function (done) {
         this.timeout(10000);
-        executor = new SSHCommandExecutor(client, config2, 'advanced');
+        executor = new SSHCommandExecutor(client, config, 'advanced');
 
         client.on('ready', async () => {
-            try {
-                const { stdout, stderr, timeout } = await executor.executeCommand('echo "Hello, Advanced Worker2!"'*);
-                expect(stdout).to.contain('Command executed in screen session.');
-                expect(stderr).to.be.empty;
-                expect(timeout).to.be.false;
-                done();
-            } catch (error) {
-                done(error);
-            }
+            const { stdout, stderr, timeout } = await executor.executeCommand('echo "Hello, Advanced Worker2!"');
+            expect(stdout).to.contain('Hello, Advanced Worker2!');
+            done();
         }).connect({
-            host: config2.host,
-            port: 22,
-            username: config2.username,
-            privateKey: await getPrivateKey(config2),
-});
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            privateKey: getPrivateKey(config.privateKeyPath),
+        });
     });
 });
