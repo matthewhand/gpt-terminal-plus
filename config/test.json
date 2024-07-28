@@ -3,6 +3,7 @@
     {
       "host": "localhost",
       "code": true,
+      "protocol": "local",
       "posix": false
     }
   ],
