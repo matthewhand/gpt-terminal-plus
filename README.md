@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Node.js CI](https://github.com/matthewhand/gpt-terminal-plus/actions/workflows/node.js.yml/badge.svg)
 <a href="https://github.com/matthewhand/gpt-terminal-plus" target="_blank">
-    <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%20%23155EEF&label=pricing&labelColor=%20%23528bff"></a>
+    <img alt="Static Badge" src="https://img.shields.io/badge/free-pricing?logo=free&color=%23155EEF&label=pricing&labelColor=%23528bff"></a>
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@
 - [Features](#features)
 - [Quick Start Guide](#quick-start-guide)
 - [Advanced Usage](#advanced-usage)
-- [Configuration](#configuration)
+- [Installation](#installation)
 - [Contributing](#contributing)
 - [FAQ](#faq)
 - [License](#license)
@@ -39,6 +39,12 @@
 
 ### Installation
 
+For detailed installation instructions, refer to the following documentation files:
+
+- [Local Installation with npm](docs/INSTALLATION.local-npm.md)
+- [Installation on fly.io](docs/INSTALLATION.fly.io.md)
+- [Local Installation with Docker](docs/INSTALLATION.local-docker.md)
+
 1. **Clone the Repository**:
     ```bash
     git clone https://github.com/matthewhand/gpt-terminal-plus.git
@@ -51,13 +57,49 @@
     ```
 
 3. **Set Up Configuration**:
-    - Edit `config/default.json` or create environment-specific files.
-    - Optionally, create a `.env` file for debug mode and other settings.
+    - Create a `.env` file with the following content:
+      ```plaintext
+      API_TOKEN=your_api_token_here
+      ```
+    - The default configuration file is `config/production.json`.
+    - You can override the configuration directory using the `NODE_CONFIG_DIR` environment variable.
+
+    Example `config/production.json`:
+    ```json
+    {
+      "port": 5004,
+      "local": {
+        "enabled": true
+      },
+      "ssh": {
+        "enabled": true,
+        "hosts": [
+          {
+            "name": "example-ssh-server",
+            "host": "ssh.example.com",
+            "port": 22,
+            "username": "user",
+            "privateKey": "/path/to/private/key"
+          }
+        ]
+      },
+      "ssm": {
+        "enabled": true,
+        "region": "us-east-1",
+        "targets": [
+          {
+            "name": "example-ssm-instance",
+            "instanceId": "i-0123456789abcdef0"
+          }
+        ]
+      }
+    }
+    ```
 
 4. **Running the Application**:
     - For production:
       ```bash
-      npm start
+      NODE_ENV=production npm start
       ```
     - For development:
       ```bash
@@ -73,12 +115,21 @@
 
 ### Coding and Development
 
-- **VSCode Integration**: Edit and review code directly from the terminal.
+VSCode will automatically detect changes to the filesystem and update the IDE when the software updates the files. Additionally, if the terminal is on the same workstation as VSCode, you can configure the plugin to use the `code` command to open files directly in the IDE by setting the `code` configuration flag to `true` within the `local` configuration.
 
-## Configuration
+Example `local` configuration with `code`:
+```json
+{
+  "local": {
+    "enabled": true,
+    "code": true
+  }
+}
+```
 
-- Configure the application using `config/*.json` files.
-- Use the `.env` file for specific settings like debug mode.
+## Chatbot Integrations
+
+Refer to [Setting Up ChatGPT Custom GPT](docs/CHATGPT_CUSTOM_GPT_SETUP.md) for instructions on setting up ChatGPT Custom GPT.
 
 ## Contributing
 
@@ -92,7 +143,7 @@ We welcome contributions, issues, and feature requests. Please follow our guidel
 
 ### How do I enable debug mode?
 
-- Create a `.env` file with `DEBUG=true`.
+- Update `.env` file with `DEBUG=true`.
 
 ## License
 
