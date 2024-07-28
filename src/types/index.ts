@@ -5,3 +5,4 @@ export * from './ServerHandlerInterface';
 export * from './appConfig';
 export * from './response';
 export * from './commandOptions';
+export * from './PaginatedResponse'; // Ensure this is included
