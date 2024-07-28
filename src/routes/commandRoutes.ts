@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { getSelectedServer } from '../utils/GlobalStateHelper';
+import { getSelectedServer, getCurrentFolder } from '../utils/GlobalStateHelper';
 import { ServerConfigUtils } from '../utils/ServerConfigUtils';
 import Debug from 'debug';
 
@@ -44,8 +44,15 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
     debug(`Executing command: ${command} with timeout: ${effectiveTimeout} on server: ${selectedServer}`);
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
+    // Get the current folder from the global state
+    const currentFolder = getCurrentFolder();
+
     debug(`Command executed successfully: ${JSON.stringify(executionResult)}`);
-    (res as any).status(200).json(executionResult);
+    (res as any).status(200).json({
+      ...executionResult,
+      selectedServer,
+      currentFolder,
+    });
   } catch (error) {
     const errorMessage = `Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`;
     debug(errorMessage);
@@ -64,4 +71,3 @@ router.post('/run', executeCommandHandler);
 router.post('/execute-command', executeCommandHandler);
 
 export default router;
-
