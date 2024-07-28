@@ -129,7 +129,7 @@ Example `local` configuration with `code`:
 
 ## Chatbot Integrations
 
-Refer to [Setting Up ChatGPT Custom GPT](docs/CHATGPT_CUSTOM_GPT_SETUP.md) for instructions on setting up ChatGPT Custom GPT.
+Refer to [Setting Up ChatGPT Custom GPT](docs/CHATGPT_configuration.md) for instructions on setting up ChatGPT Custom GPT.
 
 ## Contributing
 
@@ -147,4 +147,4 @@ We welcome contributions, issues, and feature requests. Please follow our guidel
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [docs/LICENSE](docs/LICENSE) file for details.
