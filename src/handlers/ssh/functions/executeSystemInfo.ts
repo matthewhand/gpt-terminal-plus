@@ -1,24 +1,27 @@
-import { Client } from "ssh2";
+import { Client } from 'ssh2';
 
 /**
- * Executes the command to get system information on an SSH server.
- * @param {Client} sshClient - The SSH client.
- * @returns {Promise<string>} - The system information.
+ * Executes a system info command on a remote SSH server.
+ * @param sshClient - The SSH client.
+ * @param command - The command to execute.
+ * @returns The system info as a string.
  */
-export async function executeSystemInfo(sshClient: Client): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let commandOutput = "";
-    sshClient.exec("uname -a", (err, stream) => {
-      if (err) {
-        reject(`Error: ${err}`);
-      } else {
-        stream.on("data", data => {
-          commandOutput += data;
-        }).on("close", () => {
-          resolve(commandOutput);
+export async function executeSystemInfo(sshClient: Client, command: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        let commandOutput = '';
+        sshClient.exec(command, (err, stream) => {
+            if (err) {
+                return reject(err);
+            }
+            stream.on('data', (data: any) => {
+                commandOutput += data.toString();
+            }).on('close', () => {
+                sshClient.end();
+                resolve(commandOutput);
+            }).stderr.on('data', (data: any) => {
+                console.error('STDERR: ' + data);
+                reject(new Error(data.toString()));
+            });
         });
-      }
     });
-  });
 }
-

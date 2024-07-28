@@ -1,33 +1,34 @@
-import { Client } from "ssh2";
-import { createPaginatedResponse, getCurrentFolder } from "../../../utils/PaginationUtils";
+import { Client } from 'ssh2';
+import { createPaginatedResponse } from '../../../utils/PaginationUtils';
+import { getCurrentFolder } from '../../../utils/GlobalStateHelper';
+import { PaginatedResponse } from '../../../types/index';
 
 /**
- * Lists files in the specified directory on an SSH server with pagination.
- * @param {Client} sshClient - The SSH client.
- * @param {string} [directory=""] - The directory to list files in.
- * @param {number} [limit=42] - The maximum number of files to return.
- * @param {number} [offset=0] - The offset to start the listing from.
- * @param {"filename" | "datetime"} [orderBy="filename"] - The order criterion.
- * @returns {Promise<PaginatedResponse>} - The paginated response with the list of files.
+ * Lists files in a specified directory on a remote SSH server.
+ * @param sshClient - The SSH client.
+ * @param directory - The directory to list files in.
+ * @param limit - Maximum number of files to return.
+ * @param offset - Number of files to skip before starting to collect the result set.
+ * @param orderBy - Criteria to order files by.
+ * @returns A paginated response containing files in the directory.
  */
-export async function listFiles(sshClient: Client, directory: string = "", limit: number = 42, offset: number = 0, orderBy: "filename" | "datetime" = "filename"): Promise<PaginatedResponse> {
-  const targetDirectory = directory || getCurrentFolder();
-  try {
-    let commandOutput = "";
-    sshClient.exec("ls -la " + targetDirectory, (err, stream) => {
-      if (err) throw err;
-      stream.on("data", data => {
-        commandOutput += data;
-      }).on("close", () => sshClient.end());
+export async function listFiles(sshClient: Client, directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse> {
+    const targetDirectory = directory || getCurrentFolder();
+    return new Promise((resolve, reject) => {
+        sshClient.exec('ls -l ' + targetDirectory, (err, stream) => {
+            if (err) {
+                return reject(err);
+            }
+            let commandOutput = '';
+            stream.on('data', (data: any) => {
+                commandOutput += data.toString();
+            }).on('close', () => {
+                const files = commandOutput.split('\n').slice(1); // Skip the total line
+                resolve(createPaginatedResponse(files, limit, offset));
+            }).stderr.on('data', (data: any) => {
+                console.error('STDERR: ' + data);
+                reject(new Error(data.toString()));
+            });
+        });
     });
-
-    const files = commandOutput.split("
-").slice(1); // Skip the total line
-
-    return createPaginatedResponse(files, limit, offset);
-  } catch (error) {
-    console.error("Failed to list files in directory  + targetDirectory + : " + error);
-    throw error;
-  }
 }
-

@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import Debug from 'debug';
 import { ServerHandler } from './ServerHandler';
 import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/index';
 import { createPaginatedResponse } from '../utils/PaginationUtils';
@@ -11,34 +12,14 @@ import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 import { psSystemInfoCmd } from './psSystemInfoCommand'; // Importing PowerShell command
 import { shSystemInfoCmd } from './shSystemInfoCommand'; // Importing Shell command
 
-/*router.post('/amend-file', async (req, res) => {
-    const { filename, content, directory = "" } = req.body;
-    try {
-        const serverHandler = req.serverHandler!;
-        const targetDirectory = directory || await serverHandler.getCurrentDirectory();
-        const fullPath = path.join(targetDirectory, filename);
-        const release = await lockfile.lock(fullPath, { realpath: false });
-        try {
-            const success = await serverHandler.amendFile(fullPath, content);
-            res.status(success ? 200 : 400).json({
-                message: success ? 'File amended successfully.' : 'Failed to amend file.'
-            });
-        } finally {
-            await release();
-        }
-    } catch (err) {
-        handleServerError(err, res, 'Error amending file');
-    }
-});
-*
- * Class to handle server interactions for local servers.
- * Extends the abstract ServerHandler class and implements ServerHandlerInterface.
- */
+const debug = Debug('app:LocalServerHandler');
+
 export default class LocalServerHandler extends ServerHandler implements ServerHandlerInterface {
     private execAsync = promisify(exec);
 
     constructor(ServerConfig: ServerConfig) {
         super(ServerConfig);
+        debug('LocalServerHandler initialized with config:', ServerConfig);
     }
 
     /**
@@ -60,14 +41,16 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
             const { stdout } = await this.execAsync(shellCommand, execOptions);
 
             const systemInfoObj = stdout.trim().split('\n').reduce((acc: { [key: string]: string }, line) => {
-                const [key, value] = line.split(':').map(part => part.trim());
+                const parts = line.split(':');
+                const key = parts[0].trim();
+                const value = parts.slice(1).join(':').trim();
                 acc[key] = value;
                 return acc;
             }, {});
 
             return this.constructSystemInfo(systemInfoObj);
-        } catch (error) {
-            console.error(`Error getting system information:`, error);
+        } catch (error: unknown) {
+            debug('Error getting system information: ' + (error instanceof Error ? error.message : String(error)));
             return this.getDefaultSystemInfo();
         }
     }
@@ -116,15 +99,15 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
             shell: this.ServerConfig.shell || undefined
         };
 
+        debug('Executing command: ' + command + ' with options: ' + JSON.stringify(execOptions));
         try {
             const { stdout, stderr } = await this.execAsync(command, execOptions);
+            debug('Command stdout: ' + stdout);
+            debug('Command stderr: ' + stderr);
             return { stdout, stderr };
-        } catch (error) {
-            if (error instanceof Error) {
-                throw new Error(`Error executing command: ${error.message}`);
-            } else {
-                throw new Error('An unknown error occurred while executing the command.');
-            }
+        } catch (error: unknown) {
+            debug('Error executing command: ' + (error instanceof Error ? error.message : String(error)));
+            throw new Error('Error executing command: ' + (error instanceof Error ? error.message : String(error)));
         }
     }
 
@@ -138,6 +121,7 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
      */
     async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse> {
         const targetDirectory = directory || getCurrentFolder();
+        debug('Listing files in directory: ' + targetDirectory + ' with limit: ' + limit + ', offset: ' + offset + ', orderBy: ' + orderBy);
         try {
             const entries = await fs.promises.readdir(targetDirectory, { withFileTypes: true });
             let files = entries.filter(entry => entry.isFile()).map(entry => entry.name);
@@ -153,9 +137,10 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
                 files.sort();
             }
 
+            debug('Files listed: ' + files);
             return createPaginatedResponse(files, limit, offset);
-        } catch (error) {
-            console.error(`Failed to list files in directory '${targetDirectory}': ${error}`);
+        } catch (error: unknown) {
+            debug('Failed to list files in directory \'' + targetDirectory + '\': ' + (error instanceof Error ? error.message : String(error)));
             throw error;
         }
     }
@@ -170,17 +155,20 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
      */
     async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
         const fullPath = path.join(directory || getCurrentFolder(), filename);
+        debug('Creating file at: ' + fullPath + ' with backup: ' + backup);
         try {
             if (backup && fs.existsSync(fullPath)) {
-                const backupPath = `${fullPath}.bak`;
+                const backupPath = fullPath + '.bak';
                 await fs.promises.copyFile(fullPath, backupPath);
+                debug('Backup created at: ' + backupPath);
             }
 
             await fs.promises.writeFile(fullPath, content);
+            debug('File created at: ' + fullPath);
             return true;
-        } catch (error) {
-            console.error(`Failed to create file '${fullPath}': ${error}`);
-            return false;
+        } catch (error: unknown) {
+            debug('Failed to create file \'' + fullPath + '\': ' + (error instanceof Error ? error.message : String(error)));
+            throw error;
         }
     }
 
@@ -194,20 +182,23 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
      */
     async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
         const fullPath = path.join(getCurrentFolder(), filePath);
+        debug('Updating file at: ' + fullPath + ' with backup: ' + backup);
         try {
             if (backup && fs.existsSync(fullPath)) {
-                const backupPath = `${fullPath}.bak`;
+                const backupPath = fullPath + '.bak';
                 await fs.promises.copyFile(fullPath, backupPath);
+                debug('Backup created at: ' + backupPath);
             }
 
             let content = await fs.promises.readFile(fullPath, 'utf8');
             const regex = new RegExp(escapeRegExp(pattern), 'g');
             content = content.replace(regex, replacement);
             await fs.promises.writeFile(fullPath, content);
+            debug('File updated at: ' + fullPath);
             return true;
-        } catch (error) {
-            console.error(`Failed to update file '${fullPath}': ${error}`);
-            return false;
+        } catch (error: unknown) {
+            debug('Failed to update file \'' + fullPath + '\': ' + (error instanceof Error ? error.message : String(error)));
+            throw error;
         }
     }
 
@@ -219,12 +210,14 @@ export default class LocalServerHandler extends ServerHandler implements ServerH
      */
     async amendFile(filePath: string, content: string): Promise<boolean> {
         const fullPath = path.join(getCurrentFolder(), filePath);
+        debug('Amending file at: ' + fullPath);
         try {
             await fs.promises.appendFile(fullPath, content);
+            debug('File amended at: ' + fullPath);
             return true;
-        } catch (error) {
-            console.error(`Failed to amend file '${fullPath}': ${error}`);
-            return false;
+        } catch (error: unknown) {
+            debug('Failed to amend file \'' + fullPath + '\': ' + (error instanceof Error ? error.message : String(error)));
+            throw error;
         }
     }
 }

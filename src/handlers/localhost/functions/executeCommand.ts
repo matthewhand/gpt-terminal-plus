@@ -1,31 +1,28 @@
-import { promisify } from "util";
-import { exec } from "child_process";
-import { getCurrentFolder } from "../../../utils/GlobalStateHelper";
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
 /**
- * Executes a command in the specified directory or the current folder if none is specified.
- * @param {string} command - The command to execute.
- * @param {number} [timeout=5000] - The timeout for the command execution.
- * @param {string} [directory] - The directory to execute the command in.
- * @returns {Promise<{ stdout: string; stderr: string }>} - The standard output and error output.
+ * Executes a command on the local server.
+ * @param command - The command to execute.
+ * @param timeout - Optional timeout for the command execution.
+ * @param directory - Optional directory to execute the command in.
+ * @param shell - Optional shell to use for command execution.
+ * @returns The command's stdout and stderr output.
  */
-export async function executeCommand(command: string, timeout: number = 5000, directory?: string): Promise<{ stdout: string; stderr: string }> {
-  const execOptions = {
-    timeout,
-    cwd: directory || getCurrentFolder(),
-    shell: this.ServerConfig.shell || undefined
-  };
+export async function executeCommand(command: string, timeout: number = 5000, directory?: string, shell?: string): Promise<{ stdout: string; stderr: string }> {
+    const execOptions = {
+        timeout,
+        cwd: directory || process.cwd(),
+        shell: shell || undefined
+    };
 
-  try {
-    const { stdout, stderr } = await execAsync(command, execOptions);
-    return { stdout, stderr };
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Error executing command: ${error.message}`);
-    } else {
-      throw new Error("An unknown error occurred while executing the command.");
+    try {
+        const { stdout, stderr } = await execAsync(command, execOptions);
+        return { stdout, stderr };
+    } catch (error) {
+        console.error(`Error executing command: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
     }
-  }
 }
