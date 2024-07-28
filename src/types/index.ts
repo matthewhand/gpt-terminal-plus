@@ -1,4 +1,4 @@
-export * from './systemInfo';
+export * from './SystemInfo';
 export * from './ServerConfig';
 export * from './commandConfig';
 export * from './ServerHandlerInterface';
