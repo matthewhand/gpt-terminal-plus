@@ -22,12 +22,12 @@ const app = express();
 app.use(morgan('combined'));
 
 // Health check endpoint - no auth required
-// app.get('/health', (req: Request, res: Response) => {
-//   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-//   res.set('Pragma', 'no-cache');
-//   res.set('Expires', '0');
-//   res.status(200).send('OK');
-// });
+app.get('/health', (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.status(200).send('OK');
+});
 
 // Use CORS to limit to ChatGPT referred clients
 app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
