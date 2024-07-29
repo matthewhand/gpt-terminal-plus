@@ -1,3 +1,16 @@
+-e ## Contributing
+
+We welcome contributions, issues, and feature requests. Please follow our guidelines for contributing and ensure all tests pass before submitting a pull request.
+
+### Running Tests and Linting
+
+Before submitting a pull request, please ensure that the following command works:
+
+```sh
+make
+```
+
+This command will run the lint, test, and build checks to help maintain code quality and consistency across the project.
 # Update contribution section in README.md
 ## Contributing
 
