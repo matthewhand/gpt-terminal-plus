@@ -1,3 +1,5 @@
+# Update launch_services.sh script
+# Add --insecure-api-token argument and API_TOKEN check
 #!/bin/bash
 
 # Function to display usage information
