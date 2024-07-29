@@ -1,19 +1,13 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "module": "ESNext",
+    "module": "commonjs", // Change to "esnext" if using ES modules
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
-    "types": ["jest", "node"],
     "baseUrl": "./src",
-    "typeRoots": ["../node_modules/@types", "./types"],
-    "paths": {
-      "@types/*": ["types/*"],
-      "@handlers/*": ["handlers/*"],
-      "@utils/*": ["utils/*"]
-    },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
     "downlevelIteration": true,
@@ -21,10 +15,10 @@
   },
   "include": [
     "src/**/*",
-    "src/types/**/*"
+    "tests/**/*"
   ],
   "files": [
-    "./src/types/express.d.ts",
-    "./src/global.d.ts"
+    "src/types/express.d.ts",
+    "src/global.d.ts"
   ]
 }

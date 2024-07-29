@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import serverRoutes from '../../src/routes/serverRoutes';
-import { ServerHandler } from '../../src/handlers/ServerHandler';
+import { ServerHandler } from "../../src/handlers/ServerHandler"
 import { ServerConfig } from '../../src/types/ServerConfig';
 import { SystemInfo } from '../../src/types/SystemInfo';
 

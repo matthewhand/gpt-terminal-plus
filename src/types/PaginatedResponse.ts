@@ -1,4 +1,7 @@
 export interface PaginatedResponse<T> {
     items: T[];
-    totalCount: number;
+    totalPages: number;
+    responseId: string;
+    stdout: string;
+    stderr: string;
 }
