@@ -1,4 +1,4 @@
-import { PaginatedResponse } from '../../types/index';
+import { PaginatedResponse } from '../types/PaginatedResponse';
 
 export default class PaginationHandler {
   static async retrieveResponsePage(id: number, page: number): Promise<PaginatedResponse<string>> {
