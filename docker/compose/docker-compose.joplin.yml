@@ -8,7 +8,7 @@ services:
     ports:
       - "5009:5004"
     env_file:
-      - .env
+      - ../../.env
     environment:
       - NODE_ENV=development
       - DEBUG=${DEBUG}

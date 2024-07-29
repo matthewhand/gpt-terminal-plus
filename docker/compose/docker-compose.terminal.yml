@@ -3,17 +3,16 @@ version: '3.8'
 services:
   app:
     build:
-      context: ../..  # Navigate to the root context where Dockerfile.terminal is located
+      context: ../..
       dockerfile: docker/Dockerfile.terminal
     ports:
-      - "5005:5004" # Map the port from your container to the host
+      - "5005:5004"
     env_file:
-      - .env
+      - ../../.env
     environment:
       - NODE_ENV=development
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
     volumes:
-      - ../.ssh:/root/.ssh:rw # Mount the SSH directory (rw required for updating host keys)
-      # The SSH directory is mapped for the 'terminal' service to update host keys.
+      - ../.ssh:/root/.ssh:rw
     restart: unless-stopped
