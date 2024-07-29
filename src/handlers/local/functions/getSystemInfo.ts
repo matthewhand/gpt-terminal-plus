@@ -24,7 +24,6 @@ export async function getSystemInfo(shell: string, scriptPath: string): Promise<
     type: parsedInfo["type"],
     release: parsedInfo["release"],
     platform: parsedInfo["platform"],
-    powershellVersion: parsedInfo["powershellVersion"],
     architecture: parsedInfo["architecture"],
     totalMemory: Number(parsedInfo["totalMemory"]),
     freeMemory: Number(parsedInfo["freeMemory"]),
