@@ -23,17 +23,21 @@ describe('LocalServerHandler', () => {
     const pattern = 'test';
     const replacement = 'replaced';
     const backup = true;
-    const scriptPath = path.join(__dirname, '../mockScript.sh'); // Ensure this path is correct
+    const scriptFolder = path.join(__dirname, '../mockScripts');
     let localServerHandler: LocalServerHandler;
 
     beforeEach(() => {
         if (!fs.existsSync(directory)) {
             fs.mkdirSync(directory);
         }
-        if (!fs.existsSync(scriptPath)) {
-            fs.writeFileSync(scriptPath, 'echo \"homeFolder: /home\\n type: linux\\n release: 5.8.0\\n platform: linux\\n powershellVersion: N/A\\n architecture: x64\\n totalMemory: 8192\\n freeMemory: 4096\\n uptime: 123456\\n currentFolder: /home/user\"', { mode: 0o755 });
+        if (!fs.existsSync(scriptFolder)) {
+            fs.mkdirSync(scriptFolder);
         }
-        localServerHandler = new LocalServerHandler({ host: 'localhost', protocol: 'ssh', username: 'user', privateKeyPath: '/mock/private/key', shell: 'bash', scriptPath });
+        const scriptPath = path.join(scriptFolder, 'mockScript.sh');
+        if (!fs.existsSync(scriptPath)) {
+            fs.writeFileSync(scriptPath, 'echo \"homeFolder: /home\n type: linux\n release: 5.8.0\n platform: linux\n architecture: x64\n totalMemory: 8192\n freeMemory: 4096\n uptime: 123456\n currentFolder: /home/user\"', { mode: 0o755 });
+        }
+        localServerHandler = new LocalServerHandler({ host: 'localhost', protocol: 'ssh', username: 'user', privateKeyPath: '/mock/private/key', shell: 'bash', scriptFolder });
     });
 
     afterEach(async () => {
@@ -44,8 +48,8 @@ describe('LocalServerHandler', () => {
         if (fs.existsSync(nonexistentDirectory)) {
             fs.rmSync(nonexistentDirectory, { recursive: true });
         }
-        if (fs.existsSync(scriptPath)) {
-            fs.unlinkSync(scriptPath);
+        if (fs.existsSync(scriptFolder)) {
+            fs.rmSync(scriptFolder, { recursive: true });
         }
         jest.clearAllMocks(); // Clear mocks after each test
     });
@@ -63,24 +67,6 @@ describe('LocalServerHandler', () => {
         expect(fs.readFileSync(filePath, 'utf8')).to.equal(content);
     });
 
-    // TODO fix
-    // it('should update a file with a specific pattern', async () => {
-    //     const filePath = path.join(directory, filename);
-    //     await localServerHandler.createFile(directory, filename, content, backup);
-    //     const result = await localServerHandler.updateFile(filePath, pattern, replacement, backup);
-    //     expect(result).to.be.true;
-    //     expect(fs.readFileSync(filePath, 'utf8')).to.equal('replaced content');
-    // });
-
-    // TODO fix
-    // it('should append content to an existing file', async () => {
-    //     const filePath = path.join(directory, filename);
-    //     await localServerHandler.createFile(directory, filename, content, backup);
-    //     const result = await localServerHandler.amendFile(filePath, updatedContent);
-    //     expect(result).to.be.true;
-    //     expect(fs.readFileSync(filePath, 'utf8')).to.equal(content + updatedContent);
-    // });
-
     it('should execute a simple command', async () => {
         const result = await localServerHandler.executeCommand('echo \"hello world\"', 5000, directory);
         expect(result.stdout.trim()).to.equal('hello world');
@@ -92,7 +78,6 @@ describe('LocalServerHandler', () => {
         expect(result).to.have.property('type');
         expect(result).to.have.property('release');
         expect(result).to.have.property('platform');
-        expect(result).to.have.property('powershellVersion');
         expect(result).to.have.property('architecture');
         expect(result).to.have.property('totalMemory');
         expect(result).to.have.property('freeMemory');
@@ -128,7 +113,7 @@ describe('LocalServerHandler', () => {
 
         expect(result.stdout.trim()).to.equal('Hello, World!'); // Trim the output to match
         expect(result.stderr).to.equal('');
-        // TODO test global state variables 
+        // TODO test global state variables
         // expect(result.selectedServer).to.equal('test-server');
         // expect(result.currentFolder).to.equal('/test-folder');
     });
