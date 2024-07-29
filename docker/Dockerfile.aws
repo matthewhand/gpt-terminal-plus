@@ -1,5 +1,5 @@
 # Use the base Dockerfile
-FROM base AS builder
+FROM base:latest AS builder
 
 # Install AWS CLI and AWS SDK for Node.js and Python3
 RUN apt-get update && apt-get install -y awscli python3-pip && pip3 install boto3 && npm install aws-sdk

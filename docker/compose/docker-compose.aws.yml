@@ -5,6 +5,9 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.aws
+    image: aws:latest
+    depends_on:
+      - base
     ports:
       - "5007:5004"
     env_file:
