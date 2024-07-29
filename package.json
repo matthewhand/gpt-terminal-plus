@@ -3,7 +3,7 @@
   "version": "latest",
   "description": "ChatGPT terminal action for Custom GPT",
   "main": "src/index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "lint": "npx eslint src/",
     "validate": "npm-run-all --parallel lint test",
@@ -37,7 +37,7 @@
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.17.0",
-    "@typescript-eslint/parser": "^7.17.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "chai": "^4.3.4",
     "cross-env": "^7.0.3",
     "eslint": "^9.8.0",
