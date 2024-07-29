@@ -87,7 +87,7 @@ export class ServerConfigUtils {
       case 'ssm':
         return new SsmServerHandler(serverConfig);
       case 'local':
-        return new LocalServerHandler(serverConfig as ServerConfig);
+        return new LocalServerHandler(serverConfig);
       default:
         throw new Error('Unsupported protocol: ' + serverConfig.protocol);
     }
