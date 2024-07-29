@@ -1,4 +1,4 @@
-import { PaginatedResponse } from '../types/index';
+import { PaginatedResponse } from '../types/PaginatedResponse';
 
 export function createPaginatedResponse<T>(items: T[], limit: number, offset: number): PaginatedResponse<T> {
     return {

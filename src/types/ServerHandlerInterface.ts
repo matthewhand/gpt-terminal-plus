@@ -1,4 +1,5 @@
-import { SystemInfo, PaginatedResponse } from '../types/index';
+import { PaginatedResponse } from '../types/PaginatedResponse';
+import { SystemInfo } from '../types/SystemInfo';
 
 export interface ServerHandlerInterface {
     executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;

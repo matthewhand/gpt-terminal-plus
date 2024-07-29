@@ -7,7 +7,8 @@ import { updateFile } from './functions/updateFile';
 import { getSystemInfo } from './functions/getSystemInfo';
 import { determineScriptExtension } from './functions/determineScriptExtension';
 import { createTempScript } from './functions/createTempScript';
-import { ServerHandlerInterface, SystemInfo } from '../../types/index';
+import { SystemInfo } from '../../types/SystemInfo';
+import { ServerHandlerInterface } from '../../types/ServerHandlerInterface';
 
 /**
  * SSM Server Module to handle various SSM operations.

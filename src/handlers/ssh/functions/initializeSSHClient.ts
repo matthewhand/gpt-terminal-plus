@@ -3,7 +3,7 @@ import Debug from 'debug';
 import SSHCommandExecutor from '../components/SSHCommandExecutor';
 import SSHFileOperations from '../components/SSHFileOperations';
 import SSHSystemInfoRetriever from '../components/SSHSystemInfoRetriever';
-import { ServerConfig } from '../../../types/index';
+import { ServerConfig } from '../../../types/ServerConfig';
 
 const debug = Debug('app:SshServerHandler');
 export async function initializeSSHClient(conn: Client, ServerConfig: ServerConfig) {

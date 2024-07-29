@@ -1,6 +1,7 @@
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { ServerConfig, SystemInfo } from '../types/index';
+import { ServerConfig } from '../types/ServerConfig';
+import { SystemInfo } from '../types/SystemInfo';
 import fs from 'fs/promises';
 import SSHCommandExecutor from '../utils/SSHCommandExecutor';
 import SSHFileOperations from '../handlers/ssh/components/SSHFileOperations';

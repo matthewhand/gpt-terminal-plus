@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { ServerConfig } from '../../../types/index';
+import { ServerConfig } from '../../../types/ServerConfig';
 import { initializeSSHClient } from './initializeSSHClient';
 
 export async function getInstance(ServerConfig: ServerConfig): Promise<Client> {

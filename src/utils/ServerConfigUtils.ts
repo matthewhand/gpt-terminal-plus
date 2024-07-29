@@ -1,6 +1,7 @@
 import config from 'config';
-import { ServerConfig, ServerHandlerInterface } from '../types/index';
-import SshServerHandler from '../handlers/SshServerHandler';
+import { ServerConfig } from '../types/ServerConfig';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { SshServerHandler } from '../handlers/SshServerHandler';
 import { SsmServerModule } from '../handlers/ssm/SsmServerModule';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';

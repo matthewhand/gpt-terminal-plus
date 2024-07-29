@@ -1,5 +1,8 @@
 import { ServerHandler } from '../../src/handlers/ServerHandler';
-import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../../src/types/index';
+import { ServerConfig } from '../../src/types/ServerConfig';
+import { SystemInfo } from '../../src/types/SystemInfo';
+import { PaginatedResponse } from '../../src/types/PaginatedResponse';
+import { ServerHandlerInterface } from '../../src/types/ServerHandlerInterface';
 
 /**
  * Mock implementation of ServerHandler for testing purposes.

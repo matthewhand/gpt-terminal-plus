@@ -1,4 +1,7 @@
-import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/index';
+import { ServerConfig } from '../types/ServerConfig';
+import { SystemInfo } from '../types/SystemInfo';
+import { PaginatedResponse } from '../types/PaginatedResponse';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
 import debug from 'debug';
 import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
 

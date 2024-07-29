@@ -1,4 +1,4 @@
-import { ServerConfig } from '../src/types';
+import { ServerConfig } from '../../src/types/ServerConfig';
 
 export const testServerConfig: ServerConfig = {
     host: 'worker1',

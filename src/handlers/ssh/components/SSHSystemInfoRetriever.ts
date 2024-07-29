@@ -19,7 +19,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { ServerConfig, SystemInfo } from '../../../types/index';
+import { ServerConfig } from '../../../types/ServerConfig';
+import { SystemInfo } from '../../../types/SystemInfo';
 import SFTPClient from 'ssh2-sftp-client';
 import { v4 as uuidv4 } from 'uuid';
 

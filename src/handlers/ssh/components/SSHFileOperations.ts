@@ -4,7 +4,7 @@ import path from 'path';
 import SFTPClient from 'ssh2-sftp-client';
 import { Client } from 'ssh2';
 import Debug from 'debug';
-import { ServerConfig } from '../../../types/index';
+import { ServerConfig } from '../../../types/ServerConfig';
 
 const debug = Debug('app:SSHFileOperations');
 
@@ -57,17 +57,6 @@ class SSHFileOperations {
         await sftp.end();
     }
 
-    // public async readFile(remotePath: string): Promise<Buffer> {
-    //     const sftp = await this.connectSFTP();
-    //     try {
-    //         // Specify encoding as null to ensure a Buffer is returned
-    //         const data: Buffer = await sftp.get(remotePath, { encoding: null });
-    //         return data;
-    //     } finally {
-    //         await sftp.end();
-    //     }
-    // }
-    
     public async deleteFile(remotePath: string): Promise<void> {
         const sftp = await this.connectSFTP();
         await sftp.delete(remotePath);
@@ -85,55 +74,29 @@ class SSHFileOperations {
             await sftp.end();
         }
     }
-    
+
     async uploadFile(localPath: string, remotePath: string): Promise<void> {
         const sftp = await this.connectSFTP();
         await sftp.put(localPath, remotePath);
         await sftp.end();
     }
-    
+
     async downloadFile(remotePath: string, localPath: string): Promise<void> {
         const sftp = await this.connectSFTP();
         await sftp.get(remotePath, localPath);
         await sftp.end();
-    }  
+    }
 
-    // /**
-    //  * Appends content to a file on the remote server, optionally creating a backup of the original file.
-    //  * @param {string} remotePath - The path to the file on the remote server.
-    //  * @param {Buffer} content - The content to append to the file.
-    //  * @param {boolean} backup - Whether to create a backup of the existing file before appending.
-    //  * @returns {Promise<void>} A promise that resolves when the operation is complete.
-    //  */
-    // public async amendFile(remotePath: string, content: Buffer | string, backup: boolean = true): Promise<void> {
-    //     const sftp = await this.connectSFTP();
-    //     if (backup && await this.fileExists(remotePath)) {
-    //         const backupPath = `${remotePath}.${Date.now()}.bak`;
-    //         await sftp.rename(remotePath, backupPath);
-    //     }
-    //     let existingContent = "";
-    //     try {
-    //         const buffer = await sftp.get(remotePath);
-
-    //         existingContent = buffer.toString('utf8');
-    //     } catch (error) {
-    //         debug(`File ${remotePath} not found, creating new one.`);
-    //     }
-    //     const amendedContent = Buffer.from(existingContent + (Buffer.isBuffer(content) ? content.toString('utf8') : content));
-    //     await sftp.put(amendedContent, remotePath);
-    //     await sftp.end();
-    // }
-    
     public async listFiles(directoryPath: string): Promise<string[]> {
         const sftp = await this.connectSFTP();
         const fileList = await sftp.list(directoryPath);
         await sftp.end();
         return fileList.map(file => file.name);
     }
-    
+
     public async updateFile(remotePath: string, content: Buffer | string, backup: boolean = true): Promise<void> {
         const sftp = await this.connectSFTP();
-    
+
         // Check if a backup is needed and perform it
         if (backup) {
             const exists = await this.fileExists(remotePath);
@@ -142,7 +105,7 @@ class SSHFileOperations {
                 await sftp.rename(remotePath, backupPath);
             }
         }
-    
+
         // Ensure content is a Buffer before sending
         const bufferContent = Buffer.isBuffer(content) ? content : Buffer.from(content);
         await sftp.put(bufferContent, remotePath);
@@ -164,7 +127,7 @@ class SSHFileOperations {
         }
     }
 
-        /**
+    /**
      * Lists files in a remote directory.
      * @param {string} remotePath - The remote directory path.
      * @returns {Promise<string[]>} - The list of file names.
@@ -205,8 +168,6 @@ class SSHFileOperations {
             await sftp.end();
         }
     }
-
-    
 }
-    
-export default SSHFileOperations;    
+
+export default SSHFileOperations;

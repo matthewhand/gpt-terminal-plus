@@ -1,21 +1,16 @@
 import { Client } from 'ssh2';
-import * as path from 'path';
-import { getCurrentFolder } from '../../../utils/GlobalStateHelper';
+import { ServerConfig } from '../../../types/ServerConfig';
 
-export async function readFile(sshClient: Client, filePath: string): Promise<string> {
-  const fullFilePath = path.isAbsolute(filePath) ? filePath : path.join(getCurrentFolder(), filePath);
+export async function readFile(client: Client, config: ServerConfig, filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    let fileContent = '';
-    sshClient.exec('cat ' + fullFilePath, (err, stream) => {
+    client.exec(`cat ${filePath}`, (err, stream) => {
       if (err) return reject(err);
-      stream.on('data', (data) => {
-        fileContent += data.toString();
-      }).on('close', () => {
-        sshClient.end();
-        resolve(fileContent);
-      }).stderr.on('data', (data) => {
-        console.error('STDERR: ' + data);
-        reject(new Error(data.toString()));
+      let data: string = '';
+      stream.on('data', (chunk: any) => {
+        data += chunk;
+      });
+      stream.on('end', () => {
+        resolve(data);
       });
     });
   });

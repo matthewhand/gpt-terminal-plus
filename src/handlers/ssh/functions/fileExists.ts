@@ -6,7 +6,7 @@ export async function fileExists(client: Client, config: ServerConfig, filePath:
     client.exec(`test -f ${filePath} && echo "exists"`, (err, stream) => {
       if (err) return reject(err);
       let data: string = '';
-      stream.on('data', chunk => {
+      stream.on('data', (chunk: any) => {
         data += chunk;
       });
       stream.on('end', () => {

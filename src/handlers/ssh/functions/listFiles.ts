@@ -1,33 +1,33 @@
 import { Client } from 'ssh2';
-import { createPaginatedResponse } from '../../../utils/PaginationUtils';
-import { getCurrentFolder } from '../../../utils/GlobalStateHelper';
-import { PaginatedResponse } from '../../../types/index';
+import { ServerConfig } from '../../../types/ServerConfig';
+import Debug from 'debug';
+
+const debug = Debug('app:listFiles');
 
 /**
- * Lists files in a specified directory on a remote SSH server.
- * @param sshClient - The SSH client.
- * @param directory - The directory to list files in.
- * @param limit - Maximum number of files to return.
- * @param offset - Number of files to skip before starting to collect the result set.
- * @param orderBy - Criteria to order files by.
- * @returns A paginated response containing files in the directory.
+ * Lists files in a directory on the remote server.
+ * @param client - The SSH client instance.
+ * @param config - The server configuration.
+ * @param directory - The remote directory path.
+ * @returns A promise that resolves to an array of filenames.
  */
-export async function listFiles(sshClient: Client, directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse> {
-    const targetDirectory = directory || getCurrentFolder();
+export async function listFiles(client: Client, config: ServerConfig, directory: string): Promise<string[]> {
+    debug(`Listing files in directory: ${directory}`);
     return new Promise((resolve, reject) => {
-        sshClient.exec('ls -l ' + targetDirectory, (err, stream) => {
+        client.sftp((err, sftp) => {
             if (err) {
-                return reject(err);
+                debug(`SFTP error: ${err.message}`);
+                return reject(new Error(`SFTP error: ${err.message}`));
             }
-            let commandOutput = '';
-            stream.on('data', (data: any) => {
-                commandOutput += data.toString();
-            }).on('close', () => {
-                const files = commandOutput.split('\n').slice(1); // Skip the total line
-                resolve(createPaginatedResponse(files, limit, offset));
-            }).stderr.on('data', (data: any) => {
-                console.error('STDERR: ' + data);
-                reject(new Error(data.toString()));
+
+            sftp.readdir(directory, (err, list) => {
+                if (err) {
+                    debug(`Error listing files: ${err.message}`);
+                    return reject(new Error(`Error listing files: ${err.message}`));
+                }
+
+                const filenames = list.map(item => item.filename);
+                resolve(filenames);
             });
         });
     });
