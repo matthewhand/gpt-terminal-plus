@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "module": "CommonJS",
+    "module": "ESNext",
     "strict": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
@@ -9,20 +9,22 @@
     "types": ["jest", "node"],
     "baseUrl": "./src",
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "incremental": true, // Enables incremental compilation
-    "skipLibCheck": true, // Skips type checking for declaration files
-    "downlevelIteration": true, // Optimizes iteration handling
-    "noEmitOnError": true // Prevents emitting files on compilation errors
+    "paths": {
+      "@types/*": ["types/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@utils/*": ["src/utils/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "noEmitOnError": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "src/types/**/*"
   ],
   "files": [
     "./src/types/express.d.ts",
     "./src/global.d.ts"
-  ],
-  "paths": {
-    "@handlers/*": ["src/handlers/*"],
-    "@utils/*": ["src/utils/*"]
-  }
+  ]
 }
