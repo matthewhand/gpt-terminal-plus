@@ -1,32 +1,36 @@
-# Update launch_services.sh script
-# Add --insecure-api-token argument and API_TOKEN check
 #!/bin/bash
 
 # Function to display usage information
 usage() {
-  echo "Usage: $0 [--enable] [--certbot] [--shared-node-modules]"
-  echo "  --enable                Enable Nginx configurations in /etc/nginx/sites-enabled/"
-  echo "  --certbot               Request SSL certificates for the services using Certbot"
-  echo "  --shared-node-modules   Use a shared node_modules volume across services"
+  echo "Usage: $0 [--enable-nginx] [--enable-certbot] [--enable-shared-node-modules] [--domain-name <domain>]"
+  echo "  --enable-nginx                Enable Nginx configurations in /etc/nginx/sites-enabled/"
+  echo "  --enable-certbot              Request SSL certificates for the services using Certbot"
+  echo "  --enable-shared-node-modules  Use a shared node_modules volume across services"
+  echo "  --domain-name <domain>        Override the domain name used in Nginx configurations and Certbot verification"
   exit 1
 }
 
 # Initialize variables
-ENABLE=false
-CERTBOT=false
-SHARED_NODE_MODULES=false
+ENABLE_NGINX=false
+ENABLE_CERTBOT=false
+ENABLE_SHARED_NODE_MODULES=false
+DOMAIN_NAME="${DOMAIN_NAME:-}"
 
 # Parse command line options
 while [[ "$#" -gt 0 ]]; do
   case $1 in
-    --enable)
-      ENABLE=true
+    --enable-nginx)
+      ENABLE_NGINX=true
       ;;
-    --certbot)
-      CERTBOT=true
+    --enable-certbot)
+      ENABLE_CERTBOT=true
       ;;
-    --shared-node-modules)
-      SHARED_NODE_MODULES=true
+    --enable-shared-node-modules)
+      ENABLE_SHARED_NODE_MODULES=true
+      ;;
+    --domain-name)
+      DOMAIN_NAME="$2"
+      shift
       ;;
     *)
       usage
@@ -39,10 +43,10 @@ done
 start_service() {
   local name=$1
   local compose_file=$2
-  if [ "$SHARED_NODE_MODULES" = true ]; then
-    docker compose -p $name -f docker/compose/docker-compose.terminal.yml -f $compose_file up -d --build --volume /usr/src/app/node_modules
+  if [ "$ENABLE_SHARED_NODE_MODULES" = true ]; then
+    docker compose -p $name -f docker/compose/docker-compose.base.yml -f $compose_file up -d --build --volume /usr/src/app/node_modules:/usr/src/app/node_modules
   else
-    docker compose -p $name -f docker/compose/docker-compose.terminal.yml -f $compose_file up -d --build
+    docker compose -p $name -f docker/compose/docker-compose.base.yml -f $compose_file up -d --build
   fi
   echo "Service '$name' started with configuration from '$compose_file'."
 }
@@ -52,7 +56,7 @@ enable_nginx() {
   local domain=$1
   local nginx_conf="/etc/nginx/sites-available/${domain}.conf"
   if [ -f ${nginx_conf} ]; then
-    ln -sf ${nginx_conf} /etc/nginx/sites-enabled/
+    sudo ln -sf ${nginx_conf} /etc/nginx/sites-enabled/
     echo "Nginx configuration for ${domain} has been enabled."
   else
     echo "Nginx configuration file ${nginx_conf} not found."
@@ -73,11 +77,21 @@ request_certbot() {
 # Services to be launched with their respective ports
 services=(
   "terminal:5005:docker/compose/docker-compose.terminal.yml"
-  "oci:5006:docker/compose/docker-compose.oci.yml"
+  "oci:5006:docker/compose/docker-compose.oci-cli.yml"
   "aws:5007:docker/compose/docker-compose.aws.yml"
   "notions:5008:docker/compose/docker-compose.notions.yml"
   "joplin:5009:docker/compose/docker-compose.joplin.yml"
 )
+
+# Build the base image
+echo "Building the base image..."
+docker compose -f docker/compose/docker-compose.base.yml up -d --build
+if [ $? -ne 0 ]; then
+  echo "Failed to build the base image."
+  exit 1
+fi
+
+echo "Base image built successfully."
 
 # Launch each service with its friendly name and port mapping
 for service in "${services[@]}"; do
@@ -86,22 +100,26 @@ for service in "${services[@]}"; do
   echo "Service '$name' is bound to host port $port and container port 5004."
 done
 
-# Enable Nginx configurations if --enable is provided
-if [ "$ENABLE" = true ]; then
+# Enable Nginx configurations if --enable-nginx is provided
+if [ "$ENABLE_NGINX" = true ]; then
   for service in "${services[@]}"; do
     IFS=':' read -r name port compose_file <<< "$service"
     enable_nginx "$name"
   done
   # Test the Nginx configuration
-  nginx -t
+  sudo nginx -t
   # Reload Nginx to apply the changes
-  systemctl reload nginx
+  sudo systemctl reload nginx
 fi
 
-# Request SSL certificates if --certbot is provided
-if [ "$CERTBOT" = true ]; then
+# Request SSL certificates if --enable-certbot is provided
+if [ "$ENABLE_CERTBOT" = true ]; then
   for service in "${services[@]}"; do
     IFS=':' read -r name port compose_file <<< "$service"
-    request_certbot "$name.teamstinky.duckdns.org"
+    if [ -n "$DOMAIN_NAME" ]; then
+      request_certbot "$DOMAIN_NAME"
+    else
+      request_certbot "$name"
+    fi
   done
 fi
