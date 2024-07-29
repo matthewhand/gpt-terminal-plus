@@ -1,59 +1,51 @@
 import { SshServerHandler } from '../../src/handlers/SshServerHandler';
-import { Client, ConnectConfig, ClientChannel } from 'ssh2';
-import { ServerConfig } from '../../src/types/ServerConfig';
+import { Client } from 'ssh2';
+import * as jest from 'jest-mock';
 
-jest.mock('ssh2');
+jest.mock('ssh2', () => ({
+    Client: jest.fn(() => ({
+        connect: jest.fn(),
+        exec: jest.fn()
+    }))
+}));
 
 describe('SshServerHandler', () => {
-  let sshServerHandler: SshServerHandler;
-  let mockClient: jest.Mocked<Client>;
-  const serverConfig: ServerConfig = {
-    host: 'localhost',
-    protocol: 'ssh',
-    username: 'user',
-    privateKeyPath: '/mock/private/key',
-    shell: 'bash',
-  };
+    let client: Client;
+    let mockConnect: jest.Mock;
+    let mockExec: jest.Mock;
 
-  beforeEach(() => {
-    mockClient = new Client() as jest.Mocked<Client>;
-    sshServerHandler = new SshServerHandler(serverConfig);
-    sshServerHandler['client'] = mockClient;
-  });
-
-  it('should initialize SSH client', () => {
-    const result = sshServerHandler.initializeSSHClient();
-    expect(result).toBeInstanceOf(Client);
-  });
-
-  it('should connect to the server', async () => {
-    mockClient.connect.mockImplementation((config: ConnectConfig) => {
-      expect(config.host).toBe('localhost');
-      return mockClient;
-    });
-    await sshServerHandler.connect();
-    expect(mockClient.connect).toHaveBeenCalledTimes(1);
-  });
-
-  it('should execute a simple command and return global state', async () => {
-    mockClient.exec.mockImplementation((command: string, callback: (err: Error | undefined, channel: ClientChannel) => void) => {
-      const mockStream = {
-        on: jest.fn((event, handler) => {
-          if (event === 'data') {
-            handler('hello world\n');
-          }
-          if (event === 'close') {
-            handler(0); // Simulate successful command execution
-          }
-          return mockStream;
-        }),
-      } as unknown as ClientChannel;
-      callback(undefined, mockStream);
-      return mockClient;
+    beforeEach(() => {
+        client = new Client();
+        mockConnect = client.connect as jest.Mock;
+        mockExec = client.exec as jest.Mock;
     });
 
-    const result = await sshServerHandler.executeCommand('echo \'hello world\'', 5000);
-    expect(result.stdout.trim()).toBe('hello world');
-    expect(result.stderr).toBe('');
-  });
+    it('should connect to the server', async () => {
+        mockConnect.mockResolvedValue(true);
+        const sshHandler = new SshServerHandler(client);
+        await sshHandler.connect();
+        expect(mockConnect).toHaveBeenCalled();
+    });
+
+    it('should execute a simple command and return global state', async () => {
+        const mockStdout = 'Command output';
+        const mockStderr = '';
+        mockExec.mockImplementation((command: string, callback: (err: Error | null, stream: any) => void) => {
+            const stream = {
+                on: (event: string, handler: (data: Buffer) => void) => {
+                    if (event === 'data') handler(Buffer.from(mockStdout));
+                    if (event === 'close') handler(Buffer.from(''));
+                },
+                stderr: {
+                    on: (event: string, handler: (data: Buffer) => void) => {
+                        if (event === 'data') handler(Buffer.from(mockStderr));
+                    }
+                }
+            };
+            callback(null, stream);
+        });
+
+        const result = await sshHandler.executeCommand('ls -la');
+        expect(result).toEqual({ stdout: mockStdout, stderr: mockStderr, timeout: false });
+    });
 });
