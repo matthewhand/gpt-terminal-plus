@@ -22,7 +22,7 @@ export async function connect(config: ServerConfig): Promise<Client> {
             host: config.host,
             port: config.port || 22,
             username: config.username,
-            privateKey: config.privateKey,
+            privateKey: config.privateKey
         });
     });
 }

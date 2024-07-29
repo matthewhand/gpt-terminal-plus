@@ -2,7 +2,7 @@ import config from 'config';
 import { ServerConfig } from '../types/ServerConfig';
 import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
 import { SshServerHandler } from '../handlers/SshServerHandler';
-import { SsmServerModule } from '../handlers/ssm/SsmServerModule';
+import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
 import * as AWS from 'aws-sdk';
@@ -83,11 +83,11 @@ export class ServerConfigUtils {
   private static async initializeHandler(serverConfig: ServerConfig): Promise<ServerHandlerInterface> {
     switch (serverConfig.protocol) {
       case 'ssh':
-        return await SshServerHandler.getInstance(serverConfig);
+        return new SshServerHandler(serverConfig);
       case 'ssm':
-        return new SsmServerModule(serverConfig.ssmClient as AWS.SSM, serverConfig.instanceId as string);
+        return new SsmServerHandler(serverConfig);
       case 'local':
-        return new LocalServerHandler(serverConfig);
+        return new LocalServerHandler(serverConfig)
       default:
         throw new Error(`Unsupported protocol: ${serverConfig.protocol}`);
     }

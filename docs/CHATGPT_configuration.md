@@ -14,5 +14,5 @@ To set up a custom GPT using ChatGPT, follow these steps:
 6. **Configure the Authentication API Bearer**:
     Ensure that the Authentication API Bearer defined in the configuration matches the `API_TOKEN` in the `.env` file.
 7. **Configure the Schema**:
-    Refer to the [example-openai.yaml](../chatgpt-gpt-configuration/example-openai.yaml) file for the API specification.
+    Refer to the [example-openai.yaml](./example-openai.yaml) file for the API specification.
 8. Modify the server endpoint to match your hosting domain name (do not use mine).

@@ -1,6 +1,6 @@
 import * as os from 'os';
 import { ServerHandler } from '../handlers/ServerHandler';
-import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/index';
+import { ServerConfig, SystemInfo, PaginatedResponse, ServerHandlerInterface } from '../types/ServerConfig';
 import * as AWS from 'aws-sdk';
 import Debug from 'debug';
 import { getCurrentFolder } from '../utils/GlobalStateHelper'; // Ensure this is imported
