@@ -64,12 +64,12 @@ export class ServerConfigUtils {
    * @returns A promise that resolves to the server handler instance.
    */
   public static async getInstance(host: string): Promise<ServerHandlerInterface> {
-    serverHandlerDebug(`Fetching instance for host: ${host}`);
+    serverHandlerDebug('Fetching instance for host: ' + host);
     if (!host) throw new Error('Host is undefined.');
 
     if (!this.instances[host]) {
       const serverConfig = this.getServerConfig(host);
-      if (!serverConfig) throw new Error(`Server config not found for host: ${host}`);
+      if (!serverConfig) throw new Error('Server config not found for host: ' + host);
       this.instances[host] = await this.initializeHandler(serverConfig);
     }
     return this.instances[host];
@@ -87,9 +87,9 @@ export class ServerConfigUtils {
       case 'ssm':
         return new SsmServerHandler(serverConfig);
       case 'local':
-        return new LocalServerHandler(serverConfig)
+        return new LocalServerHandler(serverConfig as ServerConfig);
       default:
-        throw new Error(`Unsupported protocol: ${serverConfig.protocol}`);
+        throw new Error('Unsupported protocol: ' + serverConfig.protocol);
     }
   }
 
@@ -99,13 +99,13 @@ export class ServerConfigUtils {
    * @param newConfig - The new configuration details.
    */
   public static updateCurrentServerConfig(host: string, newConfig: Partial<ServerConfig>): void {
-    serverHandlerDebug(`Updating server configuration for host: ${host}`);
+    serverHandlerDebug('Updating server configuration for host: ' + host);
     const index = this.serverConfigs.findIndex(config => config.host === host);
     if (index !== -1) {
       this.serverConfigs[index] = { ...this.serverConfigs[index], ...newConfig };
       delete this.instances[host];
     } else {
-      throw new Error(`Server config for host '${host}' not found.`);
+      throw new Error('Server config for host ' + host + ' not found.');
     }
   }
 }
