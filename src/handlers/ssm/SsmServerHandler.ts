@@ -22,7 +22,7 @@ export class SsmServerHandler implements ServerHandlerInterface {
 
     constructor(config: ServerConfig) {
         this.ssmClient = new AWS.SSM({ region: config.region });
-        this.instanceId = config.instanceId;
+        this.instanceId = config.instanceId || '';
         this.config = config;
     }
 
@@ -39,8 +39,8 @@ export class SsmServerHandler implements ServerHandlerInterface {
         return amendFile(this.ssmClient, this.instanceId, filePath, content);
     }
 
-    async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'datetime' | 'filename' = 'filename'): Promise<PaginatedResponse<string>> {
-        return listFiles<string>(this.ssmClient, this.instanceId, directory, limit, offset, orderBy);
+    async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse<string>> {
+        return listFiles(this.ssmClient, this.instanceId, directory, limit, offset, orderBy);
     }
 
     async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
