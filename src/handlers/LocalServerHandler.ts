@@ -3,20 +3,23 @@ import { updateFile } from './local/functions/updateFile';
 import { amendFile } from './local/functions/amendFile';
 import { executeCommand } from './local/functions/executeCommand';
 import { getSystemInfo } from './local/functions/getSystemInfo';
-import { listFiles } from './local/functions/listFiles';
+import { listFiles as localListFiles } from './local/functions/listFiles';
 import { SystemInfo } from '../types/SystemInfo';
+import { PaginatedResponse } from '../types/PaginatedResponse';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { ServerConfig } from '../types/ServerConfig';
 
 /**
  * Handles local server operations.
  */
-class LocalServerHandler {
-    private config: any;
+class LocalServerHandler implements ServerHandlerInterface {
+    private config: ServerConfig;
 
     /**
      * Constructs a LocalServerHandler instance.
      * @param config - The configuration for the local server handler.
      */
-    constructor(config: any) {
+    constructor(config: ServerConfig) {
         this.config = config;
     }
 
@@ -69,7 +72,7 @@ class LocalServerHandler {
      * @param directory - The directory from which to execute the command.
      * @returns A promise that resolves to the command execution result.
      */
-    public async executeCommand(command: string, timeout: number, directory: string): Promise<any> {
+    public async executeCommand(command: string, timeout: number, directory: string): Promise<{ stdout: string; stderr: string }> {
         console.log('Executing command: ' + command);
         return executeCommand(command, timeout, directory);
     }
@@ -79,8 +82,11 @@ class LocalServerHandler {
      * @returns A promise that resolves to the system information.
      */
     public async getSystemInfo(): Promise<SystemInfo> {
-        console.log('Retrieving system info with shell: ' + this.config.shell + ', scriptPath: ' + this.config.scriptPath);
-        return getSystemInfo(this.config.shell, this.config.scriptPath);
+        const shell = this.config.shell || 'bash'; // Provide a default value for shell
+        const scriptPath = this.config.scriptFolder || ''; // Provide a default value for scriptPath
+
+        console.log('Retrieving system info with shell: ' + shell + ', scriptPath: ' + scriptPath);
+        return getSystemInfo(shell, scriptPath);
     }
 
     /**
@@ -89,11 +95,18 @@ class LocalServerHandler {
      * @param limit - The maximum number of files to return.
      * @param offset - The offset for file listing, used for pagination.
      * @param orderBy - The criteria to order the files by.
-     * @returns A promise that resolves to an array of file names.
+     * @returns A promise that resolves to a paginated response of file names.
      */
-    public async listFiles(directory: string, limit: number, offset: number, orderBy: "datetime" | "filename"): Promise<string[]> {
+    public async listFiles(directory: string, limit: number, offset: number, orderBy: "datetime" | "filename"): Promise<PaginatedResponse<string>> {
         console.log('Listing files in directory: ' + directory);
-        return await listFiles(directory, limit, offset, orderBy);
+        const files: string[] = await localListFiles(directory, limit, offset, orderBy);
+        return {
+            items: files.slice(offset, offset + limit),
+            totalPages: Math.ceil(files.length / limit),
+            responseId: 'local',
+            stdout: [], // Correct type to string[]
+            stderr: []  // Correct type to string[]
+        };
     }
 }
 
