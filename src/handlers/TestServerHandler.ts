@@ -10,6 +10,7 @@ import { ServerHandlerInterface } from '../../src/types/ServerHandlerInterface';
  */
 class TestServerHandler extends ServerHandler implements ServerHandlerInterface {
   private currentDirectory: string = '/'; // Defaulting to root, adjust as needed
+  private defaultDirectory: string = '/mock/default'; // Add this property
 
   constructor(ServerConfig: ServerConfig) {
     // Check if the ServerConfig is empty or undefined
@@ -58,6 +59,26 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
   }
 
   /**
+   * Sets the default directory on the mock server.
+   * @param directory - The directory to set.
+   * @returns True if the directory was set successfully.
+   */
+  setDefaultDirectory(directory: string): boolean {
+    // Mock setting the default directory
+    this.defaultDirectory = directory;
+    return true;
+  }
+
+  /**
+   * Gets the default directory on the mock server.
+   * @returns The default directory.
+   */
+  getDefaultDirectory(): Promise<string> {
+    // Return the mocked default directory
+    return Promise.resolve(this.defaultDirectory);
+  }
+
+  /**
    * Lists files in a specified directory on the mock server.
    * @param directory - The directory to list files in.
    * @param limit - Maximum number of files to return.
@@ -65,7 +86,7 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
    * @param orderBy - Criteria to order files by.
    * @returns A paginated response containing files in the directory.
    */
-  listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "filename" | "datetime" = "filename"): Promise<PaginatedResponse> {
+  listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "filename" | "datetime" = "filename"): Promise<PaginatedResponse<string>> {
     return Promise.resolve({
       items: ['file1.txt', 'file2.txt'],
       totalPages: 1,

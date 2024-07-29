@@ -11,8 +11,12 @@ export default class PaginationHandler {
   static async retrieveResponsePage(id: number, page: number): Promise<PaginatedResponse<string>> {
     const response = getResponseFromCache(id, page);
     return {
-      data: response,
-      totalPages: Math.ceil(response.length / PAGE_SIZE)
+      items: [response], // Updated to match the PaginatedResponse type
+      totalPages: Math.ceil(response.length / PAGE_SIZE),
+      responseId: `response-${id}`,
+      stdout: [],
+      stderr: [],
+      timestamp: Date.now(),
     };
   }
 }

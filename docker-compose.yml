@@ -10,13 +10,12 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
       - NOTION_TOKEN=${NOTION_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
-      #- PYTHONPATH=/opt/oracle-cli/lib/python3.10/site-packages:${PYTHONPATH}
     volumes:
       - /usr/src/app/node_modules # Keep node_modules on a named volume
       - ../.aws:/root/.aws:ro # Mount the AWS configuration directory

@@ -22,26 +22,23 @@ export async function transferFile(client: Client, config: ServerConfig, localPa
                 return reject(new Error(`SFTP error: ${err.message}`));
             }
 
-            const transfer = direction === 'upload'
-                ? sftp.fastPut(localPath, remotePath, (err) => {
+            if (direction === 'upload') {
+                sftp.fastPut(localPath, remotePath, (err) => {
                     if (err) {
                         debug(`File upload error: ${err.message}`);
                         return reject(new Error(`File upload error: ${err.message}`));
                     }
                     resolve();
-                })
-                : sftp.fastGet(remotePath, localPath, (err) => {
+                });
+            } else {
+                sftp.fastGet(remotePath, localPath, (err) => {
                     if (err) {
                         debug(`File download error: ${err.message}`);
                         return reject(new Error(`File download error: ${err.message}`));
                     }
                     resolve();
                 });
-
-            transfer.on('end', () => {
-                debug(`File transfer complete: ${localPath} -> ${remotePath}`);
-                resolve();
-            });
+            }
         });
     });
 }

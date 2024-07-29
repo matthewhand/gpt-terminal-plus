@@ -1,0 +1,104 @@
+time="2024-07-29T04:37:32Z" level=warning msg="/home/chatgpt/gpt-terminal-plus/docker/compose/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+#0 building with "default" instance using docker driver
+
+#1 [app internal] load build definition from Dockerfile
+#1 transferring dockerfile: 372B done
+#1 DONE 0.0s
+
+#2 [app internal] load metadata for docker.io/library/node:18-slim
+#2 DONE 0.0s
+
+#3 [app internal] load .dockerignore
+#3 transferring context: 1.87kB done
+#3 DONE 0.0s
+
+#4 [app builder 1/7] FROM docker.io/library/node:18-slim
+#4 DONE 0.0s
+
+#5 [app internal] load build context
+#5 transferring context: 86.12kB 0.1s done
+#5 DONE 0.1s
+
+#6 [app builder 3/7] RUN npm install -g npm@latest
+#6 CACHED
+
+#7 [app builder 4/7] COPY package*.json ./
+#7 CACHED
+
+#8 [app builder 2/7] WORKDIR /usr/src/app
+#8 CACHED
+
+#9 [app builder 5/7] RUN npm install --legacy-peer-deps
+#9 CACHED
+
+#10 [app builder 6/7] COPY . .
+#10 DONE 0.2s
+
+#11 [app builder 7/7] RUN npm run build
+#11 0.410 
+#11 0.410 > gpt-terminal-plus@latest build
+#11 0.410 > tsc && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true
+#11 0.410 
+#11 8.457 src/handlers/SsmServerHandler.ts(3,85): error TS2307: Cannot find module '../types/index' or its corresponding type declarations.
+#11 8.458 src/handlers/ssh/functions/connect.ts(25,32): error TS2339: Property 'privateKey' does not exist on type 'ServerConfig'.
+#11 8.458 src/utils/ServerConfigUtils.ts(86,39): error TS2339: Property 'getInstance' does not exist on type 'typeof SshServerHandler'.
+#11 8.458 src/utils/ServerConfigUtils.ts(90,9): error TS2322: Type 'LocalServerHandler' is not assignable to type 'ServerHandlerInterface'.
+#11 8.458   The types returned by 'listFiles(...)' are incompatible between these types.
+#11 8.458     Type 'Promise<string[]>' is not assignable to type 'Promise<PaginatedResponse<string>>'.
+#11 8.458       Type 'string[]' is missing the following properties from type 'PaginatedResponse<string>': items, totalPages, responseId, stdout, stderr
+#11 8.458 tests/ServerHandlerTest.ts(2,25): error TS2459: Module '"../src/handlers/ServerHandler"' declares 'SystemInfo' locally, but it is not exported.
+#11 8.458 tests/ServerHandlerTest.ts(9,11): error TS2345: Argument of type '{ defaultDirectory: string; }' is not assignable to parameter of type 'ServerConfig'.
+#11 8.458   Property 'host' is missing in type '{ defaultDirectory: string; }' but required in type 'ServerConfig'.
+#11 8.458 tests/ServerHandlerTest.ts(13,9): error TS2416: Property 'listFiles' in type 'TestServerHandler' is not assignable to the same property in base type 'ServerHandler'.
+#11 8.458   Type '(directory: string, limit: number, offset: number, orderBy: string) => Promise<{ items: string[]; totalPages: number; responseId: string; }>' is not assignable to type '(directory: string, limit?: number | undefined, offset?: number | undefined, orderBy?: string | undefined) => Promise<PaginatedResponse<string>>'.
+#11 8.458     Type 'Promise<{ items: string[]; totalPages: number; responseId: string; }>' is not assignable to type 'Promise<PaginatedResponse<string>>'.
+#11 8.458       Type '{ items: string[]; totalPages: number; responseId: string; }' is missing the following properties from type 'PaginatedResponse<string>': stdout, stderr
+#11 8.458 tests/ServerHandlerTest.ts(33,9): error TS2416: Property 'executeCommand' in type 'TestServerHandler' is not assignable to the same property in base type 'ServerHandler'.
+#11 8.458   Type '(command: string, options: { timeout?: number | undefined; directory?: string | undefined; linesPerPage?: number | undefined; }) => Promise<{ stdout?: string | undefined; stderr?: string | undefined; pages?: string[] | undefined; totalPages?: number | undefined; responseId?: string | undefined; }>' is not assignable to type '(command: string, timeout?: number | undefined, directory?: string | undefined) => Promise<{ stdout: string; stderr: string; }>'.
+#11 8.458     Types of parameters 'options' and 'timeout' are incompatible.
+#11 8.458       Type 'number | undefined' is not assignable to type '{ timeout?: number | undefined; directory?: string | undefined; linesPerPage?: number | undefined; }'.
+#11 8.458         Type 'undefined' is not assignable to type '{ timeout?: number | undefined; directory?: string | undefined; linesPerPage?: number | undefined; }'.
+#11 8.458 tests/ServerHandlerTest.ts(34,30): error TS2339: Property 'defaultDirectory' does not exist on type 'TestServerHandler'.
+#11 8.458 tests/ServerHandlerTest.ts(47,19): error TS2339: Property 'setDefaultDirectory' does not exist on type 'TestServerHandler'.
+#11 8.458 tests/ServerHandlerTest.ts(48,44): error TS2339: Property 'getDefaultDirectory' does not exist on type 'TestServerHandler'.
+#11 8.459 tests/ServerHandlerTest.ts(53,19): error TS2339: Property 'setDefaultDirectory' does not exist on type 'TestServerHandler'.
+#11 DONE 8.6s
+
+#8 [app builder 2/7] WORKDIR /usr/src/app
+#8 CACHED
+
+#12 [app stage-1 3/3] COPY --from=builder /usr/src/app .
+#12 DONE 4.3s
+
+#13 [app] exporting to image
+#13 exporting layers
+#13 exporting layers 1.2s done
+#13 writing image sha256:d01bcb115a01b8c9be17d9dff06e507d337adaa85729e42961b85a678136f895 done
+#13 naming to docker.io/library/compose-app done
+#13 DONE 1.2s
+
+#14 [app] resolving provenance for metadata file
+#14 DONE 0.0s
+ Container compose-db-1  Running
+ Container compose-app-1  Recreate
+ Container compose-app-1  Recreated
+Attaching to app-1, db-1
+app-1  | 
+app-1  | > gpt-terminal-plus@latest start
+app-1  | > node --max-old-space-size=256 dist/index.js
+app-1  | 
+app-1  | node:internal/modules/cjs/loader:1143
+app-1  |   throw err;
+app-1  |   ^
+app-1  | 
+app-1  | Error: Cannot find module '/usr/src/app/dist/index.js'
+app-1  |     at Module._resolveFilename (node:internal/modules/cjs/loader:1140:15)
+app-1  |     at Module._load (node:internal/modules/cjs/loader:981:27)
+app-1  |     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
+app-1  |     at node:internal/main/run_main_module:28:49 {
+app-1  |   code: 'MODULE_NOT_FOUND',
+app-1  |   requireStack: []
+app-1  | }
+app-1  | 
+app-1  | Node.js v18.20.4
+[Kapp-1 exited with code 1

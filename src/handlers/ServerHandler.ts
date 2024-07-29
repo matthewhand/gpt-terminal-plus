@@ -68,7 +68,7 @@ export abstract class ServerHandler implements ServerHandlerInterface {
      * @param orderBy - Criteria to order files by.
      * @returns A paginated response containing files in the directory.
      */
-    abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<PaginatedResponse>;
+    abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<PaginatedResponse<string>>;
 
     /**
      * Abstract method to create a file on the server.

@@ -5,8 +5,7 @@ export function createPaginatedResponse<T>(items: T[], limit: number, offset: nu
         items: items.slice(0, limit),
         totalPages: Math.ceil(items.length / limit),
         responseId: 'responseId',
-        stdout: 'stdout',
-        stderr: 'stderr',
+        stdout: [],  // Correct type
+        stderr: [],  // Correct type
     };
 }
-

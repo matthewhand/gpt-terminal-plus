@@ -20,13 +20,13 @@ export async function getFileContent(client: Client, config: ServerConfig, fileP
                 return reject(new Error(`SFTP error: ${err.message}`));
             }
 
-            sftp.readFile(filePath, 'utf8', (err, data) => {
+            sftp.readFile(filePath, (err, data) => {
                 if (err) {
                     debug(`Error reading file: ${err.message}`);
                     return reject(new Error(`Error reading file: ${err.message}`));
                 }
 
-                resolve(data);
+                resolve(data.toString('utf8')); // Convert Buffer to string
             });
         });
     });
