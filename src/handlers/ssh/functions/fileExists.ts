@@ -1,16 +1,16 @@
 import { Client } from 'ssh2';
+import { ServerConfig } from '../../../types/ServerConfig';
 
-export async function fileExists(sshClient: Client, remotePath: string): Promise<boolean> {
+export async function fileExists(client: Client, config: ServerConfig, filePath: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    sshClient.exec('test -f ' + remotePath + ' && echo "exists"', (err, stream) => {
+    client.exec(`test -f ${filePath} && echo "exists"`, (err, stream) => {
       if (err) return reject(err);
-      stream.on('data', (data) => {
-        resolve(data.toString().trim() === 'exists');
-      }).on('close', () => {
-        sshClient.end();
-      }).stderr.on('data', (data) => {
-        console.error('STDERR: ' + data);
-        reject(new Error(data.toString()));
+      let data: string = '';
+      stream.on('data', chunk => {
+        data += chunk;
+      });
+      stream.on('end', () => {
+        resolve(data.trim() === 'exists');
       });
     });
   });
