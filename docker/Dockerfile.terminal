@@ -1,0 +1,28 @@
+FROM node:18-slim AS builder
+
+WORKDIR /usr/src/app
+
+RUN npm install -g npm@latest && npm install -g typescript@latest
+
+ENV NODE_ENV=development
+
+COPY package*.json ./
+
+RUN npm install --legacy-peer-deps
+
+COPY . .
+
+# Log the output of the TypeScript compilation
+RUN npm run build > build.log 2>&1 || (cat build.log && false)
+
+FROM node:18-slim
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app .
+
+ENV NODE_ENV=production
+
+EXPOSE 5010
+
+CMD ["npm", "start"]

@@ -1,0 +1,5 @@
+# Use the base Dockerfile
+FROM base AS builder
+
+# Install Joplin CLI
+RUN npm install -g joplin

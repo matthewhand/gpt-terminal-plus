@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.notions
+    ports:
+      - "5008:5004"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
+    restart: unless-stopped

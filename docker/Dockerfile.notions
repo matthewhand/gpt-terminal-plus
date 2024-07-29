@@ -1,0 +1,5 @@
+# Use the base Dockerfile
+FROM base AS builder
+
+# Install Notion SDK for Node.js
+RUN npm install @notionhq/client

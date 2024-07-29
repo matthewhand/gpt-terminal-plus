@@ -1,0 +1,14 @@
+# Use Node 18 as the base image
+FROM node:18
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Print Node.js and npm versions for debugging
+RUN node -v && npm -v
+
+# Install dependencies with verbose logging for debugging
+RUN npm install --verbose

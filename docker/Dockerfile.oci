@@ -1,0 +1,5 @@
+# Use the base Dockerfile
+FROM base AS builder
+
+# Install OCI CLI
+RUN apt-get update && apt-get install -y python3-pip && pip3 install oci-cli
