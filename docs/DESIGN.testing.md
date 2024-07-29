@@ -23,6 +23,47 @@ This document outlines the testing design for the `gpt-terminal-plus` project, i
    
 2. **Mocha**: Not used as Jest is our primary testing framework.
 
+## TypeScript Configuration
+
+- **baseUrl**: Set to "." to ensure paths are relative to the root directory.
+- **paths**: Define module aliases to streamline imports.
+- **types**: Include Jest and Node types in `tsconfig.json`.
+
+### Example `tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "ESNext",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "types": ["jest", "node"],
+    "baseUrl": ".",
+    "typeRoots": ["node_modules/@types", "src/types"],
+    "paths": {
+      "@types/*": ["src/types/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@utils/*": ["src/utils/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "noEmitOnError": true
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "files": [
+    "src/types/express.d.ts",
+    "src/global.d.ts"
+  ]
+}
+```
+
 ## File Structure
 
 The following is an overview of the test file structure:
@@ -49,7 +90,7 @@ project-root/
 └── ...
 ```
 
-## Commands from package.json
+## Commands from `package.json`
 
 The `package.json` file includes several scripts for running tests. Here are the relevant commands:
 
@@ -65,30 +106,35 @@ The `package.json` file includes several scripts for running tests. Here are the
 
 ### Explanation of Commands
 
-1. **test**: Runs all tests once using Jest.
-   ```bash
-   npm test
-   ```
-   
-2. **test:watch**: Runs tests in watch mode, rerunning tests when files change.
-   ```bash
-   npm run test:watch
-   ```
-   
-3. **test:coverage**: Runs tests and generates a code coverage report.
-   ```bash
-   npm run test:coverage
-   ```
-   
-4. **lint**: Runs ESLint to check for code quality issues.
-   ```bash
-   npm run lint
-   ```
-   
-5. **lint:fix**: Runs ESLint with the `--fix` option to automatically fix issues where possible.
-   ```bash
-   npm run lint:fix
-   ```
+- `test`: Runs all tests once using Jest.
+
+  ```bash
+  npm test
+  ```
+
+- `test:watch`: Runs tests in watch mode, rerunning tests when files change.
+
+  ```bash
+  npm run test:watch
+  ```
+
+- `test:coverage`: Runs tests and generates a code coverage report.
+
+  ```bash
+  npm run test:coverage
+  ```
+
+- `lint`: Runs ESLint to check for code quality issues.
+
+  ```bash
+  npm run lint
+  ```
+
+- `lint:fix`: Runs ESLint with the `--fix` option to automatically fix issues where possible.
+
+  ```bash
+  npm run lint:fix
+  ```
 
 ## Summary
 
