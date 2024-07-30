@@ -46,6 +46,29 @@ export class ServerConfigUtils {
    */
   public static listAvailableServers(): ServerConfig[] {
     serverHandlerDebug('Listing available servers...');
+    if (!this.serverConfigs || this.serverConfigs.length === 0) {
+      serverHandlerDebug('No server configs found, returning default local server.');
+      return [{
+        host: "local",
+        privateKeyPath: "",
+        keyPath: "",
+        posix: true,
+        systemInfo: "local",
+        port: 0,
+        code: true,
+        username: "localuser",
+        protocol: "local",
+        shell: "/bin/bash",
+        region: "",
+        instanceId: "",
+        homeFolder: "/home/localuser",
+        containerId: 0,
+        tasks: [],
+        scriptFolder: "",
+        defaultFolder: "/home/localuser",
+        ssmClient: null
+      }];
+    }
     return this.serverConfigs;
   }
 
