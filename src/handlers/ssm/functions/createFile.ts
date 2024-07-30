@@ -11,13 +11,14 @@ const debug = Debug("app:ssmUtils");
 const generateUniqueDelimiter = (content: string): string => {
   let delimiter = "EOF";
   while (content.includes(delimiter)) {
-    delimiter = `EOF_${Math.random().toString(36).substring(2, 8)}`;
+    delimiter = "EOF_" + Math.random().toString(36).substring(2, 8);
   }
   return delimiter;
 };
 
 /**
  * Creates a file on an SSM instance.
+ * Optionally backs up the existing file if backup is enabled.
  * @param {SSMClient} ssmClient - The SSM client.
  * @param {string} instanceId - The ID of the instance.
  * @param {string} directory - The directory where the file should be created.
@@ -35,10 +36,14 @@ export const createFile = async (
   backup: boolean = true
 ): Promise<boolean> => {
   const delimiter = generateUniqueDelimiter(content);
-  const command = `cat <<'${delimiter}' > ${directory}/${filename}
-${content}
-${delimiter}`;
+
+  // Backup existing file if backup is true
+  const backupCommand = backup ? "[ -f " + directory + "/" + filename + " ] && cp " + directory + "/" + filename + " " + directory + "/" + filename + ".bak;" : '';
+  
+  const command = backupCommand + " cat <<'" + delimiter + "' > " + directory + "/" + filename + "\n" + content + "\n" + delimiter;
+  
   debug("Creating file with command: " + command);
+  
   const result = await ssmClient.send(new SendCommandCommand({
     InstanceIds: [instanceId],
     DocumentName: "AWS-RunShellScript",
@@ -46,5 +51,6 @@ ${delimiter}`;
       commands: [command],
     },
   }));
+  
   return !!result.Command;
 };

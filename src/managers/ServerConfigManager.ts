@@ -5,7 +5,6 @@ import { SshServerHandler } from '../handlers/SshServerHandler';
 import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
-import { SSMClient } from '@aws-sdk/client-ssm';
 
 const serverHandlerDebug = Debug('app:ServerConfigManager');
 

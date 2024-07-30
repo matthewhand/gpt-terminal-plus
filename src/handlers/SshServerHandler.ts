@@ -1,4 +1,4 @@
-import { Client, ConnectConfig, ClientChannel } from 'ssh2';
+import { Client } from 'ssh2'; // Removed unused ConnectConfig, ClientChannel
 import { ServerConfig } from '../types/ServerConfig';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { SystemInfo } from '../types/SystemInfo';
@@ -76,11 +76,9 @@ class SshServerHandler implements ServerHandlerInterface {
   /**
    * Executes a command on the SSH server.
    * @param {string} command - The command to execute.
-   * @param {number} [timeout] - Optional timeout for the command execution.
-   * @param {string} [directory] - Optional directory to execute the command in.
    * @returns {Promise<{ stdout: string; stderr: string }>} A promise that resolves with the command output.
    */
-  async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
+  async executeCommand(command: string): Promise<{ stdout: string; stderr: string }> { // Removed unused parameters
     debug('Executing command: ' + command);
     await this.ensureConnected();
     return new Promise((resolve, reject) => {
@@ -111,17 +109,17 @@ class SshServerHandler implements ServerHandlerInterface {
     throw new Error('Method not implemented.');
   }
 
-  createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
+  createFile(directory: string, filename: string): Promise<boolean> { // Removed unused parameters
     debug('Creating file: ' + filename + ' in directory: ' + directory);
     throw new Error('Method not implemented.');
   }
 
-  updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
+  updateFile(filePath: string): Promise<boolean> { // Removed unused parameters
     debug('Updating file: ' + filePath);
     throw new Error('Method not implemented.');
   }
 
-  amendFile(filePath: string, content: string): Promise<boolean> {
+  amendFile(filePath: string): Promise<boolean> { // Removed unused parameters
     debug('Amending file: ' + filePath);
     throw new Error('Method not implemented.');
   }

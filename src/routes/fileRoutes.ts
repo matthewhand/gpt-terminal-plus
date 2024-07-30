@@ -1,4 +1,4 @@
-import express, { Router, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import path from 'path';
 import lockfile from 'proper-lockfile';
 import Debug from 'debug';

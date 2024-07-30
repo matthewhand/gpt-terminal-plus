@@ -21,8 +21,12 @@ export const updateFile = async (
   replacement: string,
   backup: boolean = true
 ): Promise<boolean> => {
-  const command = `sed -i.bak 's/${pattern}/${replacement}/g' ${filePath}`;
+  // Prepare the command with an optional backup
+  const backupFlag = backup ? '.bak' : '';
+  const command = "sed -i" + backupFlag + " 's/" + pattern + "/" + replacement + "/g' " + filePath;
+
   debug("Updating file with command: " + command);
+
   const result = await ssmClient.send(new SendCommandCommand({
     InstanceIds: [instanceId],
     DocumentName: "AWS-RunShellScript",
@@ -30,5 +34,6 @@ export const updateFile = async (
       commands: [command],
     },
   }));
+
   return !!result.Command;
 };

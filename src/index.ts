@@ -5,7 +5,7 @@ dotenv.config();
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
-import express, { Request, Response, Router } from 'express';
+import express, { Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from 'config';
@@ -15,27 +15,20 @@ import bodyParser from 'body-parser';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
+import publicRouter from './routes/publicRouter'; // Updated import
 import { checkAuthToken } from './middlewares/checkAuthToken';
-import { setSelectedServerMiddleware } from './middlewares/setSelectedServerMiddleware';
 
 const app = express();
 
+// Use morgan for logging HTTP requests
 app.use(morgan('combined'));
-
-// Health check endpoint - no auth required
-app.get('/health', (req: Request, res: Response) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.status(200).send('OK');
-});
 
 // Determine CORS origin based on environment variable or use defaults
 const corsOrigin = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(',') 
   : ['https://chat.openai.com', 'https://chatgpt.com'];
 
-console.log(`CORS configuration set to: ${corsOrigin}`);
+console.log('CORS configuration set to: ' + corsOrigin.join(', '));
 
 app.use(cors({ origin: corsOrigin })); // Use CORS with the determined origin
 
@@ -65,6 +58,9 @@ if (!process.env.API_TOKEN) {
   app.use(apiRouter); // Mounting the API router to the app
 }
 
+// Use the public router for endpoints that don't require authentication
+app.use(publicRouter);
+
 // Server initialization logic
 const startServer = () => {
   const port = config.has('port') ? config.get<number>('port') : 5004;
@@ -80,7 +76,7 @@ const startServer = () => {
   }
 
   server.listen(port, () => {
-    console.log('Server running on ' + (process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http') + '://' + port);
+    console.log('Server running on ' + (process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http') + '://localhost:' + port);
   });
 
   // Graceful shutdown handling

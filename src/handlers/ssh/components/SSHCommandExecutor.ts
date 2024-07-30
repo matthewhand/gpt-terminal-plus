@@ -39,7 +39,7 @@ interface CommandExecutionStrategy {
  */
 class SimpleExecutionStrategy implements CommandExecutionStrategy {
     async executeCommand(config: ServerConfig, client: Client, command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean }> {
-        const { cwd, timeout = 60000 } = options;
+        const { cwd, timeout = 60000 } = options;  // Use default timeout if not provided
         const escapedCommand = command.replace(/\\/g, '\\\\'); // Escaping backslashes
         const execCommand = cwd ? `cd ${cwd} && ${escapedCommand}` : escapedCommand;
 
@@ -86,7 +86,7 @@ class SimpleExecutionStrategy implements CommandExecutionStrategy {
  */
 class AdvancedExecutionStrategy implements CommandExecutionStrategy {
     async executeCommand(config: ServerConfig, client: Client, command: string, options: { cwd?: string, timeout?: number, filePath?: string, fileContent?: string } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean }> {
-        const { cwd, timeout = 60000, filePath, fileContent } = options;
+        const { cwd, timeout = 60000, filePath, fileContent } = options; // Use default timeout if not provided
         const uniqueId = uuidv4();
         const logPath = `/tmp/${uniqueId}.log`;
         const screenSessionName = `session_${uniqueId}`;

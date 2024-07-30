@@ -29,11 +29,9 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
 
   /**
    * Executes a command on the mock server.
-   * @param command - The command to execute.
-   * @param timeout - Optional timeout for the command execution.
    * @returns The command's stdout and stderr output.
    */
-  executeCommand(command: string, timeout?: number): Promise<{ stdout: string; stderr: string }> {
+  executeCommand(): Promise<{ stdout: string; stderr: string }> { // Removed unused parameters
     // Return a dummy response
     return Promise.resolve({ stdout: 'Mocked stdout', stderr: 'Mocked stderr' });
   }
@@ -81,12 +79,9 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
   /**
    * Lists files in a specified directory on the mock server.
    * @param directory - The directory to list files in.
-   * @param limit - Maximum number of files to return.
-   * @param offset - Number of files to skip before starting to collect the result set.
-   * @param orderBy - Criteria to order files by.
    * @returns A paginated response containing files in the directory.
    */
-  listFiles(directory: string, limit: number = 42, offset: number = 0, orderBy: "filename" | "datetime" = "filename"): Promise<PaginatedResponse<string>> {
+  listFiles(directory: string): Promise<PaginatedResponse<string>> { // Removed unused parameters
     return Promise.resolve({
       items: ['file1.txt', 'file2.txt'],
       totalPages: 1,
@@ -101,11 +96,9 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
    * Creates a file on the mock server.
    * @param directory - The directory to create the file in.
    * @param filename - The name of the file to create.
-   * @param content - The content to write to the file.
-   * @param backup - Whether to create a backup of the file if it exists.
    * @returns True if the file is created successfully.
    */
-  createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
+  createFile(directory: string, filename: string): Promise<boolean> { // Removed unused parameters
     // Mock file creation
     return Promise.resolve(true);
   }
@@ -115,10 +108,9 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
    * @param filePath - The path of the file to update.
    * @param pattern - The pattern to replace.
    * @param replacement - The replacement string.
-   * @param backup - Whether to create a backup of the file before updating.
    * @returns True if the file is updated successfully.
    */
-  updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
+  updateFile(filePath: string, pattern: string, replacement: string): Promise<boolean> { // Removed unused parameters
     // Mock file update
     return Promise.resolve(true);
   }
@@ -129,7 +121,7 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
    * @param content - The content to append.
    * @returns True if the file is amended successfully.
    */
-  amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+  amendFile(filePath: string, content: string): Promise<boolean> { // Removed unused parameters
     // Mock file amendment
     return Promise.resolve(true);
   }
