@@ -1,5 +1,8 @@
 import { executeLocalSystemInfoScript } from "../../../common/executeSystemInfoScript";
 import { SystemInfo } from "../../../types/SystemInfo";
+import Debug from 'debug';
+
+const debug = Debug('app:getSystemInfo');
 
 /**
  * Retrieves system information from the localhost using the specified shell and script.
@@ -8,6 +11,19 @@ import { SystemInfo } from "../../../types/SystemInfo";
  * @returns {Promise<SystemInfo>} - The system information.
  */
 export async function getSystemInfo(shell: string, scriptPath: string): Promise<SystemInfo> {
+  // Validate inputs
+  if (!shell || typeof shell !== 'string') {
+    const errorMessage = 'Shell must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!scriptPath || typeof scriptPath !== 'string') {
+    const errorMessage = 'Script path must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  debug('Retrieving system information with shell: ' + shell + ', scriptPath: ' + scriptPath);
   const rawSystemInfo = await executeLocalSystemInfoScript(shell, scriptPath);
 
   const parsedInfo = rawSystemInfo.trim().split('\n').reduce((acc: { [key: string]: string }, line) => {
@@ -31,5 +47,6 @@ export async function getSystemInfo(shell: string, scriptPath: string): Promise<
     currentFolder: parsedInfo["currentFolder"]
   };
 
+  debug('Retrieved system information: ' + JSON.stringify(systemInfoObj));
   return systemInfoObj;
 }

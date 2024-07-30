@@ -15,6 +15,28 @@ const debug = Debug('app:executeCommand');
  * @returns The command's stdout and stderr output.
  */
 export async function executeCommand(command: string, timeout: number = 5000, directory?: string, shell?: string): Promise<{ stdout: string; stderr: string }> {
+    // Validate inputs
+    if (!command || typeof command !== 'string') {
+        const errorMessage = 'Command must be provided and must be a string.';
+        debug(errorMessage);
+        throw new Error(errorMessage);
+    }
+    if (timeout !== undefined && typeof timeout !== 'number') {
+        const errorMessage = 'Timeout must be a number.';
+        debug(errorMessage);
+        throw new Error(errorMessage);
+    }
+    if (directory !== undefined && typeof directory !== 'string') {
+        const errorMessage = 'Directory must be a string.';
+        debug(errorMessage);
+        throw new Error(errorMessage);
+    }
+    if (shell !== undefined && typeof shell !== 'string') {
+        const errorMessage = 'Shell must be a string.';
+        debug(errorMessage);
+        throw new Error(errorMessage);
+    }
+
     const execOptions = {
         timeout,
         cwd: directory || presentWorkingDirectory(), // Use GlobalStateHelper for current directory
@@ -28,7 +50,8 @@ export async function executeCommand(command: string, timeout: number = 5000, di
         debug('Command stderr: ' + stderr);
         return { stdout, stderr };
     } catch (error) {
-        debug('Error executing command: ' + (error instanceof Error ? error.message : String(error)));
-        throw new Error('Error executing command: ' + (error instanceof Error ? error.message : String(error)));
+        const errorMessage = 'Error executing command: ' + (error instanceof Error ? error.message : String(error));
+        debug(errorMessage);
+        throw new Error(errorMessage);
     }
 }
