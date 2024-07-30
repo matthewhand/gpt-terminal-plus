@@ -28,8 +28,7 @@ const defaultServerConfig: ServerConfig[] = [
     containerId: 1,
     tasks: ["task1", "task2"],
     scriptFolder: "/scripts",
-    defaultFolder: "/home/user",
-    ssmClient: new SSMClient({ region: 'us-west-2' })
+    defaultFolder: "/home/user"
   }
 ];
 
@@ -65,8 +64,7 @@ export class ServerConfigUtils {
         containerId: 0,
         tasks: [],
         scriptFolder: "",
-        defaultFolder: "/home/localuser",
-        ssmClient: null
+        defaultFolder: "/home/localuser"
       }];
     }
     return this.serverConfigs;
