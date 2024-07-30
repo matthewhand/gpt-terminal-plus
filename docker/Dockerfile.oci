@@ -1,5 +1,14 @@
-# Use the base Dockerfile
-FROM base AS builder
+# Extend from the base image
+FROM gpt-terminal-plus:latest
 
-# Install OCI CLI
-RUN apt-get update && apt-get install -y python3-pip && pip3 install oci-cli
+# Set the working directory
+WORKDIR /app
+
+# Install additional dependencies if needed
+RUN pip3 install oci-cli
+
+# Copy the rest of the application code
+COPY . .
+
+# Command to run the application
+CMD ["node", "dist/index.js"]
