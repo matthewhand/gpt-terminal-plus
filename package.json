@@ -54,6 +54,7 @@
     "@aws-sdk/client-ssm": "^3.620.1",
     "@eslint/config-array": "^0.17.1",
     "@eslint/object-schema": "^2.1.4",
+    "aws-sdk": "^2.1664.0",
     "body-parser": "^1.20.2",
     "config": "^3.3.12",
     "cors": "^2.8.5",
