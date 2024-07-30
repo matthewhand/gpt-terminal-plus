@@ -14,7 +14,7 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Initializes the SSH server handler with the provided server configuration.
-   * @param config - The configuration for the server.
+   * @param {ServerConfig} config - The configuration for the server.
    */
   constructor(config: ServerConfig) {
     this.client = new Client();
@@ -25,7 +25,7 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Sets a custom SSH client for the handler.
-   * @param client - The custom SSH client to set.
+   * @param {Client} client - The custom SSH client to set.
    */
   public setClient(client: Client): void {
     this.client = client;
@@ -34,7 +34,7 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Initializes a new SSH client.
-   * @returns A new SSH client instance.
+   * @returns {Client} A new SSH client instance.
    */
   initializeSSHClient(): Client {
     debug('Initializing new SSH client.');
@@ -43,7 +43,7 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Connects to the SSH server using the provided configuration.
-   * @returns A promise that resolves when the connection is established.
+   * @returns {Promise<void>} A promise that resolves when the connection is established.
    */
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -65,7 +65,7 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Ensures the client is connected before executing any command.
-   * @returns A promise that resolves when the client is connected.
+   * @returns {Promise<void>} A promise that resolves when the client is connected.
    */
   private async ensureConnected(): Promise<void> {
     if (!(this.client + 'connected')) {
@@ -75,10 +75,10 @@ class SshServerHandler implements ServerHandlerInterface {
 
   /**
    * Executes a command on the SSH server.
-   * @param command - The command to execute.
-   * @param timeout - Optional timeout for the command execution.
-   * @param directory - Optional directory to execute the command in.
-   * @returns A promise that resolves with the command output.
+   * @param {string} command - The command to execute.
+   * @param {number} [timeout] - Optional timeout for the command execution.
+   * @param {string} [directory] - Optional directory to execute the command in.
+   * @returns {Promise<{ stdout: string; stderr: string }>} A promise that resolves with the command output.
    */
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     debug('Executing command: ' + command);

@@ -6,11 +6,11 @@ const debug = Debug('app:createFile');
 
 /**
  * Creates a file with the specified content in the given directory.
- * @param directory - The directory to create the file in.
- * @param filename - The name of the file to create.
- * @param content - The content to write to the file.
- * @param backup - Whether to create a backup if the file already exists.
- * @returns True if the file was created successfully, false otherwise.
+ * @param {string} directory - The directory to create the file in.
+ * @param {string} filename - The name of the file to create.
+ * @param {string} content - The content to write to the file.
+ * @param {boolean} backup - Whether to create a backup if the file already exists.
+ * @returns {boolean} True if the file was created successfully, false otherwise.
  */
 export function createFile(directory: string, filename: string, content: string, backup: boolean): boolean {
     // Validate inputs
