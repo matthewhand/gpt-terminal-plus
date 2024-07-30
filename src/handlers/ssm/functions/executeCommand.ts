@@ -1,4 +1,4 @@
-import * as AWS from "aws-sdk";
+import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
 import { v4 as uuidv4 } from "uuid";
 import Debug from "debug";
 import { retryOperation } from "./retryOperation";
@@ -10,7 +10,7 @@ const DEFAULT_WAIT_TIME = parseInt(process.env.SSM_WAIT_TIME || "5000");
 
 /**
  * Executes a command on an SSM instance with retry logic.
- * @param {AWS.SSM} ssmClient - The SSM client.
+ * @param {SSMClient} ssmClient - The SSM client.
  * @param {string} command - The command to execute.
  * @param {string} instanceId - The ID of the instance.
  * @param {string} documentName - The name of the SSM document.
@@ -20,7 +20,7 @@ const DEFAULT_WAIT_TIME = parseInt(process.env.SSM_WAIT_TIME || "5000");
  * @returns {Promise<{stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string}>} The command output details.
  */
 export const executeCommand = async (
-  ssmClient: AWS.SSM,
+  ssmClient: SSMClient,
   command: string,
   instanceId: string,
   documentName: string,
@@ -38,7 +38,7 @@ export const executeCommand = async (
     ? (directory ? "cd " + directory + "; " + command : command)
     : (directory ? "Set-Location -Path '" + directory + "'; " + command : command);
 
-  const params: AWS.SSM.SendCommandRequest = {
+  const params = {
     InstanceIds: [instanceId],
     DocumentName: documentName,
     Parameters: { "commands": [formattedCommand] },
@@ -46,16 +46,16 @@ export const executeCommand = async (
   };
 
   return await retryOperation(async () => {
-    const commandResponse = await ssmClient.sendCommand(params).promise();
+    const commandResponse = await ssmClient.send(new SendCommandCommand(params));
     if (!commandResponse.Command || !commandResponse.Command.CommandId) {
       debug("Failed to retrieve command response or CommandId is undefined.");
       throw new Error("Failed to retrieve command response or CommandId is undefined.");
     }
 
-    const result = await ssmClient.getCommandInvocation({
+    const result = await ssmClient.send(new GetCommandInvocationCommand({
       CommandId: commandResponse.Command.CommandId,
       InstanceId: instanceId,
-    }).promise();
+    }));
 
     debug("Command status: " + result.Status);
     if (result && result.StandardOutputContent) {

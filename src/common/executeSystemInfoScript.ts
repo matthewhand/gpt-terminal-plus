@@ -1,8 +1,7 @@
 import { exec } from "child_process";
-import * as AWS from "aws-sdk";
+import { SSMClient, SendCommandCommand, SendCommandCommandOutput, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
 import { Client } from "ssh2";
 import { promisify } from "util";
-import { SendCommandResult } from 'aws-sdk/clients/ssm';
 
 const execPromise = promisify(exec);
 
@@ -22,22 +21,22 @@ async function executeLocalSystemInfoScript(shell: string, scriptPath: string): 
   }
 }
 
-async function executeSSMSystemInfoScript(ssmClient: AWS.SSM, instanceId: string, shell: string, scriptPath: string): Promise<string> {
+async function executeSSMSystemInfoScript(ssmClient: SSMClient, instanceId: string, shell: string, scriptPath: string): Promise<string> {
   try {
     const command = `${shell} ${scriptPath}`;
-    const commandOutput: SendCommandResult = await ssmClient.sendCommand({
+    const commandOutput: SendCommandCommandOutput = await ssmClient.send(new SendCommandCommand({
       InstanceIds: [instanceId],
       DocumentName: "AWS-RunShellScript",
       Parameters: {
         commands: [command]
       }
-    }).promise();
+    }));
 
     if (commandOutput.Command?.StatusDetails === "Success") {
-      const invocation = await ssmClient.getCommandInvocation({
+      const invocation = await ssmClient.send(new GetCommandInvocationCommand({
         CommandId: commandOutput.Command.CommandId!,
         InstanceId: instanceId
-      }).promise();
+      }));
       
       return invocation.StandardOutputContent || "";
     } else {
@@ -67,3 +66,4 @@ async function executeSSHSystemInfoScript(sshClient: Client, shell: string, scri
 }
 
 export { executeLocalSystemInfoScript, executeSSMSystemInfoScript, executeSSHSystemInfoScript };
+
