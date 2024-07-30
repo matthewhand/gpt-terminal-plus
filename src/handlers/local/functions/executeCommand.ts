@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import Debug from 'debug';
-import { getCurrentFolder } from '../../../utils/GlobalStateHelper';
+import { presentWorkingDirectory } from '../../../utils/GlobalStateHelper';
 
 const execAsync = promisify(exec);
 const debug = Debug('app:executeCommand');
@@ -17,7 +17,7 @@ const debug = Debug('app:executeCommand');
 export async function executeCommand(command: string, timeout: number = 5000, directory?: string, shell?: string): Promise<{ stdout: string; stderr: string }> {
     const execOptions = {
         timeout,
-        cwd: directory || getCurrentFolder(), // Use GlobalStateHelper for current directory
+        cwd: directory || presentWorkingDirectory(), // Use GlobalStateHelper for current directory
         shell: shell || undefined
     };
 

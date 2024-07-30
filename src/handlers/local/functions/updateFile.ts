@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { getCurrentFolder } from "../../../utils/GlobalStateHelper";
+import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
 import { escapeRegExp } from "../../../utils/escapeRegExp";
 
 /**
@@ -12,10 +12,11 @@ import { escapeRegExp } from "../../../utils/escapeRegExp";
  * @returns {Promise<boolean>} - True if the file was updated successfully, false otherwise.
  */
 export async function updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
-  const fullPath = path.join(getCurrentFolder(), filePath);
+  const fullPath = path.join(presentWorkingDirectory(), filePath);
+  console.debug("Updating file at " + fullPath + " with pattern: " + pattern + ", replacement: " + replacement + ", backup: " + backup);
   try {
     if (backup && fs.existsSync(fullPath)) {
-      const backupPath = `${fullPath}.bak`;
+      const backupPath = fullPath + ".bak";
       await fs.promises.copyFile(fullPath, backupPath);
     }
 
@@ -25,7 +26,7 @@ export async function updateFile(filePath: string, pattern: string, replacement:
     await fs.promises.writeFile(fullPath, content);
     return true;
   } catch (error) {
-    console.error(`Failed to update file : ${error}`);
+    console.error("Failed to update file " + fullPath + ": " + error);
     return false;
   }
 }

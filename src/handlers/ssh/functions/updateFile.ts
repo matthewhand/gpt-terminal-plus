@@ -1,5 +1,5 @@
 import { Client } from "ssh2";
-import { getCurrentFolder } from "../../../utils/GlobalStateHelper";
+import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
 import { escapeRegExp } from "../../../utils/escapeRegExp";
 
 /**
@@ -12,12 +12,13 @@ import { escapeRegExp } from "../../../utils/escapeRegExp";
  * @returns {Promise<boolean>} - True if the file was updated successfully, false otherwise.
  */
 export async function updateFile(sshClient: Client, filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
-  const fullPath = getCurrentFolder() + "/" + filePath;
+  const fullPath = presentWorkingDirectory() + "/" + filePath;
   const backupPath = backup ? fullPath + ".bak" : null;
+  console.debug("Updating file at " + fullPath + " with pattern: " + pattern + ", replacement: " + replacement + ", backup: " + backup);
 
   try {
     const escapedPattern = escapeRegExp(pattern);
-    const command = "sed -i s/ + escapedPattern + / + replacement + /g " + fullPath;
+    const command = "sed -i s/" + escapedPattern + "/" + replacement + "/g " + fullPath;
 
     sshClient.exec(
       backup ? "cp " + fullPath + " " + backupPath + "; " + command : command,
@@ -29,8 +30,7 @@ export async function updateFile(sshClient: Client, filePath: string, pattern: s
 
     return true;
   } catch (error) {
-    console.error("Failed to update file  + fullPath + : " + error);
+    console.error("Failed to update file " + fullPath + ": " + error);
     return false;
   }
 }
-
