@@ -7,6 +7,9 @@
     "moduleResolution": "node",
     "outDir": "./dist",
     "baseUrl": "./src",
+    "paths": {
+      "@src/*": ["*"]
+    },
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
