@@ -5,7 +5,7 @@ import { SshServerHandler } from '../handlers/SshServerHandler';
 import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
-import * as AWS from 'aws-sdk';
+import { SSMClient } from '@aws-sdk/client-ssm';
 
 const serverHandlerDebug = Debug('app:ServerConfigUtils');
 
@@ -29,7 +29,7 @@ const defaultServerConfig: ServerConfig[] = [
     tasks: ["task1", "task2"],
     scriptFolder: "/scripts",
     defaultFolder: "/home/user",
-    ssmClient: new AWS.SSM()
+    ssmClient: new SSMClient({ region: 'us-west-2' })
   }
 ];
 
