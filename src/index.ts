@@ -15,7 +15,8 @@ import bodyParser from 'body-parser';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
-import { checkAuthToken } from './middlewares'; 
+import { checkAuthToken } from './middlewares/checkAuthToken';
+import { setSelectedServerMiddleware } from './middlewares/setSelectedServerMiddleware';
 
 const app = express();
 
@@ -58,7 +59,7 @@ const startServer = () => {
   }
 
   server.listen(port, () => {
-    console.log(`Server running on ${process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http'}://${port}`);
+    console.log('Server running on ' + (process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http') + '://' + port);
   });
 
   // Graceful shutdown handling
