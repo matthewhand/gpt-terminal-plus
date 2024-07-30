@@ -124,6 +124,9 @@ dist
 # Windows
 Thumbs.db
 
+# VSCode settings
+.vscode/
+
 # Ignore everything in the config directory
 config/*
 
