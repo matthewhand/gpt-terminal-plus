@@ -6,7 +6,7 @@ export interface ServerConfig {
   privateKeyPath?: string;
   keyPath?: string;
   posix?: boolean;
-  systemInfo?: 'python';
+  systemInfo?: 'local' | 'python' | 'powershell' | 'auto'; // TODO make this apply
   port?: number;
   code?: boolean;
   username?: string;
@@ -19,7 +19,6 @@ export interface ServerConfig {
   tasks?: string[];
   scriptFolder?: string;
   defaultFolder?: string;
-  ssmClient?: SSMClient;
 }
 
 export interface SystemInfo {
