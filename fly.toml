@@ -6,7 +6,8 @@ primary_region = "syd"
 
 [env]
   PORT = "5004"
-  NODE_ENV = "production"
+  # NEVER SET NODE_ENV = "production" (wont compile index.js)
+  NODE_ENV = "development"
   NODE_CONFIG_DIR = "/data/config"
 
 [http_service]
