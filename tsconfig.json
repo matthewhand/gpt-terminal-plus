@@ -6,15 +6,14 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
-      "@src/*": ["*"]
+      "@src/*": ["src/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "incremental": true,
     "skipLibCheck": true,
-    "downlevelIteration": true,
-    "noEmitOnError": true
+    "downlevelIteration": true
   },
   "include": [
     "src/**/*",

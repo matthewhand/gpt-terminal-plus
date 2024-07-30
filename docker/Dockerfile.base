@@ -1,35 +1,17 @@
-# Use Node 18 as the base image
-FROM node:18-slim AS builder
+FROM node:18-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install necessary dependencies
 COPY package*.json ./
-
-# Install Node.js dependencies with legacy peer dependencies
-RUN npm install --legacy-peer-deps
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Set environment variable for the build process
+ENV NODE_ENV=development
 
-# Production stage
-FROM node:18-slim
-
-# Install Python3 and other dependencies for the runtime environment
-RUN apt-get update && apt-get install -y python3 python3-pip
-
-# Set the working directory
-WORKDIR /app
-
-# Copy built files from the builder stage
-COPY --from=builder /app .
-
-# Expose the application port
-EXPOSE 5004
-
-# Command to run the application
-CMD ["node", "dist/index.js"]
+# Command to keep the container running
+CMD ["tail", "-f", "/dev/null"]

@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  base:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.base
+    container_name: base
+    volumes:
+      - ../../:/app
+    command: tail -f /dev/null
+
+  terminal:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.terminal
+    container_name: terminal
+    depends_on:
+      - base
+    volumes:
+      - ../../:/app
+    command: npm start

@@ -1,17 +1,26 @@
-# Extend from the base image
-FROM gpt-terminal-plus:latest
+# Use the base image
+FROM node:18-slim
 
 # Set the working directory
 WORKDIR /app
 
-# Set environment variable for the build process
-ENV NODE_ENV=development
+# Copy the package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
+# Set environment variable for the build process
+ENV NODE_ENV=development
+
 # Run the build step
 RUN npm run build
+
+# List contents of dist directory for debugging
+RUN ls -R dist
 
 # Command to run the application
 CMD ["node", "dist/index.js"]
