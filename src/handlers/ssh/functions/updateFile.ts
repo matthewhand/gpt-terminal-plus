@@ -45,17 +45,22 @@ export async function updateFile(sshClient: Client, filePath: string, pattern: s
   try {
     const escapedPattern = escapeRegExp(pattern);
     const escapedReplacement = escapeSpecialChars(replacement);
-    const command = `sed -i 's/${escapedPattern}/${escapedReplacement}/g' ${fullPath}`;
+    const command = "sed -i 's/" + escapedPattern + "/" + escapedReplacement + "/g' " + fullPath;
 
     sshClient.exec(
-      backup ? `cp ${fullPath} ${backupPath} && ${command}` : command,
+      backup ? "cp " + fullPath + " " + backupPath + " && " + command : command,
       (err, stream) => {
-        if (err) throw err;
-        stream.on("close", () => sshClient.end());
+        if (err) {
+          debug("Error executing command: " + err.message);
+          throw err;
+        }
+        stream.on("close", () => {
+          debug("File updated successfully at " + fullPath);
+          sshClient.end();
+        });
       }
     );
 
-    debug("File updated successfully at " + fullPath);
     return true;
   } catch (error) {
     const errorMessage = "Failed to update file " + fullPath + ": " + (error instanceof Error ? error.message : 'Unknown error');

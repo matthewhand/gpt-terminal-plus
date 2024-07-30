@@ -26,7 +26,7 @@ export async function deleteFile(sshClient: Client, remotePath: string): Promise
         return reject(err);
       }
 
-      stream.on('close', (code, signal) => {
+      stream.on("close", (code: number, signal: string) => {
         if (code === 0) {
           debug(`Command executed successfully: ${command}`);
           sshClient.end();
