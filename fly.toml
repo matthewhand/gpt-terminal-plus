@@ -2,11 +2,10 @@ app = "gpt-terminal-plus"
 primary_region = "syd"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "docker/Dockerfile.gpt-terminal-plus"
 
 [env]
   PORT = "5004"
-  # NODE_ENV cannot be set to production here because TypeScript (tsc) needs to compile the JavaScript files during the Docker build process.
   NODE_ENV = "production"
   NODE_CONFIG_DIR = "/data/config"
 
@@ -40,15 +39,11 @@ primary_region = "syd"
     timeout = "5s"
 
 [[vm]]
-  memory = "256mb"  # free tier eligible
-  #memory = "512mb"
-  #memory = "1024mb"
-  #memory = "2048mb"
+  memory = "256mb"
   cpu_kind = "shared"
   cpus = 1
   swap_size_mb = 1024
 
-# 3 GB free tier persist storage.. doesnt replicate, isnt highly available...
 [[mounts]]
 source = "mydata1"
 destination = "/data"
