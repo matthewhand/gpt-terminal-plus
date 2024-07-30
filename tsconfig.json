@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
       "@src/*": ["src/*"]
@@ -16,8 +17,7 @@
     "downlevelIteration": true
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
   ],
   "files": [
     "src/types/express.d.ts",
