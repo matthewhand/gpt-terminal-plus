@@ -3,6 +3,9 @@ import { ServerConfig } from '../types/ServerConfig';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { SystemInfo } from '../types/SystemInfo';
 import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import Debug from 'debug';
+
+const debug = Debug('app:SshServerHandler');
 
 class SshServerHandler implements ServerHandlerInterface {
   private client: Client;
@@ -17,7 +20,7 @@ class SshServerHandler implements ServerHandlerInterface {
     this.client = new Client();
     this.config = config;
     this.globalState = {};
-    console.log('SshServerHandler initialized with config:', config);
+    debug('SshServerHandler initialized with config: ' + JSON.stringify(config));
   }
 
   /**
@@ -26,7 +29,7 @@ class SshServerHandler implements ServerHandlerInterface {
    */
   public setClient(client: Client): void {
     this.client = client;
-    console.log('Custom SSH client set.');
+    debug('Custom SSH client set.');
   }
 
   /**
@@ -34,7 +37,7 @@ class SshServerHandler implements ServerHandlerInterface {
    * @returns A new SSH client instance.
    */
   initializeSSHClient(): Client {
-    console.log('Initializing new SSH client.');
+    debug('Initializing new SSH client.');
     return new Client();
   }
 
@@ -45,10 +48,10 @@ class SshServerHandler implements ServerHandlerInterface {
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.client.on('ready', () => {
-        console.log('SSH client ready.');
+        debug('SSH client ready.');
         resolve();
       }).on('error', (err) => {
-        console.error('SSH client error:', err);
+        debug('SSH client error: ' + err.message);
         reject(err);
       }).connect({
         host: this.config.host,
@@ -56,7 +59,7 @@ class SshServerHandler implements ServerHandlerInterface {
         privateKey: this.config.privateKeyPath,
         readyTimeout: 20000,
       });
-      console.log('Attempting to connect to SSH server...');
+      debug('Attempting to connect to SSH server...');
     });
   }
 
@@ -65,7 +68,7 @@ class SshServerHandler implements ServerHandlerInterface {
    * @returns A promise that resolves when the client is connected.
    */
   private async ensureConnected(): Promise<void> {
-    if (!this.client+'connected') {
+    if (!(this.client + 'connected')) {
       await this.connect();
     }
   }
@@ -78,7 +81,7 @@ class SshServerHandler implements ServerHandlerInterface {
    * @returns A promise that resolves with the command output.
    */
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
-    console.log('Executing command: ' + command);
+    debug('Executing command: ' + command);
     await this.ensureConnected();
     return new Promise((resolve, reject) => {
       let stdout = '';
@@ -87,10 +90,10 @@ class SshServerHandler implements ServerHandlerInterface {
         if (err) return reject(err);
         stream.on('data', (data: Buffer) => {
           stdout += data.toString();
-          console.log('Command stdout: ' + stdout);
+          debug('Command stdout: ' + stdout);
         }).on('stderr', (data: Buffer) => {
           stderr += data.toString();
-          console.error('Command stderr: ' + stderr);
+          debug('Command stderr: ' + stderr);
         }).on('close', (code: number) => {
           if (code === 0) {
             resolve({ stdout, stderr });
@@ -104,27 +107,27 @@ class SshServerHandler implements ServerHandlerInterface {
 
   // Implementing missing methods
   listFiles(directory: string): Promise<PaginatedResponse<any>> {
-    console.log('Listing files in directory: ' + directory);
+    debug('Listing files in directory: ' + directory);
     throw new Error('Method not implemented.');
   }
 
   createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean> {
-    console.log('Creating file: ' + filename + ' in directory: ' + directory);
+    debug('Creating file: ' + filename + ' in directory: ' + directory);
     throw new Error('Method not implemented.');
   }
 
   updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean> {
-    console.log('Updating file: ' + filePath);
+    debug('Updating file: ' + filePath);
     throw new Error('Method not implemented.');
   }
 
   amendFile(filePath: string, content: string): Promise<boolean> {
-    console.log('Amending file: ' + filePath);
+    debug('Amending file: ' + filePath);
     throw new Error('Method not implemented.');
   }
 
   getSystemInfo(): Promise<SystemInfo> {
-    console.log('Retrieving system info.');
+    debug('Retrieving system info.');
     throw new Error('Method not implemented.');
   }
 }

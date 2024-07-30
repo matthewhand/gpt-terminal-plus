@@ -1,8 +1,23 @@
+/**
+ * Interface representing a paginated response.
+ * @template T - The type of the items in the response.
+ */
 export interface PaginatedResponse<T> {
+    /** The items in the current page. */
     items: T[];
+
+    /** The total number of pages. */
     totalPages: number;
+
+    /** The unique identifier for the response. */
     responseId: string;
-    stdout: string[]; // Changed to array
-    stderr: string[]; // Changed to array
-    timestamp?: number; // Add timestamp property if needed
+
+    /** The standard output logs of the command execution, split by lines. */
+    stdout: string[];
+
+    /** The standard error logs of the command execution, split by lines. */
+    stderr: string[];
+
+    /** The timestamp of the response, if needed. */
+    timestamp?: number;
 }
