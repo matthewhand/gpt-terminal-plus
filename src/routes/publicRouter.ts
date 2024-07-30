@@ -48,7 +48,6 @@ router.get('/health', (_: Request, res: Response) => {
     const isConfigFilePresent = fs.existsSync(configFilePath);
 
     // Check for free disk space
-    const stat = fs.statSync(nodeConfigDir);
     const diskFree = os.freemem();
     const diskTotal = os.totalmem();
     const isDiskSpaceSufficient = diskFree / diskTotal > 0.2; // At least 20% free space
@@ -84,8 +83,9 @@ router.get('/health', (_: Request, res: Response) => {
     }
 
     return res.status(200).json({ status: 'healthy' });
-  } catch (error) {
-    console.error('Health check failed:', error);
+  } catch (err) {
+    const error = err as Error;
+    console.error('Health check failed:', error.message);
     return res.status(500).json({ status: 'unhealthy', error: error.message });
   }
 });
