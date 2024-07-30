@@ -37,18 +37,23 @@ export async function amendFile(sshClient: Client, filePath: string, content: st
   try {
     // Check if content contains EOF and set a unique marker
     let uniqueMarker = "EOF";
-    if (content.includes("EOF")) {
+    if (content.indexOf("EOF") !== -1) {
       uniqueMarker = uuidv4();
     }
 
     const escapedContent = escapeSpecialChars(content);
 
-    sshClient.exec(`cat << ${uniqueMarker} >> ${fullPath}\n${escapedContent}\n${uniqueMarker}\n`, (err, stream) => {
-      if (err) throw err;
-      stream.on("close", () => sshClient.end());
+    sshClient.exec("cat << " + uniqueMarker + " >> " + fullPath + "\n" + escapedContent + "\n" + uniqueMarker + "\n", (err, stream) => {
+      if (err) {
+        debug("Error executing command: " + err.message);
+        throw err;
+      }
+      stream.on("close", () => {
+        debug("File amended successfully at " + fullPath);
+        sshClient.end();
+      });
     });
 
-    debug("File amended successfully at " + fullPath);
     return true;
   } catch (error) {
     const errorMessage = "Failed to amend file " + fullPath + ": " + (error instanceof Error ? error.message : 'Unknown error');
@@ -56,4 +61,3 @@ export async function amendFile(sshClient: Client, filePath: string, content: st
     throw new Error(errorMessage);
   }
 }
-

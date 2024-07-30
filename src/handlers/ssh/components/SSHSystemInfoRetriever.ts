@@ -45,6 +45,7 @@ class SSHSystemInfoRetriever {
   constructor(sshClient: Client, ServerConfig: ServerConfig) {
     this.sshClient = sshClient;
     this.ServerConfig = ServerConfig;
+    debug(`SSHSystemInfoRetriever created for ${ServerConfig.username}@${ServerConfig.host}`);
   }
 
   /**
@@ -56,6 +57,7 @@ class SSHSystemInfoRetriever {
     const scriptType = this.ServerConfig.systemInfo === 'python' ? PYTHON_SCRIPT : BASH_SCRIPT;
     const command = scriptType === PYTHON_SCRIPT ? 'python3' : 'bash';
     try {
+      debug(`Retrieving system info using ${command} script: ${scriptType}`);
       return await this.executeSystemInfoScript(scriptType, command);
     } catch (error) {
       debug(`Error retrieving system info: ${error}`);
@@ -108,6 +110,7 @@ class SSHSystemInfoRetriever {
       privateKey: await this.getPrivateKey(),
     });
 
+    debug(`Transferring script to ${remoteScriptPath}`);
     await sftp.put(localScriptPath, remoteScriptPath);
     await this.executeRemoteCommand(`${command} ${remoteScriptPath} > ${remoteScriptPath}.out`);
     if (this.ServerConfig.cleanupScripts !== undefined && this.ServerConfig.cleanupScripts !== false) {
@@ -123,7 +126,9 @@ class SSHSystemInfoRetriever {
    */
   private async getPrivateKey(): Promise<Buffer> {
     try {
-      return await fs.readFile(this.ServerConfig.privateKeyPath ?? path.join(process.env.HOME || '', '.ssh', 'id_rsa'));
+      const privateKeyPath = this.ServerConfig.privateKeyPath ?? path.join(process.env.HOME || '', '.ssh', 'id_rsa');
+      debug(`Reading private key from ${privateKeyPath}`);
+      return await fs.readFile(privateKeyPath);
     } catch (error) {
       debug(`Failed to read private key: ${error}`);
       throw new Error(`Failed to read private key: ${error}`);
@@ -150,7 +155,10 @@ class SSHSystemInfoRetriever {
   private async executeRemoteCommand(command: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
       this.sshClient.exec(command, (err, stream) => {
-        if (err) return reject(err);
+        if (err) {
+          debug(`Error executing remote command: ${command}`);
+          return reject(err);
+        }
 
         let stdout = '';
         let stderr = '';
@@ -158,8 +166,13 @@ class SSHSystemInfoRetriever {
         stream.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
 
         stream.on('close', (code: number) => {
-          if (code === 0) resolve({ stdout, stderr });
-          else reject(new Error(`Remote command exited with code ${code}`));
+          if (code === 0) {
+            debug(`Remote command executed successfully: ${command}`);
+            resolve({ stdout, stderr });
+          } else {
+            debug(`Remote command exited with code ${code}: ${command}`);
+            reject(new Error(`Remote command exited with code ${code}`));
+          }
         });
       });
     });
@@ -205,27 +218,32 @@ class SSHSystemInfoRetriever {
     };
   }
 
-    public async determineRemoteScriptFolder(): Promise<string> {
-        // TODO smarter logic
-        const remoteScriptFolder = '/tmp';
-        return remoteScriptFolder;
-    }
+  /**
+   * Determines the folder on the remote server where scripts are stored.
+   * 
+   * @returns {Promise<string>} A Promise that resolves to the folder path.
+   */
+  public async determineRemoteScriptFolder(): Promise<string> {
+    // TODO smarter logic
+    const remoteScriptFolder = '/tmp';
+    return remoteScriptFolder;
+  }
 
-       /**
-     * Returns the script based on the shell type.
-     * @returns {string} - The script to be executed.
-     */
-    public getSystemInfoScript(): string {
-        switch (this.ServerConfig.shell) {
-            case 'powershell':
-                return POWERSHELL_SCRIPT;
-            case 'python':
-                return PYTHON_SCRIPT;
-            default:
-                return BASH_SCRIPT;
-        }
+  /**
+   * Returns the script based on the shell type.
+   * 
+   * @returns {string} - The script to be executed.
+   */
+  public getSystemInfoScript(): string {
+    switch (this.ServerConfig.shell) {
+      case 'powershell':
+        return POWERSHELL_SCRIPT;
+      case 'python':
+        return PYTHON_SCRIPT;
+      default:
+        return BASH_SCRIPT;
     }
-
+  }
 }
 
 export default SSHSystemInfoRetriever;

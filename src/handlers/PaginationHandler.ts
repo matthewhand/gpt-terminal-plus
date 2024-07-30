@@ -3,8 +3,14 @@ import Debug from 'debug';
 
 const debug = Debug('app:PaginationHandler');
 
+/**
+ * Dummy implementation to simulate fetching a response from cache.
+ * Replace this function with actual cache retrieval logic.
+ * @param {number} id - The unique ID of the response.
+ * @param {number} page - The page number to retrieve.
+ * @returns {string} - The cached response.
+ */
 const getResponseFromCache = (id: number, page: number): string => {
-  // Dummy implementation, replace with actual logic
   return 'Response for id: ' + id + ', page: ' + page;
 };
 
@@ -30,19 +36,19 @@ export default class PaginationHandler {
       throw new Error(errorMessage);
     }
 
-    debug('Retrieving response page for id: ' + id + ', page: ' + page);
+    debug(`Retrieving response page for id: ${id}, page: ${page}`);
     const response = getResponseFromCache(id, page);
 
     const paginatedResponse: PaginatedResponse<string> = {
       items: [response],
       totalPages: Math.ceil(response.length / PAGE_SIZE),
-      responseId: 'response-' + id,
+      responseId: `response-${id}`,
       stdout: [],
       stderr: [],
       timestamp: Date.now(),
     };
 
-    debug('Retrieved response: ' + JSON.stringify(paginatedResponse));
+    debug(`Retrieved response: ${JSON.stringify(paginatedResponse)}`);
     return paginatedResponse;
   }
 }

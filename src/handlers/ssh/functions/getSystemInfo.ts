@@ -33,13 +33,13 @@ export async function getSystemInfo(client: Client, shell: string, scriptPath: s
     const escapedShell = escapeSpecialChars(shell);
     const escapedScriptPath = escapeSpecialChars(scriptPath);
 
-    debug(`Executing command: ${escapedShell} ${escapedScriptPath}`);
+    debug('Executing command: ' + escapedShell + ' ' + escapedScriptPath);
 
     return new Promise((resolve, reject) => {
-        client.exec(`${escapedShell} ${escapedScriptPath}`, (err, stream) => {
+        client.exec(escapedShell + ' ' + escapedScriptPath, (err, stream) => {
             if (err) {
-                debug(`Execution error: ${err.message}`);
-                return reject(new Error(`Execution error: ${err.message}`));
+                debug('Execution error: ' + err.message);
+                return reject(new Error('Execution error: ' + err.message));
             }
 
             let stdout = '';
@@ -47,19 +47,19 @@ export async function getSystemInfo(client: Client, shell: string, scriptPath: s
 
             stream.on('close', (code: number, signal: string) => {
                 if (code !== 0) {
-                    debug(`Command failed with code ${code}, signal ${signal}, stderr: ${stderr}`);
-                    reject(new Error(`Command failed with code ${code}, signal ${signal}, stderr: ${stderr}`));
+                    debug('Command failed with code ' + code + ', signal ' + signal + ', stderr: ' + stderr);
+                    reject(new Error('Command failed with code ' + code + ', signal ' + signal + ', stderr: ' + stderr));
                 } else {
                     try {
                         if (stdout.trim() === '') {
                             throw new Error('Empty stdout');
                         }
                         const systemInfo = JSON.parse(stdout) as SystemInfo;
-                        debug(`Retrieved system information: ${JSON.stringify(systemInfo)}`);
+                        debug('Retrieved system information: ' + JSON.stringify(systemInfo));
                         resolve(systemInfo);
                     } catch (error) {
-                        debug(`Failed to parse JSON: ${(error as Error).message}`);
-                        reject(new Error(`Failed to parse JSON: ${(error as Error).message}`));
+                        debug('Failed to parse JSON: ' + (error as Error).message);
+                        reject(new Error('Failed to parse JSON: ' + (error as Error).message));
                     }
                 }
             }).on('data', (data: Buffer) => {

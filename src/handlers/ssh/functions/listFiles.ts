@@ -6,10 +6,10 @@ const debug = Debug('app:listFiles');
 
 /**
  * Lists files in a directory on the remote server.
- * @param client - The SSH client instance.
- * @param config - The server configuration.
- * @param directory - The remote directory path.
- * @returns A promise that resolves to an array of filenames.
+ * @param {Client} client - The SSH client instance.
+ * @param {ServerConfig} config - The server configuration.
+ * @param {string} directory - The remote directory path.
+ * @returns {Promise<string[]>} A promise that resolves to an array of filenames.
  */
 export async function listFiles(client: Client, config: ServerConfig, directory: string): Promise<string[]> {
     // Validate inputs

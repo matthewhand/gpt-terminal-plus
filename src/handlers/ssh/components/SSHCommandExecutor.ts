@@ -17,8 +17,10 @@ const debug = Debug('app:SSHCommandExecutor');
 export async function getPrivateKey(config: ServerConfig): Promise<Buffer> {
     const privateKeyPath = config.privateKeyPath ?? path.join(os.homedir(), '.ssh', 'id_rsa');
     try {
+        debug(`Reading private key from ${privateKeyPath}`);
         return await fs.readFile(privateKeyPath);
     } catch (error) {
+        debug(`Failed to read private key from ${privateKeyPath}: ${error}`);
         throw new Error(`Failed to read private key from ${privateKeyPath}: ${error}`);
     }
 }

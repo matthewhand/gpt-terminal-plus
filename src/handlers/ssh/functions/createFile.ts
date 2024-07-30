@@ -31,20 +31,35 @@ export async function createFile(sshClient: Client, filePath: string, content: s
   }
 
   const fullPath = presentWorkingDirectory() + "/" + filePath;
-  debug("Creating file at " + fullPath + " with content: " + content);
+  debug(`Creating file at ${fullPath} with content: ${content}`);
 
   try {
     const escapedContent = escapeSpecialChars(content);
 
     sshClient.exec(`cat << EOF > ${fullPath}\n${escapedContent}\nEOF\n`, (err, stream) => {
-      if (err) throw err;
-      stream.on("close", () => sshClient.end());
+      if (err) {
+        debug(`Error executing command: ${err.message}`);
+        throw err;
+      }
+      stream.on("close", (code: number, signal: string) => {
+        if (code === 0) {
+          debug(`File created successfully at ${fullPath}`);
+          sshClient.end();
+        } else {
+          const error = `Command failed with code ${code}, signal ${signal}`;
+          debug(error);
+          throw new Error(error);
+        }
+      }).stderr.on('data', (data: Buffer) => {
+        const error = `STDERR: ${data.toString()}`;
+        debug(error);
+        throw new Error(error);
+      });
     });
 
-    debug("File created successfully at " + fullPath);
     return true;
   } catch (error) {
-    const errorMessage = "Failed to create file at " + fullPath + ": " + (error instanceof Error ? error.message : 'Unknown error');
+    const errorMessage = `Failed to create file at ${fullPath}: ${(error instanceof Error ? error.message : 'Unknown error')}`;
     debug(errorMessage);
     throw new Error(errorMessage);
   }
