@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { getSelectedServer, getCurrentFolder } from '../utils/GlobalStateHelper';
+import { getSelectedServer, presentWorkingDirectory } from '../utils/GlobalStateHelper';
 import { ServerConfigUtils } from '../utils/ServerConfigUtils';
 import Debug from 'debug';
 
@@ -34,27 +34,27 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
     const serverHandler = await ServerConfigUtils.getInstance(selectedServer);
 
     if (!serverHandler) {
-      const errorMessage = `Server handler not set for ${selectedServer}. Please ensure the server is properly configured.`;
+      const errorMessage = 'Server handler not set for ' + selectedServer + '. Please ensure the server is properly configured.';
       debug(errorMessage);
       throw new Error(errorMessage);
     }
 
     // Execute the command using the retrieved server handler
     const effectiveTimeout = timeout ?? 180000; // Default timeout if not provided
-    debug(`Executing command: ${command} with timeout: ${effectiveTimeout} on server: ${selectedServer}`);
+    debug('Executing command: ' + command + ' with timeout: ' + effectiveTimeout + ' on server: ' + selectedServer);
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
     // Get the current folder from the global state
-    const currentFolder = getCurrentFolder();
+    const currentFolder = presentWorkingDirectory();
 
-    debug(`Command executed successfully: ${JSON.stringify(executionResult)}`);
+    debug('Command executed successfully: ' + JSON.stringify(executionResult));
     (res as any).status(200).json({
       ...executionResult,
       selectedServer,
       currentFolder,
     });
   } catch (error) {
-    const errorMessage = `Error executing command: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    const errorMessage = 'Error executing command: ' + (error instanceof Error ? error.message : 'Unknown error');
     debug(errorMessage);
     (res as any).status(500).json({ error: errorMessage });
   }

@@ -3,7 +3,7 @@ import { SystemInfo } from '../types/SystemInfo';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
 import debug from 'debug';
-import { getCurrentFolder, setCurrentFolder } from '../utils/GlobalStateHelper';
+import { presentWorkingDirectory, changeDirectory } from '../utils/GlobalStateHelper';
 
 const serverHandlerDebug = debug('app:ServerHandler');
 
@@ -18,8 +18,8 @@ export abstract class ServerHandler implements ServerHandlerInterface {
 
     constructor(ServerConfig: ServerConfig) {
         this.ServerConfig = ServerConfig;
-        this.identifier = `${ServerConfig.username}@${ServerConfig.host}`;
-        serverHandlerDebug(`ServerHandler created for ${this.identifier}`);
+        this.identifier = ServerConfig.username + '@' + ServerConfig.host;
+        serverHandlerDebug('ServerHandler created for ' + this.identifier);
     }
 
     /**
@@ -27,27 +27,28 @@ export abstract class ServerHandler implements ServerHandlerInterface {
      * @returns The server configuration.
      */
     getServerConfig(): ServerConfig {
+        serverHandlerDebug('Retrieving server configuration');
         return this.ServerConfig;
     }
 
     /**
-     * Sets the current directory.
-     * @param directory - The directory to set.
-     * @returns True if the directory was set successfully.
+     * Changes the current directory.
+     * @param directory - The directory to change to.
+     * @returns True if the directory was changed successfully.
      */
-    setCurrentDirectory(directory: string): boolean {
-        setCurrentFolder(directory);
-        serverHandlerDebug(`Current directory set globally to ${directory}`);
+    changeDirectory(directory: string): boolean {
+        changeDirectory(directory);
+        serverHandlerDebug('Current directory set globally to ' + directory);
         return true;
     }
 
     /**
-     * Gets the current directory.
-     * @returns The current directory.
+     * Retrieves the current working directory.
+     * @returns The current working directory.
      */
-    async getCurrentDirectory(): Promise<string> {
-        const directory = getCurrentFolder();
-        serverHandlerDebug(`Retrieving current directory globally: ${directory}`);
+    async presentWorkingDirectory(): Promise<string> {
+        const directory = presentWorkingDirectory();
+        serverHandlerDebug('Retrieving current directory globally: ' + directory);
         return directory;
     }
 

@@ -39,41 +39,41 @@ class TestServerHandler extends ServerHandler implements ServerHandlerInterface 
   }
 
   /**
-   * Sets the current directory on the mock server.
-   * @param directory - The directory to set.
-   * @returns True if the directory was set successfully.
+   * Changes the current directory on the mock server.
+   * @param directory - The directory to change to.
+   * @returns True if the directory was changed successfully.
    */
-  setCurrentDirectory(directory: string): boolean {
+  changeDirectory(directory: string): boolean {
     // Mock setting the current directory
     this.currentDirectory = directory;
     return true;
   }
 
   /**
-   * Gets the current directory on the mock server.
-   * @returns The current directory.
+   * Retrieves the current working directory on the mock server.
+   * @returns The current working directory.
    */
-  getCurrentDirectory(): Promise<string> {
+  presentWorkingDirectory(): Promise<string> {
     // Return the mocked current directory
     return Promise.resolve(this.currentDirectory);
   }
 
   /**
-   * Sets the default directory on the mock server.
-   * @param directory - The directory to set.
-   * @returns True if the directory was set successfully.
+   * Changes the default directory on the mock server.
+   * @param directory - The directory to change to.
+   * @returns True if the directory was changed successfully.
    */
-  setDefaultDirectory(directory: string): boolean {
+  changeDefaultDirectory(directory: string): boolean {
     // Mock setting the default directory
     this.defaultDirectory = directory;
     return true;
   }
 
   /**
-   * Gets the default directory on the mock server.
+   * Retrieves the default directory on the mock server.
    * @returns The default directory.
    */
-  getDefaultDirectory(): Promise<string> {
+  presentDefaultDirectory(): Promise<string> {
     // Return the mocked default directory
     return Promise.resolve(this.defaultDirectory);
   }

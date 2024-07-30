@@ -20,16 +20,16 @@ const handleServerError = (error: unknown, res: Response, debugContext: string) 
 };
 
 /**
- * Route to set the default directory.
+ * Route to change the default directory.
  */
-router.post('/set-default-directory', async (req: Request, res: Response) => {
+router.post('/change-directory', async (req: Request, res: Response) => {
   const { directory } = req.body;
   try {
     const serverHandler = req.serverHandler;
     if (!serverHandler) {
       throw new Error('Server handler not found on request object');
     }
-    const success = serverHandler.setCurrentDirectory(directory);
+    const success = serverHandler.changeDirectory(directory);
     res.status(success ? 200 : 400).json({ 
       output: success ? "Current directory set to " + directory : 'Directory does not exist.'
     });
@@ -52,7 +52,7 @@ router.post('/create-file', async (req: Request, res: Response) => {
     if (typeof serverHandler.createFile !== 'function') {
       throw new Error('createFile method not found on server handler');
     }
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
@@ -82,7 +82,7 @@ router.post('/update-file', async (req: Request, res: Response) => {
     if (typeof serverHandler.updateFile !== 'function') {
       throw new Error('updateFile method not found on server handler');
     }
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath);
     try {
@@ -112,7 +112,7 @@ router.post('/amend-file', async (req: Request, res: Response) => {
     if (typeof serverHandler.amendFile !== 'function') {
       throw new Error('amendFile method not found on server handler');
     }
-    const targetDirectory = directory || await serverHandler.getCurrentDirectory();
+    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
