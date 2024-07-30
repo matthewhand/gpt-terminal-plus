@@ -1,81 +1,93 @@
+version: "3.8"
+
 services:
   terminal:
+    container_name: terminal-app
     build:
       context: ../..
       dockerfile: docker/Dockerfile.terminal
+    image: terminal-app
     ports:
       - "5005:5004"
     env_file:
       - ../../.env
     environment:
       - NODE_ENV=development
-      - DEBUG=${DEBUG}
-      - API_TOKEN=${API_TOKEN}
+      - DEBUG=+DEBUG+
+      - API_TOKEN=+API_TOKEN+
     volumes:
       - ../.ssh:/root/.ssh:rw
     restart: unless-stopped
 
-  oci:
-    build:
-      context: ../..
-      dockerfile: docker/Dockerfile.oci
-    ports:
-      - "5006:5004"
-    env_file:
-      - ../../.env
-    environment:
-      - NODE_ENV=development
-      - DEBUG=${DEBUG}
-      - API_TOKEN=${API_TOKEN}
-      - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
-      - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
-    volumes:
-      - /mnt/models/lib/oracle-cli:/opt/oracle-cli
-    restart: unless-stopped
-
-  aws:
-    build:
-      context: ../..
-      dockerfile: docker/Dockerfile.aws
-    ports:
-      - "5007:5004"
-    env_file:
-      - ../../.env
-    environment:
-      - NODE_ENV=development
-      - DEBUG=${DEBUG}
-      - API_TOKEN=${API_TOKEN}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-    volumes:
-      - ../.aws:/root/.aws:ro
-    restart: unless-stopped
-
   notions:
+    container_name: notions-app
     build:
       context: ../..
       dockerfile: docker/Dockerfile.notions
+    image: notions-app
     ports:
       - "5008:5004"
     env_file:
       - ../../.env
     environment:
       - NODE_ENV=development
-      - DEBUG=${DEBUG}
-      - API_TOKEN=${API_TOKEN}
-      - NOTION_TOKEN=${NOTION_TOKEN}
+      - DEBUG=+DEBUG+
+      - API_TOKEN=+API_TOKEN+
+      - NOTION_TOKEN=+NOTION_TOKEN+
+    restart: unless-stopped
+
+  oci:
+    container_name: oci-app
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.oci-cli
+    image: oci-app
+    ports:
+      - "5006:5004"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=development
+      - DEBUG=+DEBUG+
+      - API_TOKEN=+API_TOKEN+
+      - OCI_COMPARTMENT_ID=+OCI_COMPARTMENT_ID+
+      - OCI_COMPARTMENT_NAME=+OCI_COMPARTMENT_NAME+
+    volumes:
+      - /mnt/models/lib/oracle-cli:/opt/oracle-cli
+    restart: unless-stopped
+
+  aws:
+    container_name: aws-app
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.aws
+    image: aws-app
+    ports:
+      - "5007:5004"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=development
+      - DEBUG=+DEBUG+
+      - API_TOKEN=+API_TOKEN+
+      - AWS_SECRET_ACCESS_KEY=+AWS_SECRET_ACCESS_KEY+
+      - AWS_ACCESS_KEY_ID=+AWS_ACCESS_KEY_ID+
+    volumes:
+      - ../.aws:/root/.aws:ro
     restart: unless-stopped
 
   joplin:
+    container_name: joplin-app
     build:
       context: ../..
       dockerfile: docker/Dockerfile.joplin
+    image: joplin-app
     ports:
       - "5009:5004"
     env_file:
       - ../../.env
     environment:
       - NODE_ENV=development
-      - DEBUG=${DEBUG}
-      - API_TOKEN=${API_TOKEN}
+      - DEBUG=+DEBUG+
+      - API_TOKEN=+API_TOKEN+
     restart: unless-stopped

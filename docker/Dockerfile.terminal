@@ -4,6 +4,9 @@ FROM gpt-terminal-plus:latest
 # Set the working directory
 WORKDIR /app
 
+# Set environment variable for the build process
+ENV NODE_ENV=development
+
 # Copy the rest of the application code
 COPY . .
 
