@@ -25,6 +25,6 @@ jobs:
           docker push registry.fly.io/app_aws:latest
 
       - name: Deploy to Fly.io
-        run: flyctl deploy -c fly_configs/fly-aws-app.toml --image registry.fly.io/app_aws:latest
+        run: flyctl deploy -c fly_configs/fly-aws-app.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
