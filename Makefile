@@ -1,4 +1,4 @@
--e # Makefile for gpt-terminal-plus
+# Makefile for gpt-terminal-plus
 
 # Default target
 .PHONY: all
