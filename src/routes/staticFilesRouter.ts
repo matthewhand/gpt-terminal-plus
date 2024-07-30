@@ -2,7 +2,9 @@ import { Router } from 'express';
 
 const router = Router();
 
-// Health check endpoint
+/**
+ * Health check endpoint
+ */
 router.get('/uptime', (_, res) => {
   res.status(200).send('OK');
 });

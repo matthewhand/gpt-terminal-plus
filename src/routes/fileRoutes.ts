@@ -30,6 +30,7 @@ router.post('/change-directory', async (req: Request, res: Response) => {
       throw new Error('Server handler not found on request object');
     }
     const success = serverHandler.changeDirectory(directory);
+    debug('Directory change attempted: ' + directory + ', success: ' + success);
     res.status(success ? 200 : 400).json({ 
       output: success ? "Current directory set to " + directory : 'Directory does not exist.'
     });
@@ -57,6 +58,7 @@ router.post('/create-file', async (req: Request, res: Response) => {
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
       const success = await serverHandler.createFile(targetDirectory, filename, content, backup);
+      debug('File create/replace attempted: ' + fullPath + ', success: ' + success);
       res.status(success ? 200 : 400).json({ 
         message: success ? 'File created or replaced successfully.' : 'Failed to create or replace file.'
       });
@@ -87,6 +89,7 @@ router.post('/update-file', async (req: Request, res: Response) => {
     const release = await lockfile.lock(fullPath);
     try {
       const updateResult = await serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup);
+      debug('File update attempted: ' + fullPath + ', pattern: ' + pattern + ', replacement: ' + replacement + ', success: ' + updateResult);
       res.status(updateResult ? 200 : 400).json({ 
         message: updateResult ? 'File updated successfully.' : 'Failed to update the file.'
       });
@@ -116,12 +119,13 @@ router.post('/amend-file', async (req: Request, res: Response) => {
     const fullPath = path.join(targetDirectory, filename);
     const release = await lockfile.lock(fullPath, { realpath: false });
     try {
-        const success = await serverHandler.amendFile(fullPath, content);
-        res.status(success ? 200 : 400).json({
-            message: success ? 'File amended successfully.' : 'Failed to amend file.'
-        });
+      const success = await serverHandler.amendFile(fullPath, content);
+      debug('File amend attempted: ' + fullPath + ', content: ' + content + ', success: ' + success);
+      res.status(success ? 200 : 400).json({
+        message: success ? 'File amended successfully.' : 'Failed to amend file.'
+      });
     } finally {
-        await release();
+      await release();
     }
   } catch (err: unknown) {
     debug("Error amending file: " + (err instanceof Error ? err.message : String(err)));

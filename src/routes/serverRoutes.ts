@@ -1,39 +1,14 @@
-/**
- * Server Routes Module
- * ====================
- *
- * Overview:
- * ---------
- * This module defines the HTTP endpoints for server-related operations within the application,
- * including listing available servers and setting the current server for subsequent operations.
- * It leverages express.js for routing and integrates with a Server Configuration Utility to manage
- * server configurations and state. A significant aspect of this module is its use of a global state
- * helper to set and retrieve the currently selected server, ensuring a consistent server context
- * across different parts of the application.
- *
- * ----------
- * 1. GET /list-servers
- *    Lists all available servers configured in the application. It retrieves server information from the
- *    ServerConfigUtils module and returns it in a structured JSON format.
- *
- * 2. POST /set-server
- *    Sets the currently active server for the application. It accepts a server identifier in the request body,
- *    updates the global state accordingly, retrieves the server handler for the specified server, and attempts to
- *    fetch system information for the newly selected server. This endpoint is crucial for operations that require
- *    context about the current server, such as executing commands or retrieving system information.
- *
- */
-
 import express, { Request, Response } from 'express';
 import { ServerConfigUtils } from '../utils/ServerConfigUtils';
 import Debug from 'debug';
-// Import the global state helper functions
 import { setSelectedServer, getSelectedServer } from '../utils/GlobalStateHelper';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
 
-// Endpoint to list available servers
+/**
+ * Endpoint to list available servers
+ */
 router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
@@ -58,7 +33,9 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   }
 });
 
-// Updated Endpoint to set the current server using global state helper
+/**
+ * Endpoint to set the current server using global state helper
+ */
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug(`Received request to set server: ${server}`, { requestBody: req.body });

@@ -25,7 +25,7 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
   // Validate the command
   if (!command) {
     debug('Command is required but not provided.');
-    return (res as any).status(400).json({ error: 'Command is required' });
+    return res.status(400).json({ error: 'Command is required' });
   }
 
   try {
@@ -48,7 +48,7 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
     const currentFolder = presentWorkingDirectory();
 
     debug('Command executed successfully: ' + JSON.stringify(executionResult));
-    (res as any).status(200).json({
+    res.status(200).json({
       ...executionResult,
       selectedServer,
       currentFolder,
@@ -56,7 +56,7 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
   } catch (error) {
     const errorMessage = 'Error executing command: ' + (error instanceof Error ? error.message : 'Unknown error');
     debug(errorMessage);
-    (res as any).status(500).json({ error: errorMessage });
+    res.status(500).json({ error: errorMessage });
   }
 };
 
