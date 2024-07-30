@@ -30,19 +30,40 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).send('OK');
 });
 
-// Use CORS to limit to ChatGPT referred clients
-app.use(cors({ origin: ['https://chat.openai.com', 'https://chatgpt.com'] }));
+// Determine CORS origin based on environment variable or use defaults
+const corsOrigin = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',') 
+  : ['https://chat.openai.com', 'https://chatgpt.com'];
+
+console.log(`CORS configuration set to: ${corsOrigin}`);
+
+app.use(cors({ origin: corsOrigin })); // Use CORS with the determined origin
+
 app.use(bodyParser.json());
 
-// API Router setup
 const apiRouter = express.Router();
-apiRouter.use(checkAuthToken); // Only applying the checkAuthToken middleware globally
-apiRouter.use(fileRoutes);
-apiRouter.use(commandRoutes);
-apiRouter.use(serverRoutes);
 
-// app.use('/public/', staticFilesRouter); // Serve static files using staticFilesRouter
-app.use(apiRouter); // Mounting the API router to the app
+// Check if API_TOKEN is configured
+if (!process.env.API_TOKEN) {
+  console.warn('Warning: No API_TOKEN configured. Using staticRouter.');
+  
+  // Use staticRouter to respond with a message indicating no API_TOKEN
+  const staticRouter = express.Router();
+  staticRouter.use((req: Request, res: Response) => {
+    res.status(503).json({  // Changed from 403 to 503
+      error: 'Service unavailable: No API_TOKEN configured. Access is restricted.',
+    });
+  });
+
+  app.use(staticRouter);
+} else {
+  // API Router setup with authentication
+  apiRouter.use(checkAuthToken); // Only applying the checkAuthToken middleware globally
+  apiRouter.use(fileRoutes);
+  apiRouter.use(commandRoutes);
+  apiRouter.use(serverRoutes);
+  app.use(apiRouter); // Mounting the API router to the app
+}
 
 // Server initialization logic
 const startServer = () => {

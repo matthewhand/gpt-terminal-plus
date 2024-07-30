@@ -1,83 +1,132 @@
-import fs from 'fs';
-import path from 'path';
+import config from 'config';
 import { ServerConfig } from '../types/ServerConfig';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { SshServerHandler } from '../handlers/SshServerHandler';
+import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
+import LocalServerHandler from '../handlers/LocalServerHandler';
 import Debug from 'debug';
+import { SSMClient } from '@aws-sdk/client-ssm';
 
-const debug = Debug('app:ServerConfigManager');
+const serverHandlerDebug = Debug('app:ServerConfigManager');
+
+// Define a default configuration
+const defaultServerConfig: ServerConfig[] = [
+  {
+    host: "localhost",
+    privateKeyPath: "/path/to/private/key",
+    keyPath: "/path/to/key",
+    posix: true,
+    systemInfo: "python",
+    port: 22,
+    code: true,
+    username: "user",
+    protocol: "local",
+    shell: "/bin/bash",
+    region: "us-west-2",
+    instanceId: "i-1234567890abcdef0",
+    homeFolder: "/home/user",
+    containerId: 1,
+    tasks: ["task1", "task2"],
+    scriptFolder: "/scripts",
+    defaultFolder: "/home/user"
+  }
+];
 
 /**
- * Singleton class to manage server configuration.
+ * Utility class for managing server configurations and handlers.
  */
-class ServerConfigManager {
-  private static instance: ServerConfigManager;
-  private configFilePath: string;
-  private ServerConfig: ServerConfig | null;
-
-  private constructor() {
-    this.configFilePath = path.join(__dirname, '../../ServerConfig.json');
-    this.ServerConfig = this.loadServerConfig();
-  }
+export class ServerConfigManager {
+  private static serverConfigs: ServerConfig[] = config.has('serverConfig') ? config.get<ServerConfig[]>('serverConfig') : defaultServerConfig;
+  private static instances: Record<string, ServerHandlerInterface> = {};
 
   /**
-   * Get the singleton instance of ServerConfigManager.
-   * @returns {ServerConfigManager} The instance of ServerConfigManager.
+   * Lists available server configurations.
+   * @returns An array of server configurations.
    */
-  public static getInstance(): ServerConfigManager {
-    if (!ServerConfigManager.instance) {
-      ServerConfigManager.instance = new ServerConfigManager();
+  public static listAvailableServers(): ServerConfig[] {
+    serverHandlerDebug('Listing available servers...');
+    if (!this.serverConfigs || this.serverConfigs.length === 0) {
+      serverHandlerDebug('No server configs found, returning default local server.');
+      return [{
+        host: "local",
+        privateKeyPath: "",
+        keyPath: "",
+        posix: true,
+        systemInfo: "local",
+        port: 0,
+        code: true,
+        username: "localuser",
+        protocol: "local",
+        shell: "/bin/bash",
+        region: "",
+        instanceId: "",
+        homeFolder: "/home/localuser",
+        containerId: 0,
+        tasks: [],
+        scriptFolder: "",
+        defaultFolder: "/home/localuser"
+      }];
     }
-    return ServerConfigManager.instance;
+    return this.serverConfigs;
   }
 
   /**
-   * Load server configuration from the file.
-   * @returns {ServerConfig | null} The loaded server configuration or null if not found.
+   * Retrieve the server configuration based on the provided server name.
+   * @param server - The name of the server.
+   * @returns The server configuration if found, otherwise undefined.
    */
-  private loadServerConfig(): ServerConfig | null {
-    try {
-      if (fs.existsSync(this.configFilePath)) {
-        const data = fs.readFileSync(this.configFilePath, 'utf-8');
-        try { return JSON.parse(data); } catch (error) { debug("Error parsing server config:", error); return null; }
-      } else {
-        debug('Server config file not found.');
-        return null;
-      }
-    } catch (error) {
-      debug('Error loading server config:', error);
-      return null;
+  public static getServerConfig(server: string): ServerConfig | undefined {
+    return this.serverConfigs.find(config => config.host === server);
+  }
+
+  /**
+   * Gets an instance of a server handler based on the host.
+   * @param host - The host name of the server.
+   * @returns A promise that resolves to the server handler instance.
+   */
+  public static async getInstance(host: string): Promise<ServerHandlerInterface> {
+    serverHandlerDebug('Fetching instance for host: ' + host);
+    if (!host) throw new Error('Host is undefined.');
+
+    if (!this.instances[host]) {
+      const serverConfig = this.getServerConfig(host);
+      if (!serverConfig) throw new Error('Server config not found for host: ' + host);
+      this.instances[host] = await this.initializeHandler(serverConfig);
+    }
+    return this.instances[host];
+  }
+
+  /**
+   * Initializes a handler based on the server configuration.
+   * @param serverConfig - The server configuration.
+   * @returns The initialized server handler.
+   */
+  private static async initializeHandler(serverConfig: ServerConfig): Promise<ServerHandlerInterface> {
+    switch (serverConfig.protocol) {
+      case 'ssh':
+        return new SshServerHandler(serverConfig);
+      case 'ssm':
+        return new SsmServerHandler(serverConfig);
+      case 'local':
+        return new LocalServerHandler(serverConfig);
+      default:
+        throw new Error('Unsupported protocol: ' + serverConfig.protocol);
     }
   }
 
   /**
-   * Save server configuration to the file.
-   * @param {ServerConfig} config - The server configuration to save.
+   * Updates the current server configuration dynamically.
+   * @param host - The host name of the server.
+   * @param newConfig - The new configuration details.
    */
-  private saveServerConfig(config: ServerConfig): void {
-    try {
-      const data = JSON.stringify(config, null, 2);
-      fs.writeFileSync(this.configFilePath, data, 'utf-8');
-      debug('Server config saved successfully.');
-    } catch (error) {
-      debug('Error saving server config:', error);
+  public static updateCurrentServerConfig(host: string, newConfig: Partial<ServerConfig>): void {
+    serverHandlerDebug('Updating server configuration for host: ' + host);
+    const index = this.serverConfigs.findIndex(config => config.host === host);
+    if (index !== -1) {
+      this.serverConfigs[index] = { ...this.serverConfigs[index], ...newConfig };
+      delete this.instances[host];
+    } else {
+      throw new Error('Server config for host ' + host + ' not found.');
     }
-  }
-
-  /**
-   * Get the current server configuration.
-   * @returns {ServerConfig | null} The current server configuration or null if not set.
-   */
-  public getServerConfig(): ServerConfig | null {
-    return this.ServerConfig;
-  }
-
-  /**
-   * Set a new server configuration and persist it to the file.
-   * @param {ServerConfig} config - The new server configuration to set.
-   */
-  public setServerConfig(config: ServerConfig): void {
-    this.ServerConfig = config;
-    this.saveServerConfig(config);
   }
 }
-
-export default ServerConfigManager;

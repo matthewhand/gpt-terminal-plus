@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { ServerConfigUtils } from '../utils/ServerConfigUtils';
+import { ServerConfigManager } from '../managers/ServerConfigManager'; // Updated import path
 import Debug from 'debug';
 import { setSelectedServer, getSelectedServer } from '../utils/GlobalStateHelper';
 
@@ -13,7 +13,7 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
   try {
-    const servers = ServerConfigUtils.listAvailableServers();
+    const servers = ServerConfigManager.listAvailableServers();
     debug('Listing available servers', { servers: servers.map((server: any) => server.host) });
     res.json({ servers });
   } catch (error) {
@@ -42,7 +42,7 @@ router.post('/set-server', async (req: Request, res: Response) => {
 
   try {
     // Validate the server before setting it
-    const serverConfig = ServerConfigUtils.getServerConfig(server);
+    const serverConfig = ServerConfigManager.getServerConfig(server);
     if (!serverConfig) {
       throw new Error('Server not in predefined list.');
     }
@@ -57,7 +57,7 @@ router.post('/set-server', async (req: Request, res: Response) => {
     debug(`Server set to ${server} using global state helper.`);
 
     // Fetch the server handler instance using the updated server
-    const serverHandler = await ServerConfigUtils.getInstance(getSelectedServer());
+    const serverHandler = await ServerConfigManager.getInstance(getSelectedServer());
     debug(`ServerHandler instance successfully retrieved for server: ${server}`);
 
     // Attempt to retrieve system info for the updated server

@@ -1,19 +1,33 @@
 import { createFile } from '../../src/handlers/local/functions/createFile';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 describe('LocalServerHandler', () => {
-    it('should fail to create file in nonexistent directory', () => {
-        const directory = path.join(__dirname, 'nonexistent-directory');
-        const filename = 'test.txt';
-        const content = 'Hello, World!';
-        const backup = false;
+    const directory = 'tests/handlers/nonexistent-directory';
+    const filename = 'test.txt';
+    const content = 'test content';
+    const backup = false;
+    const fullPath = path.join(directory, filename);
 
-        expect(() => {
-            createFile(directory, filename, content, backup);
-        }).toThrowError(new Error('Directory does not exist: ' + directory));
+    afterEach(() => {
+        // Clean up created files
+        if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+        }
     });
 
-    it('should list files correctly', () => {
-        // Further test cases...
+    it('should successfully create a file in an existing directory', () => {
+        fs.mkdirSync(directory, { recursive: true });
+        createFile(directory, filename, content, backup);
+        expect(fs.existsSync(fullPath)).toBe(true);
+        const fileContent = fs.readFileSync(fullPath, 'utf-8');
+        expect(fileContent).toBe(content);
+    });
+
+    it('should throw an error if directory does not exist', () => {
+        const nonExistentDirectory = 'tests/handlers/another-nonexistent-directory';
+        expect(() => createFile(nonExistentDirectory, filename, content, backup)).toThrowError(
+            `Directory does not exist: ${nonExistentDirectory}`
+        );
     });
 });

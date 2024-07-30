@@ -12,6 +12,7 @@
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "test": "cross-env jest --runInBand",
     "test:debug": "cross-env DEBUG=* jest --verbose --runInBand",
+    "test:monitor": "npx cross-env DEBUG=* jest --verbose --runInBand --watch",
     "version": "tsc -v",
     "ncu": "ncu"
   },

@@ -28,8 +28,6 @@ const mockSystemInfo: SystemInfo = {
   release: '5.4.0',
   platform: 'linux',
   architecture: 'x64',
-  // pythonVersion: '3.8.5',
-  // powershellVersion: '7.0',
   totalMemory: 8192,
   freeMemory: 4096,
   uptime: 10000,
@@ -57,9 +55,9 @@ jest.mock('../../src/handlers/ServerHandler', () => {
   };
 });
 
-jest.mock('../../src/utils/ServerConfigUtils', () => ({
+jest.mock('../../src/managers/ServerConfigManager', () => ({
   __esModule: true,
-  ServerConfigUtils: {
+  ServerConfigManager: {
     getServerConfig: jest.fn((host: string) => {
       const serverConfig = mockServers.find(server => server.host === host);
       if (!serverConfig) {
@@ -85,20 +83,6 @@ describe('Server Routes', () => {
   app.use(serverRoutes);
 
   describe('POST /set-server', () => {
-    // it('should set the server if it exists in the list', async () => {
-    //   const serverToSet = 'localhost';
-
-    //   const response = await request(app)
-    //     .post('/set-server')
-    //     .send({ server: serverToSet });
-
-    //   expect(response.status).toBe(200);
-    //   expect(response.body).toEqual({
-    //     message: `Server set to ${serverToSet}`,
-    //     systemInfo: mockSystemInfo,
-    //   });
-    // });
-
     it('should return an error if the server is not in the list', async () => {
       const serverToSet = 'user3@unknownhost';
 
@@ -106,7 +90,7 @@ describe('Server Routes', () => {
         .post('/set-server')
         .send({ server: serverToSet });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(500); // Corrected syntax
       expect(response.body).toEqual({
         message: `Error retrieving system info for server: ${serverToSet}`,
         error: 'Server not in predefined list.',
