@@ -1,37 +1,51 @@
-import { Client } from 'ssh2';
-import * as path from 'path';
+import { Client } from "ssh2";
+import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
+import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
+import Debug from 'debug';
+
+const debug = Debug('app:createFile');
 
 /**
- * Creates a file on a remote SSH server.
- * @param sshClient - The SSH client.
- * @param directory - The directory to create the file in.
- * @param filename - The name of the file to create.
- * @param content - The content to write to the file.
- * @param backup - Whether to create a backup of the file if it exists.
- * @returns True if the file is created successfully.
+ * Creates a new file on an SSH server.
+ * @param {Client} sshClient - The SSH client.
+ * @param {string} filePath - The path of the file to create.
+ * @param {string} content - The content to write to the file.
+ * @returns {Promise<boolean>} - True if the file was created successfully, false otherwise.
  */
-export async function createFile(sshClient: Client, directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    return new Promise((resolve, reject) => {
-        const fullPath = path.join(directory, filename);
-        const backupPath = fullPath + '.bak';
+export async function createFile(sshClient: Client, filePath: string, content: string): Promise<boolean> {
+  // Validate inputs
+  if (!sshClient || !(sshClient instanceof Client)) {
+    const errorMessage = 'SSH client must be provided and must be an instance of Client.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!filePath || typeof filePath !== 'string') {
+    const errorMessage = 'File path must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!content || typeof content !== 'string') {
+    const errorMessage = 'Content must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
 
-        const command = backup
-            ? `cp ${fullPath} ${backupPath} && echo "${content.replace(/"/g, '\"')}" > ${fullPath}`
-            : `echo "${content.replace(/"/g, '\"')}" > ${fullPath}`;
+  const fullPath = presentWorkingDirectory() + "/" + filePath;
+  debug("Creating file at " + fullPath + " with content: " + content);
 
-        sshClient.exec(command, (err, stream) => {
-            if (err) {
-                return reject(err);
-            }
-            stream.on('close', () => {
-                sshClient.end();
-                resolve(true);
-            }).on('data', () => {
-                // Handle data if needed
-            }).stderr.on('data', (data) => {
-                console.error('STDERR: ' + data);
-                reject(new Error(data.toString()));
-            });
-        });
+  try {
+    const escapedContent = escapeSpecialChars(content);
+
+    sshClient.exec(`cat << EOF > ${fullPath}\n${escapedContent}\nEOF\n`, (err, stream) => {
+      if (err) throw err;
+      stream.on("close", () => sshClient.end());
     });
+
+    debug("File created successfully at " + fullPath);
+    return true;
+  } catch (error) {
+    const errorMessage = "Failed to create file at " + fullPath + ": " + (error instanceof Error ? error.message : 'Unknown error');
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
 }
