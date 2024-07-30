@@ -1,6 +1,4 @@
 import 'module-alias/register';
-import 'module-alias/register';
-import 'module-alias/register';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -17,7 +15,6 @@ import bodyParser from 'body-parser';
 import fileRoutes from './routes/fileRoutes';
 import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
-// import staticFilesRouter from './routes/staticFilesRouter';
 import { checkAuthToken } from './middlewares'; 
 
 const app = express();
@@ -48,7 +45,7 @@ app.use(apiRouter); // Mounting the API router to the app
 
 // Server initialization logic
 const startServer = () => {
-  const port = config.get<number>('port') || 5004;
+  const port = config.has('port') ? config.get<number>('port') : 5004;
   let server: http.Server | https.Server;
 
   if (process.env.HTTPS_ENABLED === 'true') {
