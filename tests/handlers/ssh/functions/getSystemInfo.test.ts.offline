@@ -1,0 +1,69 @@
+import { Client } from 'ssh2';
+import { getSystemInfo } from '../../../../src/handlers/ssh/functions/getSystemInfo';
+
+// Mock the Client class and its methods
+jest.mock('ssh2', () => ({
+    Client: jest.fn().mockImplementation(() => ({
+        exec: jest.fn((command: string, callback: (err: Error | null, stream: any) => void) => {
+            const stream = {
+                on: (event: string, handler: (data: Buffer) => void) => {
+                    if (event === 'data') handler(Buffer.from('{"hostname":"test-host","uptime":12345}'));
+                    if (event === 'close') handler();
+                    return stream;
+                },
+                stderr: {
+                    on: (event: string, handler: (data: Buffer) => void) => {
+                        if (event === 'data') handler(Buffer.from(''));
+                        return stream;
+                    }
+                }
+            };
+            callback(null, stream);
+        })
+    }))
+}));
+
+describe('getSystemInfo', () => {
+    let client: Client;
+
+    const shell = '/bin/sh';
+    const scriptPath = '/tmp/systeminfo.sh';
+
+    beforeEach(() => {
+        client = new Client();
+    });
+
+    it('should parse valid JSON output', async () => {
+        const result = await getSystemInfo(client, shell, scriptPath);
+        expect(result).toEqual({ hostname: 'test-host', uptime: 12345 });
+    });
+
+    it('should handle command execution errors', async () => {
+        jest.spyOn(client, 'exec').mockImplementation((command: string, callback: (err: Error | null, stream: any) => void) => {
+            callback(new Error('Execution error'), null);
+        });
+
+        await expect(getSystemInfo(client, shell, scriptPath)).rejects.toThrow('Execution error');
+    });
+
+    it('should handle invalid JSON output', async () => {
+        jest.spyOn(client, 'exec').mockImplementation((command: string, callback: (err: Error | null, stream: any) => void) => {
+            const stream = {
+                on: (event: string, handler: (data: Buffer) => void) => {
+                    if (event === 'data') handler(Buffer.from('invalid json'));
+                    if (event === 'close') handler();
+                    return stream;
+                },
+                stderr: {
+                    on: (event: string, handler: (data: Buffer) => void) => {
+                        if (event === 'data') handler(Buffer.from(''));
+                        return stream;
+                    }
+                }
+            };
+            callback(null, stream);
+        });
+
+        await expect(getSystemInfo(client, shell, scriptPath)).rejects.toThrow('Invalid JSON output');
+    });
+});

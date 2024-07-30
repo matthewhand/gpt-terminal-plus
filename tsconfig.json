@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "outDir": "./dist",
-    "baseUrl": "./src",
+    "baseUrl": "src",
     "paths": {
       "@src/*": ["*"]
     },
