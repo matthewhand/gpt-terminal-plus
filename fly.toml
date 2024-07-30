@@ -18,26 +18,12 @@ primary_region = "syd"
   min_machines_running = 1
   processes = ["app"]
 
-[[services]]
-  internal_port = 5004
-  protocol = "tcp"
-
-  [[services.ports]]
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
-
-  [[services.http_checks]]
-    interval = "10s"
-    grace_period = "10s"
-    method = "get"
-    path = "/health"
-    protocol = "http"
-    restart_limit = 0
-    timeout = "5s"
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
 
 [[vm]]
   memory = "256mb"
