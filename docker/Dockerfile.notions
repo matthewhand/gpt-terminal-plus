@@ -1,5 +1,11 @@
-# Use the base Dockerfile
-FROM base AS builder
+# Extend from the base image
+FROM gpt-terminal-plus:latest
 
-# Install Notion SDK for Node.js
-RUN npm install @notionhq/client
+# Set the working directory
+WORKDIR /app
+
+# Copy the rest of the application code
+COPY . .
+
+# Command to run the application
+CMD ["node", "dist/index.js"]
