@@ -1,5 +1,14 @@
-# Use the base Dockerfile
-FROM base:latest AS builder
+# Extend from the base image
+FROM gpt-terminal-plus:latest
 
-# Install AWS CLI and AWS SDK for Node.js and Python3
-RUN apt-get update && apt-get install -y awscli python3-pip && pip3 install boto3 && npm install aws-sdk
+# Set the working directory
+WORKDIR /app
+
+# Install additional dependencies if needed
+RUN pip3 install awscli
+
+# Copy the rest of the application code
+COPY . .
+
+# Command to run the application
+CMD ["node", "dist/index.js"]
