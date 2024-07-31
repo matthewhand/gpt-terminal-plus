@@ -4,8 +4,15 @@ FROM gpt-terminal-plus:latest
 # Set the working directory
 WORKDIR /app
 
-# Install additional dependencies if needed
-RUN pip3 install awscli
+# Install necessary dependencies
+RUN apt-get update && \
+    apt-get install -y python3-pip python3-venv && \
+    apt-get clean
+
+# Create a virtual environment and install AWS CLI in it
+RUN python3 -m venv /opt/aws-cli && \
+    /opt/aws-cli/bin/pip install awscli && \
+    ln -s /opt/aws-cli/bin/aws /usr/local/bin/aws
 
 # Copy the rest of the application code
 COPY . .
