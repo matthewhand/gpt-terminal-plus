@@ -1,149 +1,82 @@
-import { ServerHandler } from '../../src/handlers/ServerHandler';
-import { ServerConfig } from '../../src/types/ServerConfig';
-import { SystemInfo } from '../../src/types/SystemInfo';
-import { PaginatedResponse } from '../../src/types/PaginatedResponse';
-import { ServerHandlerInterface } from '../../src/types/ServerHandlerInterface';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { PaginatedResponse } from '../types/PaginatedResponse';
+import { SystemInfo } from '../types/SystemInfo';
+import debug from 'debug';
+
+const log = debug('test-server-handler');
 
 /**
- * Mock implementation of ServerHandler for testing purposes.
- * Provides mock responses for all abstract methods.
+ * Test Server Handler for simulating server operations.
  */
-class TestServerHandler extends ServerHandler implements ServerHandlerInterface {
-  private currentDirectory: string = '/'; // Defaulting to root, adjust as needed
-  private defaultDirectory: string = '/mock/default'; // Add this property
-
-  constructor(ServerConfig: ServerConfig) {
-    // Check if the ServerConfig is empty or undefined
-    if (!ServerConfig || Object.keys(ServerConfig).length === 0) {
-      throw new Error('Server configuration is not defined in the config.');
-    }
-
-    // Check if the host is not 'localhost'
-    if (ServerConfig.host !== 'localhost') {
-      throw new Error('No matching server configuration found for localhost.');
-    }
-    super(ServerConfig);
-    // Set the currentDirectory or any other initial setup
-    this.currentDirectory = '/mock/directory';
+export class TestServerHandler implements ServerHandlerInterface {
+  /**
+   * Executes a command and returns simulated output.
+   * @param {string} command - The command to execute.
+   * @param {number} [timeout=60] - The timeout for command execution.
+   * @returns {Promise<{ stdout: string; stderr: string }>} - The simulated output.
+   */
+  async executeCommand(command: string, timeout: number = 60): Promise<{ stdout: string; stderr: string }> {
+    log('Executing command: ' + command + ' with timeout: ' + timeout);
+    return { stdout: 'Simulated output for: ' + command, stderr: '' };
   }
 
   /**
-   * Executes a command on the mock server.
-   * @returns The command's stdout and stderr output.
+   * Creates a file and returns success.
+   * @param {string} directory - The directory to create the file in.
+   * @param {string} filename - The name of the file.
+   * @returns {Promise<boolean>} - Whether the file creation was successful.
    */
-  executeCommand(): Promise<{ stdout: string; stderr: string }> { // Removed unused parameters
-    // Return a dummy response
-    return Promise.resolve({ stdout: 'Mocked stdout', stderr: 'Mocked stderr' });
-  }
-
-  /**
-   * Changes the current directory on the mock server.
-   * @param directory - The directory to change to.
-   * @returns True if the directory was changed successfully.
-   */
-  changeDirectory(directory: string): boolean {
-    // Mock setting the current directory
-    this.currentDirectory = directory;
+  async createFile(directory: string, filename: string): Promise<boolean> {
+    log('Creating file: ' + filename + ' in directory: ' + directory);
     return true;
   }
 
   /**
-   * Retrieves the current working directory on the mock server.
-   * @returns The current working directory.
+   * Updates a file and returns success.
+   * @param {string} filePath - The path of the file.
+   * @returns {Promise<boolean>} - Whether the file update was successful.
    */
-  presentWorkingDirectory(): Promise<string> {
-    // Return the mocked current directory
-    return Promise.resolve(this.currentDirectory);
-  }
-
-  /**
-   * Changes the default directory on the mock server.
-   * @param directory - The directory to change to.
-   * @returns True if the directory was changed successfully.
-   */
-  changeDefaultDirectory(directory: string): boolean {
-    // Mock setting the default directory
-    this.defaultDirectory = directory;
+  async updateFile(filePath: string): Promise<boolean> {
+    log('Updating file: ' + filePath);
     return true;
   }
 
   /**
-   * Retrieves the default directory on the mock server.
-   * @returns The default directory.
+   * Amends a file and returns success.
+   * @param {string} filePath - The path of the file.
+   * @returns {Promise<boolean>} - Whether the file amendment was successful.
    */
-  presentDefaultDirectory(): Promise<string> {
-    // Return the mocked default directory
-    return Promise.resolve(this.defaultDirectory);
+  async amendFile(filePath: string): Promise<boolean> {
+    log('Amending file: ' + filePath);
+    return true;
   }
 
   /**
-   * Lists files in a specified directory on the mock server.
-   * @param directory - The directory to list files in.
-   * @returns A paginated response containing files in the directory.
+   * Lists files in a directory.
+   * @param {string} [directory=''] - The directory to list files from.
+   * @param {number} [limit=42] - The limit of files to list.
+   * @param {number} [offset=0] - The offset for file listing.
+   * @param {'filename' | 'datetime'} [orderBy='filename'] - The order criterion.
+   * @returns {Promise<PaginatedResponse<string>>} - The list of files.
    */
-  listFiles(directory: string): Promise<PaginatedResponse<string>> { // Removed unused parameters
-    return Promise.resolve({
-      items: ['file1.txt', 'file2.txt'],
+  async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse<string>> {
+    log('Listing files in directory: ' + directory + ' with limit: ' + limit + ', offset: ' + offset + ', orderBy: ' + orderBy);
+    const simulatedFiles = Array.from({ length: limit }, (_, i) => 'file' + (offset + i) + '.txt');
+    return {
+      items: simulatedFiles,
       totalPages: 1,
-      responseId: 'mock-id',
+      responseId: 'test-response-id',
       stdout: [],
       stderr: [],
-      timestamp: Date.now()
-    });
+    };
   }
 
   /**
-   * Creates a file on the mock server.
-   * @param directory - The directory to create the file in.
-   * @param filename - The name of the file to create.
-   * @returns True if the file is created successfully.
+   * Retrieves system information.
+   * @returns {Promise<SystemInfo>} - The system information.
    */
-  createFile(directory: string, filename: string): Promise<boolean> { // Removed unused parameters
-    // Mock file creation
-    return Promise.resolve(true);
-  }
-
-  /**
-   * Updates a file on the mock server by replacing a pattern with a replacement string.
-   * @param filePath - The path of the file to update.
-   * @param pattern - The pattern to replace.
-   * @param replacement - The replacement string.
-   * @returns True if the file is updated successfully.
-   */
-  updateFile(filePath: string, pattern: string, replacement: string): Promise<boolean> { // Removed unused parameters
-    // Mock file update
-    return Promise.resolve(true);
-  }
-
-  /**
-   * Appends content to a file on the mock server.
-   * @param filePath - The path of the file to amend.
-   * @param content - The content to append.
-   * @returns True if the file is amended successfully.
-   */
-  amendFile(filePath: string, content: string): Promise<boolean> { // Removed unused parameters
-    // Mock file amendment
-    return Promise.resolve(true);
-  }
-
-  /**
-   * Retrieves system information from the mock server.
-   * @returns System information.
-   */
-  getSystemInfo(): Promise<SystemInfo> {
-    // Return a dummy SystemInfo object
-    return Promise.resolve({
-      homeFolder: '/mock/home',
-      type: 'MockOS',
-      release: '1.0.0',
-      platform: 'mock',
-      architecture: 'x64',
-      totalMemory: 8192,
-      freeMemory: 4096,
-      uptime: 10000,
-      currentFolder: this.currentDirectory
-    });
+  async getSystemInfo(): Promise<SystemInfo> {
+    log('Getting system info');
+    return { type: 'Linux', platform: 'x64', freeMemory: 1024, totalMemory: 2048, cpuLoad: [0.1, 0.2, 0.3], uptime: 3600 };
   }
 }
-
-export default TestServerHandler;

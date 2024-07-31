@@ -1,53 +1,29 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import Debug from 'debug';
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
 
-const debug = Debug('app:listFiles');
+const readdir = promisify(fs.readdir);
+const stat = promisify(fs.stat);
 
 /**
- * Lists files in a specified directory.
- * @param directory - The directory to list files from.
- * @param limit - The maximum number of files to return.
- * @param offset - The offset for file listing, used for pagination.
- * @param orderBy - The criteria to order the files by.
- * @returns A promise that resolves to an array of file names.
+ * Lists files in a directory with detailed information.
+ * @param {string} directory - The directory to list files from.
+ * @returns {Promise<{ name: string, isDirectory: boolean }[]>} - A promise that resolves with the list of files and their types.
  */
-export async function listFiles(directory: string, limit: number, offset: number, orderBy: "datetime" | "filename"): Promise<string[]> {
-    // Validate inputs
-    if (!directory || typeof directory !== 'string') {
-        const errorMessage = 'Directory must be provided and must be a string.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
-    if (typeof limit !== 'number' || limit < 0) {
-        const errorMessage = 'Limit must be a non-negative number.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
-    if (typeof offset !== 'number' || offset < 0) {
-        const errorMessage = 'Offset must be a non-negative number.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
-    if (orderBy !== 'datetime' && orderBy !== 'filename') {
-        const errorMessage = 'Order by must be either "datetime" or "filename".';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
+export const listFiles = async (directory: string): Promise<{ name: string, isDirectory: boolean }[]> => {
+  try {
+    const fileNames = await readdir(directory);
 
-    debug('Listing files in directory: ' + directory);
-    try {
-        if (!fs.existsSync(directory)) {
-            const errorMessage = 'Directory does not exist: ' + directory;
-            debug(errorMessage);
-            return [];
-        }
-        const files = fs.readdirSync(directory).slice(offset, offset + limit);
-        debug('Files listed in directory ' + directory + ': ' + files.join(', '));
-        return files;
-    } catch (error) {
-        const errorMessage = 'Failed to list files in ' + directory + ': ' + (error instanceof Error ? error.message : String(error));
-        debug(errorMessage);
-        return [];
-    }
-}
+    // Create a promise for each file to get detailed information
+    const fileInfos = await Promise.all(fileNames.map(async (name) => {
+      const filePath = path.join(directory, name);
+      const fileStat = await stat(filePath);
+      return { name, isDirectory: fileStat.isDirectory() };
+    }));
+
+    return fileInfos;
+  } catch (error) {
+    console.error('Error listing files in directory:', directory, error);
+    throw error;
+  }
+};
