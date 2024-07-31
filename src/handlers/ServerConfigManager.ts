@@ -1,7 +1,7 @@
 import { ServerConfig } from '../types/ServerConfig';
-import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import { SshServerHandler } from '../handlers/ssh/SshServerHandler';
-import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
+import LocalServer from '../handlers/local/LocalServerImplementation';
+import SshServer from '../handlers/ssh/SshServerImplementation';
+import SsmServer from '../handlers/ssm/SsmServerImplementation';
 import debug from 'debug';
 
 const serverConfigManagerDebug = debug('app:ServerConfigManager');
@@ -24,16 +24,16 @@ export class ServerConfigManager {
     serverConfigManagerDebug('Server configuration updated');
   }
 
-  createHandler(): LocalServerHandler | SshServerHandler | SsmServerHandler {
+  createHandler(): LocalServer | SshServer | SsmServer {
     const { protocol } = this.serverConfig;
 
     switch (protocol) {
       case 'local':
-        return new LocalServerHandler(this.serverConfig);
+        return new LocalServer();
       case 'ssh':
-        return new SshServerHandler(this.serverConfig);
+        return new SshServer();
       case 'ssm':
-        return new SsmServerHandler(this.serverConfig);
+        return new SsmServer();
       default:
         throw new Error(`Unsupported protocol: ${protocol}`);
     }
