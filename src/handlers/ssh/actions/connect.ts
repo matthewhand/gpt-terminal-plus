@@ -1,15 +1,15 @@
 import { Client } from 'ssh2';
-import { ServerConfig } from '../../../types/ServerConfig';
+import { SshHostConfig } from '../../../types/ServerConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:connect');
 
 /**
  * Establishes an SSH connection to the remote server.
- * @param {ServerConfig} config - The server configuration.
+ * @param {SshHostConfig} config - The server configuration.
  * @returns {Promise<Client>} A promise that resolves to the SSH client instance.
  */
-export async function connect(config: ServerConfig): Promise<Client> {
+export async function connect(config: SshHostConfig ): Promise<Client> {
     return new Promise((resolve, reject) => {
         // Validate inputs
         if (!config || typeof config !== 'object') {

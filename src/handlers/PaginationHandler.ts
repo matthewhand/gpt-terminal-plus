@@ -14,8 +14,8 @@ export class PaginationHandler {
       items: this.data,
       totalPages: this.totalPages,
       responseId: 'responseId',
-      stdout: [],
-      stderr: []
+      stdout: '',
+      stderr: ''
     };
   }
 }

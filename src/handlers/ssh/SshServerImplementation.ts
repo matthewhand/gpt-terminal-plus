@@ -1,13 +1,22 @@
-import { SshServerHandler } from './SshServerHandler';
-import { BaseServerHandler } from '../BaseServerHandler';
+import { AbstractServerHandler } from '../AbstractServerHandler';
 import { loadActions } from '../../utils/loadActions';
-import { SystemInfo, PaginatedResponse } from '../../types';
+import { SystemInfo } from '../../types/SystemInfo';
+import { PaginatedResponse } from '../../types/PaginatedResponse';
+import { SshHostConfig } from '../../types/ServerConfig';
 
 const actions = loadActions(__dirname + '/actions');
 
-class SshServer extends BaseServerHandler implements SshServerHandler {
+class SshServer extends AbstractServerHandler {
   privateKeyPath: string;
-  port?: number;
+  port: number;
+  username: string;
+
+  constructor(serverConfig: SshHostConfig) {
+    super(serverConfig);
+    this.privateKeyPath = serverConfig.privateKeyPath;
+    this.port = serverConfig.port ?? 22; // Provide a default value if port is undefined
+    this.username = serverConfig.username;
+  }
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     return actions.executeCommand(command, timeout, directory);

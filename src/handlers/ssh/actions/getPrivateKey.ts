@@ -1,17 +1,17 @@
 import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { ServerConfig } from '../../../types/ServerConfig';
+import { SshHostConfig } from '../../../types/ServerConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:getPrivateKey');
 
 /**
  * Retrieves the private key from the specified path or the default path.
- * @param {ServerConfig} config - The server configuration.
+ * @param {SshHostConfig} config - The server configuration.
  * @returns {Promise<Buffer>} The private key as a buffer.
  */
-export async function getPrivateKey(config: ServerConfig): Promise<Buffer> {
+export async function getPrivateKey(config: SshHostConfig): Promise<Buffer> {
   // Validate inputs
   if (!config || typeof config !== 'object') {
     const errorMessage = 'Server configuration must be provided and must be an object.';
