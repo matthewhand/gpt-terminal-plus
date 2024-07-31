@@ -1,7 +1,6 @@
 export interface PaginatedResponse<T> {
   items: T[];
-  totalPages?: number;
-  responseId: string;
-  stdout?: string;
-  stderr?: string;
+  limit: number;
+  offset: number;
+  total: number;  // Add total property
 }

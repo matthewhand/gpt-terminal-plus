@@ -1,18 +1,18 @@
 import { PaginatedResponse } from '../types/PaginatedResponse';
 
 /**
- * Creates a paginated response for the provided items.
+ * Handles pagination logic.
  * @param items - The items to paginate.
- * @param total - The total number of items.
- * @param limit - The maximum number of items per page.
- * @param offset - The offset of the current page.
- * @returns A paginated response containing the items for the specified page.
+ * @param limit - The number of items per page.
+ * @param offset - The offset to start the pagination.
+ * @returns The paginated response.
  */
-export function createPaginatedResponse<T>(items: T[], total: number, limit: number, offset: number): PaginatedResponse<T> {
-    return {
-        items,
-        total,
-        limit,
-        offset,
-    };
+export function paginate<T>(items: T[], limit: number, offset: number): PaginatedResponse<T> {
+  const paginatedItems = items.slice(offset, offset + limit);
+  return {
+    items: paginatedItems,
+    limit,
+    offset,
+    total: items.length  // Correctly include total property
+  };
 }
