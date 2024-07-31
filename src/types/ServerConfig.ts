@@ -1,8 +1,13 @@
 export interface ServerConfig {
   host: string;
-  username: string;
-  privateKeyPath: string;
+  username?: string;
+  protocol?: 'ssh' | 'ssm' | 'local';
+  posix?: boolean;
+  cleanupScripts?: boolean;
+  privateKeyPath?: string;
+  port?: number;
+  region?: string;
   instanceId?: string;
-  type: 'local' | 'ssh' | 'ssm'; // Ensure type is included
-  protocol?: string; // Add this line
+  systemInfo?: 'local' | 'python' | 'powershell' | 'auto';
+  shell?: string;
 }

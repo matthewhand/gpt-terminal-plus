@@ -7,9 +7,9 @@ project-root/
 │ │
 │ ├── handlers/ # Handlers encapsulate the logic for server operations.
 │ │ ├── ServerHandler.ts # Abstract base class providing a template for server handlers.
-│ │ ├── SshServerHandler.ts # Handles SSH-based server interactions.
+│ │ ├── ssh/SshServerHandler.ts # Handles SSH-based server interactions.
 │ │ ├── SsmServerHandler.ts # Manages interactions with servers via AWS SSM.
-│ │ ├── LocalServerHandler.ts # Implementation for operations on the local server.
+│ │ ├── local/LocalServerHandler.ts # Implementation for operations on the local server.
 │ │ └── ... # Additional handlers as necessary for other server types or operations.
 │ │
 │ ├── routes/ # Defines the API routes and their corresponding handlers.

@@ -1,6 +1,6 @@
 import config from 'config';
 import { ServerConfig } from '../types/ServerConfig';
-import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { ServerHandler } from '../types/ServerHandler';
 import { SshServerHandler } from '../handlers/SshServerHandler';
 import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
 import LocalServerHandler from '../handlers/LocalServerHandler';
@@ -13,7 +13,7 @@ const defaultServerConfig: ServerConfig[] = [
   {
     host: "localhost",
     privateKeyPath: "/path/to/private/key",
-    keyPath: "/path/to/key",
+    privateKeyPath: "/path/to/key",
     posix: true,
     systemInfo: "python",
     port: 22,
@@ -36,7 +36,7 @@ const defaultServerConfig: ServerConfig[] = [
  */
 export class ServerConfigManager {
   private static serverConfigs: ServerConfig[] = config.has('serverConfig') ? config.get<ServerConfig[]>('serverConfig') : defaultServerConfig;
-  private static instances: Record<string, ServerHandlerInterface> = {};
+  private static instances: Record<string, ServerHandler> = {};
 
   /**
    * Lists available server configurations.
@@ -49,7 +49,7 @@ export class ServerConfigManager {
       return [{
         host: "local",
         privateKeyPath: "",
-        keyPath: "",
+        privateKeyPath: "",
         posix: true,
         systemInfo: "local",
         port: 0,
@@ -83,7 +83,7 @@ export class ServerConfigManager {
    * @param host - The host name of the server.
    * @returns A promise that resolves to the server handler instance.
    */
-  public static async getInstance(host: string): Promise<ServerHandlerInterface> {
+  public static async getInstance(host: string): Promise<ServerHandler> {
     serverHandlerDebug('Fetching instance for host: ' + host);
     if (!host) throw new Error('Host is undefined.');
 
@@ -100,7 +100,7 @@ export class ServerConfigManager {
    * @param serverConfig - The server configuration.
    * @returns The initialized server handler.
    */
-  private static async initializeHandler(serverConfig: ServerConfig): Promise<ServerHandlerInterface> {
+  private static async initializeHandler(serverConfig: ServerConfig): Promise<ServerHandler> {
     switch (serverConfig.protocol) {
       case 'ssh':
         return new SshServerHandler(serverConfig);

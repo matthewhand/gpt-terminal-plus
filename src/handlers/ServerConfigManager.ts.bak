@@ -1,0 +1,34 @@
+import { ServerConfig } from '../types/ServerConfig';
+import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import LocalServer from './LocalServerHandlerImplementation';
+import SshServer from './SshServerHandlerImplementation';
+import SsmServer from './SsmServerHandlerImplementation';
+
+class ServerConfigManager {
+  private config: ServerConfig;
+  private handler: ServerHandlerInterface;
+
+  constructor(config: ServerConfig) {
+    this.config = config;
+    this.handler = this.createHandler(config);
+  }
+
+  private createHandler(config: ServerConfig): ServerHandlerInterface {
+    switch (config.type) {
+      case 'local':
+        return new LocalServer(config);
+      case 'ssh':
+        return new SshServer(config);
+      case 'ssm':
+        return new SsmServer(config);
+      default:
+        throw new Error('Invalid server type');
+    }
+  }
+
+  public getHandler(): ServerHandlerInterface {
+    return this.handler;
+  }
+}
+
+export { ServerConfigManager };

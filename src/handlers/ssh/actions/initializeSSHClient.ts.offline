@@ -5,7 +5,7 @@ import SSHFileOperations from '../components/SSHFileOperations';
 import SSHSystemInfoRetriever from '../components/SSHSystemInfoRetriever';
 import { ServerConfig } from '../../../types/ServerConfig';
 
-const debug = Debug('app:SshServerHandler');
+const debug = Debug('app:ssh/SshServerHandler');
 export async function initializeSSHClient(conn: Client, ServerConfig: ServerConfig) {
   debug('Initializing SSH client for ' + ServerConfig.host);
   conn.on('ready', () => {

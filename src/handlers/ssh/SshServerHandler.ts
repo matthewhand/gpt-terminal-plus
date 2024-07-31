@@ -1,6 +1,7 @@
 import { ServerHandler } from '../../types/ServerHandler';
+import { SystemInfo, PaginatedResponse } from '../../types';
 
-export interface SsmServerHandler extends ServerHandler {
+export interface SshServerHandler extends ServerHandler {
   executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;  // Common methods
   getSystemInfo(): Promise<SystemInfo>;
   amendFile(filePath: string, content: string): Promise<boolean>;
@@ -11,6 +12,6 @@ export interface SsmServerHandler extends ServerHandler {
   presentWorkingDirectory(): Promise<string>;
 
   // Unique parameters
-  region?: string;
-  instanceId?: string;
+  privateKeyPath: string;
+  port?: number;
 }

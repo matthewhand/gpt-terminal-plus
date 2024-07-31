@@ -3,6 +3,8 @@ import path from 'path';
 import lockfile from 'proper-lockfile';
 import Debug from 'debug';
 import { escapeRegExp } from '../utils/escapeRegExp';
+import { listFiles } from '../handlers/ssh/functions/listFiles'; // Adjust the path as necessary
+import { ServerHandler } from '../types/ServerHandler'; // Import the interface
 
 const debug = Debug('app:fileRoutes');
 const router = express.Router();
@@ -25,11 +27,14 @@ const handleServerError = (error: unknown, res: Response, debugContext: string) 
 router.post('/change-directory', async (req: Request, res: Response) => {
   const { directory } = req.body;
   try {
-    const serverHandler = req.serverHandler;
+    const serverHandler = req.serverHandler as ServerHandler; // Type assertion
     if (!serverHandler) {
       throw new Error('Server handler not found on request object');
     }
-    const success = serverHandler.changeDirectory(directory);
+    if (typeof serverHandler.changeDirectory !== 'function') {
+      throw new Error('changeDirectory method not found on server handler');
+    }
+    const success = await serverHandler.changeDirectory(directory);
     debug('Directory change attempted: ' + directory + ', success: ' + success);
     res.status(success ? 200 : 400).json({ 
       output: success ? "Current directory set to " + directory : 'Directory does not exist.'
@@ -46,7 +51,7 @@ router.post('/change-directory', async (req: Request, res: Response) => {
 router.post('/create-file', async (req: Request, res: Response) => {
   const { filename, content, backup = true, directory } = req.body;
   try {
-    const serverHandler = req.serverHandler;
+    const serverHandler = req.serverHandler as ServerHandler; // Type assertion
     if (!serverHandler) {
       throw new Error('Server handler not found on request object');
     }
@@ -77,7 +82,7 @@ router.post('/create-file', async (req: Request, res: Response) => {
 router.post('/update-file', async (req: Request, res: Response) => {
   const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
   try {
-    const serverHandler = req.serverHandler;
+    const serverHandler = req.serverHandler as ServerHandler; // Type assertion
     if (!serverHandler) {
       throw new Error('Server handler not found on request object');
     }
@@ -108,7 +113,7 @@ router.post('/update-file', async (req: Request, res: Response) => {
 router.post('/amend-file', async (req: Request, res: Response) => {
   const { filename, content, directory = "" } = req.body;
   try {
-    const serverHandler = req.serverHandler;
+    const serverHandler = req.serverHandler as ServerHandler; // Type assertion
     if (!serverHandler) {
       throw new Error('Server handler not found on request object');
     }
@@ -130,6 +135,25 @@ router.post('/amend-file', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     debug("Error amending file: " + (err instanceof Error ? err.message : String(err)));
     handleServerError(err, res, 'Error amending file');
+  }
+});
+
+/**
+ * Route to list files in a directory.
+ */
+router.get('/list-files', async (req: Request, res: Response) => {
+  const directory = req.query.directory as string;
+
+  try {
+    const serverHandler = req.serverHandler as ServerHandler; // Type assertion
+    if (!serverHandler) {
+      throw new Error('Server handler not found on request object');
+    }
+    const files = await serverHandler.listFiles({ directory });
+    res.status(200).json(files);
+  } catch (error) {
+    console.error('Error listing files:', error);
+    res.status(500).json({ error: 'Failed to list files' });
   }
 });
 

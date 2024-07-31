@@ -1,4 +1,4 @@
-import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { ServerHandler } from '../types/ServerHandler';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { SystemInfo } from '../types/SystemInfo';
 import debug from 'debug';
@@ -8,7 +8,7 @@ const log = debug('test-server-handler');
 /**
  * Test Server Handler for simulating server operations.
  */
-export class TestServerHandler implements ServerHandlerInterface {
+export class TestServerHandler implements ServerHandler {
   /**
    * Executes a command and returns simulated output.
    * @param {string} command - The command to execute.
@@ -57,17 +57,16 @@ export class TestServerHandler implements ServerHandlerInterface {
    * @param {number} [limit=42] - The limit of files to list.
    * @param {number} [offset=0] - The offset for file listing.
    * @param {'filename' | 'datetime'} [orderBy='filename'] - The order criterion.
-   * @returns {Promise<PaginatedResponse<string>>} - The list of files.
+   * @returns {Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>} - The list of files.
    */
-  async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse<string>> {
+  async listFiles(directory: string = '', limit: number = 42, offset: number = 0, orderBy: 'filename' | 'datetime' = 'filename'): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
     log('Listing files in directory: ' + directory + ' with limit: ' + limit + ', offset: ' + offset + ', orderBy: ' + orderBy);
-    const simulatedFiles = Array.from({ length: limit }, (_, i) => 'file' + (offset + i) + '.txt');
+    const simulatedFiles = Array.from({ length: limit }, (_, i) => ({ name: 'file' + (offset + i) + '.txt', isDirectory: false }));
     return {
-      items: simulatedFiles,
-      totalPages: 1,
-      responseId: 'test-response-id',
-      stdout: [],
-      stderr: [],
+        items: simulatedFiles,
+        total: 100, // Simulated total number of files
+        limit,
+        offset
     };
   }
 

@@ -1,6 +1,7 @@
 import { ServerHandler } from '../../types/ServerHandler';
+import { SystemInfo, PaginatedResponse } from '../../types';
 
-export interface SsmServerHandler extends ServerHandler {
+export interface LocalServerHandler extends ServerHandler {
   executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;  // Common methods
   getSystemInfo(): Promise<SystemInfo>;
   amendFile(filePath: string, content: string): Promise<boolean>;
@@ -11,6 +12,17 @@ export interface SsmServerHandler extends ServerHandler {
   presentWorkingDirectory(): Promise<string>;
 
   // Unique parameters
-  region?: string;
-  instanceId?: string;
+  code?: boolean;  // Run 'code' command to open in VSCode
 }
+
+export const defaultLocalServerHandler: LocalServerHandler = {
+  code: false,
+  executeCommand: async (command, timeout, directory) => ({ stdout: '', stderr: '' }),
+  getSystemInfo: async () => ({ hostname: '', platform: '', release: '', arch: '', uptime: 0 }),
+  amendFile: async (filePath, content) => true,
+  createFile: async (directory, filename, content, backup) => true,
+  listFiles: async (params) => ({ data: [], total: 0, limit: 0, offset: 0 }),
+  updateFile: async (filePath, pattern, replacement, backup) => true,
+  changeDirectory: async (directory) => true,
+  presentWorkingDirectory: async () => '',
+};

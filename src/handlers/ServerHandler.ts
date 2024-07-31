@@ -1,7 +1,7 @@
 import { ServerConfig } from '../types/ServerConfig';
 import { SystemInfo } from '../types/SystemInfo';
 import { PaginatedResponse } from '../types/PaginatedResponse';
-import { ServerHandlerInterface } from '../types/ServerHandlerInterface';
+import { ServerHandler as ServerHandlerType } from '../types/ServerHandler';
 import debug from 'debug';
 import { presentWorkingDirectory, changeDirectory } from '../utils/GlobalStateHelper';
 
@@ -11,17 +11,17 @@ const serverHandlerDebug = debug('app:ServerHandler');
  * Abstract base class for server handlers.
  * Provides common methods and properties for managing server interactions.
  */
-export abstract class ServerHandler implements ServerHandlerInterface {
+export abstract class ServerHandler implements ServerHandlerType {
   public identifier: string;
-  protected ServerConfig: ServerConfig;
+  protected serverConfig: ServerConfig;
 
   /**
    * Constructs a ServerHandler instance.
-   * @param {ServerConfig} ServerConfig - The server configuration.
+   * @param {ServerConfig} serverConfig - The server configuration.
    */
-  constructor(ServerConfig: ServerConfig) {
-    this.ServerConfig = ServerConfig;
-    this.identifier = `${ServerConfig.username}@${ServerConfig.host}`;
+  constructor(serverConfig: ServerConfig) {
+    this.serverConfig = serverConfig;
+    this.identifier = `${serverConfig.username}@${serverConfig.host}`;
     serverHandlerDebug(`ServerHandler created for ${this.identifier}`);
   }
 
@@ -31,15 +31,15 @@ export abstract class ServerHandler implements ServerHandlerInterface {
    */
   getServerConfig(): ServerConfig {
     serverHandlerDebug('Retrieving server configuration');
-    return this.ServerConfig;
+    return this.serverConfig;
   }
 
   /**
    * Changes the current directory.
    * @param {string} directory - The directory to change to.
-   * @returns {boolean} - True if the directory was changed successfully.
+   * @returns {Promise<boolean>} - True if the directory was changed successfully.
    */
-  changeDirectory(directory: string): boolean {
+  async changeDirectory(directory: string): Promise<boolean> {
     changeDirectory(directory);
     serverHandlerDebug(`Current directory set globally to ${directory}`);
     return true;
@@ -70,9 +70,9 @@ export abstract class ServerHandler implements ServerHandlerInterface {
    * @param {number} [limit] - Maximum number of files to return.
    * @param {number} [offset] - Number of files to skip before starting to collect the result set.
    * @param {string} [orderBy] - Criteria to order files by.
-   * @returns {Promise<PaginatedResponse<string>>} - A paginated response containing files in the directory.
+   * @returns {Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>} - A paginated response containing files in the directory.
    */
-  abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<PaginatedResponse<string>>;
+  abstract listFiles(directory: string, limit?: number, offset?: number, orderBy?: string): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
 
   /**
    * Abstract method to create a file on the server.
