@@ -17,6 +17,7 @@ import commandRoutes from './routes/commandRoutes';
 import serverRoutes from './routes/serverRoutes';
 import publicRouter from './routes/publicRouter';
 import { checkAuthToken } from './middlewares/checkAuthToken';
+import { initializeServerHandler } from './middlewares/initializeServerHandler';
 
 const app = express();
 
@@ -50,8 +51,9 @@ if (!process.env.API_TOKEN) {
 
   app.use(staticRouter);
 } else {
-  // API Router setup with authentication
+  // API Router setup with authentication and server handler initialization
   apiRouter.use(checkAuthToken);
+  apiRouter.use(initializeServerHandler); // Use the middleware here
   apiRouter.use(fileRoutes);
   apiRouter.use(commandRoutes);
   apiRouter.use(serverRoutes);

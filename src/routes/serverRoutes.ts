@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
-import { ServerConfigManager } from '../managers/ServerConfigManager'; // Updated import path
 import Debug from 'debug';
 import { setSelectedServer, getSelectedServer } from '../utils/GlobalStateHelper';
+import { ServerManager } from '../managers/ServerManager'; // Updated import path
+import { ServerHandler } from '../types/ServerHandler'; // Import ServerHandler
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -13,8 +14,8 @@ router.get('/list-servers', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
   try {
-    const servers = ServerConfigManager.listAvailableServers();
-    debug('Listing available servers', { servers: servers.map((server: any) => server.host) });
+    const servers = ServerManager.listAvailableServers();
+    debug('Listing available servers', { servers: servers.map(server => server.host) });
     res.json({ servers });
   } catch (error) {
     debug('Error in /list-servers', {
@@ -24,7 +25,7 @@ router.get('/list-servers', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
-      debug(`Internal Server Error: ${error.message}`);
+      debug('Internal Server Error: ' + error.message);
       res.status(500).send('Internal Server Error');
     } else {
       debug('An unknown error occurred during list-servers');
@@ -38,11 +39,11 @@ router.get('/list-servers', async (req: Request, res: Response) => {
  */
 router.post('/set-server', async (req: Request, res: Response) => {
   const { server } = req.body;
-  debug(`Received request to set server: ${server}`, { requestBody: req.body });
+  debug('Received request to set server: ' + server, { requestBody: req.body });
 
   try {
     // Validate the server before setting it
-    const serverConfig = ServerConfigManager.getServerConfig(server);
+    const serverConfig = ServerManager.getServerConfig(server);
     if (!serverConfig) {
       throw new Error('Server not in predefined list.');
     }
@@ -54,17 +55,17 @@ router.post('/set-server', async (req: Request, res: Response) => {
 
     // Set the selected server using the global state helper
     setSelectedServer(server);
-    debug(`Server set to ${server} using global state helper.`);
+    debug('Server set to ' + server + ' using global state helper.');
+
+    // Create an instance of ServerManager
+    const serverManager = new ServerManager(serverConfig);
 
     // Fetch the server handler instance using the updated server
-    const serverHandler = await ServerConfigManager.getInstance(getSelectedServer());
-    debug(`ServerHandler instance successfully retrieved for server: ${server}`);
+    const serverHandler = serverManager.createHandler();
+    serverHandler.setServerConfig(serverConfig); // Set the server config
+    debug('ServerHandler instance successfully retrieved for server: ' + server);
 
-    // Attempt to retrieve system info for the updated server
-    const systemInfo = await serverHandler.getSystemInfo();
-    debug(`Successfully retrieved system info for server: ${server}`, { systemInfo });
-
-    res.status(200).json({ message: `Server set to ${server}`, systemInfo });
+    res.status(200).json({ message: 'Server set to ' + server });
   } catch (error) {
     debug('Error in /set-server', {
       error,
@@ -73,9 +74,9 @@ router.post('/set-server', async (req: Request, res: Response) => {
     });
 
     if (error instanceof Error) {
-      debug(`Error retrieving system info for server: ${server}, Error: ${error.message}`);
+      debug('Error setting server: ' + server + ', Error: ' + error.message);
       res.status(500).json({
-        message: `Error retrieving system info for server: ${server}`,
+        message: 'Error setting server: ' + server,
         error: error.message,
       });
     } else {
@@ -84,5 +85,34 @@ router.post('/set-server', async (req: Request, res: Response) => {
     }
   }
 });
+
+/**
+ * Endpoint to get system info for the current server
+ */
+router.get('/system-info', async (req: Request, res: Response) => {
+  try {
+    const serverHandler = getServerHandler(req);
+    const systemInfo = await serverHandler.getSystemInfo();
+    res.status(200).json(systemInfo);
+  } catch (error) {
+    const errorMessage = 'Error retrieving system info: ' + (error instanceof Error ? error.message : 'Unknown error');
+    debug(errorMessage);
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * Safely gets the server handler from the request.
+ * @param {Request} req - The request object.
+ * @returns {ServerHandler} - The server handler.
+ * @throws {Error} - If the server handler is not found.
+ */
+const getServerHandler = (req: Request): ServerHandler => {
+  const serverHandler = req.serverHandler as ServerHandler | undefined;
+  if (!serverHandler) {
+    throw new Error('Server handler not found on request object');
+  }
+  return serverHandler;
+};
 
 export default router;

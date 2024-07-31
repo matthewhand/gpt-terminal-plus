@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
-import { getSelectedServer } from '../utils/GlobalStateHelper';
-import { ServerConfigManager } from '../managers/ServerConfigManager'; // Updated import
 import Debug from 'debug';
+import { ServerHandler } from '../types/ServerHandler';
 
 const debug = Debug('app:commandRoutes');
 const router = express.Router();
@@ -17,6 +16,20 @@ interface RunCommandRequestBody extends Request {
 }
 
 /**
+ * Safely gets the server handler from the request.
+ * @param {Request} req - The request object.
+ * @returns {ServerHandler} - The server handler.
+ * @throws {Error} - If the server handler is not found.
+ */
+const getServerHandler = (req: Request): ServerHandler => {
+  const serverHandler = req.serverHandler as ServerHandler | undefined;
+  if (!serverHandler) {
+    throw new Error('Server handler not found on request object');
+  }
+  return serverHandler;
+};
+
+/**
  * Handler to execute a command on the selected server
  */
 const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) => {
@@ -29,26 +42,15 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
   }
 
   try {
-    // Retrieve the selected server's handler directly using the stored global server setting
-    const selectedServer = getSelectedServer();
-    const serverHandler = await ServerConfigManager.getInstance(selectedServer);
-
-    if (!serverHandler) {
-      const errorMessage = 'Server handler not set for ' + selectedServer + '. Please ensure the server is properly configured.';
-      debug(errorMessage);
-      throw new Error(errorMessage);
-    }
+    const serverHandler = getServerHandler(req);
 
     // Execute the command using the retrieved server handler
-    const effectiveTimeout = timeout ?? 180000; // Default timeout if not provided
-    debug('Executing command: ' + command + ' with timeout: ' + effectiveTimeout + ' on server: ' + selectedServer);
+    const effectiveTimeout = timeout ?? parseInt(process.env.DEFAULT_COMMAND_TIMEOUT || '180000'); // Default timeout if not provided
+    debug('Executing command: ' + command + ' with timeout: ' + effectiveTimeout);
     const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
 
     debug('Command executed successfully: ' + JSON.stringify(executionResult));
-    res.status(200).json({
-      ...executionResult,
-      selectedServer
-    });
+    res.status(200).json(executionResult);
   } catch (error) {
     const errorMessage = 'Error executing command: ' + (error instanceof Error ? error.message : 'Unknown error');
     debug(errorMessage);
