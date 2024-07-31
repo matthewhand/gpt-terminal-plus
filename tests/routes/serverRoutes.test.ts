@@ -9,11 +9,13 @@ import { SystemInfo } from '../../src/types/SystemInfo';
 const mockServers: ServerConfig[] = [
   {
     host: 'localhost',
+    type: 'ssh',  // Add type property
     username: 'user',
     privateKeyPath: '/path/to/private/key',
   },
   {
     host: 'user2@remotehost',
+    type: 'ssh',  // Add type property
     username: 'user2',
     privateKeyPath: '/path/to/user2/private/key',
   },
@@ -88,7 +90,7 @@ describe('Server Routes', () => {
         .post('/set-server')
         .send({ server: serverToSet });
 
-      expect(response.status).toBe(500); // Corrected syntax
+      expect(response.status).toBe(500);
       expect(response.body).toEqual({
         message: `Error retrieving system info for server: ${serverToSet}`,
         error: 'Server not in predefined list.',
