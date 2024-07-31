@@ -1,4 +1,4 @@
-import { ServerHandler } from '../handlers/ServerHandler';
+import { ServerHandler } from '../handlers/AbstractServerHandler';
 
 /**
  * Extends the Express Request interface to include custom properties.
