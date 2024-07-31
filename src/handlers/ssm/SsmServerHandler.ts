@@ -1,4 +1,5 @@
 import { ServerHandler } from '../../types/ServerHandler';
+import { SystemInfo, PaginatedResponse } from '../../types';
 
 export interface SsmServerHandler extends ServerHandler {
   executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;  // Common methods

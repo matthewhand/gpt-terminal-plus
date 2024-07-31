@@ -1,4 +1,4 @@
-import { createFile } from '../../src/handlers/local/functions/createFile';
+import { createFile } from '../../src/handlers/local/actions/createFile';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,6 +13,10 @@ describe('LocalServerHandler', () => {
         // Clean up created files
         if (fs.existsSync(fullPath)) {
             fs.unlinkSync(fullPath);
+        }
+        // Clean up created directories
+        if (fs.existsSync(directory)) {
+            fs.rmdirSync(directory, { recursive: true });
         }
     });
 

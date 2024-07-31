@@ -25,11 +25,22 @@ class LocalServer extends BaseServerHandler implements LocalServerHandler {
   }
 
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    const result = actions.createFile(directory, filename, content, backup);
-    if (this.code) {
-      await actions.executeCommand('code', 0, `${directory}/${filename}`);
+    // Implementing createFile function for local protocol
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.join(directory, filename);
+
+    if (backup && fs.existsSync(filePath)) {
+      const backupPath = `${filePath}.bak`;
+      fs.copyFileSync(filePath, backupPath);
     }
-    return result;
+
+    fs.writeFileSync(filePath, content);
+
+    if (this.code) {
+      await this.executeCommand(`code ${filePath}`);
+    }
+    return true;
   }
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {

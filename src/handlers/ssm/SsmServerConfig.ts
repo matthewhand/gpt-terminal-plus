@@ -1,6 +1,7 @@
 import { ServerConfig } from '../../types/ServerConfig';
 
 export interface SsmServerConfig extends ServerConfig {
-  region?: string;
-  instanceId?: string;
+  protocol: 'ssm';
+  instanceId: string;
+  region: string;
 }

@@ -1,13 +1,12 @@
 export interface ServerConfig {
+  protocol: 'ssh' | 'ssm' | 'local';
   host: string;
-  username?: string;
-  protocol?: 'ssh' | 'ssm' | 'local';
-  posix?: boolean;
-  cleanupScripts?: boolean;
-  privateKeyPath?: string;
-  port?: number;
-  region?: string;
-  instanceId?: string;
-  systemInfo?: 'local' | 'python' | 'powershell' | 'auto';
+  systemInfo?: 'local' | 'python' | 'powershell' | 'auto'; // TODO: Review 'auto'
   shell?: string;
+  defaultDirectory?: string;  // New property for default directory
+  username?: string;          // Add username
+  privateKeyPath?: string;    // Add privateKeyPath
+  port?: number;              // Add port
+  instanceId?: string;        // Add instanceId for SSM
+  region?: string;            // Add region for SSM
 }
