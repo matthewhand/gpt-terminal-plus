@@ -1,21 +1,17 @@
-# Extend from the base image
-FROM gpt-terminal-plus:latest
-
-# Set the working directory
+FROM node:18-slim AS builder
 WORKDIR /app
-
-# Install necessary dependencies
+COPY package*.json ./
+RUN npm install --legacy-peer-deps
+COPY . .
+RUN npm run build
+FROM node:18-slim
+WORKDIR /app
 RUN apt-get update && \
-    apt-get install -y python3-pip python3-venv && \
+    apt-get install -y python3 python3-pip python3-venv && \
     apt-get clean
-
-# Create a virtual environment and install AWS CLI in it
 RUN python3 -m venv /opt/aws-cli && \
     /opt/aws-cli/bin/pip install awscli && \
     ln -s /opt/aws-cli/bin/aws /usr/local/bin/aws
-
-# Copy the rest of the application code
-COPY . .
-
-# Command to run the application
+COPY --from=builder /app .
+EXPOSE 5004
 CMD ["node", "dist/index.js"]
