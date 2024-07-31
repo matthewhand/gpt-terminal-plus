@@ -9,13 +9,11 @@ import { SystemInfo } from '../../src/types/SystemInfo';
 const mockServers: ServerConfig[] = [
   {
     host: 'localhost',
-    protocol: 'ssh', // Assuming protocol is a required property
     username: 'user',
     privateKeyPath: '/path/to/private/key',
   },
   {
     host: 'user2@remotehost',
-    protocol: 'ssh',
     username: 'user2',
     privateKeyPath: '/path/to/user2/private/key',
   },
