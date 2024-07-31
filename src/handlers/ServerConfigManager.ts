@@ -1,34 +1,41 @@
 import { ServerConfig } from '../types/ServerConfig';
-import { ServerHandler } from '../types/ServerHandler';
-import LocalServer from './local/LocalServerHandlerImplementation';
-import SshServer from './ssh/SshServerHandlerImplementation';
-import SsmServer from './ssm/SsmServerHandlerImplementation';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
+import { SshServerHandler } from '../handlers/ssh/SshServerHandler';
+import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
+import debug from 'debug';
 
-class ServerConfigManager {
-  private config: ServerConfig;
-  private handler: ServerHandler;
+const serverConfigManagerDebug = debug('app:ServerConfigManager');
 
-  constructor(config: ServerConfig) {
-    this.config = config;
-    this.handler = this.createHandler(config);
+export class ServerConfigManager {
+  private serverConfig: ServerConfig;
+
+  constructor(serverConfig: ServerConfig) {
+    this.serverConfig = serverConfig;
+    serverConfigManagerDebug(`ServerConfigManager created for ${serverConfig.host}`);
   }
 
-  private createHandler(config: ServerConfig): ServerHandler {
-    switch (config.protocol) {
+  getServerConfig(): ServerConfig {
+    serverConfigManagerDebug('Retrieving server configuration');
+    return this.serverConfig;
+  }
+
+  setServerConfig(serverConfig: ServerConfig): void {
+    this.serverConfig = serverConfig;
+    serverConfigManagerDebug('Server configuration updated');
+  }
+
+  createHandler(): LocalServerHandler | SshServerHandler | SsmServerHandler {
+    const { protocol } = this.serverConfig;
+
+    switch (protocol) {
       case 'local':
-        return new LocalServer(config);
+        return new LocalServerHandler(this.serverConfig);
       case 'ssh':
-        return new SshServer(config);
+        return new SshServerHandler(this.serverConfig);
       case 'ssm':
-        return new SsmServer(config);
+        return new SsmServerHandler(this.serverConfig);
       default:
-        throw new Error('Invalid server type');
+        throw new Error(`Unsupported protocol: ${protocol}`);
     }
   }
-
-  public getHandler(): ServerHandler {
-    return this.handler;
-  }
 }
-
-export { ServerConfigManager };

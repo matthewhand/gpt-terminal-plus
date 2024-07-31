@@ -8,14 +8,14 @@ import { SystemInfo } from '../../src/types/SystemInfo';
 // Define mock servers
 const mockServers: ServerConfig[] = [
   {
+    protocol: 'local',
     host: 'localhost',
-    type: 'ssh',  // Add type property
     username: 'user',
     privateKeyPath: '/path/to/private/key',
   },
   {
+    protocol: 'ssh',
     host: 'user2@remotehost',
-    type: 'ssh',  // Add type property
     username: 'user2',
     privateKeyPath: '/path/to/user2/private/key',
   },
@@ -92,7 +92,7 @@ describe('Server Routes', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({
-        message: `Error retrieving system info for server: ${serverToSet}`,
+        message: 'Error retrieving system info for server: ' + serverToSet,
         error: 'Server not in predefined list.',
       });
     });
