@@ -14,5 +14,6 @@ services:
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
     volumes:
-      - ../../../.ssh:/root/.ssh:rw
+      # Mount volume for SSH credentials
+      - ~/.ssh:/root/.ssh:rw
     restart: unless-stopped

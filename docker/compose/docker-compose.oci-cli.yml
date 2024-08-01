@@ -16,5 +16,6 @@ services:
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
     volumes:
+      # Mount volume for OCI credentials
       - ~/.oci:/root/.oci:ro
     restart: unless-stopped

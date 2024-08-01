@@ -13,4 +13,5 @@ services:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
+    # Uses Notion SDK
     restart: unless-stopped
