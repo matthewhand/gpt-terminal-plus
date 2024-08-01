@@ -1,14 +1,15 @@
 services:
   app:
+    container_name: ssh-cli-app
     build:
       context: ../..
-      dockerfile: docker/Dockerfile.terminal
+      dockerfile: docker/Dockerfile.ssh-cli
     ports:
       - "5005:5004"
     env_file:
       - ../../.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_DEV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
     volumes:

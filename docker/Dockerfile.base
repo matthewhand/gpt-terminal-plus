@@ -9,11 +9,5 @@ RUN apt-get update && \
     apt-get install -y python3 python3-pip python3-venv && \
     apt-get clean
 
-# Create a virtual environment and install OCI CLI in it
-RUN python3 -m venv /opt/oci-cli-env && \
-    /opt/oci-cli-env/bin/pip install --upgrade pip && \
-    /opt/oci-cli-env/bin/pip install --no-cache-dir oci-cli && \
-    ln -s /opt/oci-cli-env/bin/oci /usr/local/bin/oci
-
 # Expose the application port
 EXPOSE 5004

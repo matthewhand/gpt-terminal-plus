@@ -1,0 +1,17 @@
+FROM node:18-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Install necessary dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Set environment variable for the build process
+ENV NODE_ENV=development
+
+# Command to keep the container running
+CMD ["tail", "-f", "/dev/null"]

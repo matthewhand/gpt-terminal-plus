@@ -1,18 +1,9 @@
 services:
-  base:
-    build:
-      context: ../..
-      dockerfile: docker/Dockerfile.base
-    image: common-base-image
-    restart: unless-stopped
-
   app:
+    container_name: oci-cli-app
     build:
       context: ../..
       dockerfile: docker/Dockerfile.oci-cli
-    image: oci:latest
-    depends_on:
-      - base
     ports:
       - "5006:5004"
     env_file:

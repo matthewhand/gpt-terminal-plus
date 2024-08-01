@@ -1,17 +1,15 @@
 services:
   app:
+    container_name: aws-cli-app
     build:
       context: ../..
-      dockerfile: docker/Dockerfile.aws
-    image: aws:latest
-    depends_on:
-      - base
+      dockerfile: docker/Dockerfile.aws-cli
     ports:
       - "5007:5004"
     env_file:
       - ../../.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}

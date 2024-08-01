@@ -76,9 +76,9 @@ request_certbot() {
 
 # Services to be launched with their respective ports
 services=(
-  "terminal:5005:docker/compose/docker-compose.terminal.yml"
-  "oci:5006:docker/compose/docker-compose.oci-cli.yml"
-  "aws:5007:docker/compose/docker-compose.aws.yml"
+  "ssh-cli:5005:docker/compose/docker-compose.ssh-cli.yml"
+  "oci-cli:5006:docker/compose/docker-compose.oci-cli.yml"
+  "aws-cli:5007:docker/compose/docker-compose.aws-cli.yml"
   "notions:5008:docker/compose/docker-compose.notions.yml"
   "joplin:5009:docker/compose/docker-compose.joplin.yml"
 )
