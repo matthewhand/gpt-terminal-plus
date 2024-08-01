@@ -1,5 +1,10 @@
-# Use the base Dockerfile
-FROM base AS builder
+FROM common-base-image AS builder
+
+WORKDIR /app
 
 # Install Joplin CLI
 RUN npm install -g joplin
+
+EXPOSE 5004
+
+CMD ["joplin"]

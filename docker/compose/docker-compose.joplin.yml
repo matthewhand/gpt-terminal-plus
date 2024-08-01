@@ -3,12 +3,13 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.joplin
+    container_name: joplin-cli-app
     ports:
-      - "5009:5004"
+      - "5005:5004"
     env_file:
       - ../../.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
     restart: unless-stopped
