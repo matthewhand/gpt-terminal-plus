@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.notion-sdk
+    container_name: notion-sdk-app
+    ports:
+      - "5009:5004"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+    restart: unless-stopped
