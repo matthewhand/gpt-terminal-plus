@@ -15,6 +15,7 @@
 - [Quick Start Guide](#quick-start-guide)
 - [Advanced Usage](#advanced-usage)
 - [Installation](#installation)
+- [Customizing the Solution Stack](#customizing-the-solution-stack)
 - [Contributing](#contributing)
 - [FAQ](#faq)
 - [License](#license)
@@ -124,9 +125,17 @@ Example `local` configuration with `code`:
 }
 ```
 
-## Chatbot Integrations
+## Customizing the Solution Stack
 
-Refer to [Setting Up ChatGPT Custom GPT](docs/CHATGPT_configuration.md) for instructions on setting up ChatGPT Custom GPT.
+The `gpt-terminal-plus` solution stack can be customized to fit specific needs. Each service, such as `aws-cli`, `oci-cli`, `ssh-cli`, `joplin`, and `notion-sdk`, is containerized using Docker, and configurations can be adjusted through their respective Docker Compose files.
+
+### Examples of Customization
+
+- **Adding New Services**: You can add new services by creating new directories with their own `Dockerfile` and `docker-compose.yml`.
+- **Adjusting Environment Variables**: Modify the `.env` file or directly in the Docker Compose files to change settings such as ports, API tokens, and other configurations.
+- **Updating Dockerfiles**: Customize the `Dockerfile` in each service directory to add or remove dependencies, change build steps, or adjust runtime commands.
+
+Refer to the `docs/DESIGN.docker.md` for more detailed instructions on customizing and extending the solution stack.
 
 ## Contributing
 
