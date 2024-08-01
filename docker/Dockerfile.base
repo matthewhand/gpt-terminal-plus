@@ -1,13 +1,13 @@
-# docker/Dockerfile.base
 FROM node:18-slim
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Install necessary dependencies for the runtime environment
 RUN apt-get update && \
     apt-get install -y python3 python3-pip python3-venv && \
     apt-get clean
 
-# Expose the application port
+COPY docker/check_api_token.sh /usr/local/bin/check_api_token.sh
+RUN chmod +x /usr/local/bin/check_api_token.sh
+RUN /usr/local/bin/check_api_token.sh
+
 EXPOSE 5004
