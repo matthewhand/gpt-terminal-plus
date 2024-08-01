@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: ../..
-      dockerfile: docker/Dockerfile.oci
+      dockerfile: docker/Dockerfile.oci-cli
     ports:
       - "5006:5004"
     env_file:
