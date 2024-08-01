@@ -74,18 +74,20 @@ router.post('/create-file', async (req: Request, res: Response) => {
  * Route to update a file by replacing a pattern with a replacement.
  */
 router.post('/update-file', async (req: Request, res: Response) => {
-  const { filename, pattern, replacement, backup = true, directory = '' } = req.body;
+  const { filename, pattern, replacement, backup = true, directory } = req.body;
   try {
     const serverHandler = getServerHandler(req);
     const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
-    const fullPath = path.join(targetDirectory, filename);
+    const fullPath = filename.includes('/') ? filename : path.join(targetDirectory, filename);
+
     const updateResult = await serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup);
-    debug('File update attempted: ' + fullPath + ', pattern: ' + pattern + ', replacement: ' + replacement + ', success: ' + updateResult);
+    debug(`File update attempted: ${fullPath}, pattern: ${pattern}, replacement: ${replacement}, success: ${updateResult}`);
+
     res.status(updateResult ? 200 : 400).json({
       message: updateResult ? 'File updated successfully.' : 'Failed to update the file.'
     });
   } catch (err: unknown) {
-    debug('Error updating file: ' + (err instanceof Error ? err.message : String(err)));
+    debug(`Error updating file: ${err instanceof Error ? err.message : String(err)}`);
     handleServerError(err, res, 'Error updating file');
   }
 });
@@ -94,7 +96,7 @@ router.post('/update-file', async (req: Request, res: Response) => {
  * Route to amend a file by appending content to it.
  */
 router.post('/amend-file', async (req: Request, res: Response) => {
-  const { filename, content, directory = '' } = req.body;
+  const { filename, content, directory } = req.body;
   try {
     const serverHandler = getServerHandler(req);
     const targetDirectory = directory || await serverHandler.presentWorkingDirectory();

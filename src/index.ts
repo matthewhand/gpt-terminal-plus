@@ -148,8 +148,8 @@ const main = (): void => {
 
     if (process.env.HTTPS_ENABLED === "true") {
       console.debug("HTTPS is enabled. Setting up HTTPS server.");
-      const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH!, "utf9");
-      const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH!, "utf9");
+      const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH!, "utf8");
+      const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH!, "utf8");
       const credentials = { key: privateKey, cert: certificate };
       server = https.createServer(credentials, app);
     } else {
