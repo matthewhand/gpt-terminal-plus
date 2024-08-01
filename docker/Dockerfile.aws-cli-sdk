@@ -2,21 +2,9 @@ FROM common-base-image AS builder
 
 WORKDIR /app
 
-# Ensure Python3 and pip3 are installed
-RUN apt-get update && \
-    apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-dev \
-    build-essential
-
 # Install Node.js dependencies
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
-
-# Install Python boto3
-RUN pip3 install --upgrade pip && \
-    pip3 install boto3
+RUN npm install --legacy-peer-deps @aws-sdk/client-s3 @aws-sdk/client-ec2
 
 COPY . .
 
