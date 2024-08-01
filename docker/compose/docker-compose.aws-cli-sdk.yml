@@ -5,7 +5,7 @@ services:
       dockerfile: docker/Dockerfile.aws-cli-sdk
     container_name: aws-cli-sdk-app
     ports:
-      - "5007:5004"
+      - "5008:5004"
     env_file:
       - ../../.env
     environment:
