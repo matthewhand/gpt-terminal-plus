@@ -7,7 +7,7 @@ app = 'gpt-aws-cli'
 primary_region = 'syd'
 
 [build]
-  dockerfile = "docker/Dockerfile.base"
+  dockerfile = "../docker/Dockerfile.base"
 
 [env]
   NODE_CONFIG_DIR = '/data/config'
