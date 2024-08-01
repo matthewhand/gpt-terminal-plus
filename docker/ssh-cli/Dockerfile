@@ -1,4 +1,4 @@
-FROM common-base-image AS builder
+FROM gpt-terminal-plus AS builder-image AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY . .
 
 RUN npm run build
 
-FROM common-base-image
+FROM gpt-terminal-plus AS builder-image
 
 WORKDIR /app
 
