@@ -1,17 +1,13 @@
+# docker/Dockerfile.base
 FROM node:18-slim
 
-# Set the working directory
+# Set the working directory inside the container
 WORKDIR /app
 
-# Install necessary dependencies
-COPY package*.json ./
-RUN npm install
+# Install necessary dependencies for the runtime environment
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    apt-get clean
 
-# Copy the rest of the application code
-COPY . .
-
-# Set environment variable for the build process
-ENV NODE_ENV=development
-
-# Command to keep the container running
-CMD ["tail", "-f", "/dev/null"]
+# Expose the application port
+EXPOSE 5004

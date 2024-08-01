@@ -3,7 +3,6 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.ssh-cli
-    image: ssh-cli:latest
     container_name: ssh-cli-app
     ports:
       - "5005:5004"
