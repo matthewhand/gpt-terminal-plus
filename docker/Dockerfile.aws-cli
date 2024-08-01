@@ -1,19 +1,22 @@
-FROM common-base-image AS builder
+# Dockerfile for aws-cli
+# Base image is common-base-image
 
-WORKDIR /app
-
-# Install Node.js dependencies
-COPY package*.json ./
-RUN npm install --legacy-peer-deps @aws-sdk/client-s3 @aws-sdk/client-ec2
-
-COPY . .
-
-RUN npm run build
-
+# Use common-base-image as the base image
 FROM common-base-image
 
-WORKDIR /app
+# Install aws-cli and the aws-sdk-js
+RUN apt-get update \
+    && apt-get install -y awscli \
+    && npm install aws-sdk \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app .
+# Create and set the working directory
+WORKDIR /root
 
-CMD ["node", "dist/index.js"]
+# Specify the volume for AWS credentials
+# ~/.aws/ is used for AWS credentials etc
+VOLUME ["/root/.aws"]
+
+# Entry point for the container
+ENTRYPOINT ["/bin/bash"]
