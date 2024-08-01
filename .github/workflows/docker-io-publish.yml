@@ -26,5 +26,6 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         context: .
+        file: docker/Dockerfile.base
         push: true
         tags: ${{ secrets.DOCKER_IO_USERNAME }}/gpt-terminal-plus:latest
