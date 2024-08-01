@@ -13,6 +13,4 @@ services:
       - API_TOKEN=${API_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
-    volumes:
-      - /mnt/models/lib/oracle-cli:/opt/oracle-cli
     restart: unless-stopped
