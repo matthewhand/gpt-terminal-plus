@@ -3,9 +3,10 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.aws-cli
+    image: aws-cli-app
     container_name: aws-cli-app
     ports:
-      - "5007:5004"
+      - "5010:5004"
     env_file:
       - ../../.env
     environment:

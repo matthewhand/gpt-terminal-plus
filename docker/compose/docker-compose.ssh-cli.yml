@@ -3,9 +3,10 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.ssh-cli
+    image: ssh-cli-app
     container_name: ssh-cli-app
     ports:
-      - "5005:5004"
+      - "5008:5004"
     env_file:
       - ../../.env
     environment:

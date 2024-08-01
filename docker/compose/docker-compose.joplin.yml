@@ -3,9 +3,10 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.joplin
+    image: joplin-cli-app
     container_name: joplin-cli-app
     ports:
-      - "5005:5004"
+      - "5011:5004"
     env_file:
       - ../../.env
     environment:

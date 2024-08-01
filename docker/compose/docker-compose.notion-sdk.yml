@@ -3,9 +3,10 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.notion-sdk
+    image: notion-sdk-app
     container_name: notion-sdk-app
     ports:
-      - "5009:5004"
+      - "5012:5004"
     env_file:
       - ../../.env
     environment:
