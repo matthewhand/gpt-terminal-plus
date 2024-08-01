@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y \
 # Set work directory
 WORKDIR /app
 
-# Upgrade pip
-RUN pip3 install --upgrade pip
+# Create a virtual environment and install pip
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --upgrade pip
+
+# Ensure the virtual environment is used for subsequent commands
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Print a warning if API_TOKEN is not detected in the .env
 RUN if [ -z "$API_TOKEN" ]; then echo "WARNING: API_TOKEN not detected. Ensure it is provided in the docker-compose file."; fi
