@@ -1,4 +1,4 @@
-FROM gpt-terminal-plus AS builder-image AS builder
+FROM gpt-terminal-plus AS builder
 
 WORKDIR /app
 
