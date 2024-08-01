@@ -1,8 +1,8 @@
 # ================================
 # Stage 1: Build the application
 # ================================
-# Use Node 18 as the base image for the build stage
-FROM node:18-slim AS builder
+# Use the common base image for the build stage
+FROM common-base-image AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -22,23 +22,14 @@ RUN npm run build
 # ================================
 # Stage 2: Create the production image
 # ================================
-# Use Node 18 as the base image for the production stage
-FROM node:18-slim
+# Use the common base image for the production stage
+FROM common-base-image
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install necessary dependencies for the runtime environment
-RUN apt-get update &&     apt-get install -y python3 python3-pip python3-venv &&     apt-get clean
-
-# Create a virtual environment and install OCI CLI in it
-RUN python3 -m venv /opt/oci-cli-env &&     /opt/oci-cli-env/bin/pip install --upgrade pip &&     /opt/oci-cli-env/bin/pip install --no-cache-dir oci-cli &&     ln -s /opt/oci-cli-env/bin/oci /usr/local/bin/oci
-
 # Copy built files from the builder stage to the working directory
 COPY --from=builder /app .
-
-# Expose the application port
-EXPOSE 5004
 
 # Define the command to run the application
 CMD ["node", "dist/index.js"]
