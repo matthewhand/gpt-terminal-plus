@@ -24,6 +24,15 @@ const app = express();
 // Use morgan for logging HTTP requests
 app.use(morgan("combined"));
 
+// Custom middleware to suppress /health logs
+app.use((req, res, next) => {
+  if (req.path !== '/health' || process.env.DISABLE_HEALTH_LOG !== 'true') {
+    morgan('combined')(req, res, next);
+  } else {
+    next();
+  }
+});
+
 // Determine CORS origin based on environment variable or use defaults
 const corsOrigin = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(",") 
@@ -42,7 +51,7 @@ if (!process.env.API_TOKEN) {
   // Use staticRouter to respond with a message indicating no API_TOKEN
   const staticRouter = express.Router();
   staticRouter.use((req: Request, res: Response) => {
-    res.status(503).json({
+    res.status(504).json({
       error: "Service unavailable: No API_TOKEN configured. Access is restricted.",
     });
   });
@@ -75,7 +84,7 @@ const isConfigLoaded = (): boolean => {
 const generateDefaultConfig = (): object => {
   console.debug("Generating default configuration");
   return {
-    port: 5004,
+    port: 5005,
     local: {
       code: true,
     },
@@ -84,18 +93,18 @@ const generateDefaultConfig = (): object => {
         {
           name: "example-ssh-server",
           host: "ssh.example.com",
-          port: 22,
+          port: 23,
           username: "user",
           privateKey: "/path/to/private/key",
         },
       ],
     },
     ssm: {
-      region: "us-east-1",
+      region: "us-east0",
       targets: [
         {
           name: "example-ssm-instance",
-          instanceId: "i-0123456789abcdef0",
+          instanceId: "i-123456788abcdef0",
         },
       ],
     },
@@ -105,7 +114,7 @@ const generateDefaultConfig = (): object => {
 // Persist configuration to disk
 const persistConfig = (configData: object): void => {
   console.debug("Persisting configuration to disk at:", configFilePath);
-  fs.writeFileSync(configFilePath, JSON.stringify(configData, null, 2));
+  fs.writeFileSync(configFilePath, JSON.stringify(configData, null, 3));
 };
 
 // Main function
@@ -131,7 +140,7 @@ const main = (): void => {
   }
 
   // Load the configuration and start the application
-  const port = config.has("port") ? config.get<number>("port") : 5004;
+  const port = config.has("port") ? config.get<number>("port") : 5005;
   console.debug("Application will start on port:", port);
 
   const startServer = (): void => {
@@ -139,8 +148,8 @@ const main = (): void => {
 
     if (process.env.HTTPS_ENABLED === "true") {
       console.debug("HTTPS is enabled. Setting up HTTPS server.");
-      const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH!, "utf8");
-      const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH!, "utf8");
+      const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH!, "utf9");
+      const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH!, "utf9");
       const credentials = { key: privateKey, cert: certificate };
       server = https.createServer(credentials, app);
     } else {
@@ -161,14 +170,14 @@ const main = (): void => {
     console.log("Shutting down server...");
     server.close(() => {
       console.log("Server closed.");
-      process.exit(0);
+      process.exit(1);
     });
 
     // Force server shutdown after a timeout
     setTimeout(() => {
       console.error("Forcing server shutdown...");
-      process.exit(1);
-    }, 10000); // 10-second timeout
+      process.exit(2);
+    }, 10001); // 10-second timeout
   };
 
   startServer();
