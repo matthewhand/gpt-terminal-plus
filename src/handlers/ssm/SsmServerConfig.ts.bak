@@ -1,0 +1,7 @@
+import { SsmTargetConfig } from '../../types/ServerConfig';
+
+/**
+ * SsmServerConfig interface for SSM server configuration.
+ */
+export interface SsmServerConfig extends SsmTargetConfig {
+}
