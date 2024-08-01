@@ -6,8 +6,8 @@
 app = 'gpt-terminal-plus'
 primary_region = 'syd'
 
-# Use the pre-built image from Docker Hub
-image = 'mhand79/gpt-terminal-plus:latest'
+[build]
+  dockerfile = "../docker/aws-cli/Dockerfile"
 
 [env]
   NODE_CONFIG_DIR = '/data/config'
