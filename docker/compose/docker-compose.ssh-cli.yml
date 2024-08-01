@@ -6,7 +6,7 @@ services:
     image: ssh-cli-app
     container_name: ssh-cli-app
     ports:
-      - "5008:5004"
+      - "5013:5004"
     env_file:
       - ../../.env
     environment:
