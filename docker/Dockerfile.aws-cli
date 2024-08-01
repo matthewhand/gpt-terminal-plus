@@ -1,48 +1,19 @@
-# ================================
-# Stage 1: Build the application
-# ================================
-# Use Node 18 as the base image for the build stage
-FROM node:18-slim AS builder
+FROM common-base-image AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json to the working directory
+# Install Node.js dependencies
 COPY package*.json ./
+RUN npm install --legacy-peer-deps @aws-sdk/client-s3 @aws-sdk/client-ec2
 
-# Install Node.js dependencies, allowing for legacy peer dependencies
-RUN npm install --legacy-peer-deps
-
-# Copy the rest of the application code to the working directory
 COPY . .
 
-# Build the application
 RUN npm run build
 
-# ================================
-# Stage 2: Create the production image
-# ================================
-# Use Node 18 as the base image for the production stage
-FROM node:18-slim
+FROM common-base-image
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Install necessary dependencies for the runtime environment
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip python3-venv && \
-    apt-get clean
-
-# Create a virtual environment and install AWS CLI in it
-RUN python3 -m venv /opt/aws-cli && \
-    /opt/aws-cli/bin/pip install awscli && \
-    ln -s /opt/aws-cli/bin/aws /usr/local/bin/aws
-
-# Copy built files from the builder stage to the working directory
 COPY --from=builder /app .
 
-# Expose the application port
-EXPOSE 5004
-
-# Define the command to run the application
 CMD ["node", "dist/index.js"]
