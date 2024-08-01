@@ -1,4 +1,4 @@
-FROM gpt-terminal-plus AS builder
+FROM mhand79/gpt-terminal-plus:latest AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY . .
 
 RUN npm run build
 
-FROM gpt-terminal-plus AS builder-image
+FROM mhand79/gpt-terminal-plus:latest AS builder-image
 
 WORKDIR /app
 
