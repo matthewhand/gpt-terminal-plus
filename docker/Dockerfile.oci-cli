@@ -29,10 +29,13 @@ FROM node:18-slim
 WORKDIR /app
 
 # Install necessary dependencies for the runtime environment
-RUN apt-get update &&     apt-get install -y python3 python3-pip python3-venv &&     apt-get clean
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    apt-get clean
 
 # Update pip3 and install OCI CLI
-RUN pip3 install --upgrade pip &&     pip3 install --no-cache-dir oci-cli
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir oci-cli
 
 # Copy built files from the builder stage to the working directory
 COPY --from=builder /app .
