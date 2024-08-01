@@ -1,9 +1,9 @@
 services:
   app:
-    container_name: oci-cli-app
     build:
       context: ../..
       dockerfile: docker/Dockerfile.oci-cli
+    container_name: oci-cli-app
     ports:
       - "5006:5004"
     env_file:
@@ -15,5 +15,5 @@ services:
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
     volumes:
-      - ~/.oci:/root/.oci:ro
+      - ../../../.oci:/root/.oci:ro
     restart: unless-stopped
