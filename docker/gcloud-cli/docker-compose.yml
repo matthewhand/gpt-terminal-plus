@@ -1,13 +1,25 @@
 version: "3.8"
+
 services:
   gcloud-cli-app:
     build:
       context: .
       dockerfile: Dockerfile
-    volumes:
-      - ~/.config/gcloud:/root/.config/gcloud
+    container_name: gcloud-cli-app
     ports:
-      - "5004:5004"
+      - "${GCLOUD_CLI_PORT_HOST:-5007}:${GCLOUD_CLI_PORT_CONTAINER:-5004}"
+    env_file:
+      - ../../../.env
     environment:
-      - NODE_ENV=production
-    command: ["gcloud", "init"]
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+      - GCLOUD_PROJECT=${GCLOUD_PROJECT}
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+    volumes:
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+      - ~/.config/gcloud/application_default_credentials.json:/root/.config/gcloud/application_default_credentials.json:ro
+    restart: unless-stopped
+
+volumes:
+  gcloud-config:

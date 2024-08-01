@@ -1,4 +1,4 @@
-FROM gpt-terminal-plus AS builder
+FROM mhand79/gpt-terminal-plus:latest
 
 WORKDIR /app
 
@@ -8,17 +8,10 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
     && apt-get update -y \
     && apt-get install google-cloud-cli -y
 
-COPY . .
+# Set environment variable to use the service account
+ENV GOOGLE_APPLICATION_CREDENTIALS="/root/.config/gcloud/application_default_credentials.json"
 
-RUN npm run build
-
-FROM gpt-terminal-plus AS builder-image
-
-WORKDIR /app
-
-COPY --from=builder /app .
-
-# Set up Google Cloud configuration directory
-VOLUME ["/root/.config/gcloud"]
+# Set the default project
+RUN gcloud config set project YOUR_PROJECT_ID
 
 # CMD ["node", "dist/index.js"] inherited from Dockerfile.base
