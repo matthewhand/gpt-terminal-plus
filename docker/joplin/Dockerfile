@@ -1,0 +1,18 @@
+FROM common-base-image AS builder
+
+WORKDIR /app
+
+# Install Joplin CLI
+RUN npm install --legacy-peer-deps joplin
+
+COPY . .
+
+RUN npm run build
+
+FROM common-base-image
+
+WORKDIR /app
+
+COPY --from=builder /app .
+
+# CMD ["node", "dist/index.js"] inherited from Dockerfile.base

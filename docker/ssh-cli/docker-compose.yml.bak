@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: ssh-cli/Dockerfile
+    container_name: ssh-cli-app
+    ports:
+      - "${SSH_CLI_PORT_HOST:-5005}:${SSH_CLI_PORT_CONTAINER:-5004}"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+    volumes:
+      - ~/.ssh:/root/.ssh:rw
+    restart: unless-stopped

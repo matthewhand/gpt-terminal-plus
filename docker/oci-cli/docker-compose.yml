@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oci-cli-app
+    ports:
+      - "${OCI_CLI_PORT_HOST:-5006}:${OCI_CLI_PORT_CONTAINER:-5004}"
+    env_file:
+      - ../../../.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+      - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
+      - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
+    volumes:
+      - ~/.oci:/root/.oci:ro
+    restart: unless-stopped
