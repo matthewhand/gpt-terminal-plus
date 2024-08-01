@@ -13,16 +13,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Log in to Fly.io Docker registry
-      run: echo "${{ secrets.FLY_API_TOKEN }}" | docker login registry.fly.io -u _json_key --password-stdin
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-    - name: Pull Docker image
-      run: docker pull registry.fly.io/gpt-terminal-plus:latest
+    - name: Log in to Fly.io Docker registry
+      run: |
+        echo "${{ secrets.FLY_DOCKER_REGISTRY_AUTH }}" | base64 --decode | docker login registry.fly.io -u _json_key --password-stdin
+
+    - name: Build and Push Docker image
+      run: |
+        docker build -t registry.fly.io/gpt-terminal-plus-aws:latest -f docker/aws-cli/Dockerfile .
+        docker push registry.fly.io/gpt-terminal-plus-aws:latest
 
     - name: Deploy to Fly.io
       run: |
         curl -L https://fly.io/install.sh | sh
         flyctl auth token
-        flyctl deploy --image registry.fly.io/gpt-terminal-plus:latest
+        flyctl deploy --image registry.fly.io/gpt-terminal-plus-aws:latest
       env:
         FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
