@@ -1,11 +1,16 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { loadActions } from '../../utils/loadActions';
+// Importing actions directly
+// import listFiles from './actions/listFiles';
+import { createFile } from './actions/createFile';
+import { amendFile } from './actions/amendFile';
+import { getSystemInfo } from './actions/getSystemInfo';
+import { updateFile } from './actions/updateFile';
+import { executeCommand } from './actions/executeCommand';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { LocalConfig } from '../../types/ServerConfig';
 import debug from 'debug';
 
-const actions = loadActions(__dirname + '/actions');
 const localServerDebug = debug('app:LocalServer');
 
 /**
@@ -34,10 +39,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     localServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-    if (!actions.executeCommand) {
+    if (!executeCommand) {
       throw new Error('executeCommand action not found');
     }
-    return actions.executeCommand(command, timeout, directory);
+    return executeCommand(command, timeout, directory);
   }
 
   /**
@@ -47,10 +52,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async getSystemInfo(): Promise<SystemInfo> {
     localServerDebug(`Retrieving system info`);
-    if (!actions.getSystemInfo) {
+    if (!getSystemInfo) {
       throw new Error('getSystemInfo action not found');
     }
-    return actions.getSystemInfo();
+    return getSystemInfo('TODO','TODO');
   }
 
   /**
@@ -62,10 +67,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async amendFile(filePath: string, content: string): Promise<boolean> {
     localServerDebug(`Amending file at path: ${filePath}, content: ${content}`);
-    if (!actions.amendFile) {
+    if (!amendFile) {
       throw new Error('amendFile action not found');
     }
-    return actions.amendFile(filePath, content);
+    return amendFile(filePath, content);
   }
 
   /**
@@ -79,10 +84,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
     localServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}`);
-    if (!actions.createFile) {
+    if (!createFile) {
       throw new Error('createFile action not found');
     }
-    return actions.createFile(directory, filename, content, backup);
+    return createFile(directory, filename, content, backup);
   }
 
   /**
@@ -91,13 +96,13 @@ class LocalServer extends AbstractServerHandler {
    * @returns A paginated response with the list of files.
    * @throws {Error} If the listFiles action is not found.
    */
-  async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
-    localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-    if (!actions.listFiles) {
-      throw new Error('listFiles action not found');
-    }
-    return actions.listFiles(params);
-  }
+  // async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
+  //   localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
+  //   if (!listFiles) {
+  //     throw new Error('listFiles action not found');
+  //   }
+  //   return listFiles(params.directory, params.limit, params.offset, params.orderBy);
+  // }
 
   /**
    * Updates a file on the local server.
@@ -110,10 +115,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
     localServerDebug(`Updating file at path: ${filePath}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}`);
-    if (!actions.updateFile) {
+    if (!updateFile) {
       throw new Error('updateFile action not found');
     }
-    return actions.updateFile(filePath, pattern, replacement, backup);
+    return updateFile(filePath, pattern, replacement, backup);
   }
 
   /**
@@ -124,10 +129,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async changeDirectory(directory: string): Promise<boolean> {
     localServerDebug(`Changing directory to: ${directory}`);
-    if (!actions.changeDirectory) {
+    if (!super.changeDirectory) {
       throw new Error('changeDirectory action not found');
     }
-    return actions.changeDirectory(directory);
+    return super.changeDirectory(directory);
   }
 
   /**
@@ -137,10 +142,10 @@ class LocalServer extends AbstractServerHandler {
    */
   async presentWorkingDirectory(): Promise<string> {
     localServerDebug(`Retrieving present working directory`);
-    if (!actions.presentWorkingDirectory) {
+    if (!super.presentWorkingDirectory) {
       throw new Error('presentWorkingDirectory action not found');
     }
-    return actions.presentWorkingDirectory();
+    return super.presentWorkingDirectory();
   }
 }
 

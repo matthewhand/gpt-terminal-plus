@@ -47,7 +47,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
 
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
 
-  abstract listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
+  // abstract listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
 
   abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
 

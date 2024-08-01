@@ -7,7 +7,7 @@ export interface ServerHandler {
   createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
   updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
   amendFile(filePath: string, content: string): Promise<boolean>;
-  listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
+  // listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
   presentWorkingDirectory(): Promise<string>;
   getSystemInfo(): Promise<SystemInfo>;
   executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;

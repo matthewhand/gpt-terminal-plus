@@ -113,22 +113,22 @@ router.post('/amend-file', async (req: Request, res: Response) => {
 /**
  * Route to list files in a directory.
  */
-router.get('/list-files', async (req: Request, res: Response) => {
-  const { directory, limit, offset, orderBy } = req.query as { directory: string, limit?: string, offset?: string, orderBy?: 'datetime' | 'filename' };
+// router.get('/list-files', async (req: Request, res: Response) => {
+//   const { directory, limit, offset, orderBy } = req.query as { directory: string, limit?: string, offset?: string, orderBy?: 'datetime' | 'filename' };
 
-  try {
-    const serverHandler = getServerHandler(req);
-    const files = await serverHandler.listFiles({
-      directory,
-      limit: limit ? parseInt(limit) : undefined,
-      offset: offset ? parseInt(offset) : undefined,
-      orderBy
-    });
-    res.status(200).json(files);
-  } catch (error) {
-    debug('Error listing files: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    res.status(500).json({ error: 'Failed to list files' });
-  }
-});
+//   try {
+//     const serverHandler = getServerHandler(req);
+//     const files = await serverHandler.listFiles({
+//       directory,
+//       limit: limit ? parseInt(limit) : undefined,
+//       offset: offset ? parseInt(offset) : undefined,
+//       orderBy
+//     });
+//     res.status(200).json(files);
+//   } catch (error) {
+//     debug('Error listing files: ' + (error instanceof Error ? error.message : 'Unknown error'));
+//     res.status(500).json({ error: 'Failed to list files' });
+//   }
+// });
 
 export default router;

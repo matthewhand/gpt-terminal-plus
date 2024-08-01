@@ -1,89 +1,35 @@
-import { SshHostConfig } from '../../../types/ServerConfig'; // Corrected import path
-import { Client, ConnectConfig } from 'ssh2';
-import fs from 'fs';
-import Debug from 'debug';
+import { exec } from 'child_process';
+import util from 'util';
+import { SSHConnectionConfig } from '@types';
+import { SystemInfo } from '@types';
+import { parseUptime } from '@utils/uptimeUtils';
+import { parseDiskUsage } from '@utils/diskUtils';
+import { parseMemoryUsage } from '@utils/memoryUtils';
+import { parseCPUUsage } from '@utils/cpuUtils';
 
-const debug = Debug('app:ssh-system-info-retriever');
+const execPromise = util.promisify(exec);
 
-export class SSHSystemInfoRetriever {
-  private client: Client;
+/**
+ * Retrieves system information from a remote SSH server.
+ * @param {SSHConnectionConfig} config - The SSH connection configuration.
+ * @returns {Promise<SystemInfo>} - A promise that resolves to the system information.
+ */
+export const getSystemInfo = async (config: SSHConnectionConfig): Promise<SystemInfo> => {
+  try {
+    const [uptime, diskUsage, memoryUsage, cpuUsage] = await Promise.all([
+      execPromise('uptime'),
+      execPromise('df -h'),
+      execPromise('free -m'),
+      execPromise('mpstat')
+    ]);
 
-  constructor() {
-    this.client = new Client();
+    return {
+      uptime: parseUptime(uptime.stdout),
+      diskUsage: parseDiskUsage(diskUsage.stdout),
+      memoryUsage: parseMemoryUsage(memoryUsage.stdout),
+      cpuUsage: parseCPUUsage(cpuUsage.stdout)
+    };
+  } catch (error) {
+    throw new Error(`Failed to retrieve system info: ${error.message}`);
   }
-
-  /**
-   * Connects to an SSH server using the provided configuration.
-   * @param config - The SSH server configuration.
-   * @returns A promise that resolves when the connection is established.
-   */
-  connect(config: SshHostConfig): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const connectionConfig: ConnectConfig = {
-        host: config.host,
-        port: config.port ?? 22, // Default to 22 if port is not provided
-        username: config.username,
-        privateKey: fs.readFileSync(config.privateKeyPath)
-      };
-
-      this.client.on('ready', () => {
-        debug('SSH connection established');
-        resolve();
-      }).on('error', (err) => {
-        debug('SSH connection error: ' + err.message);
-        reject(err);
-      }).connect(connectionConfig);
-    });
-  }
-
-  /**
-   * Retrieves system information from the SSH server.
-   * @param config - The SSH server configuration.
-   * @returns A promise that resolves with the system information.
-   */
-  async retrieveSystemInfo(config: SshHostConfig): Promise<any> {
-    debug('Retrieving system info from SSH server');
-    const command = 'uname -a';
-    const { stdout } = await this.executeCommand(command);
-    return { systemInfo: stdout.trim() };
-  }
-
-  /**
-   * Executes a command on the SSH server.
-   * @param command - The command to execute.
-   * @returns A promise that resolves with the command's output.
-   */
-  executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
-    return new Promise((resolve, reject) => {
-      this.client.exec(command, (err, stream) => {
-        if (err) {
-          debug('Command execution error: ' + err.message);
-          return reject(err);
-        }
-
-        let stdout = '';
-        let stderr = '';
-
-        stream.on('data', (data: Buffer) => {
-          stdout += data.toString();
-        }).stderr.on('data', (data: Buffer) => {
-          stderr += data.toString();
-        }).on('close', (code: number) => {
-          if (code === 0) {
-            resolve({ stdout, stderr });
-          } else {
-            reject(new Error(`Command failed with exit code ${code}`));
-          }
-        });
-      });
-    });
-  }
-
-  /**
-   * Disconnects from the SSH server.
-   */
-  disconnect(): void {
-    this.client.end();
-    debug('SSH connection closed');
-  }
-}
+};
