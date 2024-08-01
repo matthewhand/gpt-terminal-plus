@@ -1,4 +1,4 @@
-name: Deploy AWS CLI App to Fly.io
+name: Deploy AWS CLI App to Fly.io (depends on base image)
 
 on:
   push:
@@ -19,6 +19,6 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to Fly.io
-        run: flyctl deploy -c fly_configs/fly-aws-app.toml --wait-timeout 300
+        run: flyctl deploy -c fly_configs/fly-aws-cli.toml --wait-timeout 300
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
