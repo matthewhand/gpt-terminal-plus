@@ -2,6 +2,12 @@ FROM common-base-image AS builder
 
 WORKDIR /app
 
+# Install system dependencies for Python and boto3
+RUN apt-get update && \
+    apt-get install -y \
+    python3-dev \
+    build-essential
+
 # Install Node.js dependencies
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
