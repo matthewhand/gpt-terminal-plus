@@ -21,6 +21,8 @@ find docker -name 'docker-compose.yml' | while read -r compose_file; do
   service_name=$(basename "$(dirname "$compose_file")")
   echo "Starting service '$service_name' with configuration from '$compose_file'..."
   docker compose -p "$service_name" -f "$compose_file" up -d --build
-...
+
+done
+
 # Clean up any dangling images to save disk space
 docker image prune -f

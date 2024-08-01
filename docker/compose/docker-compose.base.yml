@@ -1,6 +1,0 @@
-services:
-  base:
-    build:
-      context: ../..
-      dockerfile: docker/Dockerfile.base
-    image: base:latest
