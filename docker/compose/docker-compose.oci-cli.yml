@@ -1,8 +1,18 @@
 services:
+  base:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile.base
+    image: common-base-image
+    restart: unless-stopped
+
   app:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.oci-cli
+    image: oci:latest
+    depends_on:
+      - base
     ports:
       - "5006:5004"
     env_file:
@@ -13,4 +23,6 @@ services:
       - API_TOKEN=${API_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
+    volumes:
+      - ~/.oci:/root/.oci:ro
     restart: unless-stopped
