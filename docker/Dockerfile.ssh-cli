@@ -1,26 +1,19 @@
-# Use the base image
-FROM node:18-slim
+FROM common-base-image AS builder
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the package.json and package-lock.json
+# Install any additional dependencies if needed
 COPY package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
 COPY . .
 
-# Set environment variable for the build process
-ENV NODE_ENV=development
-
-# Run the build step
 RUN npm run build
 
-# List contents of dist directory for debugging
-RUN ls -R dist
+FROM common-base-image
 
-# Command to run the application
+WORKDIR /app
+
+COPY --from=builder /app .
+
 CMD ["node", "dist/index.js"]

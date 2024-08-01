@@ -2,9 +2,7 @@ FROM common-base-image AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-
-# Install Node.js dependencies and the Notion SDK client
+# Install Notion SDK
 RUN npm install --legacy-peer-deps @notionhq/client
 
 COPY . .
