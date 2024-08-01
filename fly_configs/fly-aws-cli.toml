@@ -3,11 +3,11 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'gpt-aws-cli'
+app = 'gpt-terminal-plus'
 primary_region = 'syd'
 
 [build]
-  dockerfile = "../docker/Dockerfile.base"
+  dockerfile = "../docker/aws-cli/Dockerfile"
 
 [env]
   NODE_CONFIG_DIR = '/data/config'
