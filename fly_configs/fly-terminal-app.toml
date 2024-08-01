@@ -2,7 +2,7 @@ app = "gpt-terminal-plus"
 primary_region = "syd"
 
 [build]
-  dockerfile = "../docker/Dockerfile.gpt-terminal-plus"
+  dockerfile = "../docker/gpt-terminal-plus/Dockerfile"
 
 [env]
   PORT = "5004"
