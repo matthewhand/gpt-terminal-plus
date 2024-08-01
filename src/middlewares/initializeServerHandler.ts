@@ -6,17 +6,17 @@ import { ServerHandler } from '../types/ServerHandler';
 export const initializeServerHandler = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const selectedServer = getSelectedServer();
-    console.log(`Selected server: ${selectedServer}`); // Log selected server
-    const serverManager = new ServerManager(selectedServer);
+    console.log('Selected server:', selectedServer);  // Enhanced debug statement
+    const serverConfig = ServerManager.getServerConfig(selectedServer);
+    console.log('Server configuration:', serverConfig);  // Enhanced debug statement
+    if (!serverConfig) {
+      throw new Error(`Server configuration for host ${selectedServer} not found`);
+    }
+    const serverManager = new ServerManager(serverConfig);
     const handler = serverManager.createHandler();
     req.serverHandler = handler as ServerHandler;
     next();
   } catch (error) {
-    console.error('Error initializing server handler:', error); // Log the error
-    if (error instanceof Error) {
-      res.status(500).json({ error: 'Failed to initialize server handler', details: error.message });
-    } else {
-      res.status(500).json({ error: 'Failed to initialize server handler', details: String(error) });
-    }
+    res.status(500).json({ error: 'Failed to initialize server handler', details: (error as Error).message });
   }
 };

@@ -1,128 +1,76 @@
-import { Client } from 'ssh2';
+import { Client, ConnectConfig } from 'ssh2';
+import { SshHostConfig } from '../types/ServerConfig'; // Corrected import path
 import Debug from 'debug';
-import { ServerConfig } from '../types/ServerConfig';
-import { SystemInfo } from '../types/SystemInfo';
-import fs from 'fs/promises';
-import SSHCommandExecutor from '../utils/SSHCommandExecutor';
-import SSHFileOperations from '../handlers/ssh/components/SSHFileOperations';
 
-// Initialize Debug for logging
-const debug = Debug('app:SSHConnectionManager');
+const debug = Debug('app:ssh-connection-manager');
 
-class SSHConnectionManager {
-    // A static property to hold instances of connection managers indexed by server identifiers
-    private static instances: Record<string, SSHConnectionManager> = {};
+export class SSHConnectionManager {
+  private client: Client;
 
-    // Properties for the SSH client, command executor, and file operations utilities
-    private conn: Client;
-    private commandExecutor: SSHCommandExecutor | null = null;
-    private fileOperations: SSHFileOperations | null = null;
-    private ServerConfig: ServerConfig;
+  constructor() {
+    this.client = new Client();
+  }
 
-    // Private constructor to enforce singleton pattern
-    private constructor(ServerConfig: ServerConfig) {
-        this.conn = new Client();
-        this.ServerConfig = ServerConfig;
-        this.initializeUtilities();
-        this.setupListeners();
-        this.connect();
-    }
+  /**
+   * Connects to an SSH server using the provided configuration.
+   * @param config - The SSH server configuration.
+   * @returns A promise that resolves when the connection is established.
+   */
+  connect(config: SshHostConfig): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const connectionConfig: ConnectConfig = {
+        host: config.host,
+        port: config.port ?? 22,  // Default to 22 if port is not provided
+        username: config.username,
+        privateKey: require('fs').readFileSync(config.privateKeyPath)
+      };
 
-    // Initializes utilities for command execution and file operations
-    private initializeUtilities() {
-        this.commandExecutor = new SSHCommandExecutor(this.conn, this.ServerConfig);
-        this.fileOperations = new SSHFileOperations(this.conn, this.ServerConfig);
-    }
+      this.client.on('ready', () => {
+        debug('SSH connection established');
+        resolve();
+      }).on('error', (err) => {
+        debug('SSH connection error: ' + err.message);
+        reject(err);
+      }).connect(connectionConfig);
+    });
+  }
 
-    // Sets up event listeners for the SSH client to log various connection states
-    private setupListeners() {
-        this.conn.on('ready', () => debug('SSH Connection is ready.'))
-                 .on('error', (err) => debug(`SSH Connection error: ${err.message}`))
-                 .on('end', () => debug('SSH Connection has ended.'));
-    }
-
-    // Connects to the SSH server using the provided server configuration
-    private async connect() {
-        try {
-            // Attempt to read the private key from a path, falling back to a default if not specified
-            const privateKeyPath = this.ServerConfig.privateKeyPath ?? 'path/to/default/privateKey';
-            const privateKey = await fs.readFile(privateKeyPath);
-            this.conn.connect({
-                host: this.ServerConfig.host,
-                port: this.ServerConfig.port || 22,
-                username: this.ServerConfig.username,
-                privateKey: privateKey.toString(),
-            });
-        } catch (error) {
-            debug(`Error connecting to SSH server: ${error}`);
+  /**
+   * Executes a command on the SSH server.
+   * @param command - The command to execute.
+   * @returns A promise that resolves with the command's output.
+   */
+  executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+      this.client.exec(command, (err, stream) => {
+        if (err) {
+          debug('Command execution error: ' + err.message);
+          return reject(err);
         }
-    }
 
-    // Static method to get an instance of SSHConnectionManager for a given server configuration
-    public static async getInstance(ServerConfig: ServerConfig): Promise<SSHConnectionManager> {
-        const identifier = `${ServerConfig.host}:${ServerConfig.port}`;
-        if (!this.instances[identifier]) {
-            const instance = new SSHConnectionManager(ServerConfig);
-            this.instances[identifier] = instance;
-        }
-        return this.instances[identifier];
-    }
+        let stdout = '';
+        let stderr = '';
 
-    // Executes a command on the remote SSH server and returns the result
-    public async executeCommand(command: string, options?: { cwd?: string; timeout?: number; }): Promise<{ stdout: string; stderr: string; }> {
-        if (!this.commandExecutor) {
-            throw new Error('Command executor is not initialized.');
-        }
-        return this.commandExecutor.executeCommand(command, options);
-    }
+        stream.on('data', (data: Buffer) => {
+          stdout += data.toString();
+        }).stderr.on('data', (data: Buffer) => {
+          stderr += data.toString();
+        }).on('close', (code: number) => {
+          if (code === 0) {
+            resolve({ stdout, stderr });
+          } else {
+            reject(new Error(`Command failed with exit code ${code}`));
+          }
+        });
+      });
+    });
+  }
 
-    // Lists files in a specified directory on the remote server
-    public async listFiles(directory: string): Promise<string[]> {
-        if (!this.fileOperations) {
-            throw new Error('File operations utility is not initialized.');
-        }
-        return this.fileOperations.listFiles(directory);
-    }
-
-    // Updates a file on the remote server with the provided content
-    public async updateFile(remotePath: string, content: string, backup: boolean = true): Promise<void> {
-        if (!this.fileOperations) {
-            throw new Error('File operations utility is not initialized.');
-        }
-        await this.fileOperations.updateFile(remotePath, content, backup);
-    }
-
-    // Uploads a local file to the remote server
-    public async uploadFile(localPath: string, remotePath: string): Promise<void> {
-        if (!this.fileOperations) {
-            throw new Error('File operations utility is not initialized.');
-        }
-        await this.fileOperations.uploadFile(localPath, remotePath);
-    }
-
-    // Downloads a file from the remote server to the local filesystem
-    public async downloadFile(remotePath: string, localPath: string): Promise<void> {
-        if (!this.fileOperations) {
-            throw new Error('File operations utility is not initialized.');
-        }
-        await this.fileOperations.downloadFile(remotePath, localPath);
-    }
-
-    // Placeholder for a method to retrieve system information from the remote server
-    public async getSystemInfo(): Promise<SystemInfo> {
-        throw new Error('Method getSystemInfo() is not implemented.');
-    }
-
-    // Disconnects the SSH connection
-    public disconnect(): void {
-        debug('Disconnecting from SSH server.');
-        this.conn.end();
-    }
-
-    // Checks if the SSH connection is currently active
-    public isConnected(): boolean {
-        return this.conn !== null;
-    }
+  /**
+   * Disconnects from the SSH server.
+   */
+  disconnect(): void {
+    this.client.end();
+    debug('SSH connection closed');
+  }
 }
-
-export default SSHConnectionManager;

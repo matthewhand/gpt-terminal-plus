@@ -1,6 +1,9 @@
-import { ServerConfig } from '../../types/ServerConfig';
+import { SshHostConfig } from '../../types/ServerConfig';
 
-export interface SshServerConfig extends ServerConfig {
+/**
+ * SshServerConfig interface for SSH server configuration.
+ */
+export interface SshServerConfig extends Omit<SshHostConfig, 'port'> {
   protocol: 'ssh';
   username: string;
   privateKeyPath: string;

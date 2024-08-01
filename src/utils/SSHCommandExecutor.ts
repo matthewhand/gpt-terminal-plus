@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { SshHostConfig } from '../../types/ServerConfig';  // Use SshHostConfig
+import { SshHostConfig } from '../types/ServerConfig';  // Use SshHostConfig
 import Debug from 'debug';
 
 const debug = Debug('app:ssh-command-executor');
@@ -32,7 +32,8 @@ export async function executeCommand(client: Client, config: SshHostConfig, comm
     throw new Error(errorMessage);
   }
 
-  const { cwd, timeout = 60000 } = options;
+  const { cwd } = options;
+  const timeout = options.timeout ?? 60000;
   const escapedCommand = command.replace(/(["'`\\])/g, '\\$1');
   const execCommand = cwd ? 'cd ' + cwd + ' && ' + escapedCommand : escapedCommand;
 

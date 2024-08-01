@@ -1,6 +1,9 @@
-import { ServerConfig } from '../../types/ServerConfig';
+import { LocalConfig } from '../../types/ServerConfig';
 
-export interface LocalServerConfig extends ServerConfig {
+/**
+ * LocalServerConfig interface for local server configuration.
+ */
+export interface LocalServerConfig extends LocalConfig {
   protocol: 'local';
   code: boolean;
 }

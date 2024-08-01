@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { ServerConfig } from '../../../types/ServerConfig';
+import { SshHostConfig } from '../../../types/ServerConfig'; // Updated to SshHostConfig
 import { escapeSpecialChars } from '../../../common/escapeSpecialChars';
 import Debug from 'debug';
 
@@ -8,12 +8,12 @@ const debug = Debug('app:executeCommand');
 /**
  * Executes a command on the remote server using the provided SSH client.
  * @param client - The SSH client instance.
- * @param config - The server configuration.
+ * @param config - The SSH server configuration.
  * @param command - The command to execute.
  * @param options - Optional execution options.
  * @returns A promise that resolves to the command's stdout, stderr, and timeout status.
  */
-export async function executeCommand(client: Client, config: ServerConfig, command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean }> {
+export async function executeCommand(client: Client, config: SshHostConfig, command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean }> {
     // Validate inputs
     if (!client || !(client instanceof Client)) {
         const errorMessage = 'SSH client must be provided and must be an instance of Client.';
@@ -21,7 +21,7 @@ export async function executeCommand(client: Client, config: ServerConfig, comma
         throw new Error(errorMessage);
     }
     if (!config || typeof config !== 'object') {
-        const errorMessage = 'Server configuration must be provided and must be an object.';
+        const errorMessage = 'SSH server configuration must be provided and must be an object.';
         debug(errorMessage);
         throw new Error(errorMessage);
     }

@@ -6,14 +6,15 @@
   "type": "commonjs",
   "scripts": {
     "lint": "npx eslint src/",
-    "validate": "npm-run-all --parallel lint test",
+    "check-types": "tsc --noEmit",
+    "version": "tsc -v",
     "build": "tsc && mkdir -p dist/scripts && cp src/scripts/* dist/scripts/ || true",
     "start": "node --max-old-space-size=256 dist/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
+    "validate": "npm-run-all --parallel lint test",
     "test": "cross-env jest --runInBand",
     "test:debug": "cross-env DEBUG=* jest --verbose --runInBand",
     "test:monitor": "npx cross-env DEBUG=* jest --verbose --runInBand --watch",
-    "version": "tsc -v",
     "ncu": "ncu"
   },
   "keywords": [],
