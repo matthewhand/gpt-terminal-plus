@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  gcloud-cli-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ~/.config/gcloud:/root/.config/gcloud
+    ports:
+      - "5004:5004"
+    environment:
+      - NODE_ENV=production
+    command: ["gcloud", "init"]

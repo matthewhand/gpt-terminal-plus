@@ -1,24 +1,28 @@
-name: Deploy AWS CLI App to Fly.io (depends on base image)
+name: Deploy AWS CLI
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allow manual triggers
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    concurrency: deploy-group    # optional: ensure only one action runs at a time
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+    - name: Log in to Fly.io Docker registry
+      run: echo "${{ secrets.FLY_API_TOKEN }}" | docker login registry.fly.io -u _json_key --password-stdin
 
-      - name: Deploy to Fly.io
-        run: flyctl deploy -c fly_configs/fly-aws-cli.toml --wait-timeout 300
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    - name: Pull Docker image
+      run: docker pull registry.fly.io/gpt-terminal-plus:latest
+
+    - name: Deploy to Fly.io
+      run: |
+        curl -L https://fly.io/install.sh | sh
+        flyctl auth token
+        flyctl deploy --image registry.fly.io/gpt-terminal-plus:latest
+      env:
+        FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
