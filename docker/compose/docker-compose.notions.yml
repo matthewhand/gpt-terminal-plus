@@ -3,13 +3,13 @@ services:
     build:
       context: ../..
       dockerfile: docker/Dockerfile.notions
+    container_name: notion-sdk-app
     ports:
       - "5008:5004"
     env_file:
       - ../../.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
-      - NOTION_TOKEN=${NOTION_TOKEN}
     restart: unless-stopped
