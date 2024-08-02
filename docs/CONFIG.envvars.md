@@ -1,74 +1,67 @@
-# Environment Variables Configuration
+# Configuration Environment Variables
 
-This document outlines the environment variables used across the Docker services.
+This document describes the environment variables used in the project.
 
-## Common Environment Variables
-
-### .env File
-
-- **NODE_ENV**: Specifies the environment in which the application is running. Default is `development`.
-- **DEBUG**: Enables debug logging.
-- **API_TOKEN**: Token used for API authentication.
-
-## Service-Specific Environment Variables
-
-### OCI Service
-
-- **OCI_COMPARTMENT_ID**: OCI Compartment ID.
-- **OCI_COMPARTMENT_NAME**: OCI Compartment Name.
-
-### Notion Service
-
-- **NOTION_TOKEN**: Token used for Notion API authentication.
-
-### AWS Service
-
-- **AWS_ACCESS_KEY_ID**: AWS Access Key ID
-- **AWS_SECRET_ACCESS_KEY**: AWS Secret Access Key
-- **AWS_REGION**: AWS Region
-
-## Additional Configuration Variables
-
-### NODE_CONFIG_DIR
-- **Impact**: Overrides the directory where `globalState.json` is persisted.
-- **Usage**:
-  - **Ephemeral Storage**: Ensures `globalState.json` is preserved between scaled containers.
-  - **RW Storage**: Ensures `globalState.json` is preserved across system outages.
-  - **Server Configuration**: Directory also used for the file containing a list of server endpoints/hosts/targets.
-
-## Environment Variable Impacts and Interdependencies
-
-### NODE_ENV
-- **Impact**: Determines the mode in which the application runs (development, production, etc.).
-- **Interdependencies**: May affect logging levels and configuration settings.
-
-### DEBUG
-- **Impact**: When set to `true`, enables detailed logging for debugging purposes.
-- **Interdependencies**: Works with logging configurations to control the verbosity of logs.
+## Required Environment Variables
 
 ### API_TOKEN
-- **Impact**: Used for authenticating API requests.
-- **Interdependencies**: Must match the token configured in external systems to ensure successful authentication.
+- **Description**: Used to secure `gpt-terminal-plus`.
+- **Value**: Generate a unique token and specify it here. This token will be used for Authorization as a Bearer token.
+- **Example**: `API_TOKEN=your_unique_api_token_here`
 
-### OCI_COMPARTMENT_ID & OCI_COMPARTMENT_NAME
-- **Impact**: Identifies the specific OCI compartment to operate within.
-- **Interdependencies**: Both variables must be correctly set to access the desired OCI resources.
+### DEBUG
+- **Description**: Set to `true` for detailed logging. Default is `false`.
+- **Value**: `true` or `false`
+- **Example**: `DEBUG=false`
+
+### PORT
+- **Description**: The port on which the application will run.
+- **Value**: Integer
+- **Example**: `PORT=5004`
+
+### ENABLE_FILE_MANAGEMENT
+- **Description**: Enable or disable file management routes.
+- **Value**: `true` or `false`
+- **Example**: `ENABLE_FILE_MANAGEMENT=true`
+
+## Optional Environment Variables
+
+### NODE_ENV
+- **Description**: Specifies the environment in which the application is running. Default is `development`.
+- **Value**: `development`, `production`, etc.
+- **Example**: `NODE_ENV=development`
 
 ### NOTION_TOKEN
-- **Impact**: Authenticates requests to the Notion API.
-- **Interdependencies**: Must be kept secure to prevent unauthorized access to Notion data.
+- **Description**: Token used for Notion API authentication.
+- **Value**: Your Notion API token
+- **Example**: `NOTION_TOKEN=your_notion_token_here`
 
-### AWS_ACCESS_KEY_ID & AWS_SECRET_ACCESS_KEY
-- **Impact**: Credentials for accessing AWS services.
-- **Interdependencies**: Must be used together to authenticate requests to AWS.
+### OCI_COMPARTMENT_ID
+- **Description**: OCI Service Configuration - Compartment ID.
+- **Value**: Your OCI compartment ID
+- **Example**: `OCI_COMPARTMENT_ID=your_oci_compartment_id_here`
+
+### OCI_COMPARTMENT_NAME
+- **Description**: OCI Service Configuration - Compartment Name.
+- **Value**: Your OCI compartment name
+- **Example**: `OCI_COMPARTMENT_NAME=your_oci_compartment_name_here`
+
+### AWS_ACCESS_KEY_ID
+- **Description**: AWS Service Configuration - Access Key ID.
+- **Value**: Your AWS access key ID
+- **Example**: `AWS_ACCESS_KEY_ID=your_aws_access_key_id_here`
+
+### AWS_SECRET_ACCESS_KEY
+- **Description**: AWS Service Configuration - Secret Access Key.
+- **Value**: Your AWS secret access key
+- **Example**: `AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here`
 
 ### AWS_REGION
-- **Impact**: Specifies the AWS region for operations.
-- **Interdependencies**: Must match the region where AWS resources are hosted.
+- **Description**: AWS Service Configuration - Region.
+- **Value**: Your AWS region
+- **Example**: `AWS_REGION=your_aws_region_here`
 
-### NODE_CONFIG_DIR
-- **Impact**: Determines the directory for persisting `globalState.json`.
-- **Interdependencies**: Ensures state is preserved across container scaling and system outages, and used for server configuration.
-
-By understanding the impact and interdependencies of each environment variable, you can ensure proper configuration and avoid potential issues.
-
+### SUPPRESS_NO_CONFIG_WARNING
+- **Description**: Suppress warnings related to missing configuration.
+- **Value**: `true` or `false`
+- **Example**: `SUPPRESS_NO_CONFIG_WARNING=true`

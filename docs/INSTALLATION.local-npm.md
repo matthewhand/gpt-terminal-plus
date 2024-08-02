@@ -1,109 +1,52 @@
-# Installing `gpt-terminal-plus` Locally with npm
+# Local Installation using npm
 
 ## Prerequisites
 
-1. **Install Node.js and npm**:
-    - Follow the instructions at [Node.js Installation](https://nodejs.org/).
+- Node.js and npm installed on your machine.
+- Clone the repository:
+  ```sh
+  git clone https://github.com/your-repo/project-name.git
+  cd project-name
+  ```
 
-## Steps
+## Installation
 
-1. **Clone the Repository**:
-    ```bash
-    git clone https://github.com/matthewhand/gpt-terminal-plus.git
-    cd gpt-terminal-plus
-    ```
+1. Install dependencies:
+   ```sh
+   npm install
+   ```
 
-2. **Copy and Configure `.env` File**:
-    ```bash
-    cp .env.sample .env
-    # Edit .env to set your configuration values
-    ```
+2. Create a `.env` file in the root directory and add the following:
+   ```env
+   API_TOKEN=your_unique_api_token_here
+   DEBUG=false
+   PORT=5004
+   ENABLE_FILE_MANAGEMENT=true
+   ```
 
-3. **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+## Running the Application
 
-4. **Run the Application**:
-    - For production:
-      ```bash
-      npm start
-      ```
-    - For development:
-      ```bash
-      npm run start:dev
-      ```
+To start the server, run:
+```sh
+npm start
+```
 
-5. **Check the Status and Logs**:
-    ```bash
-    npm run logs
-    ```
+The server will run on the port specified in the `.env` file.
 
-## Service-Specific Instructions
+## Environment Variables
 
-### Joplin Service and Client
+### Required
+- `API_TOKEN`: Used to secure `gpt-terminal-plus`.
+- `DEBUG`: Set to `true` for detailed logging. Default is `false`.
+- `PORT`: The port on which the application will run.
+- `ENABLE_FILE_MANAGEMENT`: Enable or disable file management routes.
 
-#### Joplin Service Installation
-
-1. **Install Joplin Server**:
-    ```sh
-    npm install -g joplin
-    joplin server start
-    ```
-
-2. **Configure Joplin Server**:
-    - Ensure persistent storage for the service.
-
-#### Joplin Client Installation
-
-1. **Install Joplin Client**:
-    ```sh
-    npm install -g joplin
-    ```
-
-2. **Configure Joplin Client**:
-    - Use the Joplin CLI to interact with the Joplin server.
-
-### OCI Service
-
-1. **Install OCI CLI**:
-    ```sh
-    bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
-    ```
-
-2. **Configure OCI CLI**:
-    - Set up `~/.oci/config` with necessary configurations.
-
-### AWS Service
-
-1. **Install AWS CLI**:
-    ```sh
-    curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-    sudo installer -pkg AWSCLIV2.pkg -target /
-    ```
-
-2. **Configure AWS CLI**:
-    - Set up `~/.aws/credentials` with access keys.
-
-### Notion Service
-
-1. **Install Notion CLI**:
-    - There is no official Notion CLI, but you can interact with Notion using their API.
-
-2. **Configure Notion API**:
-    - Set up API tokens and environment variables for authentication.
-
-## Configuration
-
-- **Update the `.env` File**:
-    - Ensure the `.env` file contains all necessary configuration values, especially `API_TOKEN`.
-
-## Troubleshooting
-
-- Ensure Node.js and npm are installed properly.
-- Check npm logs for errors.
-
-## Additional Resources
-
-- [Node.js Documentation](https://nodejs.org/)
-
+### Optional
+- `NODE_ENV`: Specifies the environment in which the application is running. Default is `development`.
+- `NOTION_TOKEN`: Token used for Notion API authentication.
+- `OCI_COMPARTMENT_ID`: OCI Service Configuration - Compartment ID.
+- `OCI_COMPARTMENT_NAME`: OCI Service Configuration - Compartment Name.
+- `AWS_ACCESS_KEY_ID`: AWS Service Configuration - Access Key ID.
+- `AWS_SECRET_ACCESS_KEY`: AWS Service Configuration - Secret Access Key.
+- `AWS_REGION`: AWS Service Configuration - Region.
+- `SUPPRESS_NO_CONFIG_WARNING`: Suppress warnings related to missing configuration.
