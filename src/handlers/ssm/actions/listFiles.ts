@@ -1,5 +1,6 @@
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand, SendCommandResult } from "@aws-sdk/client-ssm";
 import Debug from "debug";
+import { ListParams } from '../../../types/ListParams';
 
 const debug = Debug("app:ssmUtils");
 
@@ -7,20 +8,16 @@ const debug = Debug("app:ssmUtils");
  * Lists files in a directory on an SSM instance.
  * @param {SSMClient} ssmClient - The SSM client.
  * @param {string} instanceId - The ID of the instance.
- * @param {string} [directory=""] - The directory to list files from.
- * @param {number} [limit=42] - The maximum number of files to return.
- * @param {number} [offset=0] - The offset for file listing.
- * @param {"filename" | "datetime"} [orderBy="filename"] - The criteria to order the files by.
+ * @param {ListParams} params - The parameters for listing files.
  * @returns {Promise<string[]>} - The list of files.
  */
 export const listFiles = async (
   ssmClient: SSMClient,
   instanceId: string,
-  directory: string = "",
-  limit: number = 42,
-  offset: number = 0,
-  orderBy: "filename" | "datetime" = "filename"
+  params: ListParams
 ): Promise<string[]> => {
+  const { directory, limit = 42, offset = 0, orderBy = "filename" } = params;
+
   // Command to list files with applied offset and limit
   let command = "ls -l " + directory + " | tail -n +2 | awk '{print $9, $5, $6, $7}' | sort ";
 
