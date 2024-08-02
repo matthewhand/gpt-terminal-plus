@@ -9,11 +9,13 @@ import { setSelectedServer, changeDirectory, presentWorkingDirectory } from '../
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { SsmTargetConfig } from '../../types/ServerConfig';
+import { SSMClient } from '@aws-sdk/client-ssm';
 import debug from 'debug';
 
 const ssmServerDebug = debug('app:SsmServer');
 
 class SsmServer extends AbstractServerHandler {
+  private ssmClient: SSMClient;
   private instanceId: string;
   private region: string;
 
@@ -21,38 +23,56 @@ class SsmServer extends AbstractServerHandler {
     super(serverConfig);
     this.instanceId = serverConfig.instanceId;
     this.region = serverConfig.region;
+    this.ssmClient = new SSMClient({ region: this.region });
     setSelectedServer(serverConfig.host);
     ssmServerDebug(`Initialized SsmServer with config: ${JSON.stringify(serverConfig)}`);
   }
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     ssmServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return executeCommand(command, timeout, directory, this.region, this.instanceId);
+    const timeoutNum = (timeout !== undefined && timeout !== null) ? timeout : 60;
+    const directoryStr = directory ?? '';
+    const result = await executeCommand(this.ssmClient, command, this.instanceId, 'AWS-RunShellScript', timeoutNum, directoryStr);
+    return { stdout: result.stdout || '', stderr: result.stderr || '' };
   }
 
   async getSystemInfo(): Promise<SystemInfo> {
     ssmServerDebug(`Retrieving system info for region: ${this.region}, instanceId: ${this.instanceId}`);
-    return getSystemInfo(this.region, this.instanceId);
+    const info = await getSystemInfo(this.ssmClient, 'bash', 'path/to/system_info.sh', this.instanceId);
+    return JSON.parse(info) as SystemInfo;
   }
 
   async amendFile(filename: string, content: string, backup: boolean = true): Promise<boolean> {
     ssmServerDebug(`Amending file at filename: ${filename}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return amendFile(filename, content, backup, this.region, this.instanceId);
+    return amendFile(this.ssmClient, filename, content, backup.toString());
   }
 
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
     ssmServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return createFile(directory, filename, content, backup, this.region, this.instanceId);
+    return createFile(this.ssmClient, directory, filename, content, backup.toString());
   }
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
     ssmServerDebug(`Listing files with params: ${JSON.stringify(params)}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return listFiles({ ...params, region: this.region, instanceId: this.instanceId });
+    const command = `ls -l ${params.directory}`;
+    const result = await this.executeCommand(command);
+    const files = result.stdout.split('\n').map(line => {
+      const parts = line.split(/\s+/);
+      const isDirectory = parts[0].startsWith('d');
+      const name = parts.slice(8).join(' ');
+      return { name, isDirectory };
+    });
+    return {
+      items: files,
+      limit: params.limit ?? 10,
+      offset: params.offset ?? 0,
+      total: files.length,
+    };
   }
 
   async updateFile(filename: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
     ssmServerDebug(`Updating file at filename: ${filename}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return updateFile(filename, pattern, replacement, backup, this.region, this.instanceId);
+    return updateFile(this.ssmClient, filename, pattern, replacement, backup.toString());
   }
 
   async changeDirectory(directory: string): Promise<boolean> {
