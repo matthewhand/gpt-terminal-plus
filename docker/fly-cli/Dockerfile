@@ -12,4 +12,4 @@ RUN curl -L https://fly.io/install.sh | sh \
     && echo '#!/bin/sh\nexport PATH="/root/.fly/bin:\$PATH"\necho "flyctl path: /root/.fly/bin/flyctl"\nexec /root/.fly/bin/flyctl "\$@"' > /app/entrypoint.sh \
     && chmod +x /app/entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+# CMD ["node", "dist/index.js"] inherited from Dockerfile.base
