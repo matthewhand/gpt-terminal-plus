@@ -72,7 +72,7 @@ router.post('/set', async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Server set to ' + server, systemInfo });
   } catch (error) {
-    debug('Error in /set-server', {
+    debug('Error in /server/set', {
       error,
       requestBody: req.body,
       detailedError: error instanceof Error ? error.message : 'Unknown Error',
