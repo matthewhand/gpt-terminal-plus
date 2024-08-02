@@ -1,169 +1,174 @@
-import express, { Request, Response } from 'express';
-import path from 'path';
-import Debug from 'debug';
-import { escapeRegExp } from '../utils/escapeRegExp';
-import { ServerHandler } from '../types/ServerHandler';
+import express from 'express';
+import { createFile } from './file/createFile';
+import { updateFile } from './file/updateFile';
+import { amendFile } from './file/amendFile';
+import { listFiles } from './file/listFiles';
 
-const debug = Debug('app:fileRoutes');
 const router = express.Router();
 
 /**
- * Handles server errors by logging and sending a response with the error message.
- * @param {unknown} error - The error that occurred.
- * @param {Response} res - The response object to send the error message.
- * @param {string} debugContext - The context in which the error occurred.
+ * Main router for file-related operations.
+ * 
+ * This router handles file creation, updating, amending, and listing.
  */
-const handleServerError = (error: unknown, res: Response, debugContext: string) => {
-  const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-  debug(debugContext + ': ' + errorMsg);
-  res.status(500).json({ error: errorMsg });
-};
-
-/**
- * Safely gets the server handler from the request.
- * @param {Request} req - The request object.
- * @returns {ServerHandler} - The server handler.
- * @throws {Error} - If the server handler is not found.
- */
-const getServerHandler = (req: Request): ServerHandler => {
-  const serverHandler = req.serverHandler as ServerHandler | undefined;
-  if (!serverHandler) {
-    throw new Error('Server handler not found on request object');
-  }
-  return serverHandler;
-};
-
-/**
- * Route to change the default directory.
- */
-router.post('/change-directory', async (req: Request, res: Response) => {
-  const { directory } = req.body;
-
-  if (!directory) {
-    debug('Directory is required but not provided.');
-    return res.status(400).json({ error: 'Directory is required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-    const success = await serverHandler.changeDirectory(directory);
-    debug(`Directory change attempted: ${directory}, success: ${success}`);
-    res.status(success ? 200 : 400).json({
-      output: success ? `Current directory set to ${directory}` : 'Directory does not exist.'
-    });
-  } catch (err: unknown) {
-    debug(`Error setting current folder: ${(err instanceof Error ? err.message : String(err))}`);
-    handleServerError(err, res, 'Error setting current folder');
-  }
-});
 
 /**
  * Route to create or replace a file.
+ * @route POST /file/create
+ * @access Public
+ * @param {string} directory - The target directory for the file.
+ * @param {string} filename - The name of the file to create or replace.
+ * @param {string} content - The content to write to the file.
+ * @param {boolean} [backup=true] - Whether to back up the existing file before replacing.
  */
-router.post('/create', async (req: Request, res: Response) => {
-  const { directory, filename, content, backup = true } = req.body;
-
-  if (!filename || !content) {
-    debug('Filename and content are required but not provided.');
-    return res.status(400).json({ error: 'Filename and content are required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
-    const fullPath = path.isAbsolute(filename) ? filename : path.join(targetDirectory, filename);
-
-    const success = await serverHandler.createFile(targetDirectory, filename, content, backup);
-    debug(`File create/replace attempted: ${fullPath}, success: ${success}`);
-    res.status(success ? 200 : 400).json({
-      message: success ? 'File created or replaced successfully.' : 'Failed to create or replace file.'
-    });
-  } catch (err: unknown) {
-    debug(`Error in create/replace file: ${(err instanceof Error ? err.message : String(err))}`);
-    handleServerError(err, res, 'Error in create/replace file');
-  }
-});
+router.post('/create', createFile);
 
 /**
  * Route to update a file by replacing a pattern with a replacement.
+ * @route POST /file/update
+ * @access Public
+ * @param {string} directory - The target directory for the file.
+ * @param {string} filename - The name of the file to update.
+ * @param {string} pattern - The text pattern to replace.
+ * @param {string} replacement - The new text to replace the pattern.
+ * @param {boolean} [backup=true] - Whether to back up the file before updating.
  */
-router.post('/update', async (req: Request, res: Response) => {
-  const { filePath, pattern, replacement, backup = true, directory } = req.body;
-
-  if (!filePath || !pattern || !replacement) {
-    debug('File path, pattern, and replacement are required but not provided.');
-    return res.status(400).json({ error: 'File path, pattern, and replacement are required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
-    const fullPath = path.isAbsolute(filePath) ? filePath : path.join(targetDirectory, filePath);
-
-    const updateResult = await serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup);
-    debug(`File update attempted: ${fullPath}, pattern: ${pattern}, replacement: ${replacement}, success: ${updateResult}`);
-
-    res.status(updateResult ? 200 : 400).json({
-      message: updateResult ? 'File updated successfully.' : 'Failed to update the file.'
-    });
-  } catch (err: unknown) {
-    debug(`Error updating file: ${(err instanceof Error ? err.message : String(err))}`);
-    handleServerError(err, res, 'Error updating file');
-  }
-});
+router.post('/update', updateFile);
 
 /**
  * Route to amend a file by appending content to it.
+ * @route POST /file/amend
+ * @access Public
+ * @param {string} directory - The target directory for the file.
+ * @param {string} filename - The name of the file to amend.
+ * @param {string} content - The content to append to the file.
+ * @param {boolean} [backup=true] - Whether to back up the file before amending.
  */
-router.post('/amend', async (req: Request, res: Response) => {
-  const { filePath, content, backup = true, directory } = req.body;
-
-  if (!filePath || !content) {
-    debug('File path and content are required but not provided.');
-    return res.status(400).json({ error: 'File path and content are required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
-    const fullPath = path.isAbsolute(filePath) ? filePath : path.join(targetDirectory, filePath);
-
-    const success = await serverHandler.amendFile(fullPath, content, backup);
-    debug(`File amend attempted: ${fullPath}, content: ${content}, success: ${success}`);
-    res.status(success ? 200 : 400).json({
-      message: success ? 'File amended successfully.' : 'Failed to amend file.'
-    });
-  } catch (err: unknown) {
-    debug(`Error amending file: ${(err instanceof Error ? err.message : String(err))}`);
-    handleServerError(err, res, 'Error amending file');
-  }
-});
+router.post('/amend', amendFile);
 
 /**
  * Route to list files in a directory.
+ * @route POST /file/list
+ * @access Public
+ * @param {string} directory - The directory to list files from.
+ * @param {number} [limit] - The maximum number of files to return.
+ * @param {number} [offset] - The offset for file listing, used for pagination.
+ * @param {'datetime' | 'filename'} [orderBy] - The criteria to order the files by.
  */
-router.get('/list', async (req: Request, res: Response) => {
-  const { directory, limit, offset, orderBy } = req.query as { directory: string, limit?: string, offset?: string, orderBy?: 'datetime' | 'filename' };
-
-  if (!directory) {
-    debug('Directory is required but not provided.');
-    return res.status(400).json({ error: 'Directory is required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-    const files = await serverHandler.listFiles({
-      directory,
-      limit: limit ? parseInt(limit) : undefined,
-      offset: offset ? parseInt(offset) : undefined,
-      orderBy
-    });
-    debug(`Files listed in directory: ${directory}, files: ${JSON.stringify(files)}`);
-    res.status(200).json(files);
-  } catch (error) {
-    debug(`Error listing files: ${(error instanceof Error ? error.message : 'Unknown error')}`);
-    res.status(500).json({ error: 'Failed to list files' });
-  }
-});
+router.post('/list', listFiles);
 
 export default router;
+
+// OpenAPI Specification
+const openAPISpec = `
+openapi: 3.1.0
+info:
+  title: File Routes API
+  version: 1.0.0
+paths:
+  /file/create:
+    post:
+      summary: Create or replace a file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+                filename:
+                  type: string
+                content:
+                  type: string
+                backup:
+                  type: boolean
+              required:
+                - filename
+                - content
+      responses:
+        '200':
+          description: File created or replaced successfully
+  /file/update:
+    post:
+      summary: Update a file by replacing a pattern with a replacement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+                filename:
+                  type: string
+                pattern:
+                  type: string
+                replacement:
+                  type: string
+                backup:
+                  type: boolean
+              required:
+                - filename
+                - pattern
+                - replacement
+      responses:
+        '200':
+          description: File updated successfully
+  /file/amend:
+    post:
+      summary: Amend a file by appending content to it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+                filename:
+                  type: string
+                content:
+                  type: string
+                backup:
+                  type: boolean
+              required:
+                - filename
+                - content
+      responses:
+        '200':
+          description: File amended successfully
+  /file/list:
+    post:
+      summary: List files in a directory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+                limit:
+                  type: integer
+                offset:
+                  type: integer
+                orderBy:
+                  type: string
+                  enum:
+                    - datetime
+                    - filename
+              required:
+                - directory
+      responses:
+        '200':
+          description: Files listed successfully
+`;
+
+// Output OpenAPI spec to console at startup
+console.log('OpenAPI Specification:');
+console.log(openAPISpec);

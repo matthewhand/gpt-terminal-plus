@@ -1,71 +1,75 @@
-import express, { Request, Response } from 'express';
-import Debug from 'debug';
-import { ServerHandler } from '../types/ServerHandler';
+import express from 'express';
+import { changeDirectory } from './command/changeDirectory';
+import { executeCommand } from './command/executeCommand';
 
-const debug = Debug('app:commandRoutes');
 const router = express.Router();
 
 /**
- * Interface for the expected request body to improve type safety.
+ * Router for command-related operations.
+ * 
+ * This router handles changing directories and executing commands.
  */
-interface RunCommandRequestBody extends Request {
-  body: {
-    command: string;
-    timeout?: number;
-    directory?: string;
-    shell?: string;
-  }
-}
 
 /**
- * Safely gets the server handler from the request.
- * @param {Request} req - The request object.
- * @returns {ServerHandler} - The server handler.
- * @throws {Error} - If the server handler is not found.
+ * Route to change the working directory on the server.
+ * @route POST /command/change-directory
+ * @access Public
+ * @param {string} directory - The directory to change to.
  */
-const getServerHandler = (req: Request): ServerHandler => {
-  const serverHandler = req.serverHandler as ServerHandler | undefined;
-  if (!serverHandler) {
-    throw new Error('Server handler not found on request object');
-  }
-  return serverHandler;
-};
+router.post('/change-directory', changeDirectory);
 
 /**
- * Handler to execute a command on the selected server.
+ * Route to execute a command on the server.
+ * @route POST /command/execute
+ * @access Public
+ * @param {string} command - The command to execute.
  */
-const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) => {
-  const { command, timeout, directory, shell } = req.body;
-
-  // Validate the command
-  if (!command) {
-    debug('Command is required but not provided.');
-    return res.status(400).json({ error: 'Command is required' });
-  }
-
-  try {
-    const serverHandler = getServerHandler(req);
-
-    // Execute the command using the retrieved server handler
-    const effectiveTimeout = timeout ?? parseInt(process.env.DEFAULT_COMMAND_TIMEOUT || '180000'); // Default timeout if not provided
-    const effectiveDirectory = directory || '.';
-    const effectiveShell = shell || process.env.DEFAULT_SHELL || '/bin/sh';
-    
-    debug(`Executing command: ${command} with timeout: ${effectiveTimeout}, directory: ${effectiveDirectory}, shell: ${effectiveShell}`);
-    const executionResult = await serverHandler.executeCommand(command, effectiveTimeout, effectiveDirectory);
-
-    debug('Command executed successfully: ' + JSON.stringify(executionResult));
-    res.status(200).json(executionResult);
-  } catch (error) {
-    const errorMessage = 'Error executing command: ' + (error instanceof Error ? error.message : 'Unknown error');
-    debug(errorMessage);
-    res.status(500).json({ error: errorMessage });
-  }
-};
-
-/**
- * Endpoint to run a command on the selected server.
- */
-router.post('/execute', executeCommandHandler);
+router.post('/execute', executeCommand);
 
 export default router;
+
+// OpenAPI Specification
+const openAPISpec = `
+openapi: 3.1.0
+info:
+  title: Command Routes API
+  version: 1.0.0
+paths:
+  /command/change-directory:
+    post:
+      summary: Change the working directory on the server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+              required:
+                - directory
+      responses:
+        '200':
+          description: Directory changed successfully
+  /command/execute:
+    post:
+      summary: Execute a command on the server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+              required:
+                - command
+      responses:
+        '200':
+          description: Command executed successfully
+`;
+
+console.log('OpenAPI Specification:');
+console.log(openAPISpec);
