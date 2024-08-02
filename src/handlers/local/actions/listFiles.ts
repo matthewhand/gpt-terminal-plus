@@ -1,20 +1,18 @@
 import fs from 'fs';
 import path from 'path';
+import { ListParams } from '../../types/ListParams';
 
 /**
  * Lists files in a given directory.
- * @param {string} directory - The directory to list files in.
- * @param {number} [limit] - The maximum number of files to return.
- * @param {number} [offset] - The offset for pagination.
- * @param {'datetime' | 'filename'} [orderBy] - The criteria to order files by.
+ * @param {ListParams} params - The parameters for listing files.
  * @returns {Promise<{ files: { name: string, isDirectory: boolean }[], total: number }>} - A promise that resolves with the list of files and total count.
  */
-const listFiles = (
-  directory: string,
-  limit?: number,
-  offset?: number,
-  orderBy?: 'datetime' | 'filename'
-): Promise<{ files: { name: string, isDirectory: boolean }[], total: number }> => {
+const listFiles = ({
+  directory,
+  limit,
+  offset,
+  orderBy
+}: ListParams): Promise<{ files: { name: string, isDirectory: boolean }[], total: number }> => {
   return new Promise((resolve, reject) => {
     fs.readdir(directory, (err, files) => {
       if (err) {

@@ -1,5 +1,6 @@
 import { Client } from 'ssh2';
 import { ServerConfig } from '../../../types/ServerConfig';
+import { ListParams } from '../../../types/ListParams';
 import Debug from 'debug';
 
 const debug = Debug('app:listFiles');
@@ -8,10 +9,12 @@ const debug = Debug('app:listFiles');
  * Lists files in a directory on the remote server.
  * @param {Client} client - The SSH client instance.
  * @param {ServerConfig} config - The server configuration.
- * @param {string} directory - The remote directory path.
+ * @param {ListParams} params - The parameters for listing files.
  * @returns {Promise<string[]>} A promise that resolves to an array of filenames.
  */
-export async function listFiles(client: Client, config: ServerConfig, directory: string): Promise<string[]> {
+export async function listFiles(client: Client, config: ServerConfig, params: ListParams): Promise<string[]> {
+    const { directory } = params;
+
     // Validate inputs
     if (!client || !(client instanceof Client)) {
         const errorMessage = 'SSH client must be provided and must be an instance of Client.';
