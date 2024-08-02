@@ -193,24 +193,20 @@ paths:
       x-openai-isConsequential: false
       parameters:
         - name: directory
-          in: query
           schema:
             type: string
           description: The directory to list the files from.
         - name: limit
-          in: query
           schema:
             type: integer
             default: 42
           description: The maximum number of files to return.
         - name: offset
-          in: query
           schema:
             type: integer
             default: 0
           description: The offset for file listing, used for pagination.
         - name: orderBy
-          in: query
           schema:
             type: string
             enum: [datetime, filename]
