@@ -38,17 +38,24 @@ export async function updateFile(filePath: string, pattern: string, replacement:
   const fullPath = path.join(presentWorkingDirectory(), filePath);
   debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ', replacement: ' + replacement + ', backup: ' + backup);
   try {
+    // Backup the existing file if the backup flag is set and the file exists
     if (backup && fs.existsSync(fullPath)) {
       const backupPath = fullPath + backupExtension;
       await fs.promises.copyFile(fullPath, backupPath);
       debug('Backup created at ' + backupPath);
     }
 
+    // Read the content of the file
     let content = await fs.promises.readFile(fullPath, "utf8");
+
+    // Replace the pattern with the replacement string
     const regex = new RegExp(escapeRegExp(pattern), "g");
     content = content.replace(regex, replacement);
+
+    // Write the updated content back to the file
     await fs.promises.writeFile(fullPath, content);
     debug('File updated successfully at ' + fullPath);
+
     return true;
   } catch (error) {
     const errorMessage = 'Failed to update file ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');

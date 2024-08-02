@@ -21,6 +21,33 @@ export const updateFile = async (
   replacement: string,
   backup: boolean = true
 ): Promise<boolean> => {
+  // Validate inputs
+  if (!ssmClient || !(ssmClient instanceof SSMClient)) {
+    const errorMessage = 'SSM client must be provided and must be an instance of SSMClient.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!instanceId || typeof instanceId !== 'string') {
+    const errorMessage = 'Instance ID must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!filePath || typeof filePath !== 'string') {
+    const errorMessage = 'File path must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!pattern || typeof pattern !== 'string') {
+    const errorMessage = 'Pattern must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!replacement || typeof replacement !== 'string') {
+    const errorMessage = 'Replacement must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+
   // Prepare the command with an optional backup
   const backupFlag = backup ? '.bak' : '';
   const command = "sed -i" + backupFlag + " 's/" + pattern + "/" + replacement + "/g' " + filePath;
