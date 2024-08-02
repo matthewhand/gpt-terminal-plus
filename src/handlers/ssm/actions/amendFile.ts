@@ -30,10 +30,30 @@ export const amendFile = async (
   filePath: string,
   content: string
 ): Promise<boolean> => {
+  // Validate inputs
+  if (!ssmClient || !(ssmClient instanceof SSMClient)) {
+    const errorMessage = 'SSM client must be provided and must be an instance of SSMClient.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!instanceId || typeof instanceId !== 'string') {
+    const errorMessage = 'Instance ID must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!filePath || typeof filePath !== 'string') {
+    const errorMessage = 'File path must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!content || typeof content !== 'string') {
+    const errorMessage = 'Content must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+
   const delimiter = generateUniqueDelimiter(content);
-  const command = `cat <<'${delimiter}' >> ${filePath}
-${content}
-${delimiter}`;
+  const command = `cat <<'${delimiter}' >> ${filePath}\n${content}\n${delimiter}`;
   debug("Amending file with command: " + command);
   const result = await ssmClient.send(new SendCommandCommand({
     InstanceIds: [instanceId],
