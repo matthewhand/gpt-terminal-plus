@@ -14,9 +14,9 @@ const debug = Debug('app:routes:index');
  * @param router - The Express Router instance.
  */
 export const setupRoutes = (router: Router): void => {
-  const enableFileManagement = process.env.ENABLE_FILE_MANAGEMENT === 'true';
-  const enableCommandManagement = process.env.ENABLE_COMMAND_MANAGEMENT === 'true';
-  const enableServerManagement = process.env.ENABLE_SERVER_MANAGEMENT === 'true';
+  const enableFileManagement = process.env.ENABLE_FILE_MANAGEMENT !== 'false';
+  const enableCommandManagement = process.env.ENABLE_COMMAND_MANAGEMENT !== 'false';
+  const enableServerManagement = process.env.ENABLE_SERVER_MANAGEMENT !== 'false';
 
   debug('Setting up routes with configurations:', {
     enableFileManagement,
