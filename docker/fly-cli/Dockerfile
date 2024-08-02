@@ -1,5 +1,13 @@
 FROM mhand79/gpt-terminal-plus:latest
 
+# Define build arguments
+ARG NODE_ENV
+ARG DEBUG
+
+# Use build arguments
+RUN echo "NODE_ENV=$NODE_ENV" 
+RUN echo "DEBUG=$DEBUG" 
+
 WORKDIR /app
 
 # Install Fly CLI and create entrypoint script
