@@ -9,7 +9,7 @@ services:
     ports:
       - "${GCLOUD_CLI_PORT_HOST:-5007}:${GCLOUD_CLI_PORT_CONTAINER:-5004}"
     env_file:
-      - ../../../.env
+      - ../../.env
     environment:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
