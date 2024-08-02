@@ -2,6 +2,7 @@
 interface BaseConfig {
   protocol: 'local' | 'ssh' | 'ssm';
   host: string;
+  selected?: boolean;  // Add the optional 'selected' property
 }
 
 // Define the local server configuration interface extending the base configuration

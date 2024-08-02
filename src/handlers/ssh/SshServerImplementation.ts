@@ -84,7 +84,13 @@ class SshServer extends AbstractServerHandler {
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
     sshServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-    return listFiles(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, params);
+    const files = await listFiles(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, params);
+    return {
+      items: files.map(name => ({ name, isDirectory: false })),
+      limit: params.limit ?? 10,
+      offset: params.offset ?? 0,
+      total: files.length,
+    };
   }
 
   async readFile(filePath: string): Promise<string> {
