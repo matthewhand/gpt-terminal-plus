@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
 import { escapeRegExp } from "../../../utils/escapeRegExp";
+import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
 import Debug from 'debug';
 
 const debug = Debug('app:updateFile');
@@ -50,7 +51,7 @@ export async function updateFile(filePath: string, pattern: string, replacement:
 
     // Replace the pattern with the replacement string
     const regex = new RegExp(escapeRegExp(pattern), "g");
-    content = content.replace(regex, replacement);
+    content = content.replace(regex, escapeSpecialChars(replacement));
 
     // Write the updated content back to the file
     await fs.promises.writeFile(fullPath, content);
