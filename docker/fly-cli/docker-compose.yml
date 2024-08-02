@@ -2,6 +2,3 @@ services:
   fly-cli:
     build: .
     container_name: fly-cli-fly-cli-1
-    volumes:
-      - ~/.fly:/root/.fly
-    entrypoint: ["/root/.fly/bin/flyctl"]
