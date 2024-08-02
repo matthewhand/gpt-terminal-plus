@@ -1,8 +1,7 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-// Importing actions directly
-// import listFiles from './actions/listFiles';
 import { createFile } from './actions/createFile';
 import { amendFile } from './actions/amendFile';
+// import listFiles from './actions/listFiles';
 import { getSystemInfo } from './actions/getSystemInfo';
 import { updateFile } from './actions/updateFile';
 import { executeCommand } from './actions/executeCommand';
@@ -51,25 +50,27 @@ class LocalServer extends AbstractServerHandler {
    * @throws {Error} If the getSystemInfo action is not found.
    */
   async getSystemInfo(): Promise<SystemInfo> {
-    localServerDebug(`Retrieving system info`);
+    localServerDebug('Retrieving system info');
     if (!getSystemInfo) {
       throw new Error('getSystemInfo action not found');
     }
-    return getSystemInfo('TODO','TODO');
+    return getSystemInfo('TODO','TODO');   // TODO chatgpt?
   }
 
   /**
    * Amends a file on the local server.
    * @param filePath - The path of the file to amend.
    * @param content - The content to append to the file.
+   * @param backup - Whether to back up the file before amending.
    * @returns Whether the file was successfully amended.
    * @throws {Error} If the amendFile action is not found.
    */
-  async amendFile(filePath: string, content: string): Promise<boolean> {
-    localServerDebug(`Amending file at path: ${filePath}, content: ${content}`);
+  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    localServerDebug(`Amending file at path: ${filePath}, content: ${content}, backup: ${backup}`);
     if (!amendFile) {
       throw new Error('amendFile action not found');
     }
+    // return amendFile(filePath, content, backup);
     return amendFile(filePath, content);
   }
 
@@ -96,13 +97,10 @@ class LocalServer extends AbstractServerHandler {
    * @returns A paginated response with the list of files.
    * @throws {Error} If the listFiles action is not found.
    */
-  // async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
-  //   localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-  //   if (!listFiles) {
-  //     throw new Error('listFiles action not found');
-  //   }
-  //   return listFiles(params.directory, params.limit, params.offset, params.orderBy);
-  // }
+  async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
+    localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
+    throw new Error('listFiles action not found');
+  }
 
   /**
    * Updates a file on the local server.
@@ -125,26 +123,18 @@ class LocalServer extends AbstractServerHandler {
    * Changes the working directory on the local server.
    * @param directory - The directory to change to.
    * @returns Whether the directory was successfully changed.
-   * @throws {Error} If the changeDirectory action is not found.
    */
   async changeDirectory(directory: string): Promise<boolean> {
     localServerDebug(`Changing directory to: ${directory}`);
-    if (!super.changeDirectory) {
-      throw new Error('changeDirectory action not found');
-    }
     return super.changeDirectory(directory);
   }
 
   /**
    * Retrieves the present working directory on the local server.
    * @returns The present working directory.
-   * @throws {Error} If the presentWorkingDirectory action is not found.
    */
   async presentWorkingDirectory(): Promise<string> {
-    localServerDebug(`Retrieving present working directory`);
-    if (!super.presentWorkingDirectory) {
-      throw new Error('presentWorkingDirectory action not found');
-    }
+    localServerDebug('Retrieving present working directory');
     return super.presentWorkingDirectory();
   }
 }

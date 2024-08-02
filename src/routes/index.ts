@@ -26,21 +26,21 @@ export const setupRoutes = (router: Router): void => {
 
   if (enableFileManagement) {
     debug("File management is enabled.");
-    router.use('/files', fileRoutes);
+    router.use('/file', fileRoutes);
   } else {
     debug("File management is disabled.");
   }
 
   if (enableCommandManagement) {
     debug("Command management is enabled.");
-    router.use('/commands', commandRoutes);
+    router.use('/command', commandRoutes);
   } else {
     debug("Command management is disabled.");
   }
 
   if (enableServerManagement) {
     debug("Server management is enabled.");
-    router.use('/servers', serverRoutes);
+    router.use('/server', serverRoutes);
   } else {
     debug("Server management is disabled. Defaulting to local server configuration.");
     // Additional logic to default to local server configuration can be added here

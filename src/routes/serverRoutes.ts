@@ -10,7 +10,7 @@ const router = express.Router();
 /**
  * Endpoint to list available servers
  */
-router.get('/list-servers', async (req: Request, res: Response) => {
+router.get('/list', async (req: Request, res: Response) => {
   debug('Received request to list servers', { method: req.method, path: req.path });
 
   try {
@@ -37,7 +37,7 @@ router.get('/list-servers', async (req: Request, res: Response) => {
 /**
  * Endpoint to set the current server using global state helper
  */
-router.post('/set-server', async (req: Request, res: Response) => {
+router.post('/set', async (req: Request, res: Response) => {
   const { server } = req.body;
   debug('Received request to set server: ' + server, { requestBody: req.body });
 

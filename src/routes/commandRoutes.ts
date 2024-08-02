@@ -6,12 +6,14 @@ const debug = Debug('app:commandRoutes');
 const router = express.Router();
 
 /**
- * Interface for the expected request body to improve type safety
+ * Interface for the expected request body to improve type safety.
  */
 interface RunCommandRequestBody extends Request {
   body: {
     command: string;
     timeout?: number;
+    directory?: string;
+    shell?: string;
   }
 }
 
@@ -30,10 +32,10 @@ const getServerHandler = (req: Request): ServerHandler => {
 };
 
 /**
- * Handler to execute a command on the selected server
+ * Handler to execute a command on the selected server.
  */
 const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) => {
-  const { command, timeout } = req.body;
+  const { command, timeout, directory, shell } = req.body;
 
   // Validate the command
   if (!command) {
@@ -46,8 +48,11 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
 
     // Execute the command using the retrieved server handler
     const effectiveTimeout = timeout ?? parseInt(process.env.DEFAULT_COMMAND_TIMEOUT || '180000'); // Default timeout if not provided
-    debug('Executing command: ' + command + ' with timeout: ' + effectiveTimeout);
-    const executionResult = await serverHandler.executeCommand(command, effectiveTimeout);
+    const effectiveDirectory = directory || '.';
+    const effectiveShell = shell || process.env.DEFAULT_SHELL || '/bin/sh';
+    
+    debug(`Executing command: ${command} with timeout: ${effectiveTimeout}, directory: ${effectiveDirectory}, shell: ${effectiveShell}`);
+    const executionResult = await serverHandler.executeCommand(command, effectiveTimeout, effectiveDirectory);
 
     debug('Command executed successfully: ' + JSON.stringify(executionResult));
     res.status(200).json(executionResult);
@@ -59,13 +64,8 @@ const executeCommandHandler = async (req: RunCommandRequestBody, res: Response) 
 };
 
 /**
- * Endpoint to run a command on the selected server
+ * Endpoint to run a command on the selected server.
  */
-router.post('/run', executeCommandHandler);
-
-/**
- * Alias for execute-command
- */
-router.post('/execute-command', executeCommandHandler);
+router.post('/execute', executeCommandHandler);
 
 export default router;
