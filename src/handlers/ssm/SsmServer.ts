@@ -14,6 +14,8 @@ import debug from 'debug';
 
 const ssmServerDebug = debug('app:SsmServer');
 
+const DEFAULT_SSM_DOCUMENT_NAME = process.env.SSM_DOCUMENT_NAME || 'AWS-RunShellScript';
+
 class SsmServer extends AbstractServerHandler {
   private ssmClient: SSMClient;
   private instanceId: string;
@@ -34,7 +36,7 @@ class SsmServer extends AbstractServerHandler {
       ssmClient: this.ssmClient,
       command,
       instanceId: this.instanceId,
-      documentName: 'AWS-RunShellScript',
+      documentName: DEFAULT_SSM_DOCUMENT_NAME,
       timeout: timeout ?? 60,
       directory: directory ?? '',
     };

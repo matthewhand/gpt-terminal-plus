@@ -8,26 +8,31 @@ const debug = Debug("app:ssmUtils");
 const DEFAULT_RETRIES = parseInt(process.env.SSM_RETRIES || "3");
 const DEFAULT_WAIT_TIME = parseInt(process.env.SSM_WAIT_TIME || "5000");
 
-/**
- * Executes a command on an SSM instance with retry logic.
- * @param {SSMClient} ssmClient - The SSM client.
- * @param {string} command - The command to execute.
- * @param {string} instanceId - The ID of the instance.
- * @param {string} documentName - The name of the SSM document.
- * @param {number} [timeout=60] - The timeout in seconds.
- * @param {string} [directory] - The directory to execute the command from.
- * @param {number} [retries=DEFAULT_RETRIES] - The number of retries.
- * @returns {Promise<{stdout?: string, stderr?: string, pages?: string[], totalPages?: number, responseId?: string}>} The command output details.
- */
-export const executeCommand = async (
-  ssmClient: SSMClient,
-  command: string,
-  instanceId: string,
-  documentName: string,
-  timeout: number = 60,
-  directory?: string,
-  retries: number = DEFAULT_RETRIES
-): Promise<{ stdout?: string; stderr?: string; pages?: string[]; totalPages?: number; responseId?: string }> => {
+export interface ExecuteCommandParams {
+  ssmClient: SSMClient;
+  command: string;
+  instanceId: string;
+  documentName: string;
+  timeout?: number;
+  directory?: string;
+  retries?: number;
+}
+
+export const executeCommand = async ({
+  ssmClient,
+  command,
+  instanceId,
+  documentName,
+  timeout = 60,
+  directory,
+  retries = DEFAULT_RETRIES,
+}: ExecuteCommandParams): Promise<{
+  stdout?: string;
+  stderr?: string;
+  pages?: string[];
+  totalPages?: number;
+  responseId?: string;
+}> => {
   if (!command) {
     debug("Error: No command provided for execution.");
     throw new Error("No command provided for execution.");
@@ -35,8 +40,8 @@ export const executeCommand = async (
 
   debug("Executing command: " + command + " on instance: " + instanceId);
   const formattedCommand = documentName.includes("ShellScript")
-    ? (directory ? "cd " + directory + "; " + command : command)
-    : (directory ? "Set-Location -Path '" + directory + "'; " + command : command);
+    ? directory ? "cd " + directory + "; " + command : command
+    : directory ? "Set-Location -Path '" + directory + "'; " + command : command;
 
   const params = {
     InstanceIds: [instanceId],
