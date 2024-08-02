@@ -251,9 +251,9 @@ paths:
                 directory:
                   type: string
                   description: The directory where the file will be created or replaced.
-                filePath:
+                filename:
                   type: string
-                  description: The full path of the file to create or replace.
+                  description: The filename of the file to create (or replace).
                 content:
                   type: string
                   description: The content to write to the file.
@@ -286,7 +286,7 @@ paths:
                   error:
                     type: string
                     description: Error message.
-  /file/update:
+   /file/update:
     post:
       summary: Update an existing file on the managed server.
       description: >
@@ -302,7 +302,10 @@ paths:
             schema:
               type: object
               properties:
-                filePath:
+                directory:
+                  type: string
+                  description: The directory where the file is located. Defaults to the current directory if not specified.
+                filename:
                   type: string
                   description: The full path of the file to update.
                 pattern:
