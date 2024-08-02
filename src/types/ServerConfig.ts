@@ -2,7 +2,7 @@
 interface BaseConfig {
   protocol: 'local' | 'ssh' | 'ssm';
   host: string;
-  selected?: boolean;  // Add the optional 'selected' property
+  selected?: boolean;
 }
 
 // Define the local server configuration interface extending the base configuration
@@ -17,6 +17,7 @@ export interface SshHostConfig extends BaseConfig {
   port: number;
   username: string;
   privateKeyPath: string;
+  shell?: string; // Optional shell property
 }
 
 // Define the SSM server configuration interface extending the base configuration
@@ -24,6 +25,7 @@ export interface SsmTargetConfig extends BaseConfig {
   protocol: 'ssm';
   instanceId: string;
   region: string;  // Add the required 'region' property
+  shell?: string;  // Optional shell property
 }
 
 // Define the SSM configuration interface

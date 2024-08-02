@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { setSelectedServer, getSelectedServer } from '../utils/GlobalStateHelper';
+import { setSelectedServer } from '../utils/GlobalStateHelper';
 import { ServerManager } from '../managers/ServerManager'; // Updated import path
 import { ServerHandler } from '../types/ServerHandler'; // Import ServerHandler
 
