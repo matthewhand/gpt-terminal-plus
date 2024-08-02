@@ -18,9 +18,9 @@ server {
 
 # Services configuration
 services = [
-    {"service_name": "oci", "port": 5006},
-    {"service_name": "aws", "port": 5007},
-    {"service_name": "notions", "port": 5008},
+    {"service_name": "oci-cli", "port": 5006},
+    # {"service_name": "aws-cli", "port": 5007},
+    # {"service_name": "notions-sdk", "port": 5008},
     {"service_name": "joplin", "port": 5009},
 ]
 

@@ -42,8 +42,7 @@ export const setupRoutes = (router: Router): void => {
     debug("Server management is enabled.");
     router.use('/servers', serverRoutes);
   } else {
-    debug("Server management is disabled. Defaulting to local server configuration.");
-    // Additional logic to default to local server configuration can be added here
+    debug("Server management is disabled.");
   }
 
   // Add other routes here
