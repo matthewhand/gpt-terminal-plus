@@ -1,16 +1,33 @@
 {
   "port": 5004,
   "local": {
-    "host": "localhost",
+    "host": "localhost"
   },
   "ssh": {
     "hosts": [
       {
-        "name": "example-ssh-server",
-        "host": "ssh.example.com",
+        "name": "example-ssh-server-bash",
+        "host": "ssh-bash.example.com",
         "port": 22,
         "username": "user",
-        "privateKeyPath": "/path/to/private/key"
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "bash"
+      },
+      {
+        "name": "example-ssh-server-powershell",
+        "host": "ssh-powershell.example.com",
+        "port": 22,
+        "username": "user",
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "powershell"
+      },
+      {
+        "name": "example-ssh-server-python",
+        "host": "ssh-python.example.com",
+        "port": 22,
+        "username": "user",
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "python"
       }
     ]
   },
@@ -18,8 +35,19 @@
     "region": "us-west-2",
     "targets": [
       {
-        "name": "example-ssm-instance",
-        "instanceId": "i-0123456789abcdef0"
+        "name": "example-ssm-instance-bash",
+        "instanceId": "i-0123456789abcdef0",
+        "shell": "bash"
+      },
+      {
+        "name": "example-ssm-instance-powershell",
+        "instanceId": "i-0123456789abcdef1",
+        "shell": "powershell"
+      },
+      {
+        "name": "example-ssm-instance-python",
+        "instanceId": "i-0123456789abcdef2",
+        "shell": "python"
       }
     ]
   }
