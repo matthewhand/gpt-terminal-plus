@@ -1,5 +1,6 @@
 import { SSMClient, SendCommandCommand } from "@aws-sdk/client-ssm";
 import Debug from "debug";
+import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
 
 const debug = Debug("app:ssmUtils");
 
@@ -50,7 +51,9 @@ export const updateFile = async (
 
   // Prepare the command with an optional backup
   const backupFlag = backup ? '.bak' : '';
-  const command = "sed -i" + backupFlag + " 's/" + pattern + "/" + replacement + "/g' " + filePath;
+  const escapedPattern = escapeSpecialChars(pattern);
+  const escapedReplacement = escapeSpecialChars(replacement);
+  const command = "sed -i" + backupFlag + " 's/" + escapedPattern + "/" + escapedReplacement + "/g' " + filePath;
 
   debug("Updating file with command: " + command);
 
