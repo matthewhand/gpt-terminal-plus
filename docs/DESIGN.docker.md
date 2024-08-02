@@ -1,45 +1,57 @@
+# Docker Design
 
-## Customizing the Solution Stack
+This document provides an overview of the Docker design for the GPT Terminal Plus project.
 
-The `gpt-terminal-plus` solution stack can be customised to fit specific needs. Each service, such as `aws-cli`, `oci-cli`, `ssh-cli`, `joplin`, and `notion-sdk`, is containerised using Docker, and configurations can be adjusted through their respective Docker Compose files.
+## Design Philosophy
 
-### Examples of Customisation
+### Modular Design
 
-- **Adding New Services**: You can add new services by creating new directories with their own `Dockerfile` and `docker-compose.yml`.
-- **Adjusting Environment Variables**: Modify the `.env` file or directly in the Docker Compose files to change settings such as ports, API tokens, and other configurations.
-- **Updating Dockerfiles**: Customise the `Dockerfile` in each service directory to add or remove dependencies, change build steps, or adjust runtime commands.
+Each CLI tool runs in a separate Docker container, providing isolation and security. This granular approach ensures that each tool has limited access, tied directly to a custom GPT with specific instructions for that tool.
 
-### Detailed Directory Structure
+### Security Considerations
 
-The following is the detailed directory structure of the solution stack:
+By using separate Docker containers, each tool is isolated from the others, reducing the risk of one compromised tool affecting others. Containerization also limits the potential attack surface for each tool.
 
-```
-├── .env
-├── docker/
-│   ├── aws-cli/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   ├── oci-cli/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   ├── ssh-cli/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   ├── joplin/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   └── notion-sdk/
-│       ├── Dockerfile
-│       └── docker-compose.yml
-├── fly_configs/
-│   ├── fly-aws-app.toml
-│   └── fly-terminal-app.toml
-└── scripts/
-    ├── launch_all_docker_compose.sh
-```
+## Configuration
 
-Refer to this document and the `README.md` for more detailed instructions on customising and extending the solution stack.
+### Environment Variables
 
-## Notes
+- **NODE_ENV**: Specifies the environment in which the application is running. Default is `development`.
+- **DEBUG**: Enables debug logging.
+- **API_TOKEN**: Token used for API authentication.
+- **NODE_CONFIG_DIR**: Overrides the directory where `globalState.json` is persisted. Useful for:
+  - **Ephemeral Storage**: Ensuring `globalState.json` is preserved between scaled containers.
+  - **RW Storage**: Ensuring `globalState.json` is preserved across system outages.
+  - **Server Configuration**: Directory also used for the file containing a list of server endpoints/hosts/targets.
 
-- Ensure each service is started with incrementally numbered ports to avoid conflicts.
+### Volume Mapping
+
+- For the AWS CLI service, you can map your existing AWS credentials to the container:
+    ```yaml
+    version: '3.8'
+    services:
+      aws-cli:
+        image: amazon/aws-cli
+        volumes:
+          - ~/.aws:/root/.aws
+    ```
+- Alternatively, you can map to a container volume:
+    ```yaml
+    version: '3.8'
+    services:
+      aws-cli:
+        image: amazon/aws-cli
+        volumes:
+          - aws-cli-data:/root/.aws
+    volumes:
+      aws-cli-data:
+    ```
+
+## Contribution Guidelines
+
+Contributions are welcome for CLI software that follows a similar architecture of environment variables and volumes for configuration. Each tool should have an exposed HTTP endpoint for ChatGPT custom GPT to access.
+
+- **Examples**: Refer to the `docker/` directory for examples of customized Docker containers.
+- **Deployment**: Refer to `.github/workflows/` for CI/CD setup and `fly_configs/` for deployment examples on Fly.io.
+
+By understanding and following these guidelines, you can ensure a consistent and secure implementation of Docker containers in the GPT Terminal Plus project.
