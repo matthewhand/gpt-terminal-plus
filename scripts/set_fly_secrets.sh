@@ -61,7 +61,7 @@ done
 
 # Load app name from fly.toml if not provided
 if [[ -z "$FLY_APP_NAME" ]]; then
-  load_app_name_from_fly_toml
+  load_app_name_from_fly.toml
 fi
 
 # Validate required arguments
@@ -81,8 +81,16 @@ echo "Node Environment: $NODE_ENV"
 echo "Debug: $DEBUG"
 echo "Node Configuration Directory: $NODE_CONFIG_DIR"
 
-# Set secrets in Fly.io
-flyctl secrets set API_TOKEN="$API_TOKEN" -a "$FLY_APP_NAME"
-flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
-flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
-flyctl secrets set NODE_CONFIG_DIR="$NODE_CONFIG_DIR" -a "$FLY_APP_NAME"
+# Set secrets in Fly.io only if values are defined
+if [[ -n "$API_TOKEN" ]]; then
+  flyctl secrets set API_TOKEN="$API_TOKEN" -a "$FLY_APP_NAME"
+fi
+if [[ -n "$NODE_ENV" ]]; then
+  flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
+fi
+if [[ -n "$DEBUG" ]]; then
+  flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
+fi
+if [[ -n "$NODE_CONFIG_DIR" ]]; then
+  flyctl secrets set NODE_CONFIG_DIR="$NODE_CONFIG_DIR" -a "$FLY_APP_NAME"
+fi
