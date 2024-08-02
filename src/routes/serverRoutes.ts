@@ -38,7 +38,7 @@ router.get('/list', async (req: Request, res: Response) => {
  * Endpoint to set the current server using global state helper
  */
 router.post('/set', async (req: Request, res: Response) => {
-  const { server, getSystemInfo = true, resetAliases = false } = req.body;
+  const { server, getSystemInfo = true } = req.body;
   debug('Received request to set server: ' + server, { requestBody: req.body });
 
   try {
@@ -64,10 +64,6 @@ router.post('/set', async (req: Request, res: Response) => {
     const serverHandler = serverManager.createHandler();
     serverHandler.setServerConfig(serverConfig); // Set the server config
     debug('ServerHandler instance successfully retrieved for server: ' + server);
-
-    if (resetAliases) {
-      // Logic to reset aliases
-    }
 
     let systemInfo = null;
     if (getSystemInfo) {
