@@ -1,143 +1,118 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { loadActions } from '../../utils/loadActions';
+import { connect } from './actions/connect';
+import { disconnect } from './actions/disconnect';
+import { executeCommand } from './actions/executeCommand';
+import { getSystemInfo } from './actions/getSystemInfo';
+import { amendFile } from './actions/amendFile';
+import { createFile } from './actions/createFile';
+import { deleteFile } from './actions/deleteFile';
+import { fileExists } from './actions/fileExists';
+import { getFileContent } from './actions/getFileContent';
+import { listFiles } from './actions/listFiles';
+import { readFile } from './actions/readFile';
+import { transferFile } from './actions/transferFile';
+import { updateFile } from './actions/updateFile';
+import { setSelectedServer, changeDirectory, presentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { SshHostConfig } from '../../types/ServerConfig';
+import { Client } from 'ssh2';
 import debug from 'debug';
 
 const sshServerDebug = debug('app:SshServer');
-const actions = loadActions(__dirname + '/actions');
 
-/**
- * Implementation of the SSH server handler.
- */
 class SshServer extends AbstractServerHandler {
-  privateKeyPath: string;
-  port: number;
-  username: string;
+  private sshClient: Client;
+  private privateKeyPath: string;
+  private port: number;
+  private username: string;
+  private host: string;
 
-  /**
-   * Initializes the SshServer with a given server configuration.
-   * @param serverConfig - The configuration of the SSH server.
-   */
   constructor(serverConfig: SshHostConfig) {
     super(serverConfig);
     this.privateKeyPath = serverConfig.privateKeyPath;
     this.port = serverConfig.port ?? 22; // Provide a default value if port is undefined
     this.username = serverConfig.username;
+    this.host = serverConfig.host;
+    this.sshClient = new Client();
+    setSelectedServer(serverConfig.host);
     sshServerDebug(`Initialized SshServer with config: ${JSON.stringify(serverConfig)}`);
   }
 
-  /**
-   * Executes a command on the SSH server.
-   * @param command - The command to execute.
-   * @param timeout - The optional timeout for the command execution.
-   * @param directory - The optional directory to execute the command in.
-   * @returns The command execution result.
-   */
+  async connect(): Promise<void> {
+    this.sshClient = await connect({ host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' });
+  }
+
+  async disconnect(): Promise<void> {
+    await disconnect(this.sshClient);
+  }
+
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     sshServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-    if (!actions.executeCommand) {
-      throw new Error('executeCommand action not found');
-    }
-    return actions.executeCommand(command, timeout, directory);
+    return executeCommand(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, command, { cwd: directory, timeout });
   }
 
-  /**
-   * Retrieves the system information of the SSH server.
-   * @returns The system information.
-   */
   async getSystemInfo(): Promise<SystemInfo> {
     sshServerDebug('Retrieving system info');
-    if (!actions.getSystemInfo) {
-      throw new Error('getSystemInfo action not found');
-    }
-    return actions.getSystemInfo();
+    return getSystemInfo(this.sshClient, 'bash', 'path/to/system_info.sh');
   }
 
-  /**
-   * Amends a file on the SSH server.
-   * @param filePath - The path of the file to amend.
-   * @param content - The content to append to the file.
-   * @param backup - Whether to back up the file before amending.
-   * @returns Whether the file was successfully amended.
-   */
-  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
-    sshServerDebug(`Amending file at path: ${filePath}, content: ${content}, backup: ${backup}`);
-    if (!actions.amendFile) {
-      throw new Error('amendFile action not found');
-    }
-    return actions.amendFile(filePath, content, backup);
+  async amendFile(filename: string, content: string, backup: boolean = true): Promise<boolean> {
+    sshServerDebug(`Amending file at filename: ${filename}, content: ${content}, backup: ${backup}`);
+    return amendFile(this.sshClient, filename, content);
   }
 
-  /**
-   * Creates a file on the SSH server.
-   * @param directory - The directory to create the file in.
-   * @param filename - The name of the file to create.
-   * @param content - The content of the file.
-   * @param backup - Whether to create a backup of the file.
-   * @returns Whether the file was successfully created.
-   */
   async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
     sshServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}`);
-    if (!actions.createFile) {
-      throw new Error('createFile action not found');
-    }
-    return actions.createFile(directory, filename, content, backup);
+    return createFile(this.sshClient, `${directory}/${filename}`, content);
   }
 
-  /**
-   * Lists files in a directory on the SSH server.
-   * @param params - The parameters for listing files.
-   * @returns A paginated response with the list of files.
-   */
+  async deleteFile(filePath: string): Promise<void> {
+    sshServerDebug(`Deleting file at path: ${filePath}`);
+    return deleteFile(this.sshClient, filePath);
+  }
+
+  async fileExists(filePath: string): Promise<boolean> {
+    sshServerDebug(`Checking if file exists at path: ${filePath}`);
+    return fileExists(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
+  }
+
+  async getFileContent(filePath: string): Promise<string> {
+    sshServerDebug(`Getting content of file at path: ${filePath}`);
+    return getFileContent(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
+  }
+
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
     sshServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-    if (!actions.listFiles) {
-      throw new Error('listFiles action not found');
-    }
-    return actions.listFiles(params);
+    return listFiles(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, params);
   }
 
-  /**
-   * Updates a file on the SSH server.
-   * @param filePath - The path of the file to update.
-   * @param pattern - The pattern to replace in the file.
-   * @param replacement - The replacement for the pattern.
-   * @param backup - Whether to create a backup of the file.
-   * @returns Whether the file was successfully updated.
-   */
-  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
-    sshServerDebug(`Updating file at path: ${filePath}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}`);
-    if (!actions.updateFile) {
-      throw new Error('updateFile action not found');
-    }
-    return actions.updateFile(filePath, pattern, replacement, backup);
+  async readFile(filePath: string): Promise<string> {
+    sshServerDebug(`Reading file at path: ${filePath}`);
+    return readFile(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
   }
 
-  /**
-   * Changes the working directory on the SSH server.
-   * @param directory - The directory to change to.
-   * @returns Whether the directory was successfully changed.
-   */
+  async transferFile(localPath: string, remotePath: string, direction: 'upload' | 'download'): Promise<void> {
+    sshServerDebug(`Transferring file ${direction} with localPath: ${localPath}, remotePath: ${remotePath}`);
+    return transferFile(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, localPath, remotePath, direction);
+  }
+
+  async updateFile(filename: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
+    sshServerDebug(`Updating file at filename: ${filename}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}`);
+    return updateFile(this.sshClient, filename, pattern, replacement, backup);
+  }
+
   async changeDirectory(directory: string): Promise<boolean> {
     sshServerDebug(`Changing directory to: ${directory}`);
-    if (!actions.changeDirectory) {
-      throw new Error('changeDirectory action not found');
-    }
-    return actions.changeDirectory(directory);
+    changeDirectory(directory);
+    return true;
   }
 
-  /**
-   * Retrieves the present working directory on the SSH server.
-   * @returns The present working directory.
-   */
   async presentWorkingDirectory(): Promise<string> {
     sshServerDebug('Retrieving present working directory');
-    if (!actions.presentWorkingDirectory) {
-      throw new Error('presentWorkingDirectory action not found');
-    }
-    return actions.presentWorkingDirectory();
+    const pwd = await presentWorkingDirectory();
+    changeDirectory(pwd);
+    return pwd;
   }
 }
 
