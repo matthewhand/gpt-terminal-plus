@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { ListParams } from '../../types/ListParams';
+import { ListParams } from '../../../types/ListParams';
 
 /**
  * Lists files in a given directory.
@@ -14,6 +14,10 @@ const listFiles = ({
   orderBy
 }: ListParams): Promise<{ files: { name: string, isDirectory: boolean }[], total: number }> => {
   return new Promise((resolve, reject) => {
+    if (!fs.existsSync(directory)) {
+      return reject(new Error(`Directory does not exist: ${directory}`));
+    }
+
     fs.readdir(directory, (err, files) => {
       if (err) {
         return reject(err);
