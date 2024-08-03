@@ -21,7 +21,10 @@ const router = express.Router();
  * @param {string} content - The content to write to the file.
  * @param {boolean} [backup=true] - Whether to back up the existing file before replacing.
  */
-router.post('/create', createFile);
+router.post('/create', (req, res) => {
+  console.debug('Request received for /file/create with body:', req.body);
+  createFile(req, res);
+});
 
 /**
  * Route to update a file by replacing a pattern with a replacement.
@@ -33,7 +36,10 @@ router.post('/create', createFile);
  * @param {string} replacement - The new text to replace the pattern.
  * @param {boolean} [backup=true] - Whether to back up the file before updating.
  */
-router.post('/update', updateFile);
+router.post('/update', (req, res) => {
+  console.debug('Request received for /file/update with body:', req.body);
+  updateFile(req, res);
+});
 
 /**
  * Route to amend a file by appending content to it.
@@ -44,7 +50,10 @@ router.post('/update', updateFile);
  * @param {string} content - The content to append to the file.
  * @param {boolean} [backup=true] - Whether to back up the file before amending.
  */
-router.post('/amend', amendFile);
+router.post('/amend', (req, res) => {
+  console.debug('Request received for /file/amend with body:', req.body);
+  amendFile(req, res);
+});
 
 /**
  * Route to list files in a directory.
@@ -55,7 +64,10 @@ router.post('/amend', amendFile);
  * @param {number} [offset] - The offset for file listing, used for pagination.
  * @param {'datetime' | 'filename'} [orderBy] - The criteria to order the files by.
  */
-router.post('/list', listFiles);
+router.post('/list', (req, res) => {
+  console.debug('Request received for /file/list with body:', req.body);
+  listFiles(req, res);
+});
 
 export default router;
 
@@ -170,5 +182,4 @@ paths:
 `;
 
 // Output OpenAPI spec to console at startup
-console.log('OpenAPI Specification:');
-console.log(openAPISpec);
+console.debug('OpenAPI Specification:', openAPISpec);

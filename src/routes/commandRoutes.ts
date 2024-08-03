@@ -16,7 +16,10 @@ const router = express.Router();
  * @access Public
  * @param {string} directory - The directory to change to.
  */
-router.post('/change-directory', changeDirectory);
+router.post('/change-directory', (req, res) => {
+  console.debug('Request received for /command/change-directory with body:', req.body);
+  changeDirectory(req, res);
+});
 
 /**
  * Route to execute a command on the server.
@@ -24,7 +27,10 @@ router.post('/change-directory', changeDirectory);
  * @access Public
  * @param {string} command - The command to execute.
  */
-router.post('/execute', executeCommand);
+router.post('/execute', (req, res) => {
+  console.debug('Request received for /command/execute with body:', req.body);
+  executeCommand(req, res);
+});
 
 export default router;
 
@@ -71,5 +77,4 @@ paths:
           description: Command executed successfully
 `;
 
-console.log('OpenAPI Specification:');
-console.log(openAPISpec);
+console.debug('OpenAPI Specification:', openAPISpec);

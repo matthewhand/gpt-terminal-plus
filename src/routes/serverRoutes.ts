@@ -121,3 +121,45 @@ const getServerHandler = (req: Request): ServerHandler => {
 };
 
 export default router;
+
+// OpenAPI Specification
+const openAPISpec = `
+openapi: 3.1.0
+info:
+  title: Server Routes API
+  version: 1.0.0
+paths:
+  /server/list:
+    get:
+      summary: List available servers
+      responses:
+        '200':
+          description: A list of servers
+  /server/set:
+    post:
+      summary: Set the current server
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                server:
+                  type: string
+                getSystemInfo:
+                  type: boolean
+              required:
+                - server
+      responses:
+        '200':
+          description: Server set successfully
+  /server/system-info:
+    get:
+      summary: Get system info for the current server
+      responses:
+        '200':
+          description: System info retrieved successfully
+`;
+
+console.debug('OpenAPI Specification:', openAPISpec);
