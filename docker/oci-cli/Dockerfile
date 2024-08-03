@@ -14,6 +14,6 @@ RUN mkdir -p /home/chatgpt && ln -s /root/.oci /home/chatgpt/.oci
 # Set PATH
 ENV PATH="/root/bin:\$PATH"
 
-# Set the CMD directive to start the desired application
-CMD ["node", "dist/index.js"]
+# Set the entry point
+ENTRYPOINT ["node", "dist/index.js"]
 
