@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: fly-cli-app
     ports:
-      - "${FLY_CLI_PORT_HOST:-5010}:${FLY_CLI_PORT_CONTAINER:-5004}"
+      - "${FLY_CLI_PORT_HOST:-5010}:${FLY_CLI_PORT_CONTAINER:-5005}"
     env_file:
       - ../../.env
     environment:

@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: oci-cli-app
     ports:
-      - "${OCI_CLI_PORT_HOST:-5006}:${OCI_CLI_PORT_CONTAINER:-5004}"
+      - "${OCI_CLI_PORT_HOST:-5006}:${OCI_CLI_PORT_CONTAINER:-5005}"
     env_file:
       - ../../.env
     environment:
