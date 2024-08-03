@@ -12,8 +12,5 @@ RUN apt-get update && apt-get install -y unzip curl python3 python3-pip && pip i
 RUN mkdir -p /home/chatgpt && ln -s /root/.oci /home/chatgpt/.oci
 
 # Set PATH
-ENV PATH="/root/bin:\$PATH"
-
-# Set the entry point to a shell script to keep the container running
-ENTRYPOINT ["sh", "-c", "while true; do sleep 30; done;"]
+ENV PATH="/root/bin:$PATH"
 

@@ -12,4 +12,5 @@ services:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
+      - NOTION_TOKEN=${NOTION_TOKEN}
     restart: unless-stopped
