@@ -14,6 +14,6 @@ RUN mkdir -p /home/chatgpt && ln -s /root/.oci /home/chatgpt/.oci
 # Set PATH
 ENV PATH="/root/bin:\$PATH"
 
-# Set the entry point
-ENTRYPOINT ["node", "dist/index.js"]
+# Set the entry point to a shell script to keep the container running
+ENTRYPOINT ["sh", "-c", "while true; do sleep 30; done;"]
 
