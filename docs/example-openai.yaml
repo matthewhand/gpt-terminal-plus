@@ -267,6 +267,10 @@ paths:
                   type: boolean
                   default: true
                   description: Whether to back up the file before updating. Defaults to true.
+                multiline:
+                  default: false
+                  description: Whether to use multiline replacement.
+                  type: boolean
               required:
                 - filename
                 - pattern

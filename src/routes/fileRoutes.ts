@@ -122,6 +122,8 @@ paths:
                   type: string
                 backup:
                   type: boolean
+                multiline:
+                  type: boolean
               required:
                 - filename
                 - pattern
