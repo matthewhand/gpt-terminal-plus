@@ -2,10 +2,8 @@ FROM mhand79/gpt-terminal-plus:latest
 
 WORKDIR /app
 
-# Install OCI CLI
-RUN pip install --upgrade pip && pip install --no-cache-dir oci-cli
+# Create /home/chatgpt directory and symlink .oci to /root/.oci
+RUN mkdir -p /home/chatgpt && ln -s /root/.oci /home/chatgpt/.oci
 
-# Add OCI CLI to PATH
-ENV PATH="/app/../../../bin:$PATH"
+# Install any other dependencies if needed
 
-# CMD ["node", "dist/index.js"] inherited from Dockerfile.base
