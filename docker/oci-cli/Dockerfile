@@ -14,5 +14,6 @@ RUN mkdir -p /home/chatgpt && ln -s /root/.oci /home/chatgpt/.oci
 # Set PATH
 ENV PATH="/root/bin:\$PATH"
 
-# Install any other dependencies if needed
+# Specify the entry point
+ENTRYPOINT ["sh", "-c", "while true; do sleep 30; done;"]
 
