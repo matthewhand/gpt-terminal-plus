@@ -106,9 +106,9 @@ start_service() {
   local name=$1
   local compose_file=$2
   if [ "$ENABLE_SHARED_NODE_MODULES" = true ]; then
-    docker compose -p $name -f docker/compose/docker-compose.base.yml -f $compose_file up -d --build --volume /usr/src/app/node_modules:/usr/src/app/node_modules
+    docker compose -p $name -f docker/$name/docker-compose.base.yml -f $compose_file up -d --build --volume /usr/src/app/node_modules:/usr/src/app/node_modules
   else
-    docker compose -p $name -f docker/compose/docker-compose.base.yml -f $compose_file up -d --build
+    docker compose -p $name -f docker/$name/docker-compose.base.yml -f $compose_file up -d --build
   fi
   echo "Service '$name' started with configuration from '$compose_file'."
 }
