@@ -1,23 +1,9 @@
-import { Request, Response } from 'express';
-import Debug from 'debug';
-import { ServerHandler } from '../../types/ServerHandler';
-import { handleServerError } from '../../utils/handleServerError';
+import { Request, Response } from "express";
+import Debug from "debug";
+import { handleServerError } from "../../utils/handleServerError";
+import { getServerHandler } from "../../utils/getServerHandler";
 
-const debug = Debug('app:server:getSystemInfo');
-
-/**
- * Safely gets the server handler from the request.
- * @param {Request} req - The request object.
- * @returns {ServerHandler} - The server handler.
- * @throws {Error} - If the server handler is not found.
- */
-const getServerHandler = (req: Request): ServerHandler => {
-  const serverHandler = req.serverHandler as ServerHandler | undefined;
-  if (!serverHandler) {
-    throw new Error('Server handler not found on request object');
-  }
-  return serverHandler;
-};
+const debug = Debug("app:server:getSystemInfo");
 
 /**
  * Function to get system info for the current server.
@@ -30,7 +16,7 @@ export const getSystemInfo = async (req: Request, res: Response) => {
     const systemInfo = await serverHandler.getSystemInfo();
     res.status(200).json(systemInfo);
   } catch (error) {
-    debug(`Error retrieving system info: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    handleServerError(error, res, 'Error retrieving system info');
+    debug(`Error retrieving system info: ${error instanceof Error ? error.message : "Unknown error"}`);
+    handleServerError(error, res, "Error retrieving system info");
   }
 };

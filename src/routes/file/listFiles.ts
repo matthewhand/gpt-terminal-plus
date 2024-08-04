@@ -1,21 +1,22 @@
-import { Request, Response } from 'express';
-import { handleServerError } from '../../utils/handleServerError';
+import { Request, Response } from "express";
+import path from "path";
+import { handleServerError } from "../../utils/handleServerError";
+import { getServerHandler } from "../../utils/getServerHandler";
 
 export const listFiles = async (req: Request, res: Response) => {
-  const directory = req.body.directory || req.query.directory;
-  const limit = parseInt(req.body.limit || req.query.limit) || 100;
-  const offset = parseInt(req.body.offset || req.query.offset) || 0;
-  const orderBy = req.body.orderBy || req.query.orderBy || 'filename';
-
-  if (!directory) {
-    return res.status(400).json({ error: 'directory is required' });
-  }
+  const { directory, limit, offset, orderBy } = req.body;
 
   try {
-    const serverHandler = req.serverHandler;
-    const result = await serverHandler.listFiles(directory, limit, offset, orderBy);
-    res.status(200).json(result);
+    const serverHandler = getServerHandler(req);
+    if (!serverHandler) {
+      throw new Error("Server handler not found");
+    }
+
+    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
+    const files = await serverHandler.listFiles(targetDirectory);
+
+    res.status(200).json({ files });
   } catch (error) {
-    handleServerError(error, res, 'Error listing files');
+    handleServerError(error, res, "Error listing files");
   }
 };
