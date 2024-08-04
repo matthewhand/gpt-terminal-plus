@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  runpod-cli-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runpod-cli-app
+    ports:
+      - "${RUNPOD_CLI_PORT_HOST:-5004}:${RUNPOD_CLI_PORT_CONTAINER:-5005}"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - RUNPOD_AUTH_TOKEN=${RUNPOD_AUTH_TOKEN}
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro # Read-only if needed
