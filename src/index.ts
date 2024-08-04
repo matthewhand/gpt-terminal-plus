@@ -11,7 +11,7 @@ import morgan from "morgan";
 import cors from "cors";
 import config from "config";
 import bodyParser from "body-parser";
-
+import serverless from "serverless-http"; // Add serverless-http
 import { setupApiRouter } from "./routes/index";
 
 const app = express();
@@ -168,7 +168,11 @@ const main = (): void => {
     }, 10001); // 10-second timeout
   };
 
-  startServer();
+  if (process.env.USE_SERVERLESS === "true") {
+    module.exports.handler = serverless(app);
+  } else {
+    startServer();
+  }
 };
 
 // Start the main function
