@@ -151,3 +151,41 @@ ESCAPE_BACKWARD_SLASH=true
   - **Values**: `true`, `false`
   - **Default**: `true`
 
+
+## HTTPS Configuration
+
+
+
+- ****
+  - **Description**: Enables HTTPS if set to .
+  - **Values**: , 
+  - **Default**: 
+  - **Use Case**: Set to  to enable HTTPS.
+
+- ****
+  - **Description**: Path to the HTTPS private key file.
+  - **Default**: 
+
+- ****
+  - **Description**: Path to the HTTPS certificate file.
+  - **Default**: 
+
+## HTTPS Configuration
+
+HTTPS_ENABLED=false
+HTTPS_KEY_PATH=path/to/your/private.key
+HTTPS_CERT_PATH=path/to/your/certificate.crt
+
+- **HTTPS_ENABLED**
+  - **Description**: Enables HTTPS if set to .
+  - **Values**: , 
+  - **Default**: 
+  - **Use Case**: Set to  to enable HTTPS.
+
+- **HTTPS_KEY_PATH**
+  - **Description**: Path to the HTTPS private key file.
+  - **Default**: path/to/your/private.key
+
+- **HTTPS_CERT_PATH**
+  - **Description**: Path to the HTTPS certificate file.
+  - **Default**: path/to/your/certificate.crt
