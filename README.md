@@ -10,9 +10,9 @@
  ```
 
 2. **Download the Environment Variables File**
- - Download the `.env.example` file and rename it to `.env`.
+ - Download the `.env.sample` file and rename it to `.env`.
  ```sh
- curl -o .env https://raw.githubusercontent.com/yourusername/gpt-terminal-plus/main/.env.example
+ curl -o .env https://raw.githubusercontent.com/matthewhand/gpt-terminal-plus/main/.env.sample
  ```
 
 3. **Set the `API_TOKEN` in the `.env` File**
