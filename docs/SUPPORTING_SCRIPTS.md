@@ -1,87 +1,49 @@
 # Supporting Scripts
 
-This document provides detailed information about the supporting scripts included in the GPT Terminal Plus project. These scripts facilitate various deployment and configuration tasks.
+## deploy_fly_app.sh
+- **Purpose**: Launches a Fly.io application and configures secrets based on environment variables.
+- **Usage**: Supports setting environment variables like `API_TOKEN`, `NODE_ENV`, `DEBUG`, and `NODE_CONFIG_DIR`. Options for specifying the Fly.io app name and TOML file.
+- **Example Commands**:
+  - `./deploy_fly_app.sh -a your_api_token -n production -d -c /path/to/config -p your-app-name`
+  - `./deploy_fly_app.sh -e /path/to/.env -p your-app-name`
+  - `./deploy_fly_app.sh -e /path/to/.env -t /path/to/fly.toml`
 
-## Scripts Overview
+## deploy_to_render.sh
+- **Purpose**: Deploys an application to Render.com, setting up necessary environment variables and configurations.
+- **Usage**: Supports setting environment variables and options like `API_TOKEN`, `DEBUG`, `NODE_ENV`, `OCI_COMPARTMENT_ID`, `OCI_COMPARTMENT_NAME`, `RENDER_API_KEY`, `REPO`, `BRANCH`, `HEALTH_CHECK_PATH`, `NUM_INSTANCES`, and `OWNER_ID`.
+- **Example Commands**:
+  - `./deploy_to_render.sh --api-token your_api_token --debug true --node-env production --render-api-key your_render_api_key --render-owner-id your_owner_id`
+  - `./deploy_to_render.sh --render-api-key your_render_api_key --render-owner-id your_owner_id`
 
-### `deploy_fly_app.sh`
+## launch_docker.sh
+- **Purpose**: Manages Docker Compose services, allowing listing of subfolders, launching specific Docker Compose files, and launching all Docker Compose files.
+- **Usage**: Supports options to list subfolders, launch a specific Docker Compose service, and launch all Docker Compose services.
+- **Example Commands**:
+  - `./launch_docker.sh -l` (List subfolders in `docker/`)
+  - `./launch_docker.sh -a <app>` (Launch the compose file in `docker/<app>/docker-compose.yml`)
+  - `./launch_docker.sh -A` (Launch all Docker Compose files)
 
-This script launches a Fly.io application based on a provided TOML file and configures secrets for the application based on environment variables.
+## deploy_codesandbox_app.sh
+- **Purpose**: Deploys the application to CodeSandbox.
+- **Usage**: Checks for the CodeSandbox CLI, installs it if necessary, initializes or links to a CodeSandbox project, and deploys the application.
+- **Example Commands**:
+  - `./deploy_codesandbox_app.sh`
 
-#### Usage
+## deploy_gcloud_app.sh
+- **Purpose**: Deploys the application to Google Cloud.
+- **Usage**: Checks for the Google Cloud SDK, installs it if necessary, initializes or links to a Google Cloud project, and deploys the application.
+- **Example Commands**:
+  - `./deploy_gcloud_app.sh`
 
-```sh
-./scripts/deploy_fly_app.sh [options]
-```
+## deploy_netlify_app.sh
+- **Purpose**: Deploys the application to Netlify.
+- **Usage**: Checks for the Netlify CLI, installs it if necessary, initializes or links to a Netlify site, and deploys the application.
+- **Example Commands**:
+  - `./deploy_netlify_app.sh`
 
-#### Options
-
-- `-h, --help`                   Show help message and exit.
-- `-a, --api-token TOKEN`        Set the API token.
-- `-n, --node-env ENV`           Set the Node environment (default: development).
-- `-d, --debug`                  Enable debug logging.
-- `-c, --node-config-dir DIR`    Set the Node configuration directory.
-- `-e, --env-file FILE`          Source environment variables from a file.
-- `-p, --fly-app-name NAME`      Specify the Fly.io app name.
-- `-t, --toml-file FILE`         Specify the TOML file to load the app name from.
-
-### `deploy_to_render.sh`
-
-This script deploys the application to Render. It supports setting various environment variables and making API requests to Render to create the service.
-
-#### Usage
-
-```sh
-./scripts/deploy_to_render.sh [options]
-```
-
-#### Options
-
-- `--api-token API_TOKEN`             API token.
-- `--debug DEBUG`                     Debug setting.
-- `--node-env NODE_ENV`               Node environment.
-- `--oci-compartment-id OCI_COMPARTMENT_ID`  OCI compartment ID.
-- `--oci-compartment-name OCI_COMPARTMENT_NAME`  OCI compartment name.
-- `--render-api-key RENDER_API_KEY`   Render API key (required).
-- `--repo REPO`                       GitHub repository (default: https://github.com/matthewhand/gpt-terminal-plus.git).
-- `--branch BRANCH`                   Branch name (default: main).
-- `--health-check-path HEALTH_CHECK_PATH` Path for health checks (default: /health).
-- `--num-instances NUM_INSTANCES`     Number of instances to run (default: 1).
-- `--render-owner-id RENDER_OWNER_ID` Owner ID (required).
-
-### `launch_docker.sh`
-
-This script provides functions to list subfolders in the `docker` directory, launch a specific Docker Compose file, and launch all Docker Compose files.
-
-#### Usage
-
-```sh
-./scripts/launch_docker.sh [option]
-```
-
-#### Options
-
-- `-l`            List subfolders in `docker/`.
-- `-a <app>`      Launch the compose file in `docker/<app>/docker-compose.yml`.
-- `-A`            Launch all Docker Compose files.
-
-### `nginx/enable_nginx_certbot.sh`
-
-This script enables Nginx configurations and requests SSL certificates using Certbot.
-
-#### Usage
-
-```sh
-./scripts/nginx/enable_nginx_certbot.sh [options]
-```
-
-#### Options
-
-- `--enable-nginx`                Enable Nginx configurations in `/etc/nginx/sites-enabled/`.
-- `--enable-certbot`              Request SSL certificates for the services using Certbot.
-- `--enable-shared-node-modules`  Use a shared `node_modules` volume across services.
-- `--domain-name <domain>`        Override the domain name used in Nginx configurations and Certbot verification.
-- `--service <service>`           Specify which service to create Nginx config for.
-- `--deploy-all`                  Deploy Nginx config for all available services.
-- `--skip-checks`                 Skip connectivity and protocol checks.
-
+## enable_nginx_certbot.sh
+- **Purpose**: Configures and enables Nginx and Certbot for SSL certificates, with options to deploy configurations for specific services or all available services.
+- **Usage**: Supports options like `--enable-nginx`, `--enable-certbot`, `--enable-shared-node-modules`, `--domain-name`, `--service`, `--deploy-all`, and `--skip-checks`.
+- **Example Commands**:
+  - `./enable_nginx_certbot.sh --enable-nginx --domain-name example.com --service my-service`
+  - `./enable_nginx_certbot.sh --enable-certbot --domain-name example.com --deploy-all`
