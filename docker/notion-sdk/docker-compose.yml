@@ -7,10 +7,13 @@ services:
     ports:
       - "${NOTION_SDK_PORT_HOST:-5008}:${NOTION_SDK_PORT_CONTAINER:-5005}"
     env_file:
-      - ../../.env
+      - .env
     environment:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
       - NOTION_TOKEN=${NOTION_TOKEN}
+      - ENABLE_COMMAND_MANAGEMENT=true
+      - ENABLE_FILE_MANAGEMENT=true
+      - ENABLE_SERVER_MANAGEMENT=false
     restart: unless-stopped

@@ -14,6 +14,9 @@ services:
       - API_TOKEN=${API_TOKEN}
       - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID}
       - OCI_COMPARTMENT_NAME=${OCI_COMPARTMENT_NAME}
+      - ENABLE_COMMAND_MANAGEMENT=true
+      - ENABLE_FILE_MANAGEMENT=false
+      - ENABLE_SERVER_MANAGEMENT=false
     volumes:
       - ~/.oci:/root/.oci:ro
     restart: unless-stopped

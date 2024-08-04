@@ -13,6 +13,9 @@ services:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}
       - API_TOKEN=${API_TOKEN}
+      - ENABLE_COMMAND_MANAGEMENT=true
+      - ENABLE_FILE_MANAGEMENT=false
+      - ENABLE_SERVER_MANAGEMENT=false
     volumes:
-      - ~/.fly:/root/.fly:rw
+      - ~/.fly/config.yml:/root/.fly/config.yml:rw # `fly login` to initially generate config.yml
     restart: unless-stopped
