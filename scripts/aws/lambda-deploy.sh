@@ -57,7 +57,7 @@ service: $PROJECT_NAME
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs20.x
   region: $AWS_REGION
 
 functions:
