@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # lambda-deploy.sh
-# A script to deploy an Express.js application to AWS Lambda using the Serverless Framework
+# A script to deploy an existing Express.js application to AWS Lambda using the Serverless Framework
 
 # Enable debugging
 set -ex
@@ -32,21 +32,17 @@ done
 serverless create --template aws-nodejs --path $PROJECT_NAME
 cd $PROJECT_NAME
 
+# Copy existing application code
+cp -R ../src .
+
 # Install dependencies
 npm init -y
-npm install express serverless-http dotenv
+npm install express serverless-http dotenv config
 
 # Create handler
 cat << 'EOH' > handler.js
 const serverless = require('serverless-http');
-const express = require('express');
-const bodyParser = require('body-parser');
-const app = express();
-
-app.use(bodyParser.json());
-app.get('/', function(req, res) {
-  res.send('Hello World!');
-});
+const app = require('./src/index');
 
 module.exports.handler = serverless(app);
 EOH
@@ -66,7 +62,10 @@ functions:
     events:
       - http:
           path: /
-          method: get
+          method: any
+      - http:
+          path: /{proxy+}
+          method: any
 EOS
 
 # Deploy the service
