@@ -11,7 +11,6 @@ import morgan from "morgan";
 import cors from "cors";
 import config from "config";
 import bodyParser from "body-parser";
-import serverless from "serverless-http"; // Add serverless-http
 import { setupApiRouter } from "./routes/index";
 
 const app = express();
@@ -99,7 +98,7 @@ const persistConfig = (configData: object): void => {
 /**
  * Main function to initialize the application.
  */
-const main = (): void => {
+const main = async (): Promise<void> => {
   // Ensure the configuration directory exists
   console.debug("Checking if configuration directory exists at:", configDir);
   if (!fs.existsSync(configDir)) {
@@ -169,7 +168,13 @@ const main = (): void => {
   };
 
   if (process.env.USE_SERVERLESS === "true") {
-    module.exports.handler = serverless(app);
+    try {
+      const { default: serverless } = await import('serverless-http');
+      module.exports.handler = serverless(app);
+    } catch (err) {
+      console.error("Failed to load serverless-http:", err);
+      process.exit(1);
+    }
   } else {
     startServer();
   }
