@@ -1,13 +1,13 @@
-# fly.toml app configuration file generated for gpt-aws-cli on 2024-07-30T21:16:02Z
+# fly.toml app configuration file generated for notion-sdk on 2024-08-04T04:55:59Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'gpt-terminal-plus'
+app = 'notion-sdk'
 primary_region = 'syd'
 
 [build]
-  dockerfile = "../docker/aws-cli/Dockerfile"
+  dockerfile = '../docker/notion-sdk/Dockerfile'
 
 [env]
   NODE_CONFIG_DIR = '/data/config'
@@ -15,7 +15,7 @@ primary_region = 'syd'
   PORT = '5004'
 
 [[mounts]]
-  source = 'mydata1'
+  source = 'mydata3'
   destination = '/data'
 
 [http_service]
