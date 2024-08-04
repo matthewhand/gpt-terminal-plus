@@ -28,7 +28,7 @@ By using separate Docker containers, each tool is isolated from the others, redu
 
 - For the AWS CLI service, you can map your existing AWS credentials to the container:
     ```yaml
-    version: '3.8'
+    version: 3.8
     services:
       aws-cli:
         image: amazon/aws-cli
@@ -37,7 +37,7 @@ By using separate Docker containers, each tool is isolated from the others, redu
     ```
 - Alternatively, you can map to a container volume:
     ```yaml
-    version: '3.8'
+    version: 3.8
     services:
       aws-cli:
         image: amazon/aws-cli
@@ -55,3 +55,4 @@ Contributions are welcome for CLI software that follows a similar architecture o
 - **Deployment**: Refer to `.github/workflows/` for CI/CD setup and `fly_configs/` for deployment examples on Fly.io.
 
 By understanding and following these guidelines, you can ensure a consistent and secure implementation of Docker containers in the GPT Terminal Plus project.
+

@@ -70,3 +70,4 @@ The pagination logic dynamically splits the raw `stdout` string into pages based
 
 - **Memory Usage**: Storing large raw strings may lead to high memory usage. Consider implementing memory optimization techniques.
 - **Performance**: Dynamic pagination may introduce performance overhead. Explore ways to optimize the pagination logic.
+
