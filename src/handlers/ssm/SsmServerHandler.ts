@@ -1,114 +1,98 @@
-import { getScriptPath } from '../../utils/remoteSystemInfo';
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { SystemInfo } from '../../types/SystemInfo';
-import debug from 'debug';
 import { executeCommand, ExecuteCommandParams } from './actions/executeCommand';
+import { getSystemInfo } from './actions/getSystemInfo';
+import { amendFile } from './actions/amendFile';
+import { createFile } from './actions/createFile';
+import { listFiles } from './actions/listFiles';
+import { updateFile } from './actions/updateFile';
+import { setSelectedServer, changeDirectory, presentWorkingDirectory } from '../../utils/GlobalStateHelper';
+import { SystemInfo } from '../../types/SystemInfo';
+import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { SsmTargetConfig } from '../../types/ServerConfig';
-import fs from 'fs';
-import path from 'path';
+import { SSMClient } from '@aws-sdk/client-ssm';
+import debug from 'debug';
 
 const ssmServerDebug = debug('app:SsmServer');
 
-const DEFAULT_SSM_DOCUMENT_NAME = process.env.SSM_DOCUMENT_NAME || 'AWS-RunShellScript';
-
-class SsmServerHandler extends AbstractServerHandler {
-  private ssmClient: any;
-  protected serverConfig: SsmTargetConfig;
+class SsmServer extends AbstractServerHandler {
+  private ssmClient: SSMClient;
+  private instanceId: string;
+  private region: string;
 
   constructor(serverConfig: SsmTargetConfig) {
     super(serverConfig);
-    this.serverConfig = serverConfig;
-    ssmServerDebug('Initialized SsmServerHandler with config: ' + JSON.stringify(serverConfig));
-    this.ssmClient = {}; // Initialize ssmClient (this should be replaced with actual implementation)
+    this.instanceId = serverConfig.instanceId;
+    this.region = serverConfig.region;
+    this.ssmClient = new SSMClient({ region: this.region });
+    setSelectedServer(serverConfig.host);
+    ssmServerDebug(`Initialized SsmServer with config: ${JSON.stringify(serverConfig)}`);
   }
 
-  private getScriptContent(shell: string): string {
-    let scriptFilePath: string;
-    switch (shell) {
-      case 'powershell':
-        scriptFilePath = getScriptPath('powershell');
-        break;
-      case 'python':
-        scriptFilePath = getScriptPath('python');
-        break;
-      case 'bash':
-      default:
-        scriptFilePath = getScriptPath('bash');
-scriptFilePath = path.join(__dirname, '../../scripts/remote_system_info.ts');      scriptFilePath = path.join(__dirname, '../../scripts/remote_system_info.js');
-        break;
-    }
-    ssmServerDebug(`Loading script content from: ${scriptFilePath}`);
-    return fs.readFileSync(scriptFilePath, 'utf8');
-  }
-
-  async getSystemInfo(): Promise<SystemInfo> {
-    ssmServerDebug('Retrieving system info for SSM server.');
-    const shell = this.serverConfig.shell || 'bash';
-    ssmServerDebug(`Selected shell: ${shell}`);
-    const scriptContent = this.getScriptContent(shell);
-    ssmServerDebug(`Script content: ${scriptContent}`);
-
-    let command: string;
-    switch (shell) {
-      case 'powershell':
-        command = `powershell -Command "${scriptContent.replace(/"/g, '\"')}"`;
-        break;
-      case 'python':
-        command = `python -c "${scriptContent.replace(/"/g, '\"')}"`;
-        break;
-      case 'bash':
-      default:
-        command = `bash -c "${scriptContent.replace(/"/g, '\"')}"`;
-        break;
-    }
-    ssmServerDebug(`Executing command: ${command}`);
-
+  async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
+    ssmServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}, region: ${this.region}, instanceId: ${this.instanceId}`);
     const params: ExecuteCommandParams = {
       ssmClient: this.ssmClient,
       command,
-      instanceId: this.serverConfig.instanceId,
-      documentName: DEFAULT_SSM_DOCUMENT_NAME,
-      timeout: 60,
-      directory: '/',
+      instanceId: this.instanceId,
+      documentName: 'AWS-RunShellScript',
+      timeout: timeout ?? 60,
+      directory: directory ?? '',
     };
-
-    const { stdout = '' } = await executeCommand(params);
-    ssmServerDebug(`Command output: ${stdout}`);
-    return JSON.parse(stdout) as SystemInfo;
-  }
-
-  async executeCommand(command: string, timeout: number = 60, directory: string = '/'): Promise<{ stdout: string; stderr: string }> {
-    ssmServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-
-    const params: ExecuteCommandParams = {
-      ssmClient: this.ssmClient,
-      command,
-      instanceId: this.serverConfig.instanceId,
-      documentName: DEFAULT_SSM_DOCUMENT_NAME,
-      timeout,
-      directory,
-    };
-
     const result = await executeCommand(params);
-    ssmServerDebug(`Command result: stdout: ${result.stdout || ''}, stderr: ${result.stderr || ''}`);
     return { stdout: result.stdout || '', stderr: result.stderr || '' };
   }
 
-  async listFiles(): Promise<{ items: { name: string; isDirectory: boolean }[]; limit: number; offset: number; total: number }> {
-    throw new Error('Action not supported');
+  async getSystemInfo(): Promise<SystemInfo> {
+    ssmServerDebug(`Retrieving system info for region: ${this.region}, instanceId: ${this.instanceId}`);
+    const info = await getSystemInfo(this.ssmClient, 'bash', 'path/to/system_info.sh', this.instanceId);
+    return JSON.parse(info) as SystemInfo;
   }
 
-  async createFile(): Promise<boolean> {
-    throw new Error('Action not supported');
+  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Amending file at filename: ${filePath}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return amendFile(this.ssmClient, filePath, content, backup.toString());
   }
 
-  async updateFile(): Promise<boolean> {
-    throw new Error('Action not supported');
+  async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Creating filePath in directory: ${filePath}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return createFile(this.ssmClient, this.instanceId, filePath, content, backup);
   }
 
-  async amendFile(): Promise<boolean> {
-    throw new Error('Action not supported');
+  async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
+    ssmServerDebug(`Listing files with params: ${JSON.stringify(params)}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    const command = `ls -l ${params.directory}`;
+    const result = await this.executeCommand(command);
+    const files = result.stdout.split('\n').map(line => {
+      const parts = line.split(/\s+/);
+      const isDirectory = parts[0].startsWith('d');
+      const name = parts.slice(8).join(' ');
+      return { name, isDirectory };
+    });
+    return {
+      items: files,
+      limit: params.limit ?? 10,
+      offset: params.offset ?? 0,
+      total: files.length,
+    };
+  }
+
+  async updateFile(filename: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Updating file at filename: ${filename}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return updateFile(this.ssmClient, filename, pattern, replacement, backup.toString());
+  }
+
+  async changeDirectory(directory: string): Promise<boolean> {
+    ssmServerDebug(`Changing directory to: ${directory}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    changeDirectory(directory);
+    return true;
+  }
+
+  async presentWorkingDirectory(): Promise<string> {
+    ssmServerDebug(`Retrieving present working directory, region: ${this.region}, instanceId: ${this.instanceId}`);
+    const pwd = await presentWorkingDirectory();
+    changeDirectory(pwd);
+    return pwd;
   }
 }
 
-export default SsmServerHandler;
+export default SsmServer;
