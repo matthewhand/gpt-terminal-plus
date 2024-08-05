@@ -76,23 +76,22 @@ export abstract class AbstractServerHandler implements ServerHandler {
 
   /**
    * Creates or replaces a file.
-   * @param {string} directory - The directory where the file will be created or replaced.
-   * @param {string} filename - The name of the file to create or replace.
+   * @param {string} filePath - The full path of the file to create or replace.
    * @param {string} content - The content to write to the file.
    * @param {boolean} backup - Whether to back up the existing file before creating or replacing the new one.
    * @returns {Promise<boolean>} - Resolves to true if the file is created or replaced successfully.
    */
-  abstract createFile(directory: string, filename: string, content: string, backup: boolean): Promise<boolean>;
+  abstract createFile(filePath: string, content: string, backup: boolean): Promise<boolean>;
 
   /**
    * Updates an existing file by replacing specified patterns with new content.
    * @param {string} filePath - The full path of the file to update.
    * @param {string} pattern - The text pattern to be replaced in the file.
    * @param {string} replacement - The new text to replace the pattern.
-   * @param {boolean} backup - Whether to back up the file before updating.
+   * @param {boolean} multiline - Whether to treat the pattern as multiline.
    * @returns {Promise<boolean>} - Resolves to true if the file is updated successfully.
    */
-  abstract updateFile(filePath: string, pattern: string, replacement: string, backup: boolean): Promise<boolean>;
+  abstract updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean): Promise<boolean>;
 
   /**
    * Amends an existing file by appending new content to it.
