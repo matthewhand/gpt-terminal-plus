@@ -33,6 +33,7 @@ class SsmServerHandler extends AbstractServerHandler {
       case 'bash':
       default:
         scriptFilePath = path.join(__dirname, '../../scripts/remote_system_info.sh');
+scriptFilePath = path.join(__dirname, '../../scripts/remote_system_info.ts');      scriptFilePath = path.join(__dirname, '../../scripts/remote_system_info.js');
         break;
     }
     ssmServerDebug(`Loading script content from: ${scriptFilePath}`);

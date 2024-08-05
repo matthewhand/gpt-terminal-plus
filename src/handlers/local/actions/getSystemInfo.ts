@@ -97,6 +97,7 @@ function getScriptContent(shell: string): string {
     case 'bash':
     default:
       scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.sh');
+scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.ts');      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.js');
       break;
   }
   debug(`Loading script content from: ${scriptFilePath}`);
