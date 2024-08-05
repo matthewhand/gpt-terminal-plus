@@ -19,8 +19,8 @@ export const executeCommand = async (req: Request, res: Response) => {
   }
 
   try {
-    const serverHandler = getServerHandler(req);
-    const result = await serverHandler.executeCommand(command);
+    const server = getServerHandler(req);
+    const result = await server.executeCommand(command);
     debug(`Command executed: ${command}, result: ${result}`);
     res.status(200).json({ result });
   } catch (err) {

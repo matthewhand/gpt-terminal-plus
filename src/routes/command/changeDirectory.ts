@@ -19,8 +19,8 @@ export const changeDirectory = async (req: Request, res: Response) => {
   }
 
   try {
-    const serverHandler = getServerHandler(req);
-    const success = await serverHandler.changeDirectory(directory);
+    const server = getServerHandler(req);
+    const success = await server.changeDirectory(directory);
     debug(`Directory changed to: ${directory}, success: ${success}`);
     res.status(success ? 200 : 400).json({
       message: success ? "Directory changed successfully." : "Failed to change directory."
