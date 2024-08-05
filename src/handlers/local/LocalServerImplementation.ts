@@ -1,9 +1,5 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { createFile } from './actions/createFile';
-import { amendFile } from './actions/amendFile';
-import { getSystemInfo } from './actions/getSystemInfo';
-import { updateFile } from './actions/updateFile';
-import { executeCommand } from './actions/executeCommand';
+import { createFile as createLocalFile, amendFile as amendLocalFile, getSystemInfo as getLocalSystemInfo, updateFile as updateLocalFile, executeCommand as executeLocalCommand } from './actions/fileActions';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { LocalConfig } from '../../types/ServerConfig';
@@ -36,7 +32,7 @@ class LocalServer extends AbstractServerHandler {
    */
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     localServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-    return executeCommand(command, timeout, directory);
+    return executeLocalCommand(command, timeout, directory);
   }
 
   /**
@@ -45,7 +41,7 @@ class LocalServer extends AbstractServerHandler {
    */
   async getSystemInfo(): Promise<SystemInfo> {
     localServerDebug('Retrieving system info');
-    return getSystemInfo('bash'); // Provide default shell type
+    return getLocalSystemInfo('bash'); // Provide default shell type
   }
 
   /**
@@ -57,20 +53,19 @@ class LocalServer extends AbstractServerHandler {
    */
   async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
     localServerDebug(`Amending file at path: ${filePath}, content: ${content}, backup: ${backup}`);
-    return amendFile(filePath, content);
+    return amendLocalFile(filePath, content);
   }
 
   /**
    * Creates a file on the local server.
-   * @param directory - The directory to create the file in.
-   * @param filename - The name of the file to create.
+   * @param filePath - The path of the file to create.
    * @param content - The content of the file.
    * @param backup - Whether to create a backup of the file.
    * @returns Whether the file was successfully created.
    */
-  async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    localServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}`);
-    return createFile(directory, filename, content, backup);
+  async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    localServerDebug(`Creating file at path: ${filePath}, content: ${content}, backup: ${backup}`);
+    return createLocalFile(filePath, content, backup);
   }
 
   /**
@@ -88,12 +83,12 @@ class LocalServer extends AbstractServerHandler {
    * @param filePath - The path of the file to update.
    * @param pattern - The pattern to replace in the file.
    * @param replacement - The replacement for the pattern.
-   * @param backup - Whether to create a backup of the file.
+   * @param multiline - Whether to treat the pattern as multiline.
    * @returns Whether the file was successfully updated.
    */
-  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
-    localServerDebug(`Updating file at path: ${filePath}, pattern: ${pattern}, replacement: ${replacement}, backup: ${backup}`);
-    return updateFile(filePath, pattern, replacement, backup);
+  async updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean = false): Promise<boolean> {
+    localServerDebug(`Updating file at path: ${filePath}, pattern: ${pattern}, replacement: ${replacement}, multiline: ${multiline}`);
+    return updateLocalFile(filePath, pattern, replacement, multiline);
   }
 
   /**

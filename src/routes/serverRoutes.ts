@@ -61,13 +61,13 @@ router.post("/set", async (req: Request, res: Response) => {
     const serverManager = new ServerManager(serverConfig);
 
     // Fetch the server handler instance using the updated server
-    const serverHandler = serverManager.createHandler();
-    serverHandler.setServerConfig(serverConfig); // Set the server config
+    const server = serverManager.createHandler();
+    server.setServerConfig(serverConfig); // Set the server config
     debug("ServerHandler instance successfully retrieved for server: " + server);
 
     let systemInfo = null;
     if (getSystemInfo) {
-      systemInfo = await serverHandler.getSystemInfo();
+      systemInfo = await server.getSystemInfo();
     }
 
     res.status(200).json({ message: "Server set to " + server, systemInfo });
@@ -96,8 +96,8 @@ router.post("/set", async (req: Request, res: Response) => {
  */
 router.get("/system-info", async (req: Request, res: Response) => {
   try {
-    const serverHandler = getServerHandler(req);
-    const systemInfo = await serverHandler.getSystemInfo();
+    const ServerHandler = getServerHandler(req);
+    const systemInfo = await ServerHandler.getSystemInfo();
     res.status(200).json(systemInfo);
   } catch (error) {
     const errorMessage = "Error retrieving system info: " + (error instanceof Error ? error.message : "Unknown error");

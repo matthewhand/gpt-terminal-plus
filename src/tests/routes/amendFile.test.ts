@@ -2,13 +2,14 @@ import request from "supertest";
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { amendFile } from "../../src/routes/file/amendFile";
-import { createLocalServer } from "../utils/localServerUtil";
+import { amendFile } from "../../routes/file/amendFile";
 
 const app = express();
 app.use(express.json());
+
+// Mock the server directly in the route handler for the test
 app.post("/amend-file", (req, res, next) => {
-  req.server = createLocalServer();
+  req.server = {}; // Mocked server handler
   next();
 }, amendFile);
 
@@ -25,16 +26,21 @@ describe("Amend File Route", () => {
 
   afterAll(() => {
     if (fs.existsSync(testDir)) {
-      fs.rmdirSync(testDir, { recursive: true });
+      fs.rmSync(testDir, { recursive: true }); // Updated to fs.rmSync
     }
   });
 
   it("should amend file successfully", async () => {
     const filePath = path.join(testDir, "test.txt");
-    const response = await request(app).post("/amend-file").send({
-      filePath,
-      content: "Appended content.",
-    });
+    const response = await request(app)
+      .post("/amend-file")
+      .set("Content-Type", "application/json")
+      .send({
+        filePath,
+        content: "Appended content.",
+      });
+
+    console.log("Response status:", response.status); // Debug log
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("File amended successfully.");
@@ -44,9 +50,12 @@ describe("Amend File Route", () => {
   });
 
   it("should return error if filePath or content is not provided", async () => {
-    const response = await request(app).post("/amend-file").send({
-      content: "Appended content.",
-    });
+    const response = await request(app)
+      .post("/amend-file")
+      .set("Content-Type", "application/json")
+      .send({
+        content: "Appended content.",
+      });
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("File path and content are required");

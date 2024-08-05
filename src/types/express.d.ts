@@ -1,8 +1,9 @@
-import { ServerHandler } from "../types/ServerHandler";
+import { ServerHandler } from "../utils/ServerHandler";
 
-declare module "express-serve-static-core" {
-  interface Request {
-    serverHandler?: ServerHandler;
+declare global {
+  namespace Express {
+    interface Request {
+      server?: ServerHandler;
+    }
   }
 }
-

@@ -2,13 +2,31 @@ import request from "supertest";
 import express from "express";
 import fs from "fs";
 import path from "path";
-import { updateFile } from "../../src/routes/file/updateFile";
-import { createLocalServer } from "../utils/localServerUtil";
+import { updateFile } from "../../routes/file/updateFile";
+import ServerManager from "../../managers/ServerManager";
 
 const app = express();
 app.use(express.json());
 app.post("/update-file", (req, res, next) => {
-  req.server = createLocalServer();
+  req.server = new ServerManager({
+    host: 'localhost',
+    protocol: 'local',
+    code: false,
+  }).createHandler();
+  console.log("Server set on request in first middleware:", req.server); // Debug log
+  next();
+}, (req, res, next) => {
+  console.log("Middleware check after first middleware, server on request:", req.server); // Debug log
+  next();
+}, (req, res, next) => {
+  if (!req.server) {
+    console.log("Server handler is missing in third middleware");
+  } else {
+    console.log("Server handler is present in third middleware");
+  }
+  next();
+}, (req, res, next) => {
+  console.log("Inside updateFile route handler, server on request:", req.server); // Debug log
   next();
 }, updateFile);
 
@@ -25,26 +43,28 @@ describe("Update File Route", () => {
 
   afterAll(() => {
     if (fs.existsSync(testDir)) {
-      fs.rmdirSync(testDir, { recursive: true });
+      fs.rmSync(testDir, { recursive: true }); // Updated to fs.rmSync
     }
   });
 
   it("should update file successfully", async () => {
+    const filePath = path.join(testDir, "test.txt");
     const response = await request(app).post("/update-file").send({
-      directory: testDir,
-      filename: "test.txt",
+      filePath,
       pattern: "Initial",
       replacement: "Updated",
     });
 
+    console.log("Response status:", response.status); // Debug log
+
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("File updated successfully.");
 
-    const fileContent = fs.readFileSync(testFile, "utf8");
+    const fileContent = fs.readFileSync(filePath, "utf8");
     expect(fileContent).toContain("Updated content.\nSome more content.");
   });
 
-  it("should return error if filename, directory, pattern, or replacement is not provided", async () => {
+  it("should return error if filePath, pattern, or replacement is not provided", async () => {
     const response = await request(app).post("/update-file").send({
       pattern: "Initial",
       replacement: "Updated",

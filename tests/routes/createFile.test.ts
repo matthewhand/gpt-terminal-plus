@@ -8,7 +8,7 @@ import { createLocalServer } from "../utils/localServerUtil";
 const app = express();
 app.use(express.json());
 app.post("/create-file", (req, res, next) => {
-  req.serverHandler = createLocalServer();
+  req.server = createLocalServer();
   next();
 }, createFile);
 
