@@ -30,17 +30,16 @@ const generateUniqueDelimiter = (content: string): string => {
 export const createFile = async (
   ssmClient: SSMClient,
   instanceId: string,
-  directory: string,
-  filename: string,
+  filePath: string,
   content: string,
   backup: boolean = true
 ): Promise<boolean> => {
   const delimiter = generateUniqueDelimiter(content);
 
   // Backup existing file if backup is true
-  const backupCommand = backup ? "[ -f " + directory + "/" + filename + " ] && cp " + directory + "/" + filename + " " + directory + "/" + filename + ".bak;" : '';
+  const backupCommand = backup ? "[ -f " + filePath + " ] && cp " + filePath + " " + filePath + ".bak;" : '';
   
-  const command = backupCommand + " cat <<'" + delimiter + "' > " + directory + "/" + filename + "\n" + content + "\n" + delimiter;
+  const command = backupCommand + " cat <<'" + delimiter + "' > " + filePath + "\n" + content + "\n" + delimiter;
   
   debug("Creating file with command: " + command);
   

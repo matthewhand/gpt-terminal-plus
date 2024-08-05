@@ -10,12 +10,11 @@ const debug = Debug('app:updateFile');
  * @param {string} filePath - The full path of the file to update.
  * @param {string} pattern - The text pattern to be replaced in the file.
  * @param {string} replacement - The new text to replace the pattern.
- * @param {boolean} backup - Whether to back up the file before updating.
  * @param {boolean} multiline - Whether to treat the pattern as multiline.
  * @returns {Promise<boolean>} - Resolves to true if the file is updated successfully.
  */
-export async function updateFile(filePath: string, pattern: string, replacement: string, backup: boolean, multiline: boolean): Promise<boolean> {
-  debug("Received parameters:", { filePath, pattern, replacement, backup, multiline });
+export async function updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean): Promise<boolean> {
+  debug("Received parameters:", { filePath, pattern, replacement, multiline });
 
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
@@ -39,11 +38,6 @@ export async function updateFile(filePath: string, pattern: string, replacement:
   debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ' and replacement: ' + replacement);
 
   try {
-    if (backup && fs.existsSync(fullPath)) {
-      const backupPath = `${fullPath}.bak`;
-      await fs.promises.copyFile(fullPath, backupPath);
-      debug('Backup created at ' + backupPath);
-    }
     const content = await fs.promises.readFile(fullPath, "utf8");
     const updatedContent = content.replace(new RegExp(pattern, multiline ? "gm" : "g"), replacement);
     await fs.promises.writeFile(fullPath, updatedContent);

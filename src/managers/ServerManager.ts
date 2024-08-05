@@ -1,7 +1,7 @@
 import config from 'config';
 import debug from 'debug';
 import { ServerConfig, LocalConfig, SshHostConfig, SsmTargetConfig } from '../types/ServerConfig';
-import LocalServer from '../handlers/local/LocalServerImplementation';
+import LocalServerImplementation from '../handlers/local/LocalServerImplementation';
 import SshServer from '../handlers/ssh/SshServerImplementation';
 import SsmServer from '../handlers/ssm/SsmServerImplementation';
 
@@ -39,12 +39,12 @@ export class ServerManager {
     serverManagerDebug('Server configuration updated');
   }
 
-  createHandler(): LocalServer | SshServer | SsmServer {
+  createHandler(): LocalServerImplementation | SshServer | SsmServer {
     const { protocol } = this.serverConfig;
     switch (protocol) {
       case 'local':
         serverManagerDebug('Creating LocalServer handler for ' + this.serverConfig.host);
-        return new LocalServer(this.serverConfig as LocalConfig);
+        return new LocalServerImplementation(this.serverConfig as LocalConfig);
       case 'ssh':
         serverManagerDebug('Creating SshServer handler for ' + this.serverConfig.host);
         return new SshServer(this.serverConfig as SshHostConfig);

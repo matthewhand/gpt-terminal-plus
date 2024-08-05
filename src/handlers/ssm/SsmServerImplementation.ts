@@ -48,14 +48,14 @@ class SsmServer extends AbstractServerHandler {
     return JSON.parse(info) as SystemInfo;
   }
 
-  async amendFile(filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    ssmServerDebug(`Amending file at filename: ${filename}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return amendFile(this.ssmClient, filename, content, backup.toString());
+  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Amending file at filename: ${filePath}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return amendFile(this.ssmClient, filePath, content, backup.toString());
   }
 
-  async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    ssmServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return createFile(this.ssmClient, directory, filename, content, backup.toString());
+  async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Creating filePath in directory: ${filePath}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return createFile(this.ssmClient, this.instanceId, filePath, content, backup);
   }
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {

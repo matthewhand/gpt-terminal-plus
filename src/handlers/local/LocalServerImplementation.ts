@@ -1,5 +1,9 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { createFile as createLocalFile, amendFile as amendLocalFile, getSystemInfo as getLocalSystemInfo, updateFile as updateLocalFile, executeCommand as executeLocalCommand } from './actions/fileActions';
+import { createFile as createLocalFile } from './actions/createFile';
+import { amendFile as amendLocalFile } from './actions/amendFile';
+import { getSystemInfo as getLocalSystemInfo } from './actions/getSystemInfo';
+import { updateFile as updateLocalFile } from './actions/updateFile';
+import { executeCommand as executeLocalCommand } from './actions/executeCommand';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { LocalConfig } from '../../types/ServerConfig';

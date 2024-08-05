@@ -62,9 +62,9 @@ class SshServer extends AbstractServerHandler {
     return amendFile(this.sshClient, filename, content);
   }
 
-  async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    sshServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}`);
-    return createFile(this.sshClient, `${directory}/${filename}`, content);
+  async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    sshServerDebug(`Creating filePath: ${filePath}, content: ${content}, backup: ${backup}`);
+    return createFile(this.sshClient, `${filePath}`, content);
   }
 
   async deleteFile(filePath: string): Promise<void> {

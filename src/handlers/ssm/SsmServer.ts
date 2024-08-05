@@ -55,9 +55,9 @@ class SsmServer extends AbstractServerHandler {
     return amendFile(this.ssmClient, filename, content, backup.toString());
   }
 
-  async createFile(directory: string, filename: string, content: string, backup: boolean = true): Promise<boolean> {
-    ssmServerDebug(`Creating file in directory: ${directory}, filename: ${filename}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
-    return createFile(this.ssmClient, directory, filename, content, backup.toString());
+  async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    ssmServerDebug(`Creating filePath: ${filePath}, content: ${content}, backup: ${backup}, region: ${this.region}, instanceId: ${this.instanceId}`);
+    return createFile(this.ssmClient, filePath, content, backup.toString());
   }
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
