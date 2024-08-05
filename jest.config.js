@@ -1,5 +1,5 @@
 module.exports = {
-  roots: ['<rootDir>/tests', '<rootDir>/src/tests'],
+  roots: ['<rootDir>/tests'],
   transform: {
     '^.+\.tsx?$': 'ts-jest',
   },
@@ -9,11 +9,4 @@ module.exports = {
     '^@src/(.*)$': '<rootDir>/src/',
   },
   setupFiles: ['module-alias/register'],
-  collectCoverage: true,
-  coverageDirectory: 'coverage',
-  coverageReporters: ['json', 'lcov', 'text', 'clover'],
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx,ts,tsx}',
-    '!src/**/*.d.ts',
-  ],
 };
