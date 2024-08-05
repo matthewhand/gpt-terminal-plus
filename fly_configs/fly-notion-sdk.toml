@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for notion-sdk on 2024-08-04T04:55:59Z
+# fly.toml app configuration file generated for notion-sdk-weathered-breeze-7988 on 2024-08-05T06:00:44Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'notion-sdk'
+app = 'notion-sdk-weathered-breeze-7988'
 primary_region = 'syd'
 
 [build]

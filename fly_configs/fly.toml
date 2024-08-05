@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for gpt-terminal-plus on 2024-08-05T05:08:17Z
+# fly.toml app configuration file generated for gpt-terminal-plus on 2024-08-05T05:40:55Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,7 +7,7 @@ app = 'gpt-terminal-plus'
 primary_region = 'syd'
 
 [build]
-  dockerfile = '../docker/Dockerfile.base'
+  image = 'mhand79/gpt-terminal-plus'
 
 [env]
   NODE_CONFIG_DIR = '/data/config'
