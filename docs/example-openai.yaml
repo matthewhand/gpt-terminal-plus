@@ -354,6 +354,57 @@ paths:
                 error:
                   type: string
                   description: Error message.
+  /file/create:
+    post:
+      summary: Create a file on the managed server.
+      description: >
+        Creates a new file in the specified directory with the provided content. Optionally backs up the existing file
+        before overwriting. Note: There is a technical limitation of 3KB file size. If the directory is not specified or
+        is ".", the response includes the present working directory.
+      operationId: createFile
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                  description: The filePath where the file will be created or replaced.
+                content:
+                  type: string
+                  description: The content to write to the file.
+                backup:
+                  type: boolean
+                  description: Whether to back up the existing file before creating or replacing the new one. Defaults to true.
+                  default: true
+      responses:
+        "200":
+          description: File created or replaced successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  presentWorkingDirectory:
+                    type: string
+                    description: Present working directory if the directory argument is not specified or is '.'.
+        "400":
+          description: Bad request, possibly due to invalid inputs or missing required fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
 components:
   schemas:
     CreateFileRequest:

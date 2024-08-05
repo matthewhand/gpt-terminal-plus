@@ -88,16 +88,14 @@ paths:
             schema:
               type: object
               properties:
-                directory:
-                  type: string
-                filename:
+                filePath:
                   type: string
                 content:
                   type: string
                 backup:
                   type: boolean
               required:
-                - filename
+                - filePath
                 - content
       responses:
         '200':
