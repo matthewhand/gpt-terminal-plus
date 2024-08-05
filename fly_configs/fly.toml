@@ -5,12 +5,12 @@ primary_region = "syd"
   dockerfile = "../docker/Dockerfile.base"
 
 [env]
-  PORT = "5004"
+  PORT = "5005"
   NODE_ENV = "production"
   NODE_CONFIG_DIR = "/data/config"
 
 [http_service]
-  internal_port = 5004
+  internal_port = 5005
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true

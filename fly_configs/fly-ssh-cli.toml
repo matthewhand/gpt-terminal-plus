@@ -12,14 +12,14 @@ primary_region = 'syd'
 [env]
   NODE_CONFIG_DIR = '/data/config'
   NODE_ENV = 'production'
-  PORT = '5004'
+  PORT = '5005'
 
 [[mounts]]
   source = 'mydata2'
   destination = '/data'
 
 [http_service]
-  internal_port = 5004
+  internal_port = 5005
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
