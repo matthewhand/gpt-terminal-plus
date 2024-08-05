@@ -1,48 +1,44 @@
-import * as fs from "fs";
-import * as path from "path";
-import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
+import fs from 'fs';
+import path from 'path';
+import { presentWorkingDirectory } from '../../../utils/GlobalStateHelper';
 import Debug from 'debug';
 
 const debug = Debug('app:createFile');
 
-/**
- * Creates a file with the specified content.
- * @param {string} filePath - The full path of the file to create.
- * @param {string} content - The content to write to the file.
- * @param {boolean} backup - Whether to back up the existing file before creating or replacing the new one.
- * @returns {Promise<boolean>} - Resolves to true if the file is created successfully.
- */
-export async function createFile(filePath: string, content: string, backup: boolean): Promise<boolean> {
-  debug("Received parameters:", { filePath, content, backup });
+export async function createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+  debug('Received parameters: %O', { filePath, content, backup });
 
-  // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
-    const errorMessage = 'File path must be provided and must be a string.';
-    debug(errorMessage);
-    throw new Error(errorMessage);
-  }
-  if (!content || typeof content !== 'string') {
-    const errorMessage = 'Content must be provided and must be a string.';
-    debug(errorMessage);
-    throw new Error(errorMessage);
+    debug('File path must be provided and must be a string.');
+    throw new Error('File path must be provided and must be a string.');
   }
 
-  // Correct the full path
-  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
-  debug('Creating file at ' + fullPath + ' with content: ' + content);
+  if (!content || typeof content !== 'string') {
+    debug('Content must be provided and must be a string.');
+    throw new Error('Content must be provided and must be a string.');
+  }
+
+  const baseDir = process.env.NODE_CONFIG_DIR || presentWorkingDirectory();
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(baseDir, filePath);
+  debug('Resolved full path: %s', fullPath);
 
   try {
     if (backup && fs.existsSync(fullPath)) {
-      const backupPath = `${fullPath}.bak`;
-      await fs.promises.copyFile(fullPath, backupPath);
-      debug('Backup created at ' + backupPath);
+      debug('Backing up existing file to %s.bak', fullPath);
+      await fs.promises.copyFile(fullPath, fullPath + '.bak');
     }
+
+    debug('Writing file to path: %s with content: %s', fullPath, content);
     await fs.promises.writeFile(fullPath, content);
-    debug('File created successfully at ' + fullPath);
+    debug('File created successfully');
     return true;
   } catch (error) {
-    const errorMessage = 'Failed to create file ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');
-    debug(errorMessage);
-    throw new Error(errorMessage);
+    if (error instanceof Error) {
+      debug('Failed to create file %s: %s', fullPath, error.message);
+      throw new Error(`Failed to create file ${fullPath}: ${error.message}`);
+    } else {
+      debug('Failed to create file %s: %O', fullPath, error);
+      throw new Error(`Failed to create file ${fullPath}: ${error}`);
+    }
   }
 }
