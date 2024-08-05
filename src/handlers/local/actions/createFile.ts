@@ -1,52 +1,48 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
+import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
 import Debug from 'debug';
 
 const debug = Debug('app:createFile');
 
 /**
- * Creates a file with the specified content in the given directory.
- * @param {string} directory - The directory to create the file in.
- * @param {string} filename - The name of the file to create.
+ * Creates a file with the specified content.
+ * @param {string} filePath - The full path of the file to create.
  * @param {string} content - The content to write to the file.
- * @param {boolean} backup - Whether to create a backup if the file already exists.
- * @returns {boolean} True if the file was created successfully, false otherwise.
+ * @param {boolean} backup - Whether to back up the existing file before creating or replacing the new one.
+ * @returns {Promise<boolean>} - Resolves to true if the file is created successfully.
  */
-export function createFile(directory: string, filename: string, content: string, backup: boolean): boolean {
-    // Validate inputs
-    if (!directory || typeof directory !== 'string') {
-        const errorMessage = 'Directory must be provided and must be a string.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
-    if (!filename || typeof filename !== 'string') {
-        const errorMessage = 'Filename must be provided and must be a string.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
-    if (!content || typeof content !== 'string') {
-        const errorMessage = 'Content must be provided and must be a string.';
-        debug(errorMessage);
-        throw new Error(errorMessage);
-    }
+export async function createFile(filePath: string, content: string, backup: boolean): Promise<boolean> {
+  debug("Received parameters:", { filePath, content, backup });
 
-    const fullPath = path.join(directory, filename);
-    debug('Creating file: ' + fullPath);
-    try {
-        if (!fs.existsSync(directory)) {
-            const errorMessage = 'Directory does not exist: ' + directory;
-            debug(errorMessage);
-            throw new Error(errorMessage);
-        }
-        if (backup && fs.existsSync(fullPath)) {
-            fs.copyFileSync(fullPath, fullPath + '.bak');
-        }
-        fs.writeFileSync(fullPath, content);
-        debug('File created successfully at ' + fullPath);
-        return true;
-    } catch (error) {
-        const errorMessage = 'Error creating file at ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');
-        debug(errorMessage);
-        throw new Error(errorMessage);
+  // Validate inputs
+  if (!filePath || typeof filePath !== 'string') {
+    const errorMessage = 'File path must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+  if (!content || typeof content !== 'string') {
+    const errorMessage = 'Content must be provided and must be a string.';
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
+
+  // Correct the full path
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
+  debug('Creating file at ' + fullPath + ' with content: ' + content);
+
+  try {
+    if (backup && fs.existsSync(fullPath)) {
+      const backupPath = `${fullPath}.bak`;
+      await fs.promises.copyFile(fullPath, backupPath);
+      debug('Backup created at ' + backupPath);
     }
+    await fs.promises.writeFile(fullPath, content);
+    debug('File created successfully at ' + fullPath);
+    return true;
+  } catch (error) {
+    const errorMessage = 'Failed to create file ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');
+    debug(errorMessage);
+    throw new Error(errorMessage);
+  }
 }
