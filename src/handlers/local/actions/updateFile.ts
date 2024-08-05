@@ -1,25 +1,21 @@
 import * as fs from "fs";
 import * as path from "path";
 import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
-import { escapeRegExp } from "../../../utils/escapeRegExp";
-import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
 import Debug from 'debug';
 
 const debug = Debug('app:updateFile');
 
-// Use an environment variable for backup file extension, default to ".bak" if not set
-const backupExtension = process.env.BACKUP_EXTENSION || ".bak";
-
 /**
- * Updates a file by replacing a pattern with a replacement string. Optionally backs up the existing file.
- * @param {string} filePath - The path of the file to update.
- * @param {string} pattern - The pattern to replace.
- * @param {string} replacement - The replacement string.
- * @param {boolean} [backup=true] - Whether to backup the existing file.
- * @returns {Promise<boolean>} - True if the file was updated successfully, false otherwise.
+ * Updates an existing file by replacing specified patterns with new content.
+ * @param {string} filePath - The full path of the file to update.
+ * @param {string} pattern - The text pattern to be replaced in the file.
+ * @param {string} replacement - The new text to replace the pattern.
+ * @param {boolean} backup - Whether to back up the file before updating.
+ * @param {boolean} multiline - Whether to treat the pattern as multiline.
+ * @returns {Promise<boolean>} - Resolves to true if the file is updated successfully.
  */
-export async function updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
-  debug("Received parameters:", { filePath, pattern, replacement, backup });
+export async function updateFile(filePath: string, pattern: string, replacement: string, backup: boolean, multiline: boolean): Promise<boolean> {
+  debug("Received parameters:", { filePath, pattern, replacement, backup, multiline });
 
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
@@ -38,27 +34,20 @@ export async function updateFile(filePath: string, pattern: string, replacement:
     throw new Error(errorMessage);
   }
 
+  // Correct the full path
   const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
-  debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ', replacement: ' + replacement + ', backup: ' + backup);
+  debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ' and replacement: ' + replacement);
+
   try {
-    // Backup the existing file if the backup flag is set and the file exists
     if (backup && fs.existsSync(fullPath)) {
-      const backupPath = fullPath + backupExtension;
+      const backupPath = `${fullPath}.bak`;
       await fs.promises.copyFile(fullPath, backupPath);
       debug('Backup created at ' + backupPath);
     }
-
-    // Read the content of the file
-    let content = await fs.promises.readFile(fullPath, "utf8");
-
-    // Replace the pattern with the replacement string
-    const regex = new RegExp(escapeRegExp(pattern), "g");
-    content = content.replace(regex, escapeSpecialChars(replacement));
-
-    // Write the updated content back to the file
-    await fs.promises.writeFile(fullPath, content);
+    const content = await fs.promises.readFile(fullPath, "utf8");
+    const updatedContent = content.replace(new RegExp(pattern, multiline ? "gm" : "g"), replacement);
+    await fs.promises.writeFile(fullPath, updatedContent);
     debug('File updated successfully at ' + fullPath);
-
     return true;
   } catch (error) {
     const errorMessage = 'Failed to update file ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');
