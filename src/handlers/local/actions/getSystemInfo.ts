@@ -89,14 +89,14 @@ function getScriptContent(shell: string): string {
   let scriptFilePath: string;
   switch (shell) {
     case 'powershell':
-      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.ps1');
+      scriptFilePath = getScriptPath('powershell');
       break;
     case 'python':
-      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.py');
+      scriptFilePath = getScriptPath('python');
       break;
     case 'bash':
     default:
-      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.sh');
+      scriptFilePath = getScriptPath('bash');
 scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.ts');      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.js');
       break;
   }
