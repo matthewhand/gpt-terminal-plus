@@ -5,7 +5,7 @@ import { ServerHandler } from '../types/ServerHandler';
 import debug from 'debug';
 import { presentWorkingDirectory, changeDirectory } from '../utils/GlobalStateHelper';
 
-const serverHandlerDebug = debug('app:AbstractServerHandler');
+const ServerHandlerDebug = debug('app:AbstractServerHandler');
 
 /**
  * Abstract base class for server handlers.
@@ -18,7 +18,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
   constructor(serverConfig: ServerConfig) {
     this.serverConfig = serverConfig;
     this.identifier = serverConfig.host;
-    serverHandlerDebug('ServerHandler created for ' + this.identifier);
+    ServerHandlerDebug('ServerHandler created for ' + this.identifier);
   }
 
   /**
@@ -26,7 +26,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
    * @returns {ServerConfig} - The current server configuration.
    */
   getServerConfig(): ServerConfig {
-    serverHandlerDebug('Retrieving server configuration');
+    ServerHandlerDebug('Retrieving server configuration');
     return this.serverConfig;
   }
 
@@ -37,7 +37,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
   setServerConfig(serverConfig: ServerConfig): void {
     this.serverConfig = serverConfig;
     this.identifier = serverConfig.host;
-    serverHandlerDebug('Server configuration updated for ' + this.identifier);
+    ServerHandlerDebug('Server configuration updated for ' + this.identifier);
   }
 
   /**
@@ -47,7 +47,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
    */
   async changeDirectory(directory: string): Promise<boolean> {
     changeDirectory(directory);
-    serverHandlerDebug('Current directory set globally to ' + directory);
+    ServerHandlerDebug('Current directory set globally to ' + directory);
     return true;
   }
 
@@ -57,7 +57,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
    */
   async presentWorkingDirectory(): Promise<string> {
     const directory = presentWorkingDirectory();
-    serverHandlerDebug('Retrieving current directory globally: ' + directory);
+    ServerHandlerDebug('Retrieving current directory globally: ' + directory);
     return directory;
   }
 

@@ -14,7 +14,7 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     }
     const serverManager = new ServerManager(serverConfig);
     const handler = serverManager.createHandler();
-    req.serverHandler = handler as ServerHandler;
+    req.server = handler as ServerHandler;
     next();
   } catch (error) {
     res.status(500).json({ error: 'Failed to initialize server handler', details: (error as Error).message });
