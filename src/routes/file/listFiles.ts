@@ -7,13 +7,13 @@ export const listFiles = async (req: Request, res: Response) => {
   const { directory, limit, offset, orderBy } = req.body;
 
   try {
-    const serverHandler = getServerHandler(req);
-    if (!serverHandler) {
+    const ServerHandler = getServerHandler(req);
+    if (!ServerHandler) {
       throw new Error("Server handler not found");
     }
 
-    const targetDirectory = directory || await serverHandler.presentWorkingDirectory();
-    const files = await serverHandler.listFiles(targetDirectory);
+    const targetDirectory = directory || await ServerHandler.presentWorkingDirectory();
+    const files = await ServerHandler.listFiles(targetDirectory);
 
     res.status(200).json({ files });
   } catch (error) {

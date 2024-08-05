@@ -12,8 +12,8 @@ const debug = Debug("app:server:getSystemInfo");
  */
 export const getSystemInfo = async (req: Request, res: Response) => {
   try {
-    const serverHandler = getServerHandler(req);
-    const systemInfo = await serverHandler.getSystemInfo();
+    const server = getServerHandler(req);
+    const systemInfo = await server.getSystemInfo();
     res.status(200).json(systemInfo);
   } catch (error) {
     debug(`Error retrieving system info: ${error instanceof Error ? error.message : "Unknown error"}`);

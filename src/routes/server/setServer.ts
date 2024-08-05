@@ -35,8 +35,8 @@ export const setServer = async (req: Request, res: Response) => {
     const serverManager = new ServerManager(serverConfig);
 
     // Fetch the server handler instance using the updated server
-    const serverHandler = serverManager.createHandler();
-    serverHandler.setServerConfig(serverConfig); // Set the server config
+    const ServerHandler = serverManager.createHandler();
+    ServerHandler.setServerConfig(serverConfig); // Set the server config
     debug('ServerHandler instance successfully retrieved for server: ' + server);
 
     res.status(200).json({ message: 'Server set to ' + server });

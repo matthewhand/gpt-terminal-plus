@@ -10,12 +10,12 @@ export const createFile = async (req: Request, res: Response) => {
   }
 
   try {
-    const serverHandler = getServerHandler(req);
-    if (!serverHandler) {
+    const server = getServerHandler(req);
+    if (!server) {
       throw new Error("Server handler not found");
     }
 
-    const success = await serverHandler.createFile(directory, filename, content, backup);
+    const success = await server.createFile(directory, filename, content, backup);
 
     res.status(success ? 200 : 400).json({ message: success ? "File created successfully." : "Failed to create file." });
   } catch (error) {
