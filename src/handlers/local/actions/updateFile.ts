@@ -19,6 +19,8 @@ const backupExtension = process.env.BACKUP_EXTENSION || ".bak";
  * @returns {Promise<boolean>} - True if the file was updated successfully, false otherwise.
  */
 export async function updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
+  debug("Received parameters:", { filePath, pattern, replacement, backup });
+
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
     const errorMessage = 'File path must be provided and must be a string.';
@@ -36,7 +38,7 @@ export async function updateFile(filePath: string, pattern: string, replacement:
     throw new Error(errorMessage);
   }
 
-  const fullPath = path.join(presentWorkingDirectory(), filePath);
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
   debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ', replacement: ' + replacement + ', backup: ' + backup);
   try {
     // Backup the existing file if the backup flag is set and the file exists
