@@ -1,3 +1,4 @@
+import { getScriptPath } from '../../../utils/remoteSystemInfo';
 import { exec } from 'child_process';
 import { SystemInfo } from '../../../types/SystemInfo';
 import Debug from 'debug';

@@ -1,3 +1,4 @@
+import { getScriptPath } from '../../utils/remoteSystemInfo';
 import { AbstractServerHandler } from '../AbstractServerHandler';
 import { SystemInfo } from '../../types/SystemInfo';
 import debug from 'debug';
