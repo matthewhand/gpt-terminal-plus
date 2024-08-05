@@ -54,23 +54,23 @@ router.post("/set", async (req: Request, res: Response) => {
     }
 
     // Set the selected server using the global state helper
-    setSelectedServer(server);
-    debug("Server set to " + server + " using global state helper.");
+    setSelectedServer(serverConfig.host);
+    debug("Server set to " + serverConfig.host + " using global state helper.");
 
     // Create an instance of ServerManager
     const serverManager = new ServerManager(serverConfig);
 
     // Fetch the server handler instance using the updated server
-    const server = serverManager.createHandler();
-    server.setServerConfig(serverConfig); // Set the server config
-    debug("ServerHandler instance successfully retrieved for server: " + server);
+    const handler = serverManager.createHandler();
+    handler.setServerConfig(serverConfig); // Set the server config
+    debug("ServerHandler instance successfully retrieved for server: " + serverConfig.host);
 
     let systemInfo = null;
     if (getSystemInfo) {
-      systemInfo = await server.getSystemInfo();
+      systemInfo = await handler.getSystemInfo();
     }
 
-    res.status(200).json({ message: "Server set to " + server, systemInfo });
+    res.status(200).json({ message: "Server set to " + serverConfig.host, systemInfo });
   } catch (error) {
     debug("Error in /server/set", {
       error,
@@ -96,8 +96,8 @@ router.post("/set", async (req: Request, res: Response) => {
  */
 router.get("/system-info", async (req: Request, res: Response) => {
   try {
-    const ServerHandler = getServerHandler(req);
-    const systemInfo = await ServerHandler.getSystemInfo();
+    const handler = getServerHandler(req);
+    const systemInfo = await handler.getSystemInfo();
     res.status(200).json(systemInfo);
   } catch (error) {
     const errorMessage = "Error retrieving system info: " + (error instanceof Error ? error.message : "Unknown error");
@@ -149,4 +149,3 @@ paths:
 `;
 
 console.debug("OpenAPI Specification:", openAPISpec);
-
