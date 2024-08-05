@@ -12,6 +12,8 @@ const debug = Debug('app:amendFile');
  * @returns {Promise<boolean>} - True if the file was amended successfully, false otherwise.
  */
 export async function amendFile(filePath: string, content: string): Promise<boolean> {
+  debug("Received parameters:", { filePath, content });
+
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
     const errorMessage = 'File path must be provided and must be a string.';
@@ -24,7 +26,8 @@ export async function amendFile(filePath: string, content: string): Promise<bool
     throw new Error(errorMessage);
   }
 
-  const fullPath = path.join(presentWorkingDirectory(), filePath);
+  // Correct the full path
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
   debug('Amending file at ' + fullPath + ' with content: ' + content);
   try {
     await fs.promises.appendFile(fullPath, content);
