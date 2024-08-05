@@ -1,35 +1,39 @@
-app = "gpt-terminal-plus"
-primary_region = "syd"
+# fly.toml app configuration file generated for gpt-terminal-plus on 2024-08-05T05:08:17Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'gpt-terminal-plus'
+primary_region = 'syd'
 
 [build]
-  dockerfile = "../docker/Dockerfile.base"
+  dockerfile = '../docker/Dockerfile.base'
 
 [env]
-  PORT = "5005"
-  NODE_ENV = "production"
-  NODE_CONFIG_DIR = "/data/config"
+  NODE_CONFIG_DIR = '/data/config'
+  NODE_ENV = 'production'
+  PORT = '5005'
+
+[[mounts]]
+  source = 'mydata1'
+  destination = '/data'
 
 [http_service]
   internal_port = 5005
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
-[[http_service.checks]]
-  grace_period = "20s"
-  interval = "30s"
-  method = "GET"
-  timeout = "5s"
-  path = "/health"
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '20s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  memory = "256mb"
-  cpu_kind = "shared"
+  memory = '256mb'
+  cpu_kind = 'shared'
   cpus = 1
-  swap_size_mb = 1024
-
-[[mounts]]
-source = "mydata1"
-destination = "/data"
