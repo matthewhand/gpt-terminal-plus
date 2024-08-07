@@ -134,3 +134,4 @@ config/*
 !config/default.json
 !config/test.json
 .vercel
+.env*.local
