@@ -1,19 +1,34 @@
 #!/bin/bash
 
+# Description: This script is used to manage Nginx configurations and SSL certificates using Certbot.
+# It allows enabling Nginx configurations, requesting SSL certificates, and managing Docker services.
+# Usage: ./enable_nginx_certbot.sh [options]
+# Options:
+#   --enable-nginx                Enable Nginx configurations in /etc/nginx/sites-enabled/
+#   --enable-certbot              Request SSL certificates for the services using Certbot
+#   --domain-name <domain>        Override the domain name used in Nginx configurations and Certbot verification
+#   --service <service>           Specify which service to create Nginx config for
+#   --deploy-all                  Deploy Nginx config for all available services
+#   --skip-checks                 Skip connectivity and protocol checks
+
 # Function to display usage information
 usage() {
-  echo "Usage: $0 [--enable-nginx] [--enable-certbot] [--enable-shared-node-modules] [--domain-name <domain>] [--service <service>] [--deploy-all] [--skip-checks]"
+  echo "Description: This script is used to manage Nginx configurations and SSL certificates using Certbot."
+  echo "It allows enabling Nginx configurations, requesting SSL certificates, and managing Docker services."
+  echo ""
+  echo "Usage: $0 [options]"
+  echo "Options:"
   echo "  --enable-nginx                Enable Nginx configurations in /etc/nginx/sites-enabled/"
   echo "  --enable-certbot              Request SSL certificates for the services using Certbot"
-  echo "  --enable-shared-node-modules  Use a shared node_modules volume across services"
   echo "  --domain-name <domain>        Override the domain name used in Nginx configurations and Certbot verification"
   echo "  --service <service>           Specify which service to create Nginx config for"
   echo "  --deploy-all                  Deploy Nginx config for all available services"
   echo "  --skip-checks                 Skip connectivity and protocol checks"
+  echo ""
   echo "Available services:"
-  for dir in docker/*/; do
-    if [ -f "$dir/docker-compose.yml" ]; then
-      echo "  - $(basename \"$dir\")"
+  for dir in docker/*; do
+    if [ -d "$dir" ] && [ -f "$dir/docker-compose.yml" ]; then
+      echo "  - $(basename "$dir")"
     fi
   done
   exit 1
@@ -22,7 +37,6 @@ usage() {
 # Initialize variables
 ENABLE_NGINX=false
 ENABLE_CERTBOT=false
-ENABLE_SHARED_NODE_MODULES=false
 DOMAIN_NAME="${DOMAIN_NAME:-}"
 SERVICE=""
 DEPLOY_ALL=false
@@ -36,9 +50,6 @@ while [[ "$#" -gt 0 ]]; do
       ;;
     --enable-certbot)
       ENABLE_CERTBOT=true
-      ;;
-    --enable-shared-node-modules)
-      ENABLE_SHARED_NODE_MODULES=true
       ;;
     --domain-name)
       DOMAIN_NAME="$2"
@@ -105,11 +116,7 @@ check_nginx() {
 start_service() {
   local name=$1
   local compose_file=$2
-  if [ "$ENABLE_SHARED_NODE_MODULES" = true ]; then
-    docker compose -p $name -f docker/$name/docker-compose.base.yml -f $compose_file up -d --build --volume /usr/src/app/node_modules:/usr/src/app/node_modules
-  else
-    docker compose -p $name -f docker/$name/docker-compose.base.yml -f $compose_file up -d --build
-  fi
+  docker compose -p $name -f docker/$name/docker-compose.yml -f $compose_file up -d --build
   echo "Service '$name' started with configuration from '$compose_file'."
 }
 
@@ -143,31 +150,21 @@ extract_port() {
   echo $port
 }
 
-# Generate Nginx configuration for a specific service
+# Function to generate Nginx configuration from template
 generate_nginx_config() {
   local service_name=$1
   local port=$2
-  local config_content="
-server {
-    listen 80;
-    server_name ${service_name}.${DOMAIN_NAME};
-
-    location / {
-        proxy_pass http://localhost:${port};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-"
+  local config_content=$(<scripts/nginx/nginx_conf_template.j2)
+  config_content=${config_content//\{\{ service_name \}\}/$service_name}
+  config_content=${config_content//\{\{ port \}\}/$port}
+  config_content=${config_content//example.com/$DOMAIN_NAME}
   echo "$config_content" | sudo tee /etc/nginx/sites-available/${service_name}.conf > /dev/null
 }
 
 # Dynamically retrieve the list of services
 services=()
-for dir in docker/*/; do
-  if [ -f "$dir/docker-compose.yml" ]; then
+for dir in docker/*; do
+  if [ -d "$dir" ] && [ -f "$dir/docker-compose.yml" ]; then
     services+=("$(basename "$dir")")
   fi
 done
