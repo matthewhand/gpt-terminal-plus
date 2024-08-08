@@ -9,7 +9,7 @@ services:
       dockerfile: Dockerfile
     container_name: netlify-cli-app
     ports:
-      - "${NETLIFY_CLI_PORT_HOST:-5001}:${NETLIFY_CLI_PORT_CONTAINER:-5005}"
+      - "${NETLIFY_CLI_PORT_HOST:-5011}:${NETLIFY_CLI_PORT_CONTAINER:-5005}"
     env_file:
       - ../../.env
     environment:
