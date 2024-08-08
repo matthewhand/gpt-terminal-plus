@@ -9,7 +9,8 @@
 #   --domain-name <domain>        Override the domain name used in Nginx configurations and Certbot verification
 #   --service <service>           Specify which service to create Nginx config for
 #   --deploy-all                  Deploy Nginx config for all available services
-#   --skip-checks                 Skip connectivity and protocol checks
+#   --skip-checks                 Skip connectivity and protocol checks (default: false)
+#   --find-next-port              Find and use the next available port
 
 # Function to display usage information
 usage() {
@@ -23,7 +24,8 @@ usage() {
   echo "  --domain-name <domain>        Override the domain name used in Nginx configurations and Certbot verification"
   echo "  --service <service>           Specify which service to create Nginx config for"
   echo "  --deploy-all                  Deploy Nginx config for all available services"
-  echo "  --skip-checks                 Skip connectivity and protocol checks"
+  echo "  --skip-checks                 Skip connectivity and protocol checks (default: false)"
+  echo "  --find-next-port              Find and use the next available port"
   echo ""
   echo "Available services:"
   for dir in docker/*; do
@@ -34,6 +36,29 @@ usage() {
   exit 1
 }
 
+# Function to find the next available port
+find_next_port() {
+  # Find all port mappings in docker-compose files
+  ports=$(grep -roP 'ports:\s*\[\s*"\d+:\d+"' docker/ | grep -oP '\d+(?=:\d+")' | sort -n)
+
+  # Ensure only sequential ports are considered
+  previous_port=-1
+  sequential_ports=()
+  for port in $ports; do
+    if [[ $previous_port -eq -1 || $((previous_port + 1)) -eq $port ]]; then
+      sequential_ports+=($port)
+      previous_port=$port
+    fi
+  done
+
+  # Find the highest port number in the sequential list
+  highest_port=$(echo "${sequential_ports[@]}" | tr ' ' '\n' | sort -n | tail -n 1)
+
+  # Add 1 to the highest port number to get the next available port
+  next_port=$((highest_port + 1))
+  echo $next_port
+}
+
 # Initialize variables
 ENABLE_NGINX=false
 ENABLE_CERTBOT=false
@@ -41,6 +66,7 @@ DOMAIN_NAME="${DOMAIN_NAME:-}"
 SERVICE=""
 DEPLOY_ALL=false
 SKIP_CHECKS=false
+FIND_NEXT_PORT=false
 
 # Parse command line options
 while [[ "$#" -gt 0 ]]; do
@@ -65,12 +91,21 @@ while [[ "$#" -gt 0 ]]; do
     --skip-checks)
       SKIP_CHECKS=true
       ;;
+    --find-next-port)
+      FIND_NEXT_PORT=true
+      ;;
     *)
       usage
       ;;
   esac
   shift
 done
+
+# Check if --find-next-port is specified before other options
+if [ "$FIND_NEXT_PORT" = true ]; then
+  find_next_port
+  exit 0
+fi
 
 # Check if domain name is provided
 if [ -z "$DOMAIN_NAME" ]; then
@@ -143,13 +178,6 @@ request_certbot() {
   fi
 }
 
-# Function to extract port from docker-compose.yml
-extract_port() {
-  local compose_file=$1
-  local port=$(grep 'ports:' -A 1 $compose_file | tail -n 1 | awk -F '[:-]' '{print $2}' | tr -d ' ')
-  echo $port
-}
-
 # Function to generate Nginx configuration from template
 generate_nginx_config() {
   local service_name=$1
@@ -196,9 +224,13 @@ perform_checks() {
 if [ "$SERVICE" != "" ]; then
   for service in "${services[@]}"; do
     if [ "$service" = "$SERVICE" ]; then
-      port=$(extract_port "docker/$service/docker-compose.yml")
-      generate_nginx_config "$service" "$port"
       start_service "$service" "docker/$service/docker-compose.yml"
+      port=$(extract_port "$service")
+      if [ "$FIND_NEXT_PORT" = true ]; then
+        port=$(find_next_port)
+        echo "Next available port: $port"
+      fi
+      generate_nginx_config "$service" "$port"
       enable_nginx "$service"
       sudo nginx -t
       sudo systemctl reload nginx
@@ -211,9 +243,13 @@ if [ "$SERVICE" != "" ]; then
   done
 elif [ "$DEPLOY_ALL" = true ]; then
   for service in "${services[@]}"; do
-    port=$(extract_port "docker/$service/docker-compose.yml")
-    generate_nginx_config "$service" "$port"
     start_service "$service" "docker/$service/docker-compose.yml"
+    port=$(extract_port "$service")
+    if [ "$FIND_NEXT_PORT" = true ]; then
+      port=$(find_next_port)
+      echo "Next available port: $port"
+    fi
+    generate_nginx_config "$service" "$port"
     enable_nginx "$service"
     sudo nginx -t
     sudo systemctl reload nginx

@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: codesandbox-cli-app
     ports:
-      - "${CODESANDBOX_CLI_PORT_HOST:-5005}:${CODESANDBOX_CLI_PORT_CONTAINER:-5005}"
+      - "${CODESANDBOX_CLI_PORT_HOST:-5014}:${CODESANDBOX_CLI_PORT_CONTAINER:-5005}"
     env_file:
       - ../../.env
     environment:
