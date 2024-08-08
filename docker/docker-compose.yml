@@ -1,6 +1,8 @@
 services:
   gpt-terminal-plus:
-    image: mhand79/gpt-terminal-plus:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.base
     ports:
       - "5003:5005"
     environment:
