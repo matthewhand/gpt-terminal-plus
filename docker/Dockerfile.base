@@ -1,50 +1,61 @@
-# Use an official Node.js runtime as a parent image
+# This Dockerfile uses a multi-stage build to create a production-ready image for the gpt-terminal-plus application.
+# 
+# Stage 1: Build
+# - Sets up the build environment with Node.js, build-essential, Python, and pip.
+# - Copies all application files and installs all dependencies.
+# - Installs the TypeScript compiler.
+# - Runs tests and linting to ensure code quality.
+# - Compiles the TypeScript source code into JavaScript.
+# 
+# Stage 2: Production
+# - Sets up the production environment with Node.js, Python, and pip.
+# - Copies the compiled JavaScript files and package.json/package-lock.json from the build stage.
+# - Installs only the production dependencies using npm ci.
+# - Defines the command to run the application using the compiled JavaScript file.
+
+# Stage 1: Build
 FROM node:20 as build
 
-# Set the working directory
 WORKDIR /app
 
-# Install build dependencies, Python3, and pip
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     build-essential \
     python3 \
     python3-pip
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies
+COPY .. .
 RUN npm install
+RUN npm install -g typescript
 
-# Copy the rest of the application source code
-COPY . .
+# Generate test coverage report
+RUN npm run test:coverage
 
-# Build the application
+# Run tests and linting
+RUN npm run lint
+
+# Compile TypeScript to JavaScript
+RUN which tsc
 RUN npm run build
 
-# Create the final image with only the necessary files
-FROM node:20 as production
+# Stage 2: Production
+FROM build as production
 
-# Set the working directory
 WORKDIR /app
 
-# Install production dependencies
-RUN apt-get update && apt-get install -y \
+# Include Python because it is as popular as TypeScript
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     python3 \
     python3-pip
 
-# Copy only the necessary files from the build stage
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/dist ./dist
+# Copy compiled files and package.json/package-lock.json from build stage
+RUN ls -latr /app/
+RUN ls -latr /app/dist/
+RUN ls -latr /app/dist/src/
+COPY --from=build /app/dist /app/dist
+COPY --from=build /app/package.json /app/package.json
+COPY --from=build /app/package-lock.json /app/package-lock.json
 
-# Install only production dependencies
-RUN npm ci --only=production
+# Install production dependencies
+RUN npm ci --production
 
-# Set NODE_ENV to production
-ENV NODE_ENV=production
-
-# Expose the port the app runs on
-EXPOSE 3000
-
-# Define the command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/src/index.js"]
