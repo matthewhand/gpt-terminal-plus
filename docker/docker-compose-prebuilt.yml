@@ -1,0 +1,8 @@
+services:
+  gpt-terminal-plus:
+    image: mhand79/gpt-terminal-plus:latest
+    ports:
+      - "5002:5005"
+    environment:
+      - NODE_ENV=development # Needed for multi-stage ie installs compiler `tsc`
+    restart: unless-stopped
