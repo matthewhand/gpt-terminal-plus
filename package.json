@@ -15,6 +15,7 @@
     "test": "cross-env jest --runInBand",
     "test:debug": "cross-env DEBUG=* jest --verbose --runInBand",
     "test:monitor": "npx cross-env DEBUG=* jest --verbose --runInBand --watch",
+    "test:coverage": "cross-env jest --coverage --runInBand",
     "ncu": "ncu"
   },
   "keywords": [],
