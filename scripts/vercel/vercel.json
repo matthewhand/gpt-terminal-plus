@@ -12,6 +12,9 @@
       "dest": "/dist/index.js"
     }
   ],
+  "static": {
+    "include": ["dist"]
+  },
   "env": {
     "API_TOKEN": "@API_TOKEN",
     "NODE_ENV": "@NODE_ENV",
