@@ -13,5 +13,6 @@ services:
       - NODE_ENV=development # Needed for multi-stage ie installs compiler `tsc`
     volumes:
       - ~/.aws:/root/.aws:ro
-      - ~/.ssh:/root/.ssh:rw
+      - ~/.ssh:/root/.ssh:ro
+      - ../../config:/app/dist/config:rw
     restart: unless-stopped
