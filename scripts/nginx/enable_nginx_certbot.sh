@@ -11,6 +11,7 @@
 #   --deploy-all                  Deploy Nginx config for all available services
 #   --skip-checks                 Skip connectivity and protocol checks (default: false)
 #   --find-next-port              Find and use the next available port
+#   --debug                       Enable debug mode for verbose output
 
 # Function to display usage information
 usage() {
@@ -26,6 +27,7 @@ usage() {
   echo "  --deploy-all                  Deploy Nginx config for all available services"
   echo "  --skip-checks                 Skip connectivity and protocol checks (default: false)"
   echo "  --find-next-port              Find and use the next available port"
+  echo "  --debug                       Enable debug mode for verbose output"
   echo ""
   echo "Available services:"
   for dir in docker/*; do
@@ -36,19 +38,19 @@ usage() {
   exit 1
 }
 
+# Function to extract the port from a Docker Compose file
 extract_port() {
-    local service_name=$1
-    local compose_file="docker/$service_name/docker-compose.yml"
+  local service_name=$1
+  local compose_file="docker/$service_name/docker-compose.yml"
 
-    if [[ -f "$compose_file" ]]; then
-        # Extract the first series of digits following the 'ports:' section
-        grep -A 1 'ports:' "$compose_file" | grep -oE '[0-9]+' | head -n 1
-    else
-        echo "Error: $compose_file not found."
-        exit 1
-    fi
+  if [[ -f "$compose_file" ]]; then
+    # Extract the first series of digits following the 'ports:' section
+    grep -A 1 'ports:' "$compose_file" | grep -oE '[0-9]+' | head -n 1
+  else
+    echo "Error: $compose_file not found."
+    exit 1
+  fi
 }
-
 
 # Function to find the next available port
 find_next_port() {
@@ -81,6 +83,7 @@ SERVICE=""
 DEPLOY_ALL=false
 SKIP_CHECKS=false
 FIND_NEXT_PORT=false
+DEBUG=false
 
 # Parse command line options
 while [[ "$#" -gt 0 ]]; do
@@ -108,6 +111,9 @@ while [[ "$#" -gt 0 ]]; do
     --find-next-port)
       FIND_NEXT_PORT=true
       ;;
+    --debug)
+      DEBUG=true
+      ;;
     *)
       usage
       ;;
@@ -115,8 +121,26 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+# Debugging function
+debug() {
+  if [ "$DEBUG" = true ]; then
+    echo "DEBUG: $*"
+  fi
+}
+
+# Debug output for variables
+debug "ENABLE_NGINX: $ENABLE_NGINX"
+debug "ENABLE_CERTBOT: $ENABLE_CERTBOT"
+debug "DOMAIN_NAME: $DOMAIN_NAME"
+debug "SERVICE: $SERVICE"
+debug "DEPLOY_ALL: $DEPLOY_ALL"
+debug "SKIP_CHECKS: $SKIP_CHECKS"
+debug "FIND_NEXT_PORT: $FIND_NEXT_PORT"
+debug "DEBUG: $DEBUG"
+
 # Check if --find-next-port is specified before other options
 if [ "$FIND_NEXT_PORT" = true ]; then
+  debug "Finding next available port..."
   find_next_port
   exit 0
 fi
@@ -137,6 +161,7 @@ check_docker() {
     echo "  sudo systemctl enable docker"
     exit 1
   fi
+  debug "Docker is installed."
 }
 
 # Function to check if Certbot is installed
@@ -147,6 +172,7 @@ check_certbot() {
     echo "  sudo apt-get install -y certbot python3-certbot-nginx"
     exit 1
   fi
+  debug "Certbot is installed."
 }
 
 # Function to check if Nginx is installed
@@ -159,14 +185,22 @@ check_nginx() {
     echo "  sudo systemctl enable nginx"
     exit 1
   fi
+  debug "Nginx is installed."
 }
 
-# Function to start a service with a specific docker-compose file
-start_service() {
+# Function to start a service with a specific docker-compose file if not already running
+start_service_if_needed() {
   local name=$1
   local compose_file=$2
-  docker compose -p $name -f docker/$name/docker-compose.yml -f $compose_file up -d --build
-  echo "Service '$name' started with configuration from '$compose_file'."
+
+  if ! docker ps | grep -q "$name"; then
+    echo "Starting Docker service for '$name'..."
+    docker compose -p $name -f $compose_file up -d --build
+    echo "Service '$name' started with configuration from '$compose_file'."
+  else
+    echo "Service '$name' is already running. Skipping Docker Compose up."
+  fi
+  debug "Checked and handled service '$name'."
 }
 
 # Function to enable Nginx configuration for a domain
@@ -179,6 +213,7 @@ enable_nginx() {
   else
     echo "Nginx configuration file ${nginx_conf} not found."
   fi
+  debug "Enabled Nginx configuration for ${domain}."
 }
 
 # Function to request an SSL certificate for a domain using Certbot
@@ -190,6 +225,7 @@ request_certbot() {
   else
     echo "Failed to request SSL certificate for ${domain}."
   fi
+  debug "Requested SSL certificate for ${domain}."
 }
 
 # Function to generate Nginx configuration from template
@@ -199,8 +235,9 @@ generate_nginx_config() {
   local config_content=$(<scripts/nginx/nginx_conf_template.j2)
   config_content=${config_content//\{\{ service_name \}\}/$service_name}
   config_content=${config_content//\{\{ port \}\}/$port}
-  config_content=${config_content//example.com/$DOMAIN_NAME}
+  config_content=${config_content//\{\{ domain_name \}\}/$DOMAIN_NAME}
   echo "$config_content" | sudo tee /etc/nginx/sites-available/${service_name}.conf > /dev/null
+  debug "Generated Nginx config for ${service_name} on port ${port}."
 }
 
 # Dynamically retrieve the list of services
@@ -210,14 +247,11 @@ for dir in docker/*; do
     services+=("$(basename "$dir")")
   fi
 done
+debug "Available services: ${services[*]}"
 
-# Check if Docker is installed
+# Ensure dependencies are installed
 check_docker
-
-# Check if Nginx is installed
 check_nginx
-
-# Check if Certbot is installed
 check_certbot
 
 # Function to perform connectivity and protocol checks
@@ -232,22 +266,18 @@ perform_checks() {
   else
     echo "Failed to connect to ${url}."
   fi
+  debug "Performed connectivity check for ${domain}."
 }
 
 # Deploy configurations for specified service or all services
 if [ "$SERVICE" != "" ]; then
   for service in "${services[@]}"; do
     if [ "$service" = "$SERVICE" ]; then
-      start_service "$service" "docker/$service/docker-compose.yml"
+      start_service_if_needed "$service" "docker/$service/docker-compose.yml"
       port=$(extract_port "$service")
-      if [ "$FIND_NEXT_PORT" = true ]; then
-        port=$(find_next_port)
-        echo "Next available port: $port"
-      fi
       generate_nginx_config "$service" "$port"
       enable_nginx "$service"
-      sudo nginx -t
-      sudo systemctl reload nginx
+      sudo nginx -t && sudo systemctl reload nginx
       request_certbot "$service.$DOMAIN_NAME"
       if [ "$SKIP_CHECKS" = false ]; then
         perform_checks "$service.$DOMAIN_NAME"
@@ -257,16 +287,11 @@ if [ "$SERVICE" != "" ]; then
   done
 elif [ "$DEPLOY_ALL" = true ]; then
   for service in "${services[@]}"; do
-    start_service "$service" "docker/$service/docker-compose.yml"
+    start_service_if_needed "$service" "docker/$service/docker-compose.yml"
     port=$(extract_port "$service")
-    if [ "$FIND_NEXT_PORT" = true ]; then
-      port=$(find_next_port)
-      echo "Next available port: $port"
-    fi
     generate_nginx_config "$service" "$port"
     enable_nginx "$service"
-    sudo nginx -t
-    sudo systemctl reload nginx
+    sudo nginx -t && sudo systemctl reload nginx
     request_certbot "$service.$DOMAIN_NAME"
     if [ "$SKIP_CHECKS" = false ]; then
       perform_checks "$service.$DOMAIN_NAME"
@@ -280,4 +305,5 @@ fi
 if [ "$ENABLE_NGINX" = true ]; then
   sudo nginx -t
   sudo systemctl reload nginx
+  debug "Nginx configuration reloaded."
 fi
