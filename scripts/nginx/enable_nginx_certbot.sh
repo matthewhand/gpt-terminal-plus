@@ -36,6 +36,20 @@ usage() {
   exit 1
 }
 
+extract_port() {
+    local service_name=$1
+    local compose_file="docker/$service_name/docker-compose.yml"
+
+    if [[ -f "$compose_file" ]]; then
+        # Extract the first series of digits following the 'ports:' section
+        grep -A 1 'ports:' "$compose_file" | grep -oE '[0-9]+' | head -n 1
+    else
+        echo "Error: $compose_file not found."
+        exit 1
+    fi
+}
+
+
 # Function to find the next available port
 find_next_port() {
   # Find all port mappings in docker-compose files

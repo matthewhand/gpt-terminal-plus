@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   gcloud-cli-app:
     build:
@@ -7,9 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: gcloud-cli-app
     ports:
-      - "${GCLOUD_CLI_PORT_HOST:-5007}:${GCLOUD_CLI_PORT_CONTAINER:-5005}"
+      - "${GCLOUD_CLI_PORT_HOST:-5015}:${GCLOUD_CLI_PORT_CONTAINER:-5005}"
     env_file:
-      - ../../.env
+      - .env
     environment:
       - NODE_ENV=${NODE_ENV}
       - DEBUG=${DEBUG}

@@ -2,10 +2,12 @@ FROM mhand79/gpt-terminal-plus:latest
 
 WORKDIR /app
 
-# AWS CLI
-RUN apt -y install awscli
+# Install apt-utils and AWS CLI, then clean up
+RUN apt-get update && \
+    apt-get install -y apt-utils awscli && \
+    rm -rf /var/lib/apt/lists/*
 
-# JS AWS SDK
-RUN npm install --legacy-peer-deps aws-sdk
+# Install JS AWS SDK without legacy-peer-deps
+RUN npm install aws-sdk
 
 # CMD ["node", "dist/index.js"] inherited from Dockerfile.base
