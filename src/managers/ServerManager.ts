@@ -15,15 +15,22 @@ export class ServerManager {
   constructor(param: ServerConfig | string) {
     if (typeof param === 'string') {
       const selectedServer = param;
+      
+      // Debug environment variables
+      serverManagerDebug(`NODE_CONFIG_DIR: ${process.env.NODE_CONFIG_DIR}`);
+      serverManagerDebug(`NODE_ENV: ${process.env.NODE_ENV}`);
+
       serverManagerDebug(`Initializing ServerManager with selected server: ${selectedServer}`);
-      const config = ServerManager.getServerConfig(selectedServer);
-      if (!config) {
-        const errorMsg = `Server configuration for host ${selectedServer} not found`;
-        serverManagerDebug(errorMsg);
-        throw new Error(errorMsg);
-      }
+      
+      const config = ServerManager.getServerConfig(selectedServer) || ServerManager.getDefaultConfig(selectedServer);
       this.serverConfig = config;
-      serverManagerDebug(`ServerManager created for server: ${selectedServer}`);
+      
+      if (config === ServerManager.getDefaultConfig(selectedServer)) {
+        serverManagerDebug(`Server configuration for host ${selectedServer} not found. Using default configuration.`);
+      } else {
+        serverManagerDebug(`ServerManager created for server: ${selectedServer}`);
+      }
+      
     } else {
       this.serverConfig = param;
       serverManagerDebug(`ServerManager created with provided configuration for host: ${param.host}`);
@@ -148,6 +155,16 @@ export class ServerManager {
     }
 
     return foundServer;
+  }
+
+  static getDefaultConfig(host: string): ServerConfig {
+    serverManagerDebug(`Returning default configuration for host: ${host}`);
+    return {
+      host: 'localhost',
+      protocol: 'local',
+      code: false,  // Example value; adjust based on your needs
+      selected: true // Optional, if you want to mark it as selected
+    };
   }
 }
 
