@@ -21,7 +21,9 @@ WORKDIR /app
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     build-essential \
     python3 \
-    python3-pip
+    python3-pip \
+    jq 
+    # ... and jq is just useful
 
 COPY .. .
 RUN npm install
@@ -50,9 +52,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     # ... and jq is just useful
 
 # Copy compiled files and package.json/package-lock.json from build stage
-RUN ls -latr /app/
-RUN ls -latr /app/dist/
-RUN ls -latr /app/dist/src/
 COPY --from=build /app/dist /app/dist
 COPY --from=build /app/package.json /app/package.json
 COPY --from=build /app/package-lock.json /app/package-lock.json
