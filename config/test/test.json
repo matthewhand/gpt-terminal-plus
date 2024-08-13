@@ -1,0 +1,57 @@
+{
+  "port": 5004,
+  "local": {
+    "hostname": "localhost"
+  },
+  "ssh": {
+    "hosts": [
+      {
+        "name": "example-ssh-server-bash",
+        "hostname": "ssh-bash.example.com",
+        "port": 22,
+        "username": "user",
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "bash"
+      },
+      {
+        "name": "example-ssh-server-powershell",
+        "hostname": "ssh-powershell.example.com",
+        "port": 22,
+        "username": "user",
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "powershell"
+      },
+      {
+        "name": "example-ssh-server-python",
+        "hostname": "ssh-python.example.com",
+        "port": 22,
+        "username": "user",
+        "privateKeyPath": "/path/to/private/key",
+        "shell": "python"
+      }
+    ]
+  },
+  "ssm": {
+    "region": "us-west-2",
+    "targets": [
+      {
+        "name": "example-ssm-instance-bash",
+        "hostname": "GAMINGPC.WORKGROUP",
+        "instanceId": "i-0123456789abcdef0",
+        "shell": "bash"
+      },
+      {
+        "name": "example-ssm-instance-powershell",
+        "hostname": "WORKGROUP-PC",
+        "instanceId": "i-0123456789abcdef1",
+        "shell": "powershell"
+      },
+      {
+        "name": "example-ssm-instance-python",
+        "hostname": "PYTHON-SERVER",
+        "instanceId": "i-0123456789abcdef2",
+        "shell": "python"
+      }
+    ]
+  }
+}
