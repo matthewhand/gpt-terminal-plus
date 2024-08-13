@@ -22,26 +22,9 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
       return;  // Ensure the function exits here
     }
 
-    // Attempt to retrieve the server configuration based on the selected server
-    let serverConfig = ServerManager.getServerConfig(selectedServer);
-    debug('Server configuration:', serverConfig);
-
-    // If server configuration is not found, load the default localhost configuration
-    if (!serverConfig) {
-      debug(`Server configuration for host ${selectedServer} not found. Loading default localhost configuration.`);
-      serverConfig = ServerManager.getDefaultConfig(selectedServer);
-    }
-
-    // Guard clause: Ensure serverConfig is defined before proceeding
-    if (!serverConfig) {
-      debug('Failed to load both the specified and default server configurations.');
-      res.status(500).json({ error: 'Server configuration is undefined' });
-      return;  // Ensure the function exits here
-    }
-
-    // Initialize the ServerManager with the resolved configuration
-    debug(`Initializing ServerManager with the following configuration: ${JSON.stringify(serverConfig)}`);
-    const serverManager = new ServerManager(serverConfig);
+    // Initialize the ServerManager with the selected hostname
+    debug(`Initializing ServerManager with the hostname: ${selectedServer}`);
+    const serverManager = new ServerManager(selectedServer);
 
     // Create the appropriate server handler based on the server configuration
     const handler = serverManager.createHandler();
