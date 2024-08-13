@@ -17,7 +17,7 @@ describe('getFileContent', () => {
         (sshClient as any).sftp = mockSftp;
         sshConfig = {
             protocol: 'ssh',
-            host: 'localhost',
+            hostname: 'localhost',
             port: 22,
             username: 'testuser',
             privateKeyPath: '/root/.ssh/id_rsa',

@@ -5,7 +5,7 @@ import SsmServer from '../../src/handlers/ssm/SsmServerHandler';
 import config from 'config';
 import { SshHostConfig, SsmTargetConfig, ServerConfig } from '../../src/types/ServerConfig';
 
-jest.mock('config');
+// jest.mock('config');
 
 describe('ServerManager', () => {
   // it('should retrieve the correct config for a local server by hostname', () => {
@@ -42,7 +42,7 @@ describe('ServerManager', () => {
 
   it('should create the correct handler for SSM protocol', () => {
     const ssmConfig = config.get<SsmTargetConfig[]>('ssm.targets')[0];
-    const serverManager = new ServerManager(ssmConfig);
+    const serverManager = new ServerManager(ssmConfig.hostname);
     const handler = serverManager.createHandler();
     expect(handler).toBeInstanceOf(SsmServer);
   });
