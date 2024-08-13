@@ -15,7 +15,7 @@ router.get("/list", async (req: Request, res: Response) => {
 
   try {
     const servers = ServerManager.listAvailableServers();
-    debug("Listing available servers", { servers: servers.map(server => server.host) });
+    debug("Listing available servers", { servers: servers.map(server => server.hostname) });
     res.json({ servers });
   } catch (error) {
     debug("Error in /list-servers", {
@@ -58,7 +58,7 @@ router.post("/set", async (req: Request, res: Response) => {
     debug("Server set to " + serverConfig.hostname + " using global state helper.");
 
     // Create an instance of ServerManager
-    const serverManager = new ServerManager(serverConfig);
+    const serverManager = new ServerManager(serverConfig.hostname);
 
     // Fetch the server handler instance using the updated server
     const handler = serverManager.createHandler();
