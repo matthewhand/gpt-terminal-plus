@@ -12,28 +12,20 @@ export class ServerManager {
 
   /**
    * Constructs a ServerManager instance.
-   * Can be initialized with a ServerConfig object or a hostname.
-   * @param {ServerConfig | string} param - The server configuration or hostname.
+   * Can be initialized with a hostname.
+   * @param {string} selectedHostname - The server hostname.
    */
-  constructor(serverConfig: ServerConfig);
-  constructor(selectedHostname: string);
-  constructor(param: ServerConfig | string) {
-    if (typeof param === 'string') {
-      const selectedHostname = param;
-      serverManagerDebug('Initializing ServerManager with hostname: ' + selectedHostname);
+  constructor(selectedHostname: string) {
+    serverManagerDebug('Initializing ServerManager with hostname: ' + selectedHostname);
 
-      const config = ServerManager.getServerConfig(selectedHostname);
-      if (!config) {
-        serverManagerDebug('No server configuration found for hostname: ' + selectedHostname);
-        throw new Error('Server configuration for ' + selectedHostname + ' not found.');
-      }
-
-      this.serverConfig = config;
-      serverManagerDebug('ServerManager created with config for hostname: ' + selectedHostname);
-    } else {
-      this.serverConfig = param;
-      serverManagerDebug('ServerManager created with provided config for hostname: ' + param.hostname);
+    const config = ServerManager.getServerConfig(selectedHostname);
+    if (!config) {
+      serverManagerDebug('No server configuration found for hostname: ' + selectedHostname);
+      throw new Error('Server configuration for ' + selectedHostname + ' not found.');
     }
+
+    this.serverConfig = config;
+    serverManagerDebug('ServerManager created with config for hostname: ' + selectedHostname);
   }
 
   /**
