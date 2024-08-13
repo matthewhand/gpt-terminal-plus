@@ -19,7 +19,7 @@ export class SSHConnectionManager {
   connect(config: SshHostConfig): Promise<void> {
     return new Promise((resolve, reject) => {
       const connectionConfig: ConnectConfig = {
-        host: config.host,
+        host: config.hostname,
         port: config.port ?? 22,  // Default to 22 if port is not provided
         username: config.username,
         privateKey: require('fs').readFileSync(config.privateKeyPath)
