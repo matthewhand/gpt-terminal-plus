@@ -14,7 +14,7 @@
 # - Defines the command to run the application using the compiled JavaScript file.
 
 # Stage 1: Build
-FROM node:20 as build
+FROM node:20 AS build
 
 WORKDIR /app
 
@@ -38,14 +38,16 @@ RUN which tsc
 RUN npm run build
 
 # Stage 2: Production
-FROM build as production
+FROM build AS production
 
 WORKDIR /app
 
 # Include Python because it is as popular as TypeScript
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     python3 \
-    python3-pip
+    python3-pip \
+    jq 
+    # ... and jq is just useful
 
 # Copy compiled files and package.json/package-lock.json from build stage
 RUN ls -latr /app/
