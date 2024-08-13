@@ -10,6 +10,11 @@ const serverManagerDebug = debug('app:ServerManager');
 export class ServerManager {
   private serverConfig: ServerConfig;
 
+  /**
+   * Initializes the ServerManager with the configuration for the specified hostname.
+   * @param {string} selectedHostname - The hostname for which the server configuration is required.
+   * @throws {Error} - If the server configuration is not found.
+   */
   constructor(selectedHostname: string) {
     serverManagerDebug('Initializing ServerManager with hostname: ' + selectedHostname);
 
@@ -23,11 +28,20 @@ export class ServerManager {
     serverManagerDebug('ServerManager created with config for hostname: ' + selectedHostname);
   }
 
+  /**
+   * Returns the current server configuration.
+   * @returns {ServerConfig} - The current server configuration.
+   */
   getServerConfig(): ServerConfig {
     serverManagerDebug('Returning current server configuration for hostname: ' + this.serverConfig.hostname);
     return this.serverConfig;
   }
 
+  /**
+   * Sets a new server configuration.
+   * @param {ServerConfig} serverConfig - The new server configuration.
+   * @throws {Error} - If the server configuration is invalid.
+   */
   setServerConfig(serverConfig: ServerConfig): void {
     if (!serverConfig || !serverConfig.hostname) {
       serverManagerDebug('Attempted to set invalid server configuration.');
@@ -38,6 +52,11 @@ export class ServerManager {
     serverManagerDebug('Server configuration updated for hostname: ' + serverConfig.hostname);
   }
 
+  /**
+   * Creates the appropriate server handler based on the server configuration.
+   * @returns {LocalServerHandler | SshServerHandler | SsmServerHandler} - The server handler instance.
+   * @throws {Error} - If the protocol is unsupported.
+   */
   createHandler(): LocalServerHandler | SshServerHandler | SsmServerHandler {
     const protocol: string = this.serverConfig.protocol;
     const hostname: string = this.serverConfig.hostname;
@@ -60,15 +79,30 @@ export class ServerManager {
     }
   }
 
+  /**
+   * Lists all available server configurations.
+   * This method checks the configuration for local, SSH, and SSM servers.
+   * @returns {ServerConfig[]} - The list of available servers.
+   */
   static listAvailableServers(): ServerConfig[] {
     serverManagerDebug('Listing available servers from configuration');
 
-    const localConfig: LocalConfig | undefined = config.get<LocalConfig>('local');
-    serverManagerDebug('Loaded local config: ' + JSON.stringify(localConfig));
+    // Load and validate local configuration
+    let localConfig: LocalConfig | undefined;
+    try {
+      localConfig = config.get<LocalConfig>('local');
+      serverManagerDebug('Loaded local config: ' + JSON.stringify(localConfig));
+    } catch (error) {
+      serverManagerDebug('Local config not found or invalid: ' + (error as Error).message);
+      serverManagerDebug('Resorting to default local server configuration...');
+      localConfig = ServerManager.getDefaultLocalConfig();
+    }
 
+    // Load SSH configurations
     const sshConfigs: SshHostConfig[] | undefined = config.get<SshHostConfig[]>('ssh.hosts');
     serverManagerDebug('Loaded SSH configs: ' + JSON.stringify(sshConfigs));
 
+    // Load and process SSM configurations
     const ssmConfigs: SsmTargetConfig[] = config.get<SsmTargetConfig[]>('ssm.targets').map((target: SsmTargetConfig): SsmTargetConfig => {
       serverManagerDebug('Processing SSM target: ' + JSON.stringify(target));
       return {
@@ -79,6 +113,7 @@ export class ServerManager {
     });
     serverManagerDebug('Processed SSM configs: ' + JSON.stringify(ssmConfigs));
 
+    // Combine all configurations into the available servers list
     const availableServers: ServerConfig[] = [];
 
     if (localConfig && localConfig.hostname) {
@@ -118,6 +153,12 @@ export class ServerManager {
     return availableServers;
   }
 
+  /**
+   * Retrieves the server configuration for the specified hostname.
+   * If no matching configuration is found, a default local configuration is returned.
+   * @param {string} hostname - The hostname for which to retrieve the configuration.
+   * @returns {ServerConfig | undefined} - The server configuration for the given hostname.
+   */
   static getServerConfig(hostname: string): ServerConfig | undefined {
     serverManagerDebug('Searching for server configuration with hostname: ' + hostname);
 
@@ -134,9 +175,28 @@ export class ServerManager {
       serverManagerDebug('Found server configuration: ' + JSON.stringify(foundServer));
     } else {
       serverManagerDebug('Server configuration not found for hostname: ' + hostname);
+      serverManagerDebug('Resorting to default local server configuration.');
+      return ServerManager.getDefaultLocalConfig();
     }
 
     return foundServer;
+  }
+
+  /**
+   * Returns a default local server configuration.
+   * @returns {LocalConfig} - The default local server configuration.
+   */
+  static getDefaultLocalConfig(): LocalConfig {
+    serverManagerDebug('Loading default local server configuration');
+
+    const defaultLocalConfig: LocalConfig = {
+      protocol: 'local',
+      hostname: 'localhost',
+      code: false
+    };
+
+    serverManagerDebug('Default local server config: ' + JSON.stringify(defaultLocalConfig));
+    return defaultLocalConfig;
   }
 }
 
