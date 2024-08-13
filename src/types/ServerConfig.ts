@@ -1,7 +1,7 @@
 // Define the base configuration interface
 interface BaseConfig {
   protocol: 'local' | 'ssh' | 'ssm';
-  host: string;
+  hostname: string; // Changed from 'host' to 'hostname'
   selected?: boolean;
 }
 

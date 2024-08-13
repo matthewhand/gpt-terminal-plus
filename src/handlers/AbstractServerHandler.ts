@@ -17,7 +17,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
 
   constructor(serverConfig: ServerConfig) {
     this.serverConfig = serverConfig;
-    this.identifier = serverConfig.host;
+    this.identifier = serverConfig.hostname;
     ServerHandlerDebug('ServerHandler created for ' + this.identifier);
   }
 
@@ -36,7 +36,7 @@ export abstract class AbstractServerHandler implements ServerHandler {
    */
   setServerConfig(serverConfig: ServerConfig): void {
     this.serverConfig = serverConfig;
-    this.identifier = serverConfig.host;
+    this.identifier = serverConfig.hostname;
     ServerHandlerDebug('Server configuration updated for ' + this.identifier);
   }
 

@@ -2,169 +2,162 @@ import config from 'config';
 import debug from 'debug';
 import { ServerConfig, LocalConfig, SshHostConfig, SsmTargetConfig } from '../types/ServerConfig';
 import LocalServerHandler from '../handlers/local/LocalServerHandler';
-import SshServer from '../handlers/ssh/SshServerHandler';
-import SsmServer from '../handlers/ssm/SsmServerHandler';
+import SshServerHandler from '../handlers/ssh/SshServerHandler';
+import SsmServerHandler from '../handlers/ssm/SsmServerHandler';
 
 const serverManagerDebug = debug('app:ServerManager');
 
 export class ServerManager {
   private serverConfig: ServerConfig;
 
+  /**
+   * Constructs a ServerManager instance.
+   * Can be initialized with a ServerConfig object or a hostname.
+   * @param {ServerConfig | string} param - The server configuration or hostname.
+   */
   constructor(serverConfig: ServerConfig);
-  constructor(selectedServer: string);
+  constructor(selectedHostname: string);
   constructor(param: ServerConfig | string) {
     if (typeof param === 'string') {
-      const selectedServer = param;
-      
-      // Debug environment variables
-      serverManagerDebug(`NODE_CONFIG_DIR: ${process.env.NODE_CONFIG_DIR}`);
-      serverManagerDebug(`NODE_ENV: ${process.env.NODE_ENV}`);
+      const selectedHostname = param;
+      serverManagerDebug('Initializing ServerManager with hostname: ' + selectedHostname);
 
-      serverManagerDebug(`Initializing ServerManager with selected server: ${selectedServer}`);
-      
-      const config = ServerManager.getServerConfig(selectedServer) || ServerManager.getDefaultConfig(selectedServer);
-      this.serverConfig = config;
-      
-      if (config === ServerManager.getDefaultConfig(selectedServer)) {
-        serverManagerDebug(`Server configuration for host ${selectedServer} not found. Using default configuration.`);
-      } else {
-        serverManagerDebug(`ServerManager created for server: ${selectedServer}`);
+      const config = ServerManager.getServerConfig(selectedHostname);
+      if (!config) {
+        serverManagerDebug('No server configuration found for hostname: ' + selectedHostname);
+        throw new Error('Server configuration for ' + selectedHostname + ' not found.');
       }
-      
+
+      this.serverConfig = config;
+      serverManagerDebug('ServerManager created with config for hostname: ' + selectedHostname);
     } else {
       this.serverConfig = param;
-      serverManagerDebug(`ServerManager created with provided configuration for host: ${param.host}`);
+      serverManagerDebug('ServerManager created with provided config for hostname: ' + param.hostname);
     }
   }
 
+  /**
+   * Retrieves the current server configuration.
+   * @returns {ServerConfig} The server configuration.
+   */
   getServerConfig(): ServerConfig {
-    serverManagerDebug(`Retrieving server configuration for host: ${this.serverConfig.host}`);
+    serverManagerDebug('Returning current server configuration for hostname: ' + this.serverConfig.hostname);
     return this.serverConfig;
   }
 
+  /**
+   * Updates the server configuration.
+   * @param {ServerConfig} serverConfig - The new server configuration.
+   */
   setServerConfig(serverConfig: ServerConfig): void {
+    if (!serverConfig || !serverConfig.hostname) {
+      serverManagerDebug('Attempted to set invalid server configuration.');
+      throw new Error('Invalid server configuration.');
+    }
+
     this.serverConfig = serverConfig;
-    serverManagerDebug(`Server configuration updated for host: ${serverConfig.host}`);
+    serverManagerDebug('Server configuration updated for hostname: ' + serverConfig.hostname);
   }
 
-  createHandler(): LocalServerHandler | SshServer | SsmServer {
-    const { protocol, host } = this.serverConfig;
-    serverManagerDebug(`Creating handler for protocol: ${protocol}, host: ${host}`);
-    
+  /**
+   * Creates and returns the appropriate server handler based on the protocol.
+   * @returns {LocalServerHandler | SshServerHandler | SsmServerHandler} The server handler.
+   */
+  createHandler(): LocalServerHandler | SshServerHandler | SsmServerHandler {
+    const { protocol, hostname } = this.serverConfig;
+    serverManagerDebug('Creating handler for protocol: ' + protocol + ', hostname: ' + hostname);
+
     switch (protocol) {
       case 'local':
-        serverManagerDebug(`Creating LocalServer handler for ${host}`);
+        serverManagerDebug('Creating LocalServerHandler for hostname: ' + hostname);
         return new LocalServerHandler(this.serverConfig as LocalConfig);
       case 'ssh':
-        serverManagerDebug(`Creating SshServer handler for ${host}`);
-        return new SshServer(this.serverConfig as SshHostConfig);
+        serverManagerDebug('Creating SshServerHandler for hostname: ' + hostname);
+        return new SshServerHandler(this.serverConfig as SshHostConfig);
       case 'ssm':
-        serverManagerDebug(`Creating SsmServer handler for ${host}`);
-        return new SsmServer(this.serverConfig as SsmTargetConfig);
+        serverManagerDebug('Creating SsmServerHandler for hostname: ' + hostname);
+        return new SsmServerHandler(this.serverConfig as SsmTargetConfig);
       default:
-        const errorMsg = `Unsupported protocol: ${protocol}`;
+        const errorMsg = 'Unsupported protocol: ' + protocol + ' for hostname: ' + hostname;
         serverManagerDebug(errorMsg);
         throw new Error(errorMsg);
     }
   }
 
+  /**
+   * Lists all available servers by combining local, SSH, and SSM configurations.
+   * @returns {ServerConfig[]} An array of available server configurations.
+   */
   static listAvailableServers(): ServerConfig[] {
     serverManagerDebug('Listing available servers from configuration');
-    
-    let localServers: LocalConfig[] = [];
-    let sshServers: SshHostConfig[] = [];
-    let ssmServers: SsmTargetConfig[] = [];
 
-    // Debug the raw config before processing
-    const rawConfig = config.util.toObject();
-    serverManagerDebug('Raw configuration loaded: ' + JSON.stringify(rawConfig, null, 2));
+    const localConfig = config.get<LocalConfig>('local');
+    const sshConfigs = config.get<SshHostConfig[]>('ssh.hosts');
+    const ssmConfigs = config.get<SsmTargetConfig[]>('ssm.targets').map(target => ({
+      ...target,
+      protocol: 'ssm' as const, // Ensure protocol is treated as a literal type
+      region: config.get<string>('ssm.region'),
+    }));
 
-    try {
-      const localConfig = config.get<LocalConfig[]>('local');
-      if (Array.isArray(localConfig)) {
-        localServers = localConfig;
-        serverManagerDebug(`Loaded local server configurations: ${JSON.stringify(localServers)}`);
-      } else if (localConfig && typeof localConfig === 'object') {
-        serverManagerDebug('Local server configuration is a single object, converting to array');
-        localServers = [localConfig as LocalConfig];
-      } else {
-        serverManagerDebug('Local server configuration is not an array or object, using default');
-        localServers = [{ host: 'localhost', protocol: 'local', code: false }];
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        serverManagerDebug(`Error loading local server configurations: ${error.message}`);
-      } else {
-        serverManagerDebug('Unknown error occurred while loading local server configurations');
-      }
-      localServers = [{ host: 'localhost', protocol: 'local', code: false }];
+    const availableServers: ServerConfig[] = [];
+
+    if (localConfig && localConfig.hostname) {
+      availableServers.push({ ...localConfig, protocol: 'local' as const });
+    } else {
+      serverManagerDebug('Invalid or missing local server configuration.');
     }
 
-    try {
-      const sshConfig = config.get<SshHostConfig[]>('ssh.hosts');
-      if (Array.isArray(sshConfig)) {
-        sshServers = sshConfig;
-        serverManagerDebug(`Loaded SSH server configurations: ${JSON.stringify(sshServers)}`);
-      } else {
-        serverManagerDebug('SSH server configuration is not an array');
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        serverManagerDebug(`Error loading SSH server configurations: ${error.message}`);
-      } else {
-        serverManagerDebug('No SSH server configurations found');
-      }
+    if (Array.isArray(sshConfigs) && sshConfigs.length > 0) {
+      sshConfigs.forEach(server => {
+        if (server.hostname) {
+          availableServers.push({ ...server, protocol: 'ssh' as const });
+        } else {
+          serverManagerDebug('Skipping invalid SSH server configuration.');
+        }
+      });
+    } else {
+      serverManagerDebug('No valid SSH server configurations found.');
     }
 
-    try {
-      const ssmConfig = config.get<SsmTargetConfig[]>('ssm.targets');
-      if (Array.isArray(ssmConfig)) {
-        ssmServers = ssmConfig;
-        serverManagerDebug(`Loaded SSM server configurations: ${JSON.stringify(ssmServers)}`);
-      } else {
-        serverManagerDebug('SSM server configuration is not an array');
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        serverManagerDebug(`Error loading SSM server configurations: ${error.message}`);
-      } else {
-        serverManagerDebug('No SSM server configurations found');
-      }
+    if (Array.isArray(ssmConfigs) && ssmConfigs.length > 0) {
+      ssmConfigs.forEach(server => {
+        if (server.hostname && server.instanceId) {
+          availableServers.push(server); // Now correctly typed as SsmTargetConfig
+        } else {
+          serverManagerDebug('Skipping invalid SSM server configuration.');
+        }
+      });
+    } else {
+      serverManagerDebug('No valid SSM server configurations found.');
     }
 
-    const availableServers = [
-      ...localServers.map(server => ({ ...server, protocol: 'local' } as LocalConfig)),
-      ...sshServers.map(server => ({ ...server, protocol: 'ssh' } as SshHostConfig)),
-      ...ssmServers.map(server => ({ ...server, protocol: 'ssm', region: config.get('ssm.region') } as SsmTargetConfig)),
-    ];
-
-    serverManagerDebug(`Available servers: ${JSON.stringify(availableServers)}`);
-    
+    serverManagerDebug('Available servers: ' + JSON.stringify(availableServers));
     return availableServers;
   }
 
-  static getServerConfig(host: string): ServerConfig | undefined {
-    serverManagerDebug(`Searching for server configuration with host: ${host}`);
+  /**
+   * Retrieves the server configuration for the given hostname.
+   * @param {string} hostname - The hostname to search for.
+   * @returns {ServerConfig | undefined} The server configuration, or undefined if not found.
+   */
+  static getServerConfig(hostname: string): ServerConfig | undefined {
+    serverManagerDebug('Searching for server configuration with hostname: ' + hostname);
+
     const servers = ServerManager.listAvailableServers();
-    const foundServer = servers.find(server => server.host === host);
-    
+
+    const foundServer = servers.find(server =>
+      server.protocol === 'local'
+        ? hostname === 'localhost' || hostname === server.hostname
+        : server.hostname === hostname
+    );
+
     if (foundServer) {
-      serverManagerDebug(`Found server configuration: ${JSON.stringify(foundServer)}`);
+      serverManagerDebug('Found server configuration: ' + JSON.stringify(foundServer));
     } else {
-      serverManagerDebug(`Server configuration not found for host: ${host}`);
+      serverManagerDebug('Server configuration not found for hostname: ' + hostname);
     }
 
     return foundServer;
-  }
-
-  static getDefaultConfig(host: string): ServerConfig {
-    serverManagerDebug(`Returning default configuration for host: ${host}`);
-    return {
-      host: 'localhost',
-      protocol: 'local',
-      code: false,  // Example value; adjust based on your needs
-      selected: true // Optional, if you want to mark it as selected
-    };
   }
 }
 

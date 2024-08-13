@@ -17,7 +17,7 @@ export async function connect(config: SshHostConfig ): Promise<Client> {
             debug(errorMessage);
             throw new Error(errorMessage);
         }
-        if (!config.host || typeof config.host !== 'string') {
+        if (!config.hostname || typeof config.hostname !== 'string') {
             const errorMessage = 'Host must be provided and must be a string.';
             debug(errorMessage);
             throw new Error(errorMessage);
@@ -36,7 +36,7 @@ export async function connect(config: SshHostConfig ): Promise<Client> {
             debug('SSH connection error: ' + err.message);
             reject(new Error('SSH connection error: ' + err.message));
         }).connect({
-            host: config.host,
+            host: config.hostname,
             port: config.port || 22,
             username: config.username
         });

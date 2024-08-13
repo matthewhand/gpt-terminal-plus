@@ -26,7 +26,7 @@ class SsmServer extends AbstractServerHandler {
     this.instanceId = serverConfig.instanceId;
     this.region = serverConfig.region;
     this.ssmClient = new SSMClient({ region: this.region });
-    setSelectedServer(serverConfig.host);
+    setSelectedServer(serverConfig.hostname);
     ssmServerDebug(`Initialized SsmServer with config: ${JSON.stringify(serverConfig)}`);
   }
 

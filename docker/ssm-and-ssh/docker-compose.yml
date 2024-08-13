@@ -1,5 +1,5 @@
 services:
-  gpt-terminal-plus-pb:
+  ssm-and-ssh-app:
     image: mhand79/gpt-terminal-plus:latest
     env_file:
       - .env
@@ -10,7 +10,8 @@ services:
       - ENABLE_COMMAND_MANAGEMENT=true
       - ENABLE_FILE_MANAGEMENT=false
       - ENABLE_SERVER_MANAGEMENT=true
-      - NODE_ENV=development # Needed for multi-stage ie installs compiler `tsc`
+      - NODE_ENV=production
+      - NODE_CONFIG_DIR=/app/dist/config # Used this folder for production.json
     volumes:
       - ~/.aws:/root/.aws:ro
       - ~/.ssh:/root/.ssh:ro

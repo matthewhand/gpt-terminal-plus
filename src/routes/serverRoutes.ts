@@ -54,8 +54,8 @@ router.post("/set", async (req: Request, res: Response) => {
     }
 
     // Set the selected server using the global state helper
-    setSelectedServer(serverConfig.host);
-    debug("Server set to " + serverConfig.host + " using global state helper.");
+    setSelectedServer(serverConfig.hostname);
+    debug("Server set to " + serverConfig.hostname + " using global state helper.");
 
     // Create an instance of ServerManager
     const serverManager = new ServerManager(serverConfig);
@@ -63,14 +63,14 @@ router.post("/set", async (req: Request, res: Response) => {
     // Fetch the server handler instance using the updated server
     const handler = serverManager.createHandler();
     handler.setServerConfig(serverConfig); // Set the server config
-    debug("ServerHandler instance successfully retrieved for server: " + serverConfig.host);
+    debug("ServerHandler instance successfully retrieved for server: " + serverConfig.hostname);
 
     let systemInfo = null;
     if (getSystemInfo) {
       systemInfo = await handler.getSystemInfo();
     }
 
-    res.status(200).json({ message: "Server set to " + serverConfig.host, systemInfo });
+    res.status(200).json({ message: "Server set to " + serverConfig.hostname, systemInfo });
   } catch (error) {
     debug("Error in /server/set", {
       error,

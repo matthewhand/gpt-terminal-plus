@@ -33,14 +33,14 @@ class SshServer extends AbstractServerHandler {
     this.privateKeyPath = serverConfig.privateKeyPath;
     this.port = serverConfig.port ?? 22; // Provide a default value if port is undefined
     this.username = serverConfig.username;
-    this.host = serverConfig.host;
+    this.host = serverConfig.hostname;
     this.sshClient = new Client();
-    setSelectedServer(serverConfig.host);
+    setSelectedServer(serverConfig.hostname);
     sshServerDebug(`Initialized SshServer with config: ${JSON.stringify(serverConfig)}`);
   }
 
   async connect(): Promise<void> {
-    this.sshClient = await connect({ host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' });
+    this.sshClient = await connect({ hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' });
   }
 
   async disconnect(): Promise<void> {
@@ -49,7 +49,7 @@ class SshServer extends AbstractServerHandler {
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }> {
     sshServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-    return executeCommand(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, command, { cwd: directory, timeout });
+    return executeCommand(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, command, { cwd: directory, timeout });
   }
 
   async getSystemInfo(): Promise<SystemInfo> {
@@ -74,17 +74,17 @@ class SshServer extends AbstractServerHandler {
 
   async fileExists(filePath: string): Promise<boolean> {
     sshServerDebug(`Checking if file exists at path: ${filePath}`);
-    return fileExists(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
+    return fileExists(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
   }
 
   async getFileContent(filePath: string): Promise<string> {
     sshServerDebug(`Getting content of file at path: ${filePath}`);
-    return getFileContent(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
+    return getFileContent(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
   }
 
   async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
     sshServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-    const files = await listFiles(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, params);
+    const files = await listFiles(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, params);
     return {
       items: files.map(name => ({ name, isDirectory: false })),
       limit: params.limit ?? 10,
@@ -95,12 +95,12 @@ class SshServer extends AbstractServerHandler {
 
   async readFile(filePath: string): Promise<string> {
     sshServerDebug(`Reading file at path: ${filePath}`);
-    return readFile(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
+    return readFile(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, filePath);
   }
 
   async transferFile(localPath: string, remotePath: string, direction: 'upload' | 'download'): Promise<void> {
     sshServerDebug(`Transferring file ${direction} with localPath: ${localPath}, remotePath: ${remotePath}`);
-    return transferFile(this.sshClient, { host: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, localPath, remotePath, direction);
+    return transferFile(this.sshClient, { hostname: this.host, port: this.port, username: this.username, privateKeyPath: this.privateKeyPath, protocol: 'ssh' }, localPath, remotePath, direction);
   }
 
   async updateFile(filename: string, pattern: string, replacement: string, backup: boolean = true): Promise<boolean> {
