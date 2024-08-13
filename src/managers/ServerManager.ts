@@ -151,6 +151,9 @@ export class ServerManager {
         : server.hostname === hostname
     );
 
+    console.log('Found Server Configuration:', foundServer); // Debug statement
+    console.log('Available Servers:', servers); // Debug statement
+
     if (foundServer) {
       serverManagerDebug('Found server configuration: ' + JSON.stringify(foundServer));
     } else {
