@@ -2,6 +2,7 @@ import { execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import shellEscape from 'shell-escape';
 
 /**
  * Executes a given shell command locally by writing it to a temporary script file and executing it.
@@ -22,32 +23,17 @@ export async function executeCommand(
     const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
 
     try {
-        // Sanity check: Ensure no file exists at the path before writing
-        try {
-            await fs.access(scriptFilePath);
-            console.error(`Sanity check failed: File already exists at ${scriptFilePath}`);
-            throw new Error(`File already exists at ${scriptFilePath}`);
-        } catch {
-            // File does not exist, which is expected
-            console.debug(`Sanity check passed: No pre-existing file at ${scriptFilePath}`);
-        }
+        // Escape the command to prevent injection
+        const escapedCommand = shellEscape([command]);
 
-        // Write the command to the script file
-        await fs.writeFile(scriptFilePath, command, { mode: 0o755 });
-
-        // Sanity check: Ensure the file was written and exists
-        try {
-            await fs.access(scriptFilePath);
-            console.debug(`Sanity check passed: File successfully created at ${scriptFilePath}`);
-        } catch (error) {
-            console.error(`Sanity check failed: File not found after creation at ${scriptFilePath}`);
-            throw new Error(`File not found after creation at ${scriptFilePath}`);
-        }
+        // Write the escaped command to the script file
+        await fs.writeFile(scriptFilePath, escapedCommand, { mode: 0o755 });
 
         const options = {
             cwd: directory,
             timeout: timeout || 0,
-            shell: shell, // Specify the shell to be used
+            shell: shell,
+            env: { ...process.env }, // Use process.env as is
         };
 
         console.debug(`Executing script at path: ${scriptFilePath} with options: cwd=${options.cwd}, timeout=${options.timeout}, shell=${options.shell}`);
@@ -67,9 +53,9 @@ export async function executeCommand(
         });
 
     } finally {
-        // Check if cleanup is enabled
+        // Cleanup logic
         const enableCleanup = process.env.ENABLE_CLEANUP === 'true';
-        const cleanupDelay = parseInt(process.env.CLEANUP_DELAY || '1000', 10); // Default delay is 1000ms
+        const cleanupDelay = parseInt(process.env.CLEANUP_DELAY || '1000', 10);
 
         if (enableCleanup) {
             console.debug(`Cleanup is enabled. Deleting temporary script file after ${cleanupDelay}ms delay: ${scriptFilePath}`);
