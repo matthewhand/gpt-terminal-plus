@@ -98,20 +98,30 @@ export class ServerManager {
       localConfig = ServerManager.getDefaultLocalConfig();
     }
 
-    // Load SSH configurations
-    const sshConfigs: SshHostConfig[] | undefined = config.get<SshHostConfig[]>('ssh.hosts');
-    serverManagerDebug('Loaded SSH configs: ' + JSON.stringify(sshConfigs));
+    // Load SSH configurations, handle missing config
+    let sshConfigs: SshHostConfig[] | undefined = [];
+    try {
+      sshConfigs = config.get<SshHostConfig[]>('ssh.hosts');
+      serverManagerDebug('Loaded SSH configs: ' + JSON.stringify(sshConfigs));
+    } catch (error) {
+      serverManagerDebug('SSH config not found or invalid: ' + (error as Error).message);
+    }
 
-    // Load and process SSM configurations
-    const ssmConfigs: SsmTargetConfig[] = config.get<SsmTargetConfig[]>('ssm.targets').map((target: SsmTargetConfig): SsmTargetConfig => {
-      serverManagerDebug('Processing SSM target: ' + JSON.stringify(target));
-      return {
-        ...target,
-        protocol: 'ssm' as const,
-        region: config.get<string>('ssm.region'),
-      };
-    });
-    serverManagerDebug('Processed SSM configs: ' + JSON.stringify(ssmConfigs));
+    // Load and process SSM configurations, handle missing config
+    let ssmConfigs: SsmTargetConfig[] = [];
+    try {
+      ssmConfigs = config.get<SsmTargetConfig[]>('ssm.targets').map((target: SsmTargetConfig): SsmTargetConfig => {
+        serverManagerDebug('Processing SSM target: ' + JSON.stringify(target));
+        return {
+          ...target,
+          protocol: 'ssm' as const,
+          region: config.get<string>('ssm.region'),
+        };
+      });
+      serverManagerDebug('Processed SSM configs: ' + JSON.stringify(ssmConfigs));
+    } catch (error) {
+      serverManagerDebug('SSM config not found or invalid: ' + (error as Error).message);
+    }
 
     // Combine all configurations into the available servers list
     const availableServers: ServerConfig[] = [];
