@@ -1,8 +1,10 @@
-import { escapeSpecialChars } from '../../../common/escapeSpecialChars';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 
 /**
- * Executes a given shell command locally, with support for special character escaping and environment configuration.
+ * Executes a given shell command locally by writing it to a temporary script file and executing it.
  * 
  * @param {string} command - The shell command to execute.
  * @param {number} [timeout] - Optional timeout in milliseconds for the command execution.
@@ -23,29 +25,42 @@ export async function executeCommand(
         throw new Error('Command must be a non-empty string');
     }
 
-    // Escape special characters in the command
-    const escapedCommand = escapeSpecialChars(command);
-    console.debug(`Escaped command: ${escapedCommand}`);
+    // Create a temporary script file to hold the command
+    const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
 
-    // Define execution options with defaults
-    const options = {
-        cwd: directory,
-        timeout: timeout || 0,
-        shell: shell,
-    };
-    console.debug(`Execution options: cwd=${options.cwd}, timeout=${options.timeout}, shell=${options.shell}`);
+    try {
+        // Write the command to the script file
+        await fs.writeFile(scriptFilePath, command, { mode: 0o755 });
 
-    // Execute the command and return the result
-    return new Promise((resolve, reject) => {
-        exec(escapedCommand, options, (error: Error | null, stdout: string, stderr: string) => {
-            console.debug(`Command executed. stdout: ${stdout}, stderr: ${stderr}`);
+        const options = {
+            cwd: directory,
+            timeout: timeout || 0,
+            shell: shell, // Specify the shell to be used
+        };
 
-            if (error) {
-                console.error(`Error executing command: ${escapedCommand}`, error);
-                reject({ stdout, stderr, presentWorkingDirectory: options.cwd });
-            } else {
-                resolve({ stdout, stderr, presentWorkingDirectory: options.cwd });
-            }
+        console.debug(`Executing script at path: ${scriptFilePath} with options: cwd=${options.cwd}, timeout=${options.timeout}, shell=${options.shell}`);
+
+        // Execute the script file using execFile
+        return new Promise((resolve, reject) => {
+            execFile(scriptFilePath, [], options, (error, stdout, stderr) => {
+                console.debug(`Command executed. stdout: ${stdout}, stderr: ${stderr}`);
+
+                if (error) {
+                    console.error(`Error executing script: ${scriptFilePath}`, error);
+                    reject({ stdout, stderr, presentWorkingDirectory: options.cwd });
+                } else {
+                    resolve({ stdout, stderr, presentWorkingDirectory: options.cwd });
+                }
+            });
         });
-    });
+
+    } finally {
+        // Clean up: Delete the temporary script file
+        try {
+            await fs.unlink(scriptFilePath);
+            console.debug(`Temporary script file deleted: ${scriptFilePath}`);
+        } catch (cleanupError) {
+            console.warn(`Failed to delete temporary script file: ${scriptFilePath}`, cleanupError);
+        }
+    }
 }

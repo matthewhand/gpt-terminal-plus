@@ -15,7 +15,7 @@ export function escapeSpecialChars(input: string): string {
   if (process.env.ESCAPE_BACKTICKS !== 'false') {
       escaped = escaped.replace(/`/g, "\\$");
   }
-  if (process.env.ESCAPE_QUOTES === 'true') {
+  if (process.env.ESCAPE_QUOTES !== 'false') {
       escaped = escaped.replace(/['"]/g, "\\$&");
   }
   if (process.env.ESCAPE_FORWARD_SLASH === 'true') {
