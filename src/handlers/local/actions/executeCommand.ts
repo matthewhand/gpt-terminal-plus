@@ -19,13 +19,6 @@ export async function executeCommand(
     directory: string = '.',
     shell: string = '/bin/bash'
 ): Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }> {
-    // Validate the command input
-    if (typeof command !== 'string' || command.trim() === '') {
-        console.error('Invalid command provided:', command);
-        throw new Error('Command must be a non-empty string');
-    }
-
-    // Create a temporary script file to hold the command
     const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
 
     try {
@@ -74,12 +67,22 @@ export async function executeCommand(
         });
 
     } finally {
-        // Clean up: Delete the temporary script file
-        try {
-            await fs.unlink(scriptFilePath);
-            console.debug(`Temporary script file deleted: ${scriptFilePath}`);
-        } catch (cleanupError) {
-            console.warn(`Failed to delete temporary script file: ${scriptFilePath}`, cleanupError);
+        // Check if cleanup is enabled
+        const enableCleanup = process.env.ENABLE_CLEANUP === 'true';
+        const cleanupDelay = parseInt(process.env.CLEANUP_DELAY || '1000', 10); // Default delay is 1000ms
+
+        if (enableCleanup) {
+            console.debug(`Cleanup is enabled. Deleting temporary script file after ${cleanupDelay}ms delay: ${scriptFilePath}`);
+            setTimeout(async () => {
+                try {
+                    await fs.unlink(scriptFilePath);
+                    console.debug(`Temporary script file deleted: ${scriptFilePath}`);
+                } catch (cleanupError) {
+                    console.warn(`Failed to delete temporary script file: ${scriptFilePath}`, cleanupError);
+                }
+            }, cleanupDelay);
+        } else {
+            console.debug('Cleanup is disabled. Temporary script file will not be deleted.');
         }
     }
 }
