@@ -6,20 +6,20 @@
 export function escapeSpecialChars(input: string): string {
   let escaped = input;
 
+  if (process.env.ESCAPE_BACKWARD_SLASH !== 'false') {
+      escaped = escaped.replace(/\\/g, "\\\\");
+  }
   if (process.env.ESCAPE_DOLLAR !== 'false') {
       escaped = escaped.replace(/\$/g, "\\$");
-  }
-  if (process.env.ESCAPE_QUOTES !== 'false') {
-      escaped = escaped.replace(/['"]/g, "\\$&");
   }
   if (process.env.ESCAPE_BACKTICKS !== 'false') {
       escaped = escaped.replace(/`/g, "\\$");
   }
+  if (process.env.ESCAPE_QUOTES === 'true') {
+      escaped = escaped.replace(/['"]/g, "\\$&");
+  }
   if (process.env.ESCAPE_FORWARD_SLASH === 'true') {
       escaped = escaped.replace(/\//g, "\\/");
-  }
-  if (process.env.ESCAPE_BACKWARD_SLASH !== 'false') {
-      escaped = escaped.replace(/\\/g, "\\\\");
   }
 
   return escaped;
