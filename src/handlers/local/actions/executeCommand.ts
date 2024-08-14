@@ -29,8 +29,27 @@ export async function executeCommand(
     const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
 
     try {
+        // Sanity check: Ensure no file exists at the path before writing
+        try {
+            await fs.access(scriptFilePath);
+            console.error(`Sanity check failed: File already exists at ${scriptFilePath}`);
+            throw new Error(`File already exists at ${scriptFilePath}`);
+        } catch {
+            // File does not exist, which is expected
+            console.debug(`Sanity check passed: No pre-existing file at ${scriptFilePath}`);
+        }
+
         // Write the command to the script file
         await fs.writeFile(scriptFilePath, command, { mode: 0o755 });
+
+        // Sanity check: Ensure the file was written and exists
+        try {
+            await fs.access(scriptFilePath);
+            console.debug(`Sanity check passed: File successfully created at ${scriptFilePath}`);
+        } catch (error) {
+            console.error(`Sanity check failed: File not found after creation at ${scriptFilePath}`);
+            throw new Error(`File not found after creation at ${scriptFilePath}`);
+        }
 
         const options = {
             cwd: directory,
