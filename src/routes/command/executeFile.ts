@@ -1,51 +1,30 @@
 import { Request, Response } from 'express';
-import { execFile } from 'child_process';
-import path from 'path';
+import Debug from 'debug';
+import { handleServerError } from '../../utils/handleServerError';
+import { getServerHandler } from '../../utils/getServerHandler';
+
+const debug = Debug("app:command:execute-file");
 
 /**
- * Handles the execution of a file on the server.
- * 
- * @param {Request} req - The request object.
- * @param {Response} res - The response object.
+ * Function to execute a file on the server.
+ * @param {Request} req - The Express request object.
+ * @param {Response} res - The Express response object.
  */
-export const executeFile = (req: Request, res: Response): void => {
+export const executeFile = async (req: Request, res: Response) => {
   const { filename, directory } = req.body;
 
   if (!filename) {
-    res.status(400).json({ error: 'Filename is required.' });
-    return;
+    debug("Filename is required but not provided.");
+    return res.status(400).json({ error: "Filename is required." });
   }
 
-  const filePath = directory ? path.join(directory, filename) : filename;
-  const fileExtension = path.extname(filename).toLowerCase();
-
-  let command: string;
-
-  switch (fileExtension) {
-    case '.sh':
-      command = 'bash';
-      break;
-    case '.ps1':
-      command = 'powershell';
-      break;
-    case '.py':
-      command = 'python';
-      break;
-    case '.ts':
-      command = 'ts-node';
-      break;
-    default:
-      res.status(400).json({ error: `Unsupported file extension: ${fileExtension}` });
-      return;
+  try {
+    const server = getServerHandler(req);
+    const result = await server.executeFile(filename, directory);
+    debug(`File executed: ${filename}, result: ${JSON.stringify(result)}`);
+    res.status(200).json({ result });
+  } catch (err) {
+    debug(`Error executing file: ${err instanceof Error ? err.message : String(err)}`);
+    handleServerError(err, res, "Error executing file");
   }
-
-  execFile(command, [filePath], (error: Error | null, stdout: string, stderr: string) => {
-    if (error) {
-      console.error(`Error executing file ${filename}:`, error);
-      res.status(500).json({ error: error.message, stderr });
-      return;
-    }
-
-    res.status(200).json({ stdout, stderr });
-  });
 };

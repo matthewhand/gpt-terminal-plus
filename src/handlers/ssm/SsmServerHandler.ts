@@ -10,6 +10,7 @@ import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { SsmTargetConfig } from '../../types/ServerConfig';
 import { SSMClient } from '@aws-sdk/client-ssm';
+import { ExecutionResult } from '../../types/ExecutionResult'; // Ensure you import ExecutionResult
 import debug from 'debug';
 
 const ssmServerDebug = debug('app:SsmServer');
@@ -92,6 +93,44 @@ class SsmServer extends AbstractServerHandler {
     const pwd = await presentWorkingDirectory();
     changeDirectory(pwd);
     return pwd;
+  }
+
+  /**
+   * Executes a file on the remote SSM server.
+   * 
+   * @param {string} filename - The name of the file to execute.
+   * @param {string} [directory] - The directory where the file is located.
+   * @param {number} [timeout] - Optional timeout for file execution.
+   * @returns {Promise<ExecutionResult>} - A promise that resolves with the execution result.
+   */
+  async executeFile(
+    filename: string,
+    directory?: string,
+    timeout?: number
+  ): Promise<ExecutionResult> {
+    if (!filename) {
+      ssmServerDebug(`No filename provided for execution.`);
+      throw new Error('Filename is required for file execution.');
+    }
+
+    ssmServerDebug(`Executing file: ${filename} on SSM server, directory: ${directory}, timeout: ${timeout}`);
+
+    const command = `./${filename}`;
+    const execParams: ExecuteCommandParams = {
+      ssmClient: this.ssmClient,
+      command,
+      instanceId: this.instanceId,
+      documentName: 'AWS-RunShellScript',
+      timeout: timeout ?? 60,
+      directory: directory ?? '',
+    };
+
+    const result = await executeCommand(execParams);
+    return {
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      error: (result.stderr || '').length > 0,
+    };
   }
 }
 

@@ -118,4 +118,10 @@ export abstract class AbstractServerHandler implements ServerHandler {
       throw new Error('executeCode method not implemented in AbstractServerHandler');
   }
 
+  abstract executeFile(
+    filename: string, 
+    directory?: string, 
+    timeout?: number
+  ): Promise<ExecutionResult>;
+
 }

@@ -12,10 +12,12 @@ import { listFiles } from './actions/listFiles';
 import { readFile } from './actions/readFile';
 import { transferFile } from './actions/transferFile';
 import { updateFile } from './actions/updateFile';
+import { executeFile as executeRemoteFile } from './actions/executeFile'; 
 import { setSelectedServer, changeDirectory, presentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { SshHostConfig } from '../../types/ServerConfig';
+import { ExecutionResult } from '../../types/ExecutionResult';
 import { Client } from 'ssh2';
 import debug from 'debug';
 
@@ -119,6 +121,29 @@ class SshServer extends AbstractServerHandler {
     const pwd = await presentWorkingDirectory();
     changeDirectory(pwd);
     return pwd;
+  }
+
+  /**
+   * Executes a file on the remote SSH server.
+   * 
+   * @param {string} filename - The name of the file to execute.
+   * @param {string} [directory] - The directory where the file is located.
+   * @param {number} [timeout] - Optional timeout for file execution.
+   * @returns {Promise<ExecutionResult>} - A promise that resolves with the execution result.
+   */
+  async executeFile(
+    filename: string,
+    directory?: string,
+    timeout?: number
+  ): Promise<ExecutionResult> {
+    if (!filename) {
+      sshServerDebug(`No filename provided for execution.`);
+      throw new Error('Filename is required for file execution.');
+    }
+
+    sshServerDebug(`Executing file: ${filename} on SSH server, directory: ${directory}, timeout: ${timeout}`);
+
+    return executeRemoteFile(this.sshClient, filename, directory, timeout);
   }
 }
 

@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import { exec } from 'child_process';
 import * as os from 'os';
 import { AbstractServerHandler } from '../AbstractServerHandler';
@@ -8,6 +7,7 @@ import { getSystemInfo as getLocalSystemInfo } from './actions/getSystemInfo';
 import { updateFile as updateLocalFile } from './actions/updateFile';
 import { executeCommand as executeLocalCommand } from './actions/executeCommand';
 import { executeCode as executeLocalCode } from './actions/executeCode';
+import { executeFile as executeLocalFile } from './actions/executeFile'; // Import the executeFile function
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { LocalConfig } from '../../types/ServerConfig';
@@ -82,23 +82,37 @@ class LocalServer extends AbstractServerHandler {
         }
     }
 
-    // New method for file execution
-    async executeLocalCommand(
-        command: string, 
-        timeout?: number, 
-        directory?: string
+    /**
+     * Executes a file on the local server.
+     * 
+     * @param {string} filename - The name of the file to execute.
+     * @param {string} [directory] - The directory where the file is located.
+     * @param {number} [timeout] - Optional timeout for file execution.
+     * @returns {Promise<ExecutionResult>} - A promise that resolves with the execution result.
+     * @throws {Error} - Will throw an error if file execution fails.
+     */
+    async executeFile(
+        filename: string, 
+        directory?: string, 
+        timeout?: number
     ): Promise<ExecutionResult> {
-        return new Promise((resolve, reject) => {
-            exec(command, { cwd: directory, timeout }, (error, stdout, stderr) => {
-                if (error) {
-                    resolve({ stdout, stderr, error: true });
-                } else {
-                    resolve({ stdout, stderr, error: false });
-                }
-            });
-        });
+        if (!filename) {
+            localServerDebug(`No filename provided for execution.`);
+            throw new Error('Filename is required for file execution.');
+        }
+
+        localServerDebug(`Executing file: ${filename}, directory: ${directory}, timeout: ${timeout}`);
+
+        try {
+            const result = await executeLocalFile(filename, directory, timeout);
+            localServerDebug(`File execution result: ${JSON.stringify(result)}`);
+            return result;
+        } catch (error) {
+            localServerDebug(`Error during file execution: ${(error as Error).message}`);
+            throw new Error(`Failed to execute file: ${(error as Error).message}`);
+        }
     }
-    
+
     async getSystemInfo(): Promise<SystemInfo> {
         localServerDebug('Retrieving system info');
         return getLocalSystemInfo('bash');
