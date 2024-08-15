@@ -3,9 +3,13 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import shellEscape from 'shell-escape';
+import debug from 'debug';
+
+const executeCommandDebug = debug('app:executeCommand');
 
 /**
- * Executes a given shell command locally by writing it to a temporary script file and executing it.
+ * Executes a shell command by writing it to a temporary script file and running it.
+ * This function is designed to work across both POSIX and non-POSIX systems.
  * 
  * @param {string} command - The shell command to execute.
  * @param {number} [timeout] - Optional timeout in milliseconds for the command execution.
@@ -20,31 +24,50 @@ export async function executeCommand(
     directory: string = '.',
     shell: string = '/bin/bash'
 ): Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }> {
+    // Validate that the command is provided
+    if (!command) {
+        throw new Error('Command must be provided.');
+    }
+
+    executeCommandDebug(`Received command: ${command}`);
+    executeCommandDebug(`Using shell: ${shell}`);
+    executeCommandDebug(`Working directory: ${directory}`);
+    executeCommandDebug(`Timeout: ${timeout}`);
+
+    // Generate a unique file path for the temporary script
     const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
+    executeCommandDebug(`Generated script file path: ${scriptFilePath}`);
 
     try {
-        // Escape the command to prevent injection
-        const escapedCommand = shellEscape([command]);
+        // Determine whether to include a shebang based on environment variable
+        const includeShebang = process.env.DISABLE_SHEBANG !== 'true';
+        const shebang = includeShebang ? `#!${shell}\n` : '';
 
-        // Write the escaped command to the script file
-        await fs.writeFile(scriptFilePath, escapedCommand, { mode: 0o755 });
+        // Construct the script content, ensuring $ symbols are properly escaped
+        const scriptContent = `${shebang}${command.replace(/[$]/g, '\\$')}`;
+        executeCommandDebug(`Script content: ${scriptContent}`);
 
+        // Write the script content to the temporary file with executable permissions
+        await fs.writeFile(scriptFilePath, scriptContent, { mode: 0o755 });
+        executeCommandDebug(`Script file created with executable permissions`);
+
+        // Define the execution options, including the specified shell and environment variables
         const options = {
             cwd: directory,
             timeout: timeout || 0,
             shell: shell,
-            env: { ...process.env }, // Use process.env as is
+            env: { ...process.env },
         };
 
-        console.debug(`Executing script at path: ${scriptFilePath} with options: cwd=${options.cwd}, timeout=${options.timeout}, shell=${options.shell}`);
+        executeCommandDebug(`Execution options: ${JSON.stringify(options)}`);
 
-        // Execute the script file using execFile
+        // Execute the script file using the specified shell
         return new Promise((resolve, reject) => {
             execFile(scriptFilePath, [], options, (error, stdout, stderr) => {
-                console.debug(`Command executed. stdout: ${stdout}, stderr: ${stderr}`);
+                executeCommandDebug(`Command executed. stdout: ${stdout}, stderr: ${stderr}`);
 
                 if (error) {
-                    console.error(`Error executing script: ${scriptFilePath}`, error);
+                    executeCommandDebug(`Error during script execution: ${error.message}`);
                     reject({ stdout, stderr, presentWorkingDirectory: options.cwd });
                 } else {
                     resolve({ stdout, stderr, presentWorkingDirectory: options.cwd });
@@ -53,22 +76,22 @@ export async function executeCommand(
         });
 
     } finally {
-        // Cleanup logic
+        // Handle cleanup of the temporary script file
         const enableCleanup = process.env.ENABLE_CLEANUP === 'true';
         const cleanupDelay = parseInt(process.env.CLEANUP_DELAY || '1000', 10);
 
         if (enableCleanup) {
-            console.debug(`Cleanup is enabled. Deleting temporary script file after ${cleanupDelay}ms delay: ${scriptFilePath}`);
+            executeCommandDebug(`Cleanup is enabled. Deleting temporary script file after ${cleanupDelay}ms delay: ${scriptFilePath}`);
             setTimeout(async () => {
                 try {
                     await fs.unlink(scriptFilePath);
-                    console.debug(`Temporary script file deleted: ${scriptFilePath}`);
+                    executeCommandDebug(`Temporary script file deleted: ${scriptFilePath}`);
                 } catch (cleanupError) {
-                    console.warn(`Failed to delete temporary script file: ${scriptFilePath}`, cleanupError);
+                    executeCommandDebug(`Failed to delete temporary script file: ${scriptFilePath}. Error: ${(cleanupError as Error).message}`);
                 }
             }, cleanupDelay);
         } else {
-            console.debug('Cleanup is disabled. Temporary script file will not be deleted.');
+            executeCommandDebug('Cleanup is disabled. Temporary script file will not be deleted.');
         }
     }
 }

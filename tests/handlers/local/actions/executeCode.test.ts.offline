@@ -1,11 +1,11 @@
-import { execFile } from 'child_process';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
-import { executeCode } from '../../../../src/handlers/local/actions/executeCode';
-import { SupportedLanguages } from '../../../../src/types/SupportedLanguages';
+import LocalServer from '../../../../src/handlers/local/LocalServerHandler';
+import { ExecutionResult } from '../../../../src/types/ExecutionResult';
 
-// Mocking execFile and fs modules
+// Mocking spawn and fs modules
 jest.mock('child_process', () => ({
-    execFile: jest.fn(),
+    spawn: jest.fn(),
 }));
 
 jest.mock('fs', () => ({
@@ -15,61 +15,118 @@ jest.mock('fs', () => ({
     },
 }));
 
-describe('executeCode', () => {
+describe('LocalServer - executeCode', () => {
+    let localServer: LocalServer;
+
+    beforeEach(() => {
+        localServer = new LocalServer({
+            protocol: 'local',
+            hostname: 'localhost',
+            code: true,
+            // supportedLanguages: ['typescript', 'python'],
+        });
+    });
+
     afterEach(() => {
         jest.clearAllMocks();
         delete process.env.ENABLE_CLEANUP; // Reset to default behavior after each test
     });
 
-    test('should execute a Python script correctly', async () => {
-        (execFile as unknown as jest.Mock).mockImplementation((command, args, options, callback) => {
-            callback(null, 'Python script output', '');
-        });
+    it('should execute a Python script correctly', async () => {
+        const mockSpawn = spawn as jest.Mock;
+        const mockStdout = 'Python script output';
+        const mockProcess = {
+            stdout: {
+                on: jest.fn().mockImplementation((event, callback) => {
+                    if (event === 'data') callback(Buffer.from(mockStdout));
+                }),
+            },
+            stderr: {
+                on: jest.fn().mockImplementation(() => {}),
+            },
+            on: jest.fn().mockImplementation((event, callback) => {
+                if (event === 'close') callback(0);
+            }),
+        };
+        mockSpawn.mockReturnValue(mockProcess);
 
-        const result = await executeCode("print('Hello, Python!')", 'python');
+        const result: ExecutionResult = await localServer.executeCode("print('Hello, Python!')", 'python');
 
         expect(fs.promises.writeFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), { mode: 0o755 });
-        expect(execFile).toHaveBeenCalledWith(expect.stringContaining('python3'), [], expect.any(Object), expect.any(Function));
-        expect(result.stdout).toBe('Python script output');
+        expect(spawn).toHaveBeenCalledWith('python3', [expect.any(String)], expect.any(Object));
+        expect(result.stdout).toBe(mockStdout);
         expect(result.error).toBe(false);
     });
 
-    test('should execute a TypeScript script correctly', async () => {
-        (execFile as unknown as jest.Mock).mockImplementation((command, args, options, callback) => {
-            callback(null, 'TypeScript output', '');
-        });
+    it('should execute a TypeScript script correctly', async () => {
+        const mockSpawn = spawn as jest.Mock;
+        const mockStdout = 'TypeScript output';
+        const mockProcess = {
+            stdout: {
+                on: jest.fn().mockImplementation((event, callback) => {
+                    if (event === 'data') callback(Buffer.from(mockStdout));
+                }),
+            },
+            stderr: {
+                on: jest.fn().mockImplementation(() => {}),
+            },
+            on: jest.fn().mockImplementation((event, callback) => {
+                if (event === 'close') callback(0);
+            }),
+        };
+        mockSpawn.mockReturnValue(mockProcess);
 
-        const result = await executeCode("console.log('Hello, TypeScript!')", 'typescript');
+        const result: ExecutionResult = await localServer.executeCode("console.log('Hello, TypeScript!')", 'typescript');
 
         expect(fs.promises.writeFile).toHaveBeenCalledWith(expect.any(String), expect.any(String), { mode: 0o755 });
-        expect(execFile).toHaveBeenCalledWith(expect.stringContaining('tsc'), [], expect.any(Object), expect.any(Function));
-        expect(result.stdout).toBe('TypeScript output');
+        expect(spawn).toHaveBeenCalledWith('ts-node', [expect.any(String)], expect.any(Object));
+        expect(result.stdout).toBe(mockStdout);
         expect(result.error).toBe(false);
     });
 
-    test('should handle execution errors without cleanup', async () => {
+    it('should handle execution errors without cleanup', async () => {
         process.env.ENABLE_CLEANUP = 'false';
 
-        (execFile as unknown as jest.Mock).mockImplementation((command, args, options, callback) => {
-            callback(new Error('Execution failed'), '', 'Error output');
-        });
+        const mockSpawn = spawn as jest.Mock;
+        const mockStderr = 'Error output';
+        const mockProcess = {
+            stdout: { on: jest.fn() },
+            stderr: {
+                on: jest.fn().mockImplementation((event, callback) => {
+                    if (event === 'data') callback(Buffer.from(mockStderr));
+                }),
+            },
+            on: jest.fn().mockImplementation((event, callback) => {
+                if (event === 'close') callback(1);
+            }),
+        };
+        mockSpawn.mockReturnValue(mockProcess);
 
-        await expect(executeCode("print('This will fail')", 'python')).rejects.toThrow('Execution failed');
+        await expect(localServer.executeCode("print('This will fail')", 'python')).rejects.toThrow('Command failed with exit code 1');
 
-        // Ensure cleanup was not called
         expect(fs.promises.unlink).not.toHaveBeenCalled();
     });
 
-    test('should handle execution errors with cleanup enabled via env var', async () => {
+    it('should handle execution errors with cleanup enabled via env var', async () => {
         process.env.ENABLE_CLEANUP = 'true';
 
-        (execFile as unknown as jest.Mock).mockImplementation((command, args, options, callback) => {
-            callback(new Error('Execution failed'), '', 'Error output');
-        });
+        const mockSpawn = spawn as jest.Mock;
+        const mockStderr = 'Error output';
+        const mockProcess = {
+            stdout: { on: jest.fn() },
+            stderr: {
+                on: jest.fn().mockImplementation((event, callback) => {
+                    if (event === 'data') callback(Buffer.from(mockStderr));
+                }),
+            },
+            on: jest.fn().mockImplementation((event, callback) => {
+                if (event === 'close') callback(1);
+            }),
+        };
+        mockSpawn.mockReturnValue(mockProcess);
 
-        await expect(executeCode("print('This will fail')", 'python')).rejects.toThrow('Execution failed');
+        await expect(localServer.executeCode("print('This will fail')", 'python')).rejects.toThrow('Command failed with exit code 1');
 
-        // Ensure cleanup was called
         expect(fs.promises.unlink).toHaveBeenCalled();
     });
 });
