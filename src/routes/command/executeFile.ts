@@ -13,6 +13,8 @@ const debug = Debug("app:command:execute-file");
 export const executeFile = async (req: Request, res: Response) => {
   const { filename, directory } = req.body;
 
+  debug(`Received executeFile request: filename=${filename}, directory=${directory}`);
+
   if (!filename) {
     debug("Filename is required but not provided.");
     return res.status(400).json({ error: "Filename is required." });
