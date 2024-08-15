@@ -137,6 +137,63 @@ paths:
                   error:
                     type: string
                     description: Error message.
+  /command/execute-file:
+    post:
+      summary: Execute a file on the managed server.
+      description: >
+        Executes a specified file on a managed server. The file type determines the execution environment.
+        Supported file types include `.sh` (bash), `.ps1` (PowerShell), `.py` (Python), and `.ts` (TypeScript via ts-node).
+      operationId: executeFile
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                  description: The name of the file to execute.
+                directory:
+                  type: string
+                  description: The directory where the file is located. Optional if the file is in the current directory.
+              required:
+                - filename
+      responses:
+        "200":
+          description: File executed successfully with output returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stdout:
+                    type: string
+                  stderr:
+                    type: string
+        "400":
+          description: Bad request, such as unsupported file type or missing filename.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+        "500":
+          description: Server error during file execution.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message.
+                  stderr:
+                    type: string
   /command/execute:
     post:
       summary: Execute a command on the managed server.
