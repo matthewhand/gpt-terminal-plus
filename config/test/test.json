@@ -1,7 +1,10 @@
 {
   "port": 5004,
   "local": {
-    "hostname": "localhost"
+    "hostname": "localhost",
+    "protocol": "local",
+    "code": true,
+    "supportedLanguages": ["python", "typescript"]
   },
   "ssh": {
     "hosts": [

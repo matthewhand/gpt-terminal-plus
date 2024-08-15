@@ -1,3 +1,11 @@
+export type SupportedLanguages = 'python' | 'typescript';
+
+export interface ExecutionResult {
+    stdout: string;
+    stderr: string;
+    error: boolean;
+}
+
 export interface ServerHandlerOptions {
   // Define the options here
 }

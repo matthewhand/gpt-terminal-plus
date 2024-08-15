@@ -2,6 +2,7 @@ import { ServerConfig } from '../types/ServerConfig';
 import { SystemInfo } from '../types/SystemInfo';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { ServerHandler } from '../types/ServerHandler';
+import { ExecutionResult } from '../types/ExecutionResult'; // Added this import
 import debug from 'debug';
 import { presentWorkingDirectory, changeDirectory } from '../utils/GlobalStateHelper';
 
@@ -107,4 +108,14 @@ export abstract class AbstractServerHandler implements ServerHandler {
    * @returns {Promise<SystemInfo>} - The system information.
    */
   abstract getSystemInfo(): Promise<SystemInfo>;
+
+  async executeCode(
+      code: string,
+      language: string,
+      timeout?: number,
+      directory?: string
+  ): Promise<ExecutionResult> {
+      throw new Error('executeCode method not implemented in AbstractServerHandler');
+  }
+
 }

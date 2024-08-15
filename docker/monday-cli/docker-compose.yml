@@ -17,3 +17,5 @@ services:
       - ENABLE_FILE_MANAGEMENT=true
       - ENABLE_SERVER_MANAGEMENT=false
     restart: unless-stopped
+    volumes:
+      - ./scripts/:/scripts:rw
