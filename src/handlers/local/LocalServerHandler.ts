@@ -56,11 +56,10 @@ class LocalServer extends AbstractServerHandler {
      */
     async executeCode(
         code: string, 
-        language: string,  // Updated to allow any string for language
+        language: string, 
         timeout: number = 5000, 
         directory: string = os.tmpdir()
     ): Promise<ExecutionResult> {
-        // Guard clauses to ensure valid inputs
         if (!code) {
             localServerDebug(`No code provided for execution.`);
             throw new Error('Code is required for execution.');
@@ -74,87 +73,62 @@ class LocalServer extends AbstractServerHandler {
         localServerDebug(`Executing code: ${code}, language: ${language}, timeout: ${timeout}, directory: ${directory}`);
 
         try {
-            // Execute the code using the local handler
             const result = await executeLocalCode(code, language, timeout, directory);
             localServerDebug(`Code execution result: ${JSON.stringify(result)}`);
             return result;
         } catch (error) {
-            // Log the error and rethrow it
             localServerDebug(`Error during code execution: ${(error as Error).message}`);
             throw new Error(`Failed to execute code: ${(error as Error).message}`);
         }
     }
 
-    /**
-     * Retrieves the system information of the local server.
-     * @returns The system information.
-     */
+    // New method for file execution
+    async executeLocalCommand(
+        command: string, 
+        timeout?: number, 
+        directory?: string
+    ): Promise<ExecutionResult> {
+        return new Promise((resolve, reject) => {
+            exec(command, { cwd: directory, timeout }, (error, stdout, stderr) => {
+                if (error) {
+                    resolve({ stdout, stderr, error: true });
+                } else {
+                    resolve({ stdout, stderr, error: false });
+                }
+            });
+        });
+    }
+    
     async getSystemInfo(): Promise<SystemInfo> {
         localServerDebug('Retrieving system info');
         return getLocalSystemInfo('bash');
     }
 
-    /**
-     * Amends a file on the local server.
-     * @param filePath - The path of the file to amend.
-     * @param content - The content to append to the file.
-     * @param backup - Whether to back up the file before amending.
-     * @returns Whether the file was successfully amended.
-     */
     async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
         localServerDebug(`Amending file at path: ${filePath}, content: ${content}, backup: ${backup}`);
         return amendLocalFile(filePath, content);
     }
 
-    /**
-     * Creates a file on the local server.
-     * @param filePath - The path of the file to create.
-     * @param content - The content of the file.
-     * @param backup - Whether to create a backup of the file.
-     * @returns Whether the file was successfully created.
-     */
     async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
         localServerDebug(`Creating file at path: ${filePath}, content: ${content}, backup: ${backup}`);
         return createLocalFile(filePath, content, backup);
     }
 
-    /**
-     * Lists files in a directory on the local server.
-     * @param params - The parameters for listing files.
-     * @returns A paginated response with the list of files.
-     */
     async listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'filename' | 'datetime' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>> {
         localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
         throw new Error('listFiles action not implemented');
     }
 
-    /**
-     * Updates a file on the local server.
-     * @param filePath - The path of the file to update.
-     * @param pattern - The pattern to replace in the file.
-     * @param replacement - The replacement for the pattern.
-     * @param multiline - Whether to treat the pattern as multiline.
-     * @returns Whether the file was successfully updated.
-     */
     async updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean = false): Promise<boolean> {
         localServerDebug(`Updating file at path: ${filePath}, pattern: ${pattern}, replacement: ${replacement}, multiline: ${multiline}`);
         return updateLocalFile(filePath, pattern, replacement, multiline);
     }
 
-    /**
-     * Changes the working directory on the local server.
-     * @param directory - The directory to change to.
-     * @returns Whether the directory was successfully changed.
-     */
     async changeDirectory(directory: string): Promise<boolean> {
         localServerDebug(`Changing directory to: ${directory}`);
         return super.changeDirectory(directory);
     }
 
-    /**
-     * Retrieves the present working directory on the local server.
-     * @returns The present working directory.
-     */
     async presentWorkingDirectory(): Promise<string> {
         localServerDebug('Retrieving present working directory');
         return super.presentWorkingDirectory();
