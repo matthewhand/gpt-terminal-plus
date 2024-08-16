@@ -1,4 +1,4 @@
-import "module-alias/register";
+// import "module-alias/register";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,6 +12,8 @@ import cors from "cors";
 import config from "config";
 import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
+
+import './modules/ngrok';
 
 const app = express();
 

@@ -14,6 +14,8 @@ ngrokDebug(`NGROK_PORT: ${NGROK_PORT}`);
 ngrokDebug(`NGROK_AUTHTOKEN is ${NGROK_AUTHTOKEN ? 'provided' : 'not provided'}`);
 
 if (NGROK_ENABLED) {
+    console.log("Ngrok module loaded and executing...");
+
     (async function setupNgrok() {
         // Guard: Check if the required port is a valid number
         if (isNaN(Number(NGROK_PORT))) {
