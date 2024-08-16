@@ -1,30 +1,38 @@
-import { execFile } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import shellEscape from 'shell-escape';
+import { Shescape } from 'shescape';
 import debug from 'debug';
 
 const executeCommandDebug = debug('app:executeCommand');
 
+// Load configuration from environment variables
+const DEFAULT_TIMEOUT = parseInt(process.env.DEFAULT_TIMEOUT || '0', 10);
+const DEFAULT_SHELL = process.env.DEFAULT_SHELL || '/bin/bash';
+const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
+const ENABLE_CLEANUP = process.env.ENABLE_CLEANUP === 'true';
+const CLEANUP_DELAY = parseInt(process.env.CLEANUP_DELAY || '1000', 10);
+const DISABLE_SHEBANG = process.env.DISABLE_SHEBANG === 'true';
+
 /**
- * Executes a shell command by writing it to a temporary script file and running it.
+ * Executes a shell command by either using exec or execFile based on an environment variable.
  * This function is designed to work across both POSIX and non-POSIX systems.
  * 
  * @param {string} command - The shell command to execute.
- * @param {number} [timeout] - Optional timeout in milliseconds for the command execution.
+ * @param {number} [timeout=DEFAULT_TIMEOUT] - Optional timeout in milliseconds for the command execution.
  * @param {string} [directory='.'] - The directory from which to execute the command. Defaults to the current directory.
- * @param {string} [shell='/bin/bash'] - The shell environment in which to run the command. Defaults to '/bin/bash'.
+ * @param {string} [shell=DEFAULT_SHELL] - The shell environment in which to run the command. Defaults to `/bin/bash`.
  * @returns {Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }>} - A promise that resolves with the command's output.
  * @throws Will throw an error if the command execution fails.
  */
 export async function executeCommand(
     command: string,
-    timeout?: number,
+    timeout: number = DEFAULT_TIMEOUT,
     directory: string = '.',
-    shell: string = '/bin/bash'
+    shell: string = DEFAULT_SHELL
 ): Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }> {
-    // Validate that the command is provided
+    // Validate that a command is provided
     if (!command) {
         throw new Error('Command must be provided.');
     }
@@ -33,63 +41,78 @@ export async function executeCommand(
     executeCommandDebug(`Using shell: ${shell}`);
     executeCommandDebug(`Working directory: ${directory}`);
     executeCommandDebug(`Timeout: ${timeout}`);
+    executeCommandDebug(`Using execFile: ${USE_EXECFILE}`);
+    executeCommandDebug(`Enable Cleanup: ${ENABLE_CLEANUP}`);
+    executeCommandDebug(`Cleanup Delay: ${CLEANUP_DELAY}`);
+    executeCommandDebug(`Disable Shebang: ${DISABLE_SHEBANG}`);
 
-    // Generate a unique file path for the temporary script
-    const scriptFilePath = path.join(os.tmpdir(), `script-${Date.now()}.sh`);
-    executeCommandDebug(`Generated script file path: ${scriptFilePath}`);
+    // Initialize Shescape
+    const shescape = new Shescape({ shell: USE_EXECFILE ? false : shell });
+
+    // Prepare the command
+    let commandToExecute: string;
+    let args: string[];
+
+    if (USE_EXECFILE) {
+        // For execFile, escape $ and other special characters in each argument
+        args = shescape.escapeAll(command.split(' ')).map(arg => arg.replace(/\$/g, '\\$'));
+        commandToExecute = args[0];
+        args = args.slice(1);
+    } else {
+        // For exec with bash -c, escape $ and pass everything to bash -c
+        const escapedCommand = command.replace(/\$/g, '\\$');
+        commandToExecute = `${shell} -c '${shescape.quote(escapedCommand)}'`;
+        args = [];
+    }
 
     try {
-        // Determine whether to include a shebang based on environment variable
-        const includeShebang = process.env.DISABLE_SHEBANG !== 'true';
-        const shebang = includeShebang ? `#!${shell}\n` : '';
-
-        // Construct the script content, ensuring $ symbols are properly escaped
-        const scriptContent = `${shebang}${command.replace(/[$]/g, '\\$')}`;
-        executeCommandDebug(`Script content: ${scriptContent}`);
-
-        // Write the script content to the temporary file with executable permissions
-        await fs.writeFile(scriptFilePath, scriptContent, { mode: 0o755 });
-        executeCommandDebug(`Script file created with executable permissions`);
-
-        // Define the execution options, including the specified shell and environment variables
-        const options = {
+        // Define the execution options
+        const execOptions = {
             cwd: directory,
             timeout: timeout || 0,
             shell: shell,
             env: { ...process.env },
         };
+        executeCommandDebug(`Execution options: ${JSON.stringify(execOptions)}`);
 
-        executeCommandDebug(`Execution options: ${JSON.stringify(options)}`);
-
-        // Execute the script file using the specified shell
+        // Execute the command
         return new Promise((resolve, reject) => {
-            execFile(scriptFilePath, [], options, (error, stdout, stderr) => {
-                executeCommandDebug(`Command executed. stdout: ${stdout}, stderr: ${stderr}`);
+            if (USE_EXECFILE) {
+                execFile(commandToExecute, args, execOptions, (error, stdout, stderr) => {
+                    executeCommandDebug(`Command executed with execFile. stdout: ${stdout}, stderr: ${stderr}`);
 
-                if (error) {
-                    executeCommandDebug(`Error during script execution: ${error.message}`);
-                    reject({ stdout, stderr, presentWorkingDirectory: options.cwd });
-                } else {
-                    resolve({ stdout, stderr, presentWorkingDirectory: options.cwd });
-                }
-            });
+                    if (error) {
+                        executeCommandDebug(`Error during command execution with execFile: ${error.message}`);
+                        reject({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    } else {
+                        resolve({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    }
+                });
+            } else {
+                exec(commandToExecute, execOptions, (error, stdout, stderr) => {
+                    executeCommandDebug(`Command executed with exec. stdout: ${stdout}, stderr: ${stderr}`);
+
+                    if (error) {
+                        executeCommandDebug(`Error during command execution with exec: ${error.message}`);
+                        reject({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    } else {
+                        resolve({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    }
+                });
+            }
         });
 
     } finally {
-        // Handle cleanup of the temporary script file
-        const enableCleanup = process.env.ENABLE_CLEANUP === 'true';
-        const cleanupDelay = parseInt(process.env.CLEANUP_DELAY || '1000', 10);
-
-        if (enableCleanup) {
-            executeCommandDebug(`Cleanup is enabled. Deleting temporary script file after ${cleanupDelay}ms delay: ${scriptFilePath}`);
+        // Handle cleanup of the temporary script file if applicable
+        if (ENABLE_CLEANUP) {
+            executeCommandDebug(`Cleanup is enabled. Deleting temporary script file after ${CLEANUP_DELAY}ms delay.`);
             setTimeout(async () => {
                 try {
-                    await fs.unlink(scriptFilePath);
-                    executeCommandDebug(`Temporary script file deleted: ${scriptFilePath}`);
+                    // Cleanup logic if needed
                 } catch (cleanupError) {
-                    executeCommandDebug(`Failed to delete temporary script file: ${scriptFilePath}. Error: ${(cleanupError as Error).message}`);
+                    executeCommandDebug(`Failed to delete temporary script file. Error: ${(cleanupError as Error).message}`);
                 }
-            }, cleanupDelay);
+            }, CLEANUP_DELAY);
         } else {
             executeCommandDebug('Cleanup is disabled. Temporary script file will not be deleted.');
         }
