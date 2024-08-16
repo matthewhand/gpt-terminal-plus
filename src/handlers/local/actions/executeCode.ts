@@ -57,7 +57,7 @@ export async function executeCode(
         // Generate the command to execute based on the language
         const command = language.toLowerCase() === 'python'
             ? `python3 ${tempFilePath}`
-            : `ts-node ${tempFilePath}`;
+            : `node ${tempFilePath}`;
         executeCodeDebug(`Generated command: ${command}`);
 
         // Execute the command and capture the output
