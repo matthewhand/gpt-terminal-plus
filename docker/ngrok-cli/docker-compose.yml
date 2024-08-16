@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ngrok-cli-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ngrok-cli-app
+    ports:
+      - "${NGROK_CLI_PORT_HOST:-5013}:${NGROK_CLI_PORT_CONTAINER:-5005}"
+    env_file:
+      - .env
+    environment:
+      - NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN}
+      - NGROK_REGION=${NGROK_REGION}
+    restart: unless-stopped
