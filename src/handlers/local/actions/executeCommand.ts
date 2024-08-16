@@ -54,14 +54,14 @@ export async function executeCommand(
     let args: string[];
 
     if (USE_EXECFILE) {
-        // For execFile, escape $ and other special characters in each argument
-        args = shescape.escapeAll(command.split(' ')).map(arg => arg.replace(/\$/g, '\\$'));
+        // For execFile, quote each argument properly using shescape.quote
+        args = command.split(' ').map(arg => shescape.quote(arg));
         commandToExecute = args[0];
         args = args.slice(1);
     } else {
-        // For exec with bash -c, escape $ and pass everything to bash -c
-        const escapedCommand = command.replace(/\$/g, '\\$');
-        commandToExecute = `${shell} -c '${shescape.quote(escapedCommand)}'`;
+        // For exec with bash -c, quote the entire command
+        const escapedCommand = shescape.quote(command);
+        commandToExecute = `${shell} -c ${escapedCommand}`;
         args = [];
     }
 
