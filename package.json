@@ -57,6 +57,7 @@
     "@aws-sdk/client-ssm": "^3.623.0",
     "@eslint/config-array": "^0.17.1",
     "@eslint/object-schema": "^2.1.4",
+    "@ngrok/ngrok": "^1.4.1",
     "@types/shell-escape": "^0.2.3",
     "aws-sdk": "^2.1667.0",
     "body-parser": "^1.20.2",

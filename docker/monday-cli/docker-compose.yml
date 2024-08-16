@@ -18,4 +18,5 @@ services:
       - ENABLE_SERVER_MANAGEMENT=false
     restart: unless-stopped
     volumes:
-      - ./scripts/:/scripts:rw
+      - ./scripts/:/scripts:rw # for storing shell functions to be loaded on each session
+      - .bashrc:/root/.bashrc # for disabling various expansions

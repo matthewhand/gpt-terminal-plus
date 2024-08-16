@@ -17,4 +17,7 @@ SHELL ["/bin/bash", "-c"]
 # Add this to Dockerfile to source all scripts at the start of each session
 RUN echo "for script in /scripts/*.sh; do source \$script; done" >> ~/.bashrc
 
+# Ensure applies to non-interactive sessions as well
+RUN echo "source ~/.bashrc" >> ~/.bash_profile
+
 # CMD ["node", "dist/index.js"] inherited from Dockerfile.base
