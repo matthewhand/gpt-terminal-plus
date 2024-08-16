@@ -11,7 +11,7 @@ const debug = Debug("app:command:execute-code");
  * @param {Response} res - The Express response object.
  */
 export const executeCode = async (req: Request, res: Response) => {
-  if (process.env.ENABLE_CODE_EXECUTION !== 'true') {
+  if (process.env.ENABLE_CODE_EXECUTION === 'false') {
     return res.status(403).json({ error: "Code execution is disabled." });
   }
 
