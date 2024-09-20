@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  pinecone-sdk:
+    build: .
+    environment:
+      - API_TOKEN=${API_TOKEN}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENV=${PINECONE_ENV}
+    ports:
+      - "${PINECONE_PORT_HOST:-5018}:${PINECONE_PORT_CONTAINER:-5005}"
+    restart: unless-stopped
+    volumes:
+      - ./scripts/:/scripts:rw # for storing shell functions to be loaded on each session
+
+
