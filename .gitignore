@@ -133,6 +133,7 @@ config/*
 # But not these files...
 !config/default.json
 !config/test.json
+!config/test/*
 .vercel
 .env*.local
 
