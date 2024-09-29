@@ -1,0 +1,48 @@
+import { expect } from 'chai';
+import fs from 'fs';
+import sinon from 'sinon';
+import { updateFile } from '../../../../src/handlers/local/actions/updateFile';
+
+describe('updateFile', () => {
+  let readFileSyncStub: sinon.SinonStub;
+  let writeFileSyncStub: sinon.SinonStub;
+
+  beforeEach(() => {
+    readFileSyncStub = sinon.stub(fs, 'readFileSync');
+    writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
+  });
+
+  afterEach(() => {
+    readFileSyncStub.restore();
+    writeFileSyncStub.restore();
+  });
+
+  it('should update the file with the replacement text', () => {
+    const filePath = 'test.txt';
+    const fileContent = 'Hello World';
+    readFileSyncStub.returns(fileContent);
+
+    const pattern = 'World';
+    const replacement = 'Universe';
+
+    const result = updateFile(filePath, pattern, replacement);
+
+    expect(result).to.be.true;
+    expect(writeFileSyncStub.calledOnce).to.be.true;
+    const updatedContent = writeFileSyncStub.getCall(0).args[1];
+    expect(updatedContent).to.equal('Hello Universe');
+  });
+
+  it('should throw an error if file does not exist', () => {
+    const filePath = 'nonexistent.txt';
+    readFileSyncStub.throws(new Error('File not found'));
+
+    expect(() => updateFile(filePath, 'pattern', 'replacement')).to.throw('File not found');
+  });
+
+  it('should handle invalid input parameters', () => {
+    expect(() => updateFile('', 'pattern', 'replacement')).to.throw('Invalid file path');
+    expect(() => updateFile('file.txt', '', 'replacement')).to.throw('Invalid pattern');
+    expect(() => updateFile('file.txt', 'pattern', '')).to.throw('Invalid replacement');
+  });
+});

@@ -1,0 +1,30 @@
+import { expect } from 'chai';
+import { executeCommand } from '../../../../src/handlers/local/actions/executeCommand';
+
+describe('executeCommand', () => {
+  it('should execute a valid command successfully', async () => {
+    const result = await executeCommand('echo "Hello, World!"');
+    expect(result.stdout.trim()).to.equal('Hello, World!');
+    expect(result.stderr).to.equal('');
+  });
+
+  it('should handle command execution errors', async () => {
+    try {
+      await executeCommand('invalidcommand');
+      expect.fail('Expected error was not thrown');
+    } catch (error) {
+      expect(error).to.be.an('Error');
+      expect(error).to.have.property('stderr');
+    }
+  });
+
+  it('should validate input parameters', async () => {
+    try {
+      // @ts-ignore
+      await executeCommand(null);
+      expect.fail('Expected error was not thrown for null command');
+    } catch (error) {
+      expect(error.message).to.equal('A valid command string must be provided.');
+    }
+  });
+});

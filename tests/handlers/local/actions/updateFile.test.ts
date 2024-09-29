@@ -1,0 +1,101 @@
+/**
+ * @fileoverview Tests for the updateFile function.
+ */
+
+import { expect } from 'chai';
+import fs from 'fs';
+import sinon from 'sinon';
+import { updateFile } from '@src/handlers/local/actions/updateFile';
+
+describe('updateFile', () => {
+  let readFileSyncStub: sinon.SinonStub;
+  let writeFileSyncStub: sinon.SinonStub;
+
+  beforeEach(() => {
+    readFileSyncStub = sinon.stub(fs, 'readFileSync');
+    writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
+  });
+
+  afterEach(() => {
+    readFileSyncStub.restore();
+    writeFileSyncStub.restore();
+  });
+
+  it('should update the file with the replacement text', () => {
+    console.log('Test Case: Update file with replacement text');
+    const filePath = 'test.txt';
+    const fileContent = 'Hello World';
+    readFileSyncStub.returns(fileContent);
+
+    const pattern = 'World';
+    const replacement = 'Universe';
+    const multiline = false; // Added argument
+
+    const result = updateFile(filePath, pattern, replacement, multiline); // Passed argument
+
+    console.log(`updateFile returned: ${result}`);
+
+    expect(result).to.be.true;
+    expect(writeFileSyncStub.calledOnce).to.be.true;
+    const updatedContent = writeFileSyncStub.getCall(0).args[1];
+    expect(updatedContent).toBe('Hello Universe');
+  });
+
+  it('should throw an error if file does not exist', () => {
+    console.log('Test Case: Update non-existent file');
+    const filePath = 'nonexistent.txt';
+    readFileSyncStub.throws(new Error('File not found'));
+
+    try {
+      updateFile(filePath, 'pattern', 'replacement', false); // Passed argument
+      expect.fail('Expected error was not thrown');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(`Caught error: ${error.message}`);
+        expect(error.message).toBe('File not found');
+      } else {
+        throw error;
+      }
+    }
+  });
+
+  it('should handle invalid input parameters', () => {
+    console.log('Test Case: Handle invalid input parameters');
+
+    try {
+      updateFile('', 'pattern', 'replacement', false); // Passed argument
+      expect.fail('Expected error was not thrown for invalid file path');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(`Caught error: ${error.message}`);
+        expect(error.message).toBe('Invalid file path');
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      updateFile('file.txt', '', 'replacement', false); // Passed argument
+      expect.fail('Expected error was not thrown for invalid pattern');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(`Caught error: ${error.message}`);
+        expect(error.message).toBe('Invalid pattern');
+      } else {
+        throw error;
+      }
+    }
+
+    try {
+      updateFile('file.txt', 'pattern', '', false); // Passed argument
+      expect.fail('Expected error was not thrown for invalid replacement');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(`Caught error: ${error.message}`);
+        expect(error.message).toBe('Invalid replacement');
+      } else {
+        throw error;
+      }
+    }
+  });
+});

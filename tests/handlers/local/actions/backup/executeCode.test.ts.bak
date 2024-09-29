@@ -1,0 +1,53 @@
+import { expect } from 'chai';
+import { executeCode } from '../../../../src/handlers/local/actions/executeCode';
+import sinon from 'sinon';
+import { exec } from 'child_process';
+
+describe('executeCode', () => {
+  let execStub: sinon.SinonStub;
+
+  beforeEach(() => {
+    execStub = sinon.stub(exec);
+  });
+
+  afterEach(() => {
+    execStub.restore();
+  });
+
+  it('should execute code in Python successfully', async () => {
+    execStub.yields(null, 'Hello, World!\n', '');
+
+    const result = await executeCode('print("Hello, World!")', 'python');
+
+    expect(execStub.calledOnce).to.be.true;
+    expect(result.stdout.trim()).to.equal('Hello, World!');
+    expect(result.stderr).to.equal('');
+  });
+
+  it('should handle execution errors', async () => {
+    execStub.yields(new Error('Execution failed'), '', 'Error message');
+
+    try {
+      await executeCode('print("Hello, World!"', 'python'); // Syntax error
+      expect.fail('Expected error was not thrown');
+    } catch (error) {
+      expect(error.message).to.include('Failed to execute code');
+    }
+  });
+
+  it('should validate input parameters', async () => {
+    try {
+      await executeCode('', 'python');
+      expect.fail('Expected error was not thrown');
+    } catch (error) {
+      expect(error.message).to.equal('Code is required for execution.');
+    }
+
+    try {
+      await executeCode('print("Hello")', '');
+      expect.fail('Expected error was not thrown');
+    } catch (error) {
+      expect(error.message).to.equal('Language is required for code execution.');
+    }
+  });
+});
