@@ -1,0 +1,22 @@
+{
+  "run": [
+    {
+      "method": "shell.run",
+      "params": {
+        "message": "npm install"
+      }
+    },
+    {
+      "method": "shell.run",
+      "params": {
+        "message": "npm run build"
+      }
+    },
+    {
+      "method": "shell.run",
+      "params": {
+        "message": "npm start"
+      }
+    }
+  ]
+}
