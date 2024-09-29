@@ -1,61 +1,41 @@
-import { Client } from 'ssh2';
-import { createFile } from '../../../../src/handlers/ssh/actions/createFile';
-import { presentWorkingDirectory } from '../../../../src/utils/GlobalStateHelper';
-import { escapeSpecialChars } from '../../../../src/common/escapeSpecialChars';
+/**
+ * @fileoverview Tests for the createFile function in SSH actions.
+ */
 
-jest.mock('ssh2');
-jest.mock('../../../../src/utils/GlobalStateHelper');
-jest.mock('../../../../src/common/escapeSpecialChars');
+import { expect } from 'chai';
+import { createFile } from '@src/handlers/ssh/actions/createFile';
+import sinon from 'sinon';
+import fs from 'fs';
 
 describe('createFile', () => {
-    let sshClient: Client;
-    let mockExec: jest.Mock;
+  let writeFileSyncStub: sinon.SinonStub;
 
-    beforeEach(() => {
-        sshClient = new Client();
-        mockExec = jest.fn();
-        (sshClient as any).exec = mockExec;
-        (presentWorkingDirectory as jest.Mock).mockReturnValue('/home/user');
-        (escapeSpecialChars as jest.Mock).mockImplementation((content: string) => content);
-    });
+  beforeEach(() => {
+    writeFileSyncStub = sinon.stub(fs, 'writeFileSync');
+  });
 
-    // it('should create a file on an SSH server', async () => {
-    //     const filePath = 'test.txt';
-    //     const content = 'Hello, world!';
+  afterEach(() => {
+    writeFileSyncStub.restore();
+  });
 
-    //     mockExec.mockImplementation((command, callback) => {
-    //         const stream = {
-    //             on: (event: string, handler: () => void) => {
-    //                 if (event === 'close') handler();
-    //                 return stream;
-    //             }
-    //         };
-    //         callback(null, stream);
-    //     });
+  it('should create a file successfully', () => {
+    const directory = '/remote/path';
+    const filename = 'remote.txt';
+    const content = 'Remote content';
 
-    //     const result = await createFile(sshClient, filePath, content);
-    //     expect(result).toBe(true);
-    //     expect(mockExec).toHaveBeenCalledWith(
-    //         `cat << EOF > /home/user/${filePath}\n${content}\nEOF\n`,
-    //         expect.any(Function)
-    //     );
-    // });
+    createFile(directory, filename, content);
 
-    it('should throw an error if SSH client is not provided', async () => {
-        await expect(createFile(null as unknown as Client, 'test.txt', 'Hello, world!'))
-            .rejects
-            .toThrow('SSH client must be provided and must be an instance of Client.');
-    });
+    expect(writeFileSyncStub.calledOnce).to.be.true;
+    expect(writeFileSyncStub.calledWith(`${directory}/${filename}`, content)).to.be.true;
+  });
 
-    it('should throw an error if file path is not provided', async () => {
-        await expect(createFile(sshClient, '', 'Hello, world!'))
-            .rejects
-            .toThrow('File path must be provided and must be a string.');
-    });
+  it('should throw an error if directory does not exist', () => {
+    const directory = '/nonexistent/path';
+    const filename = 'remote.txt';
+    const content = 'Remote content';
 
-    it('should throw an error if content is not provided', async () => {
-        await expect(createFile(sshClient, 'test.txt', ''))
-            .rejects
-            .toThrow('Content must be provided and must be a string.');
-    });
+    writeFileSyncStub.throws(new Error('Directory does not exist'));
+
+    expect(() => createFile(directory, filename, content)).to.throw('Directory does not exist');
+  });
 });
