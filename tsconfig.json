@@ -1,28 +1,29 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "CommonJS",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "target": "ES6",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "allowJs": false,
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": ".",
-    "paths": {
-      "@src/*": ["src/*"]
-    },
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "incremental": true,
     "skipLibCheck": true,
-    "downlevelIteration": true
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@common/*": ["src/common/*"],
+      "@command/*": ["src/command/*"],
+      "@config/*": ["src/config/*"],
+      "@llm/*": ["src/llm/*"],
+      "@message/*": ["src/message/*"],
+      "@webhook/*": ["src/webhook/*"],
+      "@integrations/*": ["src/integrations/*"],
+      "@types/*": ["src/types/*"]
+    }
   },
-  "include": [
-    "src/**/*",
-    "tests/**/*"
-  ],
-  "files": [
-    "src/types/express.d.ts",
-    "src/global.d.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
-
