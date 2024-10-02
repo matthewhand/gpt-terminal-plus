@@ -25,25 +25,25 @@ router.post('/set', async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Server not found in predefined list.' });
     }
 
-    setSelectedServer(serverConfig.hostname);
-    debug('Server set to ' + serverConfig.hostname + ' using global state helper.');
+    setSelectedServer(serverConfig.hostname || 'localhost');
+    debug('Server set to ' + (serverConfig.hostname || 'localhost') + ' using global state helper.');
 
-    const serverManager = new ServerManager(serverConfig.hostname);
+    const serverManager = new ServerManager(serverConfig.hostname || 'localhost');
     const handler = serverManager.createHandler();
     handler.setServerConfig(serverConfig);
-    debug('ServerHandler instance successfully retrieved for server: ' + serverConfig.hostname);
+    debug('ServerHandler instance successfully retrieved for server: ' + (serverConfig.hostname || 'localhost'));
 
     let systemInfo = null;
     if (getSystemInfo) {
       try {
         systemInfo = await handler.getSystemInfo();
       } catch (error) {
-        debug('Error fetching system info: ' + (error instanceof Error ? error.message : 'Unknown error'));
-        return res.status(500).json({ message: 'Error fetching system info.', error: error.message });
+        debug('Error fetching system info: ' + (error as Error).message);
+        return res.status(500).json({ message: 'Error fetching system info.', error: (error as Error).message });
       }
     }
 
-    res.status(200).json({ message: 'Server set to ' + serverConfig.hostname, systemInfo });
+    res.status(200).json({ message: 'Server set to ' + (serverConfig.hostname || 'localhost'), systemInfo });
   } catch (error) {
     debug('Error in /server/set', {
       error,
