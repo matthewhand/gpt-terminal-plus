@@ -2,7 +2,7 @@ import express from 'express';
 import { createFile } from './file/createFile';
 import { updateFile } from './file/updateFile';
 import { amendFile } from './file/amendFile';
-import LocalServerHandler from '../handlers/local/LocalServerHandler';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import fs from 'fs';
 
 const router = express.Router();
