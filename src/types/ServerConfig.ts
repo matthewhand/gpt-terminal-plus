@@ -1,38 +1,31 @@
-// Define the base configuration interface
-interface BaseConfig {
-  protocol: 'local' | 'ssh' | 'ssm';
-  hostname: string; // Changed from 'host' to 'hostname'
-  selected?: boolean;
-}
-
-// Define the local server configuration interface extending the base configuration
-export interface LocalConfig extends BaseConfig {
-  protocol: 'local';
+// Configuration for local server
+export interface LocalServerConfig {
   code: boolean;
+  protocol: 'local';
+  hostname?: string;
+  // Add other properties if necessary
 }
 
-// Define the SSH server configuration interface extending the base configuration
-export interface SshHostConfig extends BaseConfig {
-  protocol: 'ssh';
+// Configuration for SSH hosts
+export interface SshHostConfig {
+  hostname: string;
   port: number;
   username: string;
   privateKeyPath: string;
-  shell?: string; // Optional shell property
+  protocol?: 'ssh';
+  // Other SSH-specific properties
 }
 
-// Define the SSM server configuration interface extending the base configuration
-export interface SsmTargetConfig extends BaseConfig {
-  protocol: 'ssm';
+// Configuration for SSM targets
+export interface SsmTargetConfig {
   instanceId: string;
-  region: string;  // Add the required 'region' property
-  shell?: string;  // Optional shell property
-}
-
-// Define the SSM configuration interface
-export interface SsmConfig {
   region: string;
-  targets: SsmTargetConfig[];
+  hostname?: string;
+  protocol?: 'ssm';
+  // Other SSM-specific properties
 }
 
-// Define the unified server configuration type
-export type ServerConfig = LocalConfig | SshHostConfig | SsmTargetConfig;
+// Unified configuration type that encompasses all server types
+export type ServerConfig = LocalServerConfig | SshHostConfig | SsmTargetConfig;
+
+export { LocalServerConfig, SshHostConfig, SsmTargetConfig };
