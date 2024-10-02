@@ -1,4 +1,3 @@
-import { getScriptPath } from '../../../utils/remoteSystemInfo';
 import { exec } from 'child_process';
 import { SystemInfo } from '../../../types/SystemInfo';
 import Debug from 'debug';
@@ -57,15 +56,13 @@ export async function getSystemInfo(shell: string): Promise<SystemInfo> {
 
     // Map the parsed data to match the SystemInfo type
     const systemInfoObj: SystemInfo = {
-      homeFolder: parsedInfo["homeFolder"],
-      type: parsedInfo["type"],
-      release: parsedInfo["release"],
-      platform: parsedInfo["platform"],
-      architecture: parsedInfo["architecture"],
-      totalMemory: Number(parsedInfo["totalMemory"]),
-      freeMemory: Number(parsedInfo["freeMemory"]),
-      uptime: Number(parsedInfo["uptime"]),
-      currentFolder: parsedInfo["currentFolder"]
+      type: parsedInfo["type"] || '',
+      platform: parsedInfo["platform"] || '',
+      architecture: parsedInfo["architecture"] || '',
+      totalMemory: Number(parsedInfo["totalMemory"] || 0),
+      freeMemory: Number(parsedInfo["freeMemory"] || 0),
+      uptime: Number(parsedInfo["uptime"] || 0),
+      currentFolder: parsedInfo["currentFolder"] || '',
     };
 
     debug('Retrieved system information: ' + JSON.stringify(systemInfoObj));
@@ -98,7 +95,6 @@ function getScriptContent(shell: string): string {
     case 'bash':
     default:
       scriptFilePath = getScriptPath('bash');
-scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.ts');      scriptFilePath = path.join(__dirname, '../../../scripts/remote_system_info.js');
       break;
   }
   debug(`Loading script content from: ${scriptFilePath}`);
