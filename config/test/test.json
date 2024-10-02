@@ -20,8 +20,10 @@
       {
         "hostname": "GAMINGPC.WORKGROUP",
         "protocol": "ssm",
-        "otherProperty": "value" // Replace with actual properties required
+        "instanceId": "i-1234567890abcdef0",
+        "region": "us-west-2"
       }
-    ]
+    ],
+    "region": "us-west-2"
   }
 }
