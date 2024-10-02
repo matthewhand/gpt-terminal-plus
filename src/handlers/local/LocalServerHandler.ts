@@ -8,7 +8,7 @@ import path from 'path';
 
 const localServerDebug = Debug('app:LocalServerHandler');
 
-export class LocalServerHandler extends AbstractServerHandler {
+class LocalServerHandler extends AbstractServerHandler {
   constructor(serverConfig: { protocol: string; code: boolean; hostname?: string }) {
     super(serverConfig);
     localServerDebug('Initialized LocalServerHandler with config:', serverConfig);
@@ -19,9 +19,8 @@ export class LocalServerHandler extends AbstractServerHandler {
     return executeLocalCode(command, 'bash', timeout, directory);
   }
 
-  async listFiles(params: { directory: string, limit?: number, offset?: number }): Promise<PaginatedResponse<string>> {
-    localServerDebug(`Listing files with params: ${JSON.stringify(params)}`);
-    const { directory, limit = 10, offset = 0 } = params;
+  async listFiles(directory: string, limit: number = 10, offset: number = 0): Promise<PaginatedResponse<string>> {
+    localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
 
     try {
       const files = await readdir(directory);
