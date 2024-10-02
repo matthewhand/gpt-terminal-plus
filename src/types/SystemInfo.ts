@@ -1,5 +1,12 @@
+/**
+ * Represents the system information retrieved from the local server.
+ */
 export interface SystemInfo {
-  homeFolder: string;
   type: string;
-  // Other properties...
+  platform: string;
+  architecture: string;
+  totalMemory: number;
+  freeMemory: number;
+  uptime: number;
+  currentFolder: string;
 }
