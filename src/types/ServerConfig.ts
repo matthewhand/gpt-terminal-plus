@@ -27,5 +27,3 @@ export interface SsmTargetConfig {
 
 // Unified configuration type that encompasses all server types
 export type ServerConfig = LocalServerConfig | SshHostConfig | SsmTargetConfig;
-
-export { LocalServerConfig, SshHostConfig, SsmTargetConfig };
