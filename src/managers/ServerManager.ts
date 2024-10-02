@@ -1,9 +1,9 @@
 import config from 'config';
 import debug from 'debug';
 import { ServerConfig, LocalServerConfig, SshHostConfig, SsmTargetConfig } from '../types/ServerConfig';
-import LocalServerHandler from '../handlers/local/LocalServerHandler';
-import SshServerHandler from '../handlers/ssh/SshServerHandler';
-import SsmServerHandler from '../handlers/ssm/SsmServerHandler';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
+import { SshServerHandler } from '../handlers/ssh/SshServerHandler';
+import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
 
 const serverManagerDebug = debug('app:ServerManager');
 
