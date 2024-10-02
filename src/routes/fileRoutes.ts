@@ -2,38 +2,34 @@ import express from 'express';
 import { createFile } from './file/createFile';
 import { updateFile } from './file/updateFile';
 import { amendFile } from './file/amendFile';
-import { listFiles } from '../handlers/local/LocalServerHandler';
+import LocalServerHandler from '../handlers/local/LocalServerHandler';
 import fs from 'fs';
 
 const router = express.Router();
+const localHandler = new LocalServerHandler({ protocol: 'local', code: false });
 
-function ensureDirectoryExists(directory: string) {
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory, { recursive: true });
-  }
-}
-
+/**
+ * Route to create or replace a file.
+ * @route POST /file/create
+ */
 router.post('/create', (req, res) => {
   const { directory, filename, content } = req.body;
 
   try {
-    ensureDirectoryExists(directory);
+    if (!fs.existsSync(directory)) {
+      fs.mkdirSync(directory, { recursive: true });
+    }
   } catch (error) {
-    const errorMessage = (error as Error).message;
-    return res.status(500).json({ message: 'Failed to create directory.', error: errorMessage });
+    return res.status(500).json({ message: 'Failed to create directory.', error: (error as Error).message });
   }
 
   createFile(req, res);
 });
 
-router.post('/update', (req, res) => {
-  updateFile(req, res);
-});
-
-router.post('/amend', (req, res) => {
-  amendFile(req, res);
-});
-
+/**
+ * Route to list files in a directory.
+ * @route GET /file/list
+ */
 router.get('/list', async (req, res) => {
   const { directory, limit, offset, orderBy } = req.query;
 
@@ -49,11 +45,10 @@ router.get('/list', async (req, res) => {
       orderBy: orderBy === 'datetime' ? 'datetime' : 'filename',
     };
 
-    const paginatedResponse = await listFiles(params);
+    const paginatedResponse = await localHandler.listFiles(params);
     res.status(200).json(paginatedResponse);
   } catch (error) {
-    const errorMessage = (error as Error).message;
-    res.status(500).json({ message: errorMessage });
+    res.status(500).json({ message: (error as Error).message });
   }
 });
 
