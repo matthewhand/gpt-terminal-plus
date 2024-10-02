@@ -4,6 +4,7 @@ import Debug from 'debug';
 import util from 'util';
 import path from 'path';
 import fs from 'fs';
+import { getScriptPath } from '../../../utils/scriptUtils';
 
 const debug = Debug('app:getSystemInfo');
 const execPromise = util.promisify(exec);
