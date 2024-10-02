@@ -142,3 +142,4 @@ docker/*/scripts/
 
 # Allow for customisation of the container on per app basis
 docker/*/.bashrc
+*.js
