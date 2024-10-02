@@ -1,6 +1,5 @@
 export interface SystemInfo {
+  homeFolder: string;
   type: string;
-  osVersion: string;
-  cpuModel: string;
-  cpuSpeed: number;
+  // Other properties...
 }
