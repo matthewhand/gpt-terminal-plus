@@ -1,6 +1,5 @@
-// src/types/ExecutionResult.ts
 export interface ExecutionResult {
-    stdout: string;
-    stderr: string;
-    error: boolean;
+  stdout: string;
+  stderr: string;
+  error?: boolean; // Make error optional
 }
