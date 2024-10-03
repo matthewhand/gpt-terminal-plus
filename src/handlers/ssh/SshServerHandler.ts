@@ -14,6 +14,15 @@ export class SshServerHandler extends AbstractServerHandler {
     this.sshConfig = sshConfig;
   }
 
+  /**
+   * Updates the server configuration.
+   * @param {SshHostConfig} config - The new SSH server configuration.
+   */
+  setServerConfig(config: SshHostConfig): void {
+    this.sshConfig = config;
+    this.serverConfig = { hostname: config.hostname, protocol: 'ssh' };
+  }
+
   async executeCommand(command: string, timeout: number = 5000): Promise<ExecutionResult> {
     sshDebug(`Executing SSH command: ${command} with timeout: ${timeout}`);
     // Simulated SSH command execution logic
