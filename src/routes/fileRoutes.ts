@@ -39,7 +39,7 @@ router.get('/list', async (req, res) => {
 
   try {
     const params = {
-      directory,
+      directory: directory.toString(),
       limit: limit ? parseInt(limit as string, 10) : undefined,
       offset: offset ? parseInt(offset as string, 10) : undefined,
       orderBy: orderBy === 'datetime' ? 'datetime' : 'filename',
@@ -51,5 +51,7 @@ router.get('/list', async (req, res) => {
     res.status(500).json({ message: (error as Error).message });
   }
 });
+
+// Preserve additional routes and logic here if any...
 
 export default router;
