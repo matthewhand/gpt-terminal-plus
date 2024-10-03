@@ -1,4 +1,4 @@
-import { escapeRegExp } from '../../src/utils/escapeRegExp';
+import { escapeRegExp } from '@src/utils/escapeRegExp';
 
 describe('escapeRegExp', () => {
     it('should escape special characters in the string', () => {

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import ServerManager from '../../src/managers/ServerManager';
+import ServerManager from '@src/managers/ServerManager';
 import config from 'config'; // Assuming you're using the 'config' package
 
 describe('ServerManager', () => {

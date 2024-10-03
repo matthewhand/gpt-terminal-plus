@@ -1,16 +1,16 @@
 import express from 'express';
 import request from 'supertest';
-import fileRoutes from '../../src/routes/fileRoutes';
-import * as createFileHandler from '../../src/routes/file/createFile';
-import * as updateFileHandler from '../../src/routes/file/updateFile';
-import * as amendFileHandler from '../../src/routes/file/amendFile';
-import * as listFilesHandler from '../../src/routes/file/listFiles';
+import fileRoutes from '@src/routes/fileRoutes';
+import * as createFileHandler from '@src/routes/file/createFile';
+import * as updateFileHandler from '@src/routes/file/updateFile';
+import * as amendFileHandler from '@src/routes/file/amendFile';
+import * as listFilesHandler from '@src/routes/file/listFiles';
 import fs from 'fs';
 
-jest.mock('../../src/routes/file/createFile');
-jest.mock('../../src/routes/file/updateFile');
-jest.mock('../../src/routes/file/amendFile');
-jest.mock('../../src/routes/file/listFiles');
+jest.mock('@src/routes/file/createFile');
+jest.mock('@src/routes/file/updateFile');
+jest.mock('@src/routes/file/amendFile');
+jest.mock('@src/routes/file/listFiles');
 
 const app = express();
 app.use(express.json());

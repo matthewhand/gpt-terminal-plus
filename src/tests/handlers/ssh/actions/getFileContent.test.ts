@@ -1,6 +1,6 @@
 import { Client } from 'ssh2';
-import { getFileContent } from '../../../../src/handlers/ssh/actions/getFileContent';
-import { ServerConfig } from '../../../../src/types/ServerConfig';
+import { getFileContent } from '@src/handlers/ssh/actions/getFileContent';
+import { ServerConfig } from '@types/ServerConfig';
 
 jest.mock('ssh2');
 
