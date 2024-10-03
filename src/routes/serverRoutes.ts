@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { setSelectedServer } from '../utils/GlobalStateHelper';
 import { ServerManager } from '../managers/ServerManager';
 import { getServerHandler } from '../utils/getServerHandler';
+import { SshHostConfig, SsmTargetConfig, LocalServerConfig } from '../types/ServerConfig';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -30,8 +31,14 @@ router.post('/set', async (req: Request, res: Response) => {
 
     const serverManager = new ServerManager(serverConfig.hostname || 'localhost');
     const handler = serverManager.createHandler();
-    handler.setServerConfig(serverConfig);
-    debug('ServerHandler instance successfully retrieved for server: ' + (serverConfig.hostname || 'localhost'));
+
+    // Type guard to ensure correct server configuration
+    if ((serverConfig as SshHostConfig).privateKeyPath || (serverConfig as SsmTargetConfig).protocol === 'ssm') {
+      handler.setServerConfig(serverConfig);
+      debug('ServerHandler instance successfully retrieved for server: ' + (serverConfig.hostname || 'localhost'));
+    } else {
+      debug('Invalid server configuration type. Skipping setServerConfig.');
+    }
 
     let systemInfo = null;
     if (getSystemInfo) {
