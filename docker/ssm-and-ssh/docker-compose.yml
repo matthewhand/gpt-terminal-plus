@@ -16,4 +16,5 @@ services:
       - ~/.aws:/root/.aws:ro
       - ~/.ssh:/root/.ssh:ro
       - ../../config:/app/dist/config:rw
+      - ../../src/scripts:/app/dist/src/scripts:rw
     restart: unless-stopped
