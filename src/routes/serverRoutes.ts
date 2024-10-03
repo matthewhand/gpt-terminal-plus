@@ -4,7 +4,6 @@ import { setSelectedServer } from '../utils/GlobalStateHelper';
 import { ServerManager } from '../managers/ServerManager';
 import { getServerHandler } from '../utils/getServerHandler';
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import { setPostCommand } from './server/setPostCommand';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -68,6 +67,5 @@ router.post('/set', async (req: Request, res: Response) => {
 /**
  * Pass-through route to set the post-command for the server
  */
-router.post('/setPostCommand', setPostCommand);
 
 export default router;
