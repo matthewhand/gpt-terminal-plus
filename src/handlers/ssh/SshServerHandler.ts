@@ -17,6 +17,14 @@ export class SshServerHandler extends AbstractServerHandler {
     }
 
     /**
+     * Sets the server configuration.
+     */
+    setServerConfig(config: ServerConfig): void {
+        this.sshConfig = config as SshHostConfig;
+        this.serverConfig = { hostname: config.hostname, protocol: 'ssh', code: config.code || false };
+    }
+
+    /**
      * Executes a command on the SSH server.
      */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
