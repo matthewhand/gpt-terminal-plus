@@ -6,7 +6,7 @@ import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import fs from 'fs';
 
 const router = express.Router();
-const localHandler = new LocalServerHandler({ protocol: 'local', code: false });
+const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
 
 /**
  * Route to create or replace a file.
