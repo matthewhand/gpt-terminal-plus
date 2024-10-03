@@ -10,7 +10,7 @@ export class SsmServerHandler extends AbstractServerHandler {
   private ssmConfig: SsmTargetConfig;
 
   constructor(ssmConfig: SsmTargetConfig) {
-    super({ hostname: ssmConfig.hostname, protocol: 'ssm' });
+    super({ hostname: ssmConfig.hostname || 'default-hostname', protocol: 'ssm' });
     this.ssmConfig = ssmConfig;
   }
 
@@ -20,7 +20,7 @@ export class SsmServerHandler extends AbstractServerHandler {
    */
   setServerConfig(config: SsmTargetConfig): void {
     this.ssmConfig = config;
-    this.serverConfig = { hostname: config.hostname, protocol: 'ssm' };
+    this.serverConfig = { hostname: config.hostname || 'default-hostname', protocol: 'ssm' };
   }
 
   async executeCommand(command: string, timeout: number = 5000): Promise<ExecutionResult> {
