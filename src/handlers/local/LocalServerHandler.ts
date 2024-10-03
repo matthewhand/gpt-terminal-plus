@@ -6,7 +6,6 @@ import { SystemInfo } from '../../types/SystemInfo';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { readdir } from 'fs/promises';
-import path from 'path';
 import { exec } from 'child_process';
 import Debug from 'debug';
 
@@ -17,9 +16,9 @@ export class LocalServerHandler extends AbstractServerHandler {
     postCommand: string | undefined;
 
     constructor(serverConfig: LocalServerConfig) {
-        super({ hostname: serverConfig.hostname || 'localhost', protocol: serverConfig.protocol, code: serverConfig.code || false });
+        super({ hostname: serverConfig.hostname || 'localhost', protocol: 'local', code: serverConfig.code || false });
         this.localConfig = serverConfig;
-        this.postCommand = serverConfig['post-command'];
+        this.postCommand = serverConfig['post-command'] as string | undefined;
         localServerDebug('Initialized LocalServerHandler with config:', serverConfig);
     }
 
@@ -115,8 +114,8 @@ export class LocalServerHandler extends AbstractServerHandler {
     setServerConfig(config: ServerConfig): void {
         if ('post-command' in config) {
             this.localConfig = config as LocalServerConfig;
-            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: config.protocol, code: config.code || false };
-            this.postCommand = config['post-command'];
+            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: 'local', code: config.code || false };
+            this.postCommand = config['post-command'] as string | undefined;
         }
     }
 
