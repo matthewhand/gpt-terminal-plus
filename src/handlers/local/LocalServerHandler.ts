@@ -8,20 +8,21 @@ import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
 import { SystemInfo } from '../../types/SystemInfo';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { readdir, stat } from 'fs/promises';
+import { readdir } from 'fs/promises';
 import path from 'path';
+import { exec } from 'child_process';
 import Debug from 'debug';
 
 const localServerDebug = Debug('app:LocalServerHandler');
 
 export class LocalServerHandler extends AbstractServerHandler {
     private localConfig: LocalServerConfig;
-    code: boolean;
+    postCommand: string | undefined;
 
     constructor(serverConfig: LocalServerConfig) {
-        super(serverConfig);
+        super({ hostname: serverConfig.hostname || 'localhost', protocol: serverConfig.protocol });
         this.localConfig = serverConfig;
-        this.code = serverConfig.code ?? false;
+        this.postCommand = serverConfig['post-command'];
         localServerDebug('Initialized LocalServerHandler with config:', serverConfig);
     }
 
@@ -60,29 +61,64 @@ export class LocalServerHandler extends AbstractServerHandler {
     /**
      * Lists files in a specified directory.
      */
-    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string; }): Promise<PaginatedResponse<string>> {
-        const { directory, limit = 10, offset = 0 } = params;
+    async listFiles(directory: string, limit: number = 10, offset: number = 0): Promise<PaginatedResponse<string>> {
         localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
-        // Simulate file listing
-        const files = ['file1.txt', 'file2.txt'];
-        return { items: files.slice(offset, offset + limit), total: files.length, limit, offset };
+        try {
+            const files = await readdir(directory);
+            const sortedFiles = files.sort();
+            const paginatedFiles = sortedFiles.slice(offset, offset + limit);
+            return {
+                items: paginatedFiles,
+                total: files.length,
+                limit,
+                offset,
+            };
+        } catch (error) {
+            localServerDebug('Error listing files:', error);
+            throw new Error('Failed to list files: ' + error.message);
+        }
     }
 
     /**
-     * Creates a file on the local server.
+     * Runs post-command if specified and returns its exit code.
      */
-    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    private async runPostCommand(filePath: string): Promise<{ exitCode: number; advice?: string }> {
+        if (this.postCommand) {
+            const command = `${this.postCommand} ${filePath}`;
+            localServerDebug(`Running post-command: ${command}`);
+            return new Promise((resolve) => {
+                exec(command, (error, stdout, stderr) => {
+                    if (error) {
+                        localServerDebug(`Error running post-command: ${error.message}`);
+                        resolve({ exitCode: error.code || 1, advice: 'Post-command failed. Consider checking syntax or permissions.' });
+                        return;
+                    }
+                    localServerDebug(`Post-command stdout: ${stdout}`);
+                    resolve({ exitCode: 0, advice: 'Post-command executed successfully.' });
+                });
+            });
+        }
+        return { exitCode: 0 };
+    }
+
+    /**
+     * Creates a file on the local server and runs post-command.
+     */
+    async createFile(filePath: string, content: string, backup: boolean = true): Promise<{ success: boolean; exitCode?: number; advice?: string }> {
         localServerDebug(`Creating file at path: ${filePath}, content: ${content}, backup: ${backup}`);
-        return createLocalFile(filePath, content, backup);
+        const result = await createLocalFile(filePath, content, backup);
+        const postCommandResult = await this.runPostCommand(filePath);
+        return { success: result, exitCode: postCommandResult.exitCode, advice: postCommandResult.advice };
     }
 
     /**
      * Updates the server configuration.
      */
     setServerConfig(config: ServerConfig): void {
-        if ('code' in config) {
+        if ('post-command' in config) {
             this.localConfig = config as LocalServerConfig;
-            this.serverConfig = config;
+            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: config.protocol };
+            this.postCommand = config['post-command'];
         }
     }
 
