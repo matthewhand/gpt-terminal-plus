@@ -1,34 +1,30 @@
 import { Request, Response } from 'express';
+import { getSelectedServer } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
-import { getServerHandler } from '../../utils/getServerHandler';
-import { LocalServerHandler } from '../../handlers/local/LocalServerHandler';
 
-const debug = Debug('app:setPostCommand');
+const debug = Debug('app:file:setPostCommand');
 
-/**
- * Sets the post-command for the server handler.
- */
 export const setPostCommand = (req: Request, res: Response): void => {
-  const { command } = req.body;
-  debug('Received request to set post-command:', command);
+    const { command } = req.body;
 
-  if (!command || typeof command !== 'string') {
-    res.status(400).json({ message: 'Invalid request. Missing or invalid "command" field.' });
-    return;
-  }
-
-  try {
-    const handler = getServerHandler();
-
-    if (handler instanceof LocalServerHandler) {
-      handler.setServerConfig({ ...handler.serverConfig, 'post-command': command });
-      debug('Post-command set to:', command);
-      res.status(200).json({ message: 'Post-command set successfully.' });
-    } else {
-      res.status(400).json({ message: 'Post-command can only be set for local servers.' });
+    if (!command || typeof command !== 'string') {
+        res.status(400).json({ message: 'Invalid or missing "command" parameter.' });
+        return;
     }
-  } catch (error) {
-    debug('Error setting post-command:', error);
-    res.status(500).json({ message: 'Failed to set post-command', error: (error as Error).message });
-  }
+
+    try {
+        const handler = getSelectedServer();
+        if (!handler) {
+            res.status(500).json({ message: 'No server selected.' });
+            return;
+        }
+
+        // Assuming the handler has a method to set the post command
+        handler.setPostCommand(command);
+        debug('Post command set to:', command);
+        res.status(200).json({ message: 'Post command set successfully.' });
+    } catch (error) {
+        debug('Error setting post command:', error);
+        res.status(500).json({ message: 'Error setting post command', details: (error as Error).message });
+    }
 };
