@@ -10,14 +10,22 @@ export class SsmServerHandler extends AbstractServerHandler {
   private ssmConfig: SsmTargetConfig;
 
   constructor(ssmConfig: SsmTargetConfig) {
-    super({ hostname: ssmConfig.hostname || 'localhost', protocol: ssmConfig.protocol || 'ssm' });
+    super({ hostname: ssmConfig.hostname, protocol: 'ssm' });
     this.ssmConfig = ssmConfig;
-    ssmDebug('Initialized SsmServerHandler with config:', ssmConfig);
+  }
+
+  /**
+   * Updates the server configuration.
+   * @param {SsmTargetConfig} config - The new SSM server configuration.
+   */
+  setServerConfig(config: SsmTargetConfig): void {
+    this.ssmConfig = config;
+    this.serverConfig = { hostname: config.hostname, protocol: 'ssm' };
   }
 
   async executeCommand(command: string, timeout: number = 5000): Promise<ExecutionResult> {
-    ssmDebug(`Executing command: ${command} with timeout: ${timeout}`);
-    // Simulated command execution logic for SSM
+    ssmDebug(`Executing SSM command: ${command} with timeout: ${timeout}`);
+    // Simulated SSM command execution logic
     return { stdout: 'Simulated SSM Command Output', stderr: '', error: false };
   }
 
