@@ -1,8 +1,9 @@
 FROM mhand79/gpt-terminal-plus:latest
 
-WORKDIR /app
 
 # Install Notion SDK
-RUN npm install @notionhq/client
+WORKDIR /scripts
+RUN npm install @notionhq/client yargs
 
+WORKDIR /app
 # CMD ["node", "dist/index.js"] inherited from Dockerfile.base
