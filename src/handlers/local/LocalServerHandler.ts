@@ -1,8 +1,5 @@
 import { executeLocalCode } from './actions/executeCode';
-import { executeFile as executeLocalFile } from './actions/executeFile';
 import { createFile as createLocalFile } from './actions/createFile';
-import { amendFile as amendLocalFile } from './actions/amendFile';
-import { updateFile as updateLocalFile } from './actions/updateFile';
 import { AbstractServerHandler } from '../AbstractServerHandler';
 import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
 import { SystemInfo } from '../../types/SystemInfo';
@@ -20,7 +17,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     postCommand: string | undefined;
 
     constructor(serverConfig: LocalServerConfig) {
-        super({ hostname: serverConfig.hostname || 'localhost', protocol: serverConfig.protocol });
+        super({ hostname: serverConfig.hostname || 'localhost', protocol: serverConfig.protocol, code: serverConfig.code || false });
         this.localConfig = serverConfig;
         this.postCommand = serverConfig['post-command'];
         localServerDebug('Initialized LocalServerHandler with config:', serverConfig);
@@ -61,7 +58,8 @@ export class LocalServerHandler extends AbstractServerHandler {
     /**
      * Lists files in a specified directory.
      */
-    async listFiles(directory: string, limit: number = 10, offset: number = 0): Promise<PaginatedResponse<string>> {
+    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
+        const { directory, limit = 10, offset = 0 } = params;
         localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
         try {
             const files = await readdir(directory);
@@ -75,7 +73,7 @@ export class LocalServerHandler extends AbstractServerHandler {
             };
         } catch (error) {
             localServerDebug('Error listing files:', error);
-            throw new Error('Failed to list files: ' + error.message);
+            throw new Error('Failed to list files: ' + (error as Error).message);
         }
     }
 
@@ -104,11 +102,11 @@ export class LocalServerHandler extends AbstractServerHandler {
     /**
      * Creates a file on the local server and runs post-command.
      */
-    async createFile(filePath: string, content: string, backup: boolean = true): Promise<{ success: boolean; exitCode?: number; advice?: string }> {
+    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
         localServerDebug(`Creating file at path: ${filePath}, content: ${content}, backup: ${backup}`);
         const result = await createLocalFile(filePath, content, backup);
-        const postCommandResult = await this.runPostCommand(filePath);
-        return { success: result, exitCode: postCommandResult.exitCode, advice: postCommandResult.advice };
+        await this.runPostCommand(filePath);
+        return result;
     }
 
     /**
@@ -117,7 +115,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     setServerConfig(config: ServerConfig): void {
         if ('post-command' in config) {
             this.localConfig = config as LocalServerConfig;
-            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: config.protocol };
+            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: config.protocol, code: config.code || false };
             this.postCommand = config['post-command'];
         }
     }
