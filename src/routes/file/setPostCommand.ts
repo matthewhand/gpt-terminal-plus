@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getSelectedServer } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
+import { AbstractServerHandler } from '../../handlers/AbstractServerHandler';
 
 const debug = Debug('app:file:setPostCommand');
 
@@ -13,16 +14,20 @@ export const setPostCommand = (req: Request, res: Response): void => {
     }
 
     try {
-        const handler = getSelectedServer();
+        const handler = getSelectedServer() as unknown as AbstractServerHandler;
         if (!handler) {
             res.status(500).json({ message: 'No server selected.' });
             return;
         }
 
-        // Assuming the handler has a method to set the post command
-        handler.setPostCommand(command);
-        debug('Post command set to:', command);
-        res.status(200).json({ message: 'Post command set successfully.' });
+        // Properly access the setPostCommand method if it exists
+        if (typeof (handler as any).setPostCommand === 'function') {
+            (handler as any).setPostCommand(command);
+            debug('Post command set to:', command);
+            res.status(200).json({ message: 'Post command set successfully.' });
+        } else {
+            res.status(500).json({ message: 'setPostCommand method is not available on the selected server handler.' });
+        }
     } catch (error) {
         debug('Error setting post command:', error);
         res.status(500).json({ message: 'Error setting post command', details: (error as Error).message });
