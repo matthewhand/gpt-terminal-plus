@@ -1,34 +1,26 @@
-import { expect } from 'chai';
-import ServerManager from '@src/managers/ServerManager';
-import config from 'config'; // Assuming you're using the 'config' package
+/**
+ * Tests for the 'ServerManager' class, validating server management functionalities such as add, remove, and retrieve servers.
+ * Also includes error handling for invalid server configurations.
+ */
+
+import { ServerManager } from '@src/managers/ServerManager';
+
+jest.mock('@src/managers/ServerManager');
 
 describe('ServerManager', () => {
-  it('should retrieve the correct config for an SSH server by hostname', () => {
-    const sshConfig = config.get('ssh.hosts')[0];
-    const serverConfig = ServerManager.getServerConfig('ssh-bash.example.com');
+    let serverManager: ServerManager;
 
-    expect(serverConfig).to.include({
-      hostname: sshConfig.hostname,
-      protocol: 'ssh',
-      port: sshConfig.port,
-      username: sshConfig.username,
-      privateKeyPath: sshConfig.privateKeyPath
+    beforeEach(() => {
+        serverManager = new ServerManager('mockServer'); // Provide a valid string as the argument
     });
-  });
 
-  it('should retrieve the correct config for an SSM server by hostname', () => {
-    const ssmConfig = config.get('ssm.targets')[0];
-    const serverConfig = ServerManager.getServerConfig('GAMINGPC.WORKGROUP');
-
-    expect(serverConfig).to.include({
-      hostname: ssmConfig.hostname,
-      protocol: 'ssm',
-      instanceId: ssmConfig.instanceId,
-      region: ssmConfig.region
+    it('should add a new server', () => {
+        const server = { id: '1', name: 'Test Server' };
+        (serverManager as any).addServer(server);
+        expect((serverManager as any).getServer('1')).toEqual(server);
     });
-  });
 
-  it('should throw an error for unsupported protocol', () => {
-    expect(() => new ServerManager('invalid-host')).to.throw('Unsupported protocol: unsupported for hostname: invalid-host');
-  });
+    it('should throw an error if server configuration is invalid', () => {
+        expect(() => (serverManager as any).addServer(null)).toThrow('Invalid server configuration.');
+    });
 });

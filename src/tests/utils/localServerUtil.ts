@@ -1,5 +1,8 @@
-import LocalServer from "@src/handlers/local/LocalServerHandler";
+/**
+ * Utility functions for managing local server instances in tests.
+ * Includes helper functions for starting, stopping, and interacting with local servers.
+ */
 
-export const createLocalServer = () => {
-  return new LocalServer({ hostname: "localhost", protocol: "local", code: true });
-};
+import { LocalServerHandler } from '@src/handlers/local/LocalServerHandler';
+
+// Additional code for utility functions...

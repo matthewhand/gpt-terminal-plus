@@ -64,8 +64,4 @@ router.post('/set', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Pass-through route to set the post-command for the server
- */
-
 export default router;

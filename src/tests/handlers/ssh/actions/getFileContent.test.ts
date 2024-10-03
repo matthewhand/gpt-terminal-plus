@@ -1,6 +1,11 @@
+/**
+ * Tests for the 'getFileContent' function that retrieves the content of a file from a remote SSH server.
+ * This includes checks for successful file content retrieval and error handling for invalid inputs.
+ */
+
 import { Client } from 'ssh2';
 import { getFileContent } from '@src/handlers/ssh/actions/getFileContent';
-import { ServerConfig } from '@types/ServerConfig';
+import { SshHostConfig } from '@src/types/ServerConfig';
 
 jest.mock('ssh2');
 
@@ -8,7 +13,7 @@ describe('getFileContent', () => {
     let sshClient: Client;
     let mockSftp: jest.Mock;
     let mockReadFile: jest.Mock;
-    let sshConfig: ServerConfig;
+    let sshConfig: SshHostConfig;
 
     beforeEach(() => {
         sshClient = new Client();
@@ -20,8 +25,7 @@ describe('getFileContent', () => {
             hostname: 'localhost',
             port: 22,
             username: 'testuser',
-            privateKeyPath: '/root/.ssh/id_rsa',
-            shell: 'bash',
+            privateKeyPath: '/root/.ssh/id_rsa'
         };
     });
 
@@ -50,7 +54,7 @@ describe('getFileContent', () => {
     });
 
     it('should throw an error if SSH server configuration is not provided', async () => {
-        await expect(getFileContent(sshClient, null as unknown as ServerConfig, '/path/to/file.txt'))
+        await expect(getFileContent(sshClient, null as unknown as SshHostConfig, '/path/to/file.txt'))
             .rejects
             .toThrow('Server configuration must be provided and must be an object.');
     });
