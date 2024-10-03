@@ -37,12 +37,8 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     // Create the appropriate server handler based on the server configuration
     const handler = serverManager.createHandler();
 
-    // Properly handle the type conversion
-    if (handler instanceof ServerHandler) {
-      req.server = handler;
-    } else {
-      throw new Error('Handler does not conform to ServerHandler interface.');
-    }
+    // Cast handler to ServerHandler interface
+    req.server = handler as unknown as ServerHandler;
 
     // Final debug statement to confirm successful initialization
     debug('Server handler initialized successfully');
