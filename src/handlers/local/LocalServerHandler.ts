@@ -53,6 +53,7 @@ export class LocalServerHandler extends AbstractServerHandler {
             totalMemory: 8192,
             freeMemory: 4096,
             uptime: process.uptime(),
+            currentFolder: process.cwd(),
         };
     }
 
