@@ -1,29 +1,25 @@
-// Configuration for local server
-export interface LocalServerConfig {
-  code: boolean;
-  protocol: 'local';
-  hostname?: string;
-  // Add other properties if necessary
+export interface ServerConfig {
+    hostname: string;
+    protocol: 'local' | 'ssh' | 'ssm';
+    code?: boolean;
+    'post-command'?: string;
 }
 
-// Configuration for SSH hosts
-export interface SshHostConfig {
-  hostname: string;
-  port: number;
-  username: string;
-  privateKeyPath: string;
-  protocol?: 'ssh';
-  // Other SSH-specific properties
+export interface LocalServerConfig extends ServerConfig {
+    protocol: 'local';
+    code: boolean; // Required for local servers
+    'post-command'?: string;
 }
 
-// Configuration for SSM targets
-export interface SsmTargetConfig {
-  instanceId: string;
-  region: string;
-  hostname?: string;
-  protocol?: 'ssm';
-  // Other SSM-specific properties
+export interface SshHostConfig extends ServerConfig {
+    protocol: 'ssh';
+    port: number;
+    username: string;
+    privateKeyPath: string;
 }
 
-// Unified configuration type that encompasses all server types
-export type ServerConfig = LocalServerConfig | SshHostConfig | SsmTargetConfig;
+export interface SsmTargetConfig extends ServerConfig {
+    protocol: 'ssm';
+    instanceId: string;
+    region: string;
+}

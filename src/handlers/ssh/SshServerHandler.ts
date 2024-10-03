@@ -1,43 +1,84 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { SshHostConfig } from '../../types/ServerConfig';
+import { SshHostConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
+import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import Debug from 'debug';
 
-const sshDebug = Debug('app:SshServerHandler');
+const sshServerDebug = Debug('app:SshServerHandler');
 
 export class SshServerHandler extends AbstractServerHandler {
-  private sshConfig: SshHostConfig;
+    private sshConfig: SshHostConfig;
 
-  constructor(sshConfig: SshHostConfig) {
-    super({ hostname: sshConfig.hostname, protocol: 'ssh' });
-    this.sshConfig = sshConfig;
-  }
+    constructor(serverConfig: SshHostConfig) {
+        super({ hostname: serverConfig.hostname, protocol: 'ssh', code: serverConfig.code || false });
+        this.sshConfig = serverConfig;
+        sshServerDebug('Initialized SshServerHandler with config:', serverConfig);
+    }
 
-  /**
-   * Updates the server configuration.
-   * @param {SshHostConfig} config - The new SSH server configuration.
-   */
-  setServerConfig(config: SshHostConfig): void {
-    this.sshConfig = config;
-    this.serverConfig = { hostname: config.hostname, protocol: 'ssh' };
-  }
+    /**
+     * Executes a command on the SSH server.
+     */
+    async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+        // Placeholder for SSH command execution
+        sshServerDebug(`Executing SSH command: ${command}`);
+        return { stdout: 'SSH command executed', stderr: '' };
+    }
 
-  async executeCommand(command: string, timeout: number = 5000): Promise<ExecutionResult> {
-    sshDebug(`Executing SSH command: ${command} with timeout: ${timeout}`);
-    // Simulated SSH command execution logic
-    return { stdout: 'Simulated SSH Command Output', stderr: '', error: false };
-  }
+    /**
+     * Executes code in a specified language on the SSH server.
+     */
+    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+        // Placeholder implementation
+        sshServerDebug(`Executing SSH code: ${code} in language: ${language}`);
+        return { stdout: 'SSH code executed', stderr: '' };
+    }
 
-  async listFiles(directory: string, limit: number = 10, offset: number = 0): Promise<PaginatedResponse<string>> {
-    sshDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
-    // Simulated file listing logic for SSH
-    const files = ['file1.txt', 'file2.txt', 'file3.txt']; // Example list of files
-    return {
-      items: files.slice(offset, offset + limit),
-      total: files.length,
-      limit,
-      offset,
-    };
-  }
+    /**
+     * Creates a file on the SSH server.
+     */
+    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+        // Placeholder for SSH file creation
+        sshServerDebug(`Creating file on SSH server: ${filePath}`);
+        return true;
+    }
+
+    /**
+     * Retrieves system information for the SSH server.
+     */
+    async getSystemInfo(): Promise<SystemInfo> {
+        // Placeholder for SSH system info retrieval
+        return {
+            type: 'SshServer',
+            platform: 'linux',
+            architecture: 'x64',
+            totalMemory: 16384,
+            freeMemory: 8192,
+            uptime: 123456,
+            currentFolder: '/home/user',
+        };
+    }
+
+    /**
+     * Lists files on the SSH server.
+     */
+    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
+        const { directory, limit = 10, offset = 0 } = params;
+        sshServerDebug(`Listing files on SSH server in directory: ${directory}`);
+        // Placeholder implementation
+        return {
+            items: ['file1.txt', 'file2.txt'],
+            total: 2,
+            limit,
+            offset,
+        };
+    }
+
+    /**
+     * Retrieves the present working directory on the SSH server.
+     */
+    async presentWorkingDirectory(): Promise<string> {
+        // Placeholder for SSH working directory retrieval
+        return '/home/user';
+    }
 }
