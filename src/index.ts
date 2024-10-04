@@ -12,31 +12,23 @@ import cors from "cors";
 import config from "config";
 import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
+import { getOrGenerateApiToken } from './common/apiToken';
+import { validateEnvironmentVariables } from './utils/envValidation';
+import setupMiddlewares from './middlewares/setupMiddlewares';
+import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
 
 import './modules/ngrok';
 
 const app = express();
 
-// Use morgan for logging HTTP requests
-app.use(morgan("combined"));
+// Validate environment variables
+validateEnvironmentVariables();
 
-// Custom middleware to suppress /health logs
-app.use((req, res, next) => {
-  if (req.path !== '/health' || process.env.DISABLE_HEALTH_LOG !== 'true') {
-    morgan('combined')(req, res, next);
-  } else {
-    next();
-  }
-});
+// Setup middlewares
+setupMiddlewares(app);
 
-// Determine CORS origin based on environment variable or use defaults
-const corsOrigin = process.env.CORS_ORIGIN 
-  ? process.env.CORS_ORIGIN.split(",") 
-  : ["https://chat.openai.com", "https://chatgpt.com"];
-
-console.log("CORS configuration set to: " + corsOrigin.join(", "));
-app.use(cors({ origin: corsOrigin }));
-app.use(bodyParser.json());
+// Retrieve API Token
+const apiToken = getOrGenerateApiToken();
 
 // Setup API Router
 setupApiRouter(app);
@@ -44,58 +36,6 @@ setupApiRouter(app);
 // Configuration directory and file path
 const configDir = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, "..", "config");
 const configFilePath = path.join(configDir, "production.json");
-
-/**
- * Check if the configuration file is loaded.
- * @returns {boolean} - True if the configuration file exists, false otherwise.
- */
-const isConfigLoaded = (): boolean => {
-  console.debug("Checking if configuration file exists at:", configFilePath);
-  return fs.existsSync(configFilePath);
-};
-
-/**
- * Generate default configuration.
- * @returns {object} - The default configuration object.
- */
-const generateDefaultConfig = (): object => {
-  console.debug("Generating default configuration");
-  return {
-    port: 5005,
-    local: {
-      code: true,
-    },
-    ssh: {
-      hosts: [
-        {
-          name: "example-ssh-server",
-          host: "ssh.example.com",
-          port: 23,
-          username: "user",
-          privateKey: "/path/to/private/key",
-        },
-      ],
-    },
-    ssm: {
-      region: "us-east0",
-      targets: [
-        {
-          name: "example-ssm-instance",
-          instanceId: "i-123456788abcdef0",
-        },
-      ],
-    },
-  };
-};
-
-/**
- * Persist configuration to disk.
- * @param {object} configData - The configuration data to persist.
- */
-const persistConfig = (configData: object): void => {
-  console.debug("Persisting configuration to disk at:", configFilePath);
-  fs.writeFileSync(configFilePath, JSON.stringify(configData, null, 3));
-};
 
 /**
  * Main function to initialize the application.
@@ -112,10 +52,10 @@ const main = async (): Promise<void> => {
   }
 
   // Check if configuration file is loaded, if not, generate and persist default config
-  if (!isConfigLoaded()) {
+  if (!isConfigLoaded(configFilePath)) {
     console.debug("Configuration file does not exist. Generating default configuration.");
     const defaultConfig = generateDefaultConfig();
-    persistConfig(defaultConfig);
+    persistConfig(defaultConfig, configFilePath);
     console.log("Default configuration generated and persisted to disk.");
   } else {
     console.debug("Configuration file already exists at:", configFilePath);
@@ -131,15 +71,23 @@ const main = async (): Promise<void> => {
   const startServer = (): void => {
     let server: http.Server | https.Server;
 
-    if (process.env.HTTPS_ENABLED === "true") {
-      console.debug("HTTPS is enabled. Setting up HTTPS server.");
-      const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH!, "utf8");
-      const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH!, "utf8");
-      const credentials = { key: privateKey, cert: certificate };
-      server = https.createServer(credentials, app);
-    } else {
-      console.debug("HTTPS is not enabled. Setting up HTTP server.");
-      server = http.createServer(app);
+    try {
+      if (process.env.HTTPS_ENABLED === "true") {
+        console.debug("HTTPS is enabled. Setting up HTTPS server.");
+        if (!process.env.HTTPS_KEY_PATH || !process.env.HTTPS_CERT_PATH) {
+          throw new Error("HTTPS_KEY_PATH and HTTPS_CERT_PATH must be set when HTTPS is enabled.");
+        }
+        const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH, "utf8");
+        const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH, "utf8");
+        const credentials = { key: privateKey, cert: certificate };
+        server = https.createServer(credentials, app);
+      } else {
+        console.debug("HTTPS is not enabled. Setting up HTTP server.");
+        server = http.createServer(app);
+      }
+    } catch (error) {
+      console.error("Failed to setup server:", error);
+      process.exit(1);
     }
 
     server.listen(port, () => {
