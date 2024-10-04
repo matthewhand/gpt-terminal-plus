@@ -27,9 +27,6 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
-// Retrieve API Token
-const apiToken = getOrGenerateApiToken();
-
 // Setup API Router
 setupApiRouter(app);
 
