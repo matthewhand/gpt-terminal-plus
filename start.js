@@ -4,7 +4,7 @@ module.exports = {
     {
       method: "shell.run",
       params: {
-        path: "app",               // Customize the path if needed
+        path: ".",               // Customize the path if needed
         message: [
           "npm start"             // Run the npm start command for Node.js
         ],
