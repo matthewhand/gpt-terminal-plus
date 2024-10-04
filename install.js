@@ -32,14 +32,26 @@ module.exports = {
           ]
         }
       },
+
       {
         "method": "shell.run",
         "params": {
           "message": [
             "npm install",
           ],
-          "path": "app"
+          "path": "."
+        }
+      },
+
+      {
+        "method": "shell.run",
+        "params": {
+          "message": [
+            "npm run build",
+          ],
+          "path": "."
         }
       }
+
     ]
   }
