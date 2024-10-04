@@ -8,17 +8,17 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN });
 // Define the database ID
 const databaseId = '99c51b8e-18be-4efd-accb-b64f49e0b86d';
 
-// Function to fetch status options from the database
-async function fetchStatusOptions() {
+// Function to fetch project ID options from the database
+async function fetchProjectIDOptions() {
   try {
     const response = await notion.databases.retrieve({ database_id: databaseId });
-    const statusProperty = response.properties['Status'];
-    if (statusProperty && statusProperty.status) {
-      return statusProperty.status.options.map(option => option.name);
+    const projectIDProperty = response.properties['ProjectID'];
+    if (projectIDProperty && projectIDProperty.multi_select) {
+      return projectIDProperty.multi_select.options.map(option => option.name);
     }
     return [];
   } catch (error) {
-    console.error('Error fetching status options:', error.body?.message || error.message);
+    console.error('Error fetching project ID options:', error.body?.message || error.message);
     return [];
   }
 }
@@ -29,11 +29,11 @@ function isValidDate(date) {
 }
 
 // Function to create a new project activity
-async function createProjectActivity(title, notes, status, dueDate) {
-  // Fetch status options and validate
-  const validStatuses = await fetchStatusOptions();
-  if (!validStatuses.includes(status)) {
-    console.error(`Invalid status. Please use one of the following: ${validStatuses.join(', ')}`);
+async function createProjectActivity(title, notes, status, dueDate, projectID) {
+  // Fetch project ID options and validate
+  const validProjectIDs = await fetchProjectIDOptions();
+  if (projectID && !validProjectIDs.includes(projectID)) {
+    console.error(`Invalid ProjectID. Please use one of the following: ${validProjectIDs.join(', ')}`);
     return;
   }
 
@@ -69,6 +69,9 @@ async function createProjectActivity(title, notes, status, dueDate) {
         Date: {
           date: { start: dueDate },
         },
+        ProjectID: projectID ? {
+          multi_select: [{ name: projectID }],
+        } : undefined,
       },
     });
     console.log('Project activity created successfully:', response);
@@ -103,8 +106,13 @@ const args = yargs(hideBin(process.argv))
     demandOption: true,
     description: 'Due date of the project activity (YYYY-MM-DD)',
   })
+  .option('projectID', {
+    alias: 'p',
+    type: 'string',
+    description: 'ProjectID of the project activity',
+  })
   .help()
   .argv;
 
 // Call the function to create a new project activity
-createProjectActivity(args.title, args.notes, args.status, args.date);
+createProjectActivity(args.title, args.notes, args.status, args.date, args.projectID);
