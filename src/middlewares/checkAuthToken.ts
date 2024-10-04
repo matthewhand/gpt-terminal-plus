@@ -1,41 +1,41 @@
-// src/middlewares/checkAuthToken.ts
-
+import { getOrGenerateApiToken } from '../common/apiToken';
 import { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
 
-const debugMiddleware = Debug('app:middleware:checkAuthToken');
+const debug = Debug('app:checkAuthToken');
 
 /**
- * Middleware to check for API token in the request headers.
- * Ensures that each request to the server contains a valid API token.
- * If the token is missing, invalid, or not provided, the middleware
- * will block the request and respond with an appropriate HTTP status code.
- * 
- * @param {Request} req - The request object.
- * @param {Response} res - The response object.
- * @param {NextFunction} next - The next middleware function in the call stack.
+ * Middleware to check the API token in request headers.
+ * @param req - Express request object.
+ * @param res - Express response object.
+ * @param next - Express next middleware function.
  */
 export const checkAuthToken = (req: Request, res: Response, next: NextFunction): void => {
-    debugMiddleware('Checking authorization token');
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+  debug('checkAuthToken middleware called.');
 
-    if (req.path === '/health') {
-        return next(); // Skip auth for health check
-    }
+  // Skip auth for health check
+  if (req.path === '/health') {
+    return next();
+  }
 
-    if (token == null) {
-        debugMiddleware('No authorization token provided');
-        res.sendStatus(401); // if there's no token
-        return;
-    }
+  // Ensure API token is set
+  const apiToken = getOrGenerateApiToken();
 
-    if (token !== process.env.API_TOKEN) {
-        debugMiddleware('Authorization token mismatch');
-        res.sendStatus(403); // if the token is wrong
-        return;
-    }
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-    debugMiddleware('Authorization token validated successfully');
-    next(); // if the token is correct
+  if (!token) {
+    debug('No authorization token provided');
+    res.sendStatus(401); // No token present
+    return;
+  }
+
+  if (token !== apiToken) {
+    debug('Authorization token mismatch');
+    res.sendStatus(403); // Token mismatch
+    return;
+  }
+
+  debug('API token validated successfully.');
+  next();
 };
