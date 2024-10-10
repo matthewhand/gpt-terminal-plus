@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { presentWorkingDirectory } from '../../../utils/GlobalStateHelper';
+import { getPresentWorkingDirectory } from '../../../utils/GlobalStateHelper';
 import Debug from 'debug';
 
 const debug = Debug('app:createFile');

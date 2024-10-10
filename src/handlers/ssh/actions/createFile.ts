@@ -1,5 +1,5 @@
 import { Client } from "ssh2";
-import { presentWorkingDirectory } from "../../../utils/GlobalStateHelper";
+import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper";
 import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
 import Debug from 'debug';
 
