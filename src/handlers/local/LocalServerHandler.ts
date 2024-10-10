@@ -7,6 +7,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { readdir } from 'fs/promises';
 import { exec } from 'child_process';
+import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
 
 const localServerDebug = Debug('app:LocalServerHandler');
@@ -27,7 +28,8 @@ export class LocalServerHandler extends AbstractServerHandler {
      */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         localServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-        return executeLocalCode(command, 'bash', timeout, directory);
+        const workingDirectory = directory || getPresentWorkingDirectory();
+        return executeLocalCode(command, 'bash', timeout, workingDirectory);
     }
 
     /**
