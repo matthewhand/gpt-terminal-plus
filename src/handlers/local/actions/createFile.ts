@@ -18,7 +18,7 @@ export async function createFile(filePath: string, content: string, backup: bool
     throw new Error('Content must be provided and must be a string.');
   }
 
-  const baseDir = process.env.NODE_CONFIG_DIR || presentWorkingDirectory();
+  const baseDir = process.env.NODE_CONFIG_DIR || getPresentWorkingDirectory();
   const fullPath = path.isAbsolute(filePath) ? filePath : path.join(baseDir, filePath);
   debug('Resolved full path: %s', fullPath);
 

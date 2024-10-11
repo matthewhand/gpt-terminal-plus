@@ -25,7 +25,7 @@ export async function executeCommand(
     timeout: number = DEFAULT_TIMEOUT,
     directory: string = '.',
     shell: string = DEFAULT_SHELL
-): Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }> {
+): Promise<{ stdout: string; stderr: string; getPresentWorkingDirectory: string }> {
     // Input validation
     if (!command || typeof command !== 'string') {
         throw new Error('A valid command string must be provided.');
@@ -84,7 +84,7 @@ export async function executeCommand(
                     executeCommandDebug(`Error during command execution with execFile: ${error.message}`);
                     reject({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
                 } else {
-                    resolve({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    resolve({ stdout, stderr, getPresentWorkingDirectory: execOptions.cwd });
                 }
             });
         } else {
@@ -94,7 +94,7 @@ export async function executeCommand(
                     executeCommandDebug(`Error during command execution with exec: ${error.message}`);
                     reject({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
                 } else {
-                    resolve({ stdout, stderr, presentWorkingDirectory: execOptions.cwd });
+                    resolve({ stdout, stderr, getPresentWorkingDirectory: execOptions.cwd });
                 }
             });
         }

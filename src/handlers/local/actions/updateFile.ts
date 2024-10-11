@@ -34,7 +34,7 @@ export async function updateFile(filePath: string, pattern: string, replacement:
   }
 
   // Correct the full path
-  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(getPresentWorkingDirectory(), filePath);
   debug('Updating file at ' + fullPath + ' with pattern: ' + pattern + ' and replacement: ' + replacement);
 
   try {

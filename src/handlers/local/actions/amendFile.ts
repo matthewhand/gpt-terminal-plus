@@ -27,7 +27,7 @@ export async function amendFile(filePath: string, content: string): Promise<bool
   }
 
   // Correct the full path
-  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(presentWorkingDirectory(), filePath);
+  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(getPresentWorkingDirectory(), filePath);
   debug('Amending file at ' + fullPath + ' with content: ' + content);
   try {
     await fs.promises.appendFile(fullPath, content);
