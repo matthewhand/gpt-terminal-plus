@@ -30,7 +30,7 @@ export async function createFile(sshClient: Client, filePath: string, content: s
     throw new Error(errorMessage);
   }
 
-  const fullPath = presentWorkingDirectory() + "/" + filePath;
+  const fullPath = getPresentWorkingDirectory() + "/" + filePath;
   debug(`Creating file at ${fullPath} with content: ${content}`);
 
   try {

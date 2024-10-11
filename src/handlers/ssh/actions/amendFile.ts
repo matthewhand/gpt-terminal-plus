@@ -31,7 +31,7 @@ export async function amendFile(sshClient: Client, filePath: string, content: st
     throw new Error(errorMessage);
   }
 
-  const fullPath = presentWorkingDirectory() + "/" + filePath;
+  const fullPath = getPresentWorkingDirectory() + "/" + filePath;
   debug("Amending file at " + fullPath + " with content: " + content);
 
   try {

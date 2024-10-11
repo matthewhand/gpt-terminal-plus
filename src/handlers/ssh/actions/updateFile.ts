@@ -39,7 +39,7 @@ export async function updateFile(sshClient: Client, filePath: string, pattern: s
     throw new Error(errorMessage);
   }
 
-  const fullPath = presentWorkingDirectory() + "/" + filePath;
+  const fullPath = getPresentWorkingDirectory() + "/" + filePath;
   const backupPath = backup ? fullPath + ".bak" : null;
   debug("Updating file at " + fullPath + " with pattern: " + pattern + ", replacement: " + replacement + ", backup: " + backup + ", multiline: " + multiline);
 
