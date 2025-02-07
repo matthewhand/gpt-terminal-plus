@@ -1,5 +1,4 @@
 import { exec, execFile } from 'child_process';
-import { Shescape } from 'shescape';
 import debug from 'debug';
 
 const executeCommandDebug = debug('app:executeCommand');
@@ -47,22 +46,19 @@ export async function executeCommand(
     executeCommandDebug(`Timeout: ${timeout}`);
     executeCommandDebug(`Using execFile: ${USE_EXECFILE}`);
 
-    // Initialize Shescape with the appropriate shell context
-    const shescape = new Shescape({ shell: USE_EXECFILE ? false : shell });
-
     let commandToExecute: string;
     let args: string[] = [];
 
     // Determine how to prepare the command based on whether execFile is used
     if (USE_EXECFILE) {
-        // For execFile, split the command into arguments and quote each part
+        // For execFile, split the command into arguments manually
         const parts = command.split(' ');
-        args = shescape.quoteAll(parts);
-        commandToExecute = args.shift()!; // The first argument becomes the command
+        commandToExecute = parts.shift()!; // The first part becomes the command
+        args = parts; // Remaining parts are arguments
         executeCommandDebug(`Prepared command for execFile: ${commandToExecute} with args: ${args.join(' ')}`);
     } else {
-        // For exec, quote the entire command string
-        commandToExecute = `${shell} -c ${shescape.quote(command)}`;
+        // For exec, pass the command directly to the shell
+        commandToExecute = `${shell} -c '${command.replace(/'/g, "'\\''")}'`;
         executeCommandDebug(`Prepared command for exec: ${commandToExecute}`);
     }
 

@@ -6,8 +6,8 @@
 # Purpose: This script launches a Fly.io application based on a provided TOML 
 #          file and configures secrets for the application based on environment
 #          variables provided in a .env file and specified through command-line
-#          options. It supports setting four key environment variables as Fly.io
-#          secrets: API_TOKEN, NODE_ENV, DEBUG, and NODE_CONFIG_DIR.
+#          options. It sets both predefined secrets and any additional secrets
+#          found in the .env file.
 #
 # Design:
 # 1. Initialization and Command-Line Argument Parsing
@@ -17,32 +17,15 @@
 #
 # 2. Service Management Functions
 #    - Define functions to source environment variables from a file, load app
-#      name from the specified TOML file, launch the app, and set secrets in Fly.io.
+#      name from the specified TOML file, check if the app exists, create the app,
+#      set secrets in Fly.io, and deploy the app.
 #
-# 3. Load Environment Variables
-#    - Source environment variables from the specified .env file.
-#
-# 4. Parse Command-Line Arguments
-#    - Set the API token, Node environment, debug flag, Node configuration 
-#      directory, Fly.io app name, and the path to the TOML file based on user inputs.
-#
-# 5. Load App Name from the Specified TOML File
-#    - If the Fly.io app name is not provided via command-line arguments, load
-#      it from the specified TOML file.
-#
-# 6. Launch Fly.io Application
-#    - Launch the Fly.io application based on the provided TOML file.
-#
-# 7. Validate Required Arguments
-#    - Ensure that the Fly.io app name is provided either through the command
-#      line or the specified TOML file.
-#
-# 8. Print Configuration
-#    - Display the current configuration, redacting the API token for security.
-#
-# 9. Set Secrets in Fly.io
-#    - Set the provided values as secrets in the Fly.io app using the flyctl
-#      command.
+# 3. Deployment Flow
+#    - Parse arguments.
+#    - Determine app name.
+#    - Ensure the app exists or create it.
+#    - Set secrets.
+#    - Deploy the app.
 #
 # ----------------------------------------------------------------------------
 
@@ -61,9 +44,9 @@ print_help() {
   echo "  -t, --toml-file FILE         Specify the TOML file to load the app name from"
   echo ""
   echo "Example:"
-  echo "  $0 -a your_api_token -n production -d -c /path/to/config -p your-app-name"
-  echo "  $0 -e /path/to/.env -p your-app-name"
-  echo "  $0 -e /path/to/.env -t /path/to/fly.toml"
+  echo "  $0 -a your_api_token -n production -d -c /path/to/config -e /path/to/.env.fly -p your-app-name -t fly.toml"
+  echo "  $0 -e /path/to/.env.fly -p your-app-name -t fly.toml"
+  echo "  $0 -p your-app-name"
 }
 
 # Default values
@@ -73,12 +56,14 @@ API_TOKEN=""
 NODE_CONFIG_DIR=""
 FLY_APP_NAME=""
 TOML_FILE=""
+ENV_FILE=""
 
 # Function to source .env file
 source_env_file() {
   if [ -f "$1" ]; then
     echo "Sourcing environment variables from $1"
-    export $(grep -v '^#' "$1" | xargs)
+    # Export variables, handling spaces and quotes correctly
+    export $(grep -v '^#' "$1" | xargs -d '\n')
   else
     echo "Error: File $1 does not exist."
     exit 1
@@ -88,7 +73,11 @@ source_env_file() {
 # Function to load app name from a specified TOML file
 load_app_name_from_toml() {
   if [ -f "$1" ]; then
-    FLY_APP_NAME=$(grep 'app = "' "$1" | sed 's/app = "\(.*\)"/\1/')
+    FLY_APP_NAME=$(grep 'app\s*=' "$1" | sed -E 's/app\s*=\s*"(.*)"/\1/')
+    if [ -z "$FLY_APP_NAME" ]; then
+      echo "Error: Could not extract app name from $1."
+      exit 1
+    fi
     echo "Loaded Fly.io app name from $1: $FLY_APP_NAME"
   else
     echo "Error: TOML file $1 does not exist."
@@ -96,11 +85,106 @@ load_app_name_from_toml() {
   fi
 }
 
-# Function to launch Fly.io application
-launch_fly_app() {
+# Function to check if Fly.io app exists
+check_app_exists() {
+  flyctl apps list --json | jq -e ".[] | select(.Name == \"$FLY_APP_NAME\")" >/dev/null 2>&1
+  return $?
+}
+
+# Function to create Fly.io app
+create_fly_app() {
+  echo "Creating Fly.io app '$FLY_APP_NAME'..."
+  flyctl apps create "$FLY_APP_NAME"
+  if [ $? -ne 0 ]; then
+    echo "Error: Failed to create Fly.io app '$FLY_APP_NAME'."
+    exit 1
+  fi
+}
+
+# Function to set predefined secrets in Fly.io
+set_predefined_secrets() {
+  echo "Setting predefined Fly.io secrets..."
+
+  # Redact API token for display
+  REDACTED_API_TOKEN="${API_TOKEN:0:4}********"
+
+  echo "Setting secrets for app '$FLY_APP_NAME' with the following configuration:"
+  echo "API Token: $REDACTED_API_TOKEN"
+  echo "Node Environment: $NODE_ENV"
+  echo "Debug: $DEBUG"
+  echo "Node Configuration Directory: $NODE_CONFIG_DIR"
+
+  # Debug output of environment variables (redacted)
+  echo "Environment variables sourced:"
+  echo "API_TOKEN: ${API_TOKEN:0:4}********"
+  echo "NODE_ENV: $NODE_ENV"
+  echo "DEBUG: $DEBUG"
+  echo "NODE_CONFIG_DIR: $NODE_CONFIG_DIR"
+
+  # Set predefined secrets in Fly.io only if values are defined
+  if [[ -n "$API_TOKEN" ]]; then
+    flyctl secrets set API_TOKEN="$API_TOKEN" -a "$FLY_APP_NAME"
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to set API_TOKEN."
+      exit 1
+    fi
+  fi
+  if [[ -n "$NODE_ENV" ]]; then
+    flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to set NODE_ENV."
+      exit 1
+    fi
+  fi
+  if [[ -n "$DEBUG" ]]; then
+    flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to set DEBUG."
+      exit 1
+    fi
+  fi
+  if [[ -n "$NODE_CONFIG_DIR" ]]; then
+    flyctl secrets set NODE_CONFIG_DIR="$NODE_CONFIG_DIR" -a "$FLY_APP_NAME"
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to set NODE_CONFIG_DIR."
+      exit 1
+    fi
+  fi
+}
+
+# Function to set all environment variables from the .env file as Fly.io secrets
+set_env_secrets() {
   if [ -f "$1" ]; then
-    echo "Launching Fly.io app using $1"
-    flyctl launch --config "$1" --now
+    echo "Setting additional Fly.io secrets from $1"
+    while IFS='=' read -r key value; do
+      # Skip comments and empty lines
+      if [[ -z "$key" || "$key" =~ ^# ]]; then
+        continue
+      fi
+      # Trim possible quotes around the value
+      value=$(echo "$value" | sed -e 's/^"//' -e 's/"$//')
+      echo "Setting secret $key"
+      flyctl secrets set "$key=$value" -a "$FLY_APP_NAME"
+      if [ $? -ne 0 ]; then
+        echo "Error: Failed to set secret '$key'."
+        exit 1
+      fi
+    done < "$1"
+  else
+    echo "Error: Environment file $1 does not exist."
+    exit 1
+  fi
+}
+
+# Function to deploy Fly.io application
+deploy_fly_app() {
+  if [ -f "$1" ]; then
+    echo "Deploying Fly.io app using $1"
+    flyctl deploy --config "$1" --remote-only
+    if [ $? -ne 0 ]; then
+      echo "Error: Deployment failed."
+      exit 1
+    fi
   else
     echo "Error: TOML file $1 does not exist."
     exit 1
@@ -115,7 +199,7 @@ while [[ "$#" -gt 0 ]]; do
     -n|--node-env) NODE_ENV="$2"; shift ;;
     -d|--debug) DEBUG="true" ;;
     -c|--node-config-dir) NODE_CONFIG_DIR="$2"; shift ;;
-    -e|--env-file) source_env_file "$2"; shift ;;
+    -e|--env-file) ENV_FILE="$2"; shift ;;
     -p|--fly-app-name) FLY_APP_NAME="$2"; shift ;;
     -t|--toml-file) TOML_FILE="$2"; shift ;;
     *) echo "Unknown parameter passed: $1"; print_help; exit 1 ;;
@@ -135,38 +219,47 @@ if [[ -z "$FLY_APP_NAME" ]]; then
   exit 1
 fi
 
-# Launch the Fly.io application
-if [[ -n "$TOML_FILE" ]]; then
-  launch_fly_app "$TOML_FILE"
+# Source environment variables if env file is provided
+if [[ -n "$ENV_FILE" ]]; then
+  source_env_file "$ENV_FILE"
 fi
+
+# Check if Fly.io app exists
+echo "Checking if Fly.io app '$FLY_APP_NAME' exists..."
+check_app_exists
+if [ $? -ne 0 ]; then
+  echo "Fly.io app '$FLY_APP_NAME' does not exist. Creating..."
+  create_fly_app
+else
+  echo "Fly.io app '$FLY_APP_NAME' already exists."
+fi
+
+# Set predefined secrets
+set_predefined_secrets
+
+# Set additional secrets from the .env file
+if [[ -n "$ENV_FILE" ]]; then
+  set_env_secrets "$ENV_FILE"
+fi
+
+# Deploy the Fly.io application
+deploy_fly_app "$TOML_FILE"
 
 # Redact API token for display
 REDACTED_API_TOKEN="${API_TOKEN:0:4}********"
 
-# Print configuration
-echo "Setting Fly.io secrets for app '$FLY_APP_NAME' with the following configuration:"
+# Print configuration summary
+echo "Fly.io secrets set for app '$FLY_APP_NAME' with the following configuration:"
 echo "API Token: $REDACTED_API_TOKEN"
 echo "Node Environment: $NODE_ENV"
 echo "Debug: $DEBUG"
 echo "Node Configuration Directory: $NODE_CONFIG_DIR"
 
-# Debug output of environment variables
+# Debug output of environment variables (redacted)
 echo "Environment variables sourced:"
-echo "API_TOKEN: $API_TOKEN"
+echo "API_TOKEN: ${API_TOKEN:0:4}********"
 echo "NODE_ENV: $NODE_ENV"
 echo "DEBUG: $DEBUG"
 echo "NODE_CONFIG_DIR: $NODE_CONFIG_DIR"
 
-# Set secrets in Fly.io only if values are defined
-if [[ -n "$API_TOKEN" ]]; then
-  flyctl secrets set API_TOKEN="$API_TOKEN" -a "$FLY_APP_NAME"
-fi
-if [[ -n "$NODE_ENV" ]]; then
-  flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
-fi
-if [[ -n "$DEBUG" ]]; then
-  flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
-fi
-if [[ -n "$NODE_CONFIG_DIR" ]]; then
-  flyctl secrets set NODE_CONFIG_DIR="$NODE_CONFIG_DIR" -a "$FLY_APP_NAME"
-fi
+echo "Deployment and secret configuration completed successfully."
