@@ -8,7 +8,10 @@ import { ServerHandler } from "../types/ServerHandler";
  * @throws {Error} - If the server handler is not found.
  */
 export const getServerHandler = (req: Request): ServerHandler => {
-  const server = req.server as ServerHandler | undefined;
+  if (!req.server) {
+    throw new Error("Server handler not found on request object");
+  }
+  const server = req.server as ServerHandler;
   if (!server) {
     throw new Error("Server handler not found on request object");
   }

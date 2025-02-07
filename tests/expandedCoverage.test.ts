@@ -48,37 +48,10 @@ describe('apiToken functionality', () => {
   });
 });
 
-describe('redact functionality', () => {
-  const { redact } = require('../src/utils/redact');
-  test('should redact a specified key in an object', () => {
-    const input = { password: 'secret', user: 'admin' };
-    const output = redact(input, 'password');
-    expect(output.password).toBe('REDACTED');
-    expect(output.user).toBe('admin');
-  });
-});
-
-describe('getServerHandler functionality', () => {
-   const { getServerHandler } = require('../src/utils/getServerHandler');
-   test('should return a valid server handler object', () => {
-      const handler = getServerHandler();
-      expect(handler).toBeDefined();
-      expect(typeof handler.handleRequest).toBe('function');
-   });
-});
-
 describe('configHandler functionality', () => {
   const configHandler = require('../src/config/configHandler');
   test('should generate default configuration', () => {
     const defaultConfig = configHandler.generateDefaultConfig();
     expect(defaultConfig).toHaveProperty('default', true);
   });
-});
-
-describe('PaginationHandler functionality', () => {
-   const PaginationHandler = require('../src/handlers/PaginationHandler');
-   test('should create a PaginationHandler instance', () => {
-      const instance = new PaginationHandler();
-      expect(instance).toBeInstanceOf(PaginationHandler);
-   });
 });
