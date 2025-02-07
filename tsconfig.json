@@ -15,15 +15,16 @@
     "paths": {
       "@src/*": ["src/*"],
       "@common/*": ["src/common/*"],
-      "@command/*": ["src/command/*"],
       "@config/*": ["src/config/*"],
-      "@llm/*": ["src/llm/*"],
-      "@message/*": ["src/message/*"],
-      "@webhook/*": ["src/webhook/*"],
-      "@integrations/*": ["src/integrations/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@managers/*": ["src/managers/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@modules/*": ["src/modules/*"],
+      "@routes/*": ["src/routes/*"],
+      "@tests/*": ["tests/*"],
       "@types/*": ["src/types/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }

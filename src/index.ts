@@ -18,6 +18,8 @@ import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
 
 import './modules/ngrok';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
 const app = express();
 
@@ -29,6 +31,22 @@ setupMiddlewares(app);
 
 // Setup API Router
 setupApiRouter(app);
+
+if (process.env.USE_MCP === "true") {
+  const { registerMcpTools } = require("./modules/mcpTools");
+  const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
+  
+  // Register all MCP tools that wrap Express routes
+  registerMcpTools(mcpServer);
+
+  // Set up SSE endpoint for MCP communication
+  app.get("/mcp/messages", async (req, res) => {
+    const transport = new SSEServerTransport("/mcp/messages", res);
+    await mcpServer.connect(transport);
+  });
+
+  console.log("MCP server initialized with SSE transport at /mcp/messages");
+}
 
 // Configuration directory and file path
 const configDir = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, "..", "config");
