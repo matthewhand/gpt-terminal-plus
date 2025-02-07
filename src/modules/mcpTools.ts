@@ -1,0 +1,117 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { z } from "zod";
+import { changeDirectory } from "../routes/command/changeDirectory";
+import { executeCommand } from "../routes/command/executeCommand";
+import { executeCode } from "../routes/command/executeCode";
+import { executeFile } from "../routes/command/executeFile";
+import { createFile } from "../routes/file/createFile";
+import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
+
+/**
+ * Registers MCP tools to expose Express routes as discoverable MCP tools.
+ * Each tool wraps an existing Express route handler.
+ */
+export const registerMcpTools = (server: McpServer) => {
+  // Command Tools
+
+  // Change Directory Tool
+  server.tool(
+    "command/change-directory",
+    {
+      directory: z.string()
+    },
+    async ({ directory }: { directory: string }) => {
+      const result = await changeDirectory({ body: { directory } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // Execute Command Tool
+  server.tool(
+    "command/execute",
+    {
+      command: z.string(),
+      shell: z.enum(["powershell", "bash"]).default("bash")
+    },
+    async ({ command, shell }: { command: string, shell: "powershell" | "bash" }) => {
+      const result = await executeCommand({ body: { command, shell } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // Execute Code Tool
+  server.tool(
+    "command/execute-code",
+    {
+      code: z.string(),
+      language: z.enum(["python", "typescript"])
+    },
+    async ({ code, language }: { code: string, language: "python" | "typescript" }) => {
+      const result = await executeCode({ body: { code, language } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // Execute File Tool
+  server.tool(
+    "command/execute-file",
+    {
+      filename: z.string(),
+      directory: z.string().optional()
+    },
+    async ({ filename, directory }: { filename: string, directory?: string }) => {
+      const result = await executeFile({ body: { filename, directory } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // File Tools
+
+  // Create File Tool
+  server.tool(
+    "file/create",
+    {
+      directory: z.string(),
+      filename: z.string(),
+      content: z.string()
+    },
+    async ({ directory, filename, content }: { directory: string; filename: string; content: string }) => {
+      const result = await createFile({ body: { directory, filename, content } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // List Files Tool
+  server.tool(
+    "file/list",
+    {
+      directory: z.string(),
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+      orderBy: z.enum(["datetime", "filename"]).optional()
+    },
+    async ({ directory, limit, offset, orderBy }: { directory: string; limit?: number; offset?: number; orderBy?: "datetime" | "filename" }) => {
+      const localHandler = new LocalServerHandler({ protocol: "local", hostname: "localhost", code: false });
+      const params = { directory, limit, offset, orderBy };
+      const result = await localHandler.listFiles(params);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // Server Tool
+
+  // Set Server Tool
+  server.tool(
+    "server/set",
+    {
+      server: z.string(),
+      getSystemInfo: z.boolean().optional()
+    },
+    async ({ server: serverName, getSystemInfo }: { server: string; getSystemInfo?: boolean }) => {
+      // Placeholder for server setting logic.
+      // This should mimic the behavior of the /server/set endpoint in serverRoutes.ts.
+      const result = { message: `Server set to ${serverName}`, systemInfo: getSystemInfo ? { info: "dummy system info" } : null };
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+};
