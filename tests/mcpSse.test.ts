@@ -20,13 +20,13 @@ describe("MCP SSE Endpoint", () => {
       const mcpServer = new McpServer({ name: "Test Server", version: "1.0.0" });
       registerMcpTools(mcpServer);
       const transport = new SSEServerTransport("/mcp/messages", res);
-      try {
-        await mcpServer.connect(transport);
-      } catch (err) {
+      mcpServer.connect(transport).catch(err => {
         console.error("Error connecting MCP server:", err);
-      }
-      res.write("data: test\n\n");
-      res.end();
+      });
+      setTimeout(() => {
+        res.write("data: test\n\n");
+        res.end();
+      }, 500);
     });
   });
 
