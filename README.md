@@ -72,3 +72,12 @@ Contributions are welcome for CLI software that follows a similar architecture. 
 - **Examples**: Refer to the `docker/` directory for customised Docker container examples.
 - **Deployment**: Refer to `.github/workflows/` for CI/CD setup and `fly_configs/` for deployment examples on Fly.io.
 
+## TODO
+
+- Implement `gpt-oss:20b` model support:
+  - Add model registration and configuration.
+  - Expose selection via config/env and API.
+  - Ensure tokenizer/streaming compatibility and tests.
+  - Update docs and examples.
+
+For a fuller list, see `docs/TODO.md`.
