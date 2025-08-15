@@ -6,6 +6,8 @@ import { executeCode } from "../routes/command/executeCode";
 import { executeFile } from "../routes/command/executeFile";
 import { createFile } from "../routes/file/createFile";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
+import { getSupportedModels } from "../common/models";
+import { getSelectedModel, setSelectedModel } from "../utils/GlobalStateHelper";
 
 /**
  * Registers MCP tools to expose Express routes as discoverable MCP tools.
@@ -112,6 +114,38 @@ export const registerMcpTools = (server: McpServer) => {
       // This should mimic the behavior of the /server/set endpoint in serverRoutes.ts.
       const result = { message: `Server set to ${serverName}`, systemInfo: getSystemInfo ? { info: "dummy system info" } : null };
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
+
+  // Model Tools
+  server.tool(
+    "model/list",
+    {},
+    async () => {
+      const supported = getSupportedModels();
+      const selected = getSelectedModel();
+      return { content: [{ type: "text", text: JSON.stringify({ supported, selected }) }] };
+    }
+  );
+
+  server.tool(
+    "model/select",
+    {
+      model: z.string()
+    },
+    async ({ model }: { model: string }) => {
+      setSelectedModel(model);
+      const selected = getSelectedModel();
+      return { content: [{ type: "text", text: JSON.stringify({ selected }) }] };
+    }
+  );
+
+  server.tool(
+    "model/current",
+    {},
+    async () => {
+      const selected = getSelectedModel();
+      return { content: [{ type: "text", text: JSON.stringify({ selected }) }] };
     }
   );
 };

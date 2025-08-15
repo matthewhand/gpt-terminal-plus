@@ -3,6 +3,7 @@ import fileRoutes from './fileRoutes';
 import commandRoutes from './commandRoutes';
 import serverRoutes from './serverRoutes';
 import publicRouter from './publicRouter';
+import modelRoutes from './modelRoutes';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 import Debug from 'debug';
@@ -47,6 +48,7 @@ export const setupRoutes = (router: Router): void => {
   }
 
   // Add other routes here
+  router.use('/model', modelRoutes);
   router.use(publicRouter);
 };
 

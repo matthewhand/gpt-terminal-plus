@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { getDefaultModel } from '../common/models';
 
 const debug = Debug('app:GlobalStateHelper');
 
@@ -16,11 +17,13 @@ const stateFilePath = path.join(configDir, 'globalState.json');
 interface GlobalState {
   selectedServer: string;
   presentWorkingDirectory: string;
+  selectedModel: string;
 }
 
 let globalState: GlobalState = {
   selectedServer: defaultServer,
   presentWorkingDirectory: process.cwd(), // Initialize to current working directory
+  selectedModel: process.env.DEFAULT_MODEL || getDefaultModel(),
 };
 
 /**
@@ -65,6 +68,10 @@ const loadGlobalState = (): GlobalState => {
         ? path.resolve(data.presentWorkingDirectory) // Ensure absolute path
         : process.cwd();
 
+      const selectedModel = typeof data.selectedModel === 'string' && data.selectedModel.trim() !== ''
+        ? data.selectedModel
+        : (process.env.DEFAULT_MODEL || getDefaultModel());
+
       // Ensure the directory exists
       if (!fs.existsSync(presentWorkingDirectory)) {
         debug(`Configured presentWorkingDirectory does not exist: ${presentWorkingDirectory}. Reverting to process.cwd()`);
@@ -78,6 +85,7 @@ const loadGlobalState = (): GlobalState => {
       return {
         selectedServer,
         presentWorkingDirectory,
+        selectedModel,
       };
     } else {
       debug(`Global state file does not exist: ${stateFilePath}. Initializing with default values.`);
@@ -90,6 +98,7 @@ const loadGlobalState = (): GlobalState => {
   const initialState: GlobalState = {
     selectedServer: defaultServer,
     presentWorkingDirectory: process.cwd(),
+    selectedModel: process.env.DEFAULT_MODEL || getDefaultModel(),
   };
   saveGlobalState(initialState);
   return initialState;
@@ -150,6 +159,12 @@ const setGlobalState = (updates: Partial<GlobalState>): void => {
     debug(`selectedServer updated to: ${updates.selectedServer}`);
   }
 
+  // Update selectedModel if provided
+  if (updates.selectedModel) {
+    newState.selectedModel = updates.selectedModel;
+    debug(`selectedModel updated to: ${updates.selectedModel}`);
+  }
+
   if (!isTestEnv) {
     saveGlobalState(newState);
   } else {
@@ -182,6 +197,30 @@ export const setSelectedServer = (server: string): void => {
   }
   setGlobalState({ selectedServer: server });
   debug('Selected server set to: ' + server);
+};
+
+/**
+ * Retrieves the selected model from the global state.
+ * @returns The selected model identifier.
+ */
+export const getSelectedModel = (): string => {
+  const selectedModel = getGlobalState().selectedModel;
+  debug('Selected model retrieved: ' + selectedModel);
+  return selectedModel;
+};
+
+/**
+ * Sets the selected model in the global state.
+ * @param model - The model to set as selected.
+ */
+export const setSelectedModel = (model: string): void => {
+  debug('Setting selected model to: ' + model);
+  if (!model || typeof model !== 'string' || model.trim() === '') {
+    debug('Invalid model value provided: ' + model);
+    throw new Error('Model must be a non-empty string.');
+  }
+  setGlobalState({ selectedModel: model });
+  debug('Selected model set to: ' + model);
 };
 
 /**
@@ -223,6 +262,8 @@ if (!isTestEnv) {
 export default {
   getSelectedServer,
   setSelectedServer,
+  getSelectedModel,
+  setSelectedModel,
   getPresentWorkingDirectory,
   changeDirectory,
 };

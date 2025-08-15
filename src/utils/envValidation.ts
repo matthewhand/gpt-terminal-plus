@@ -12,7 +12,8 @@ export const validateEnvironmentVariables = (): void => {
     'API_TOKEN',
     'NODE_CONFIG_DIR',
     'HTTPS_ENABLED',
-    'CORS_ORIGIN'
+    'CORS_ORIGIN',
+    'DEFAULT_MODEL'
   ];
 
   requiredVariables.forEach((variable) => {
