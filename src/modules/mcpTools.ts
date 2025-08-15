@@ -6,7 +6,7 @@ import { executeCode } from "../routes/command/executeCode";
 import { executeFile } from "../routes/command/executeFile";
 import { createFile } from "../routes/file/createFile";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
-import { getSupportedModels } from "../common/models";
+import { getSupportedModels, isSupportedModel } from "../common/models";
 import { getSelectedModel, setSelectedModel } from "../utils/GlobalStateHelper";
 
 /**
@@ -134,6 +134,9 @@ export const registerMcpTools = (server: McpServer) => {
       model: z.string()
     },
     async ({ model }: { model: string }) => {
+      if (!isSupportedModel(model)) {
+        return { content: [{ type: "text", text: JSON.stringify({ error: 'Unsupported model', model }) }] };
+      }
       setSelectedModel(model);
       const selected = getSelectedModel();
       return { content: [{ type: "text", text: JSON.stringify({ selected }) }] };
