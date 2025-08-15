@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { getSelectedModel } from '../utils/GlobalStateHelper';
-import { chat } from '../llm';
+import { chat, chatStream } from '../llm';
 import { ChatMessage } from '../llm/types';
 
 const debug = Debug('app:chatRoutes');
@@ -27,8 +27,28 @@ router.post('/completions', async (req: Request, res: Response) => {
     const selectedModel = model || getSelectedModel();
     debug('Generating chat completion with model: ' + selectedModel);
 
-    const response = await chat({ model: selectedModel, messages: safeMessages, stream });
-    res.status(200).json(response);
+    if (stream) {
+      // SSE streaming response
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders?.();
+
+      let sentAny = false;
+      for await (const delta of chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
+        sentAny = true;
+        res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: delta } }] })}\n\n`);
+      }
+      // Send done signal
+      if (!sentAny) {
+        res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: '' } }] })}\n\n`);
+      }
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } else {
+      const response = await chat({ model: selectedModel, messages: safeMessages, stream: false });
+      res.status(200).json(response);
+    }
   } catch (error) {
     debug('Chat completion error: ' + String(error));
     res.status(500).json({ message: 'Chat error', error: (error as Error).message });
@@ -36,4 +56,3 @@ router.post('/completions', async (req: Request, res: Response) => {
 });
 
 export default router;
-

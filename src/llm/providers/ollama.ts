@@ -107,3 +107,82 @@ async function fetchCompat(url: string, options: any): Promise<{ ok: boolean; st
     }
   });
 }
+
+export async function* chatWithOllamaStream(cfg: OllamaConfig, req: ChatRequest): AsyncGenerator<string> {
+  const providerModel = cfg.modelMap?.[req.model] || req.model;
+  const url = new URL('/api/chat', cfg.baseUrl).toString();
+  const body = {
+    model: providerModel,
+    messages: toOllamaMessages(req.messages),
+    stream: true
+  };
+
+  const res = await streamCompat(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  let buffer = '';
+  for await (const chunk of res) {
+    buffer += chunk.toString('utf8');
+    let idx: number;
+    while ((idx = buffer.indexOf('\n')) >= 0) {
+      const line = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 1);
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const evt = JSON.parse(trimmed);
+        const delta = evt?.message?.content || '';
+        if (delta) yield delta;
+        if (evt?.done) return;
+      } catch {
+        // Ignore partials
+      }
+    }
+  }
+}
+
+// Streaming compatibility shim - returns an async iterable of Buffer
+async function streamCompat(urlStr: string, options: any): Promise<AsyncIterable<Buffer>> {
+  const g: any = (globalThis as any);
+  if (typeof g.fetch === 'function') {
+    const res = await g.fetch(urlStr, options);
+    const anyRes: any = res;
+    if (anyRes?.body && typeof anyRes.body.getReader === 'function') {
+      const reader = anyRes.body.getReader();
+      return {
+        async *[Symbol.asyncIterator]() {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            yield Buffer.from(value);
+          }
+        }
+      } as AsyncIterable<Buffer>;
+    }
+    const text = await res.text();
+    return {
+      async *[Symbol.asyncIterator]() {
+        yield Buffer.from(text);
+      }
+    } as AsyncIterable<Buffer>;
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const u = new URL(urlStr);
+      const isHttps = u.protocol === 'https:';
+      const lib = isHttps ? https : http;
+      const req = lib.request(urlStr, { method: options?.method || 'GET', headers: options?.headers || {} }, (res) => {
+        resolve(res as any);
+      });
+      req.on('error', reject);
+      if (options?.body) req.write(options.body);
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
