@@ -36,9 +36,15 @@ export const executeLlm = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Selected server not found in config' });
     }
 
-    // Gate: only local protocol supported for now
-    if (serverConfig.protocol !== 'local') {
+    // Gate: allow local by default; for ssh require per-server llm with provider 'ollama'; ssm not implemented
+    if (serverConfig.protocol === 'ssm') {
       return res.status(501).json({ error: `execute-llm not implemented for protocol ${serverConfig.protocol}` });
+    }
+    if (serverConfig.protocol === 'ssh') {
+      const ok = !!(serverConfig as any).llm && (serverConfig as any).llm.provider === 'ollama' && (serverConfig as any).llm.baseUrl;
+      if (!ok) {
+        return res.status(501).json({ error: 'execute-llm requires per-server LLM config (ollama) for SSH hosts' });
+      }
     }
 
     const selectedModel = model || getSelectedModel();

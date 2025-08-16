@@ -4,6 +4,8 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import Debug from 'debug';
+import fs from 'fs';
+import { Client } from 'ssh2';
 
 const sshServerDebug = Debug('app:SshServerHandler');
 
@@ -28,9 +30,50 @@ export class SshServerHandler extends AbstractServerHandler {
      * Executes a command on the SSH server.
      */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        // Placeholder for SSH command execution
         sshServerDebug(`Executing SSH command: ${command}`);
-        return { stdout: 'SSH command executed', stderr: '', error: false, exitCode: 0 };
+        return new Promise<ExecutionResult>((resolve) => {
+            const conn = new Client();
+            const key = this.sshConfig.privateKeyPath ? fs.readFileSync(this.sshConfig.privateKeyPath, 'utf8') : undefined;
+            const opts: any = {
+                host: this.sshConfig.hostname,
+                port: this.sshConfig.port || 22,
+                username: this.sshConfig.username,
+                privateKey: key
+            };
+            let stdout = '';
+            let stderr = '';
+            let settled = false;
+
+            const finalize = (result: ExecutionResult) => {
+                if (!settled) {
+                    settled = true;
+                    try { conn.end(); } catch { /* ignore */ }
+                    resolve(result);
+                }
+            };
+
+            conn.on('ready', () => {
+                const cmd = directory ? `cd ${directory} && ${command}` : command;
+                conn.exec(cmd, (err, stream) => {
+                    if (err) {
+                        sshServerDebug('SSH exec error: ' + err.message);
+                        return finalize({ stdout: '', stderr: err.message, error: true, exitCode: 1 });
+                    }
+                    stream.on('close', (code: number) => {
+                        finalize({ stdout, stderr, error: (code ?? 1) !== 0, exitCode: code ?? 1 });
+                    });
+                    stream.on('data', (data: Buffer) => { stdout += data.toString(); });
+                    stream.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+                });
+            }).on('error', (e) => {
+                sshServerDebug('SSH conn error: ' + String(e));
+                finalize({ stdout: '', stderr: String(e), error: true, exitCode: 1 });
+            }).connect(opts);
+
+            if (timeout && timeout > 0) {
+                setTimeout(() => finalize({ stdout, stderr: stderr || 'Timeout', error: true, exitCode: 124 }), timeout);
+            }
+        });
     }
 
     /**
