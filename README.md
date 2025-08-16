@@ -64,7 +64,7 @@ For more advanced setup options, such as using Docker or deploying to Fly.io, re
 - [Fly.io Deployment](docs/FLY_IO_DEPLOYMENT.md)
 - [Configuration Details](docs/CONFIGURATION.md)
 - [Supporting Scripts](docs/SUPPORTING_SCRIPTS.md)
- - [API Guide](docs/API.md)
+- [API Guide](docs/API.md)
 
 ## Configuration
 
