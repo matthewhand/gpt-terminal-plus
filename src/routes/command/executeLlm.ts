@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSelectedModel } from '../../utils/GlobalStateHelper';
+import { getSelectedModel, getSelectedServer } from '../../utils/GlobalStateHelper';
 import { chatForServer } from '../../llm';
 import { ServerManager } from '../../managers/ServerManager';
 import { getServerHandler } from '../../utils/getServerHandler';
@@ -30,7 +30,7 @@ export const executeLlm = async (req: Request, res: Response) => {
 
   try {
     // Resolve server and per-server LLM provider if present
-    const hostname = (await import('../../utils/GlobalStateHelper')).getSelectedServer();
+    const hostname = getSelectedServer();
     const serverConfig = ServerManager.getServerConfig(hostname);
     if (!serverConfig) {
       return res.status(500).json({ error: 'Selected server not found in config' });
@@ -83,4 +83,3 @@ export const executeLlm = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'execute-llm failed', message: (err as Error).message });
   }
 };
-

@@ -33,6 +33,7 @@ const setupMiddlewares = (app: express.Application): void => {
   console.log('CORS configuration set to: ' + corsOrigin.join(', '));
   app.use(cors({ origin: corsOrigin }));
   app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
   debug('Middlewares setup completed.');
 };
