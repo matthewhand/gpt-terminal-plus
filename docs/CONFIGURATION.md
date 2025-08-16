@@ -262,3 +262,24 @@ SSE_HEARTBEAT_MS=15000
 ```
 
 Defaults to `15000` (15s). In tests, it defaults to `50ms`.
+
+
+### Safety Policy (Confirm/Deny Patterns)
+
+You can control which commands require confirmation or are denied outright using either environment variables or config.
+
+- Env (takes precedence):
+  - `CONFIRM_COMMAND_REGEX`: comma-separated regex patterns that trigger confirmation.
+  - `DENY_COMMAND_REGEX`: comma-separated regex patterns that block execution.
+
+- Config (fallback if env not set):
+```json
+{
+  "safety": {
+    "confirmRegex": ["rm\s+-rf", "mkfs", "shutdown", "reboot"],
+    "denyRegex": [":/$"]
+  }
+}
+```
+
+Edit these via the Setup UI at `/setup/policy` or by modifying your config file.

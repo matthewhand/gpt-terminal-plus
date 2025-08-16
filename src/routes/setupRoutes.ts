@@ -2,6 +2,10 @@ import express, { Request, Response } from 'express';
 import { loadRawConfig, saveRawConfig, getConfigPaths } from '../utils/configIO';
 import http from 'http';
 import https from 'https';
+import { chatForServer } from '../llm';
+import { ServerManager } from '../managers/ServerManager';
+import { getSelectedModel, getSelectedServer } from '../utils/GlobalStateHelper';
+import { evaluateCommandSafety } from '../utils/safety';
 
 const router = express.Router();
 
@@ -34,6 +38,8 @@ router.get('/', (_req: Request, res: Response) => {
     <a href="/setup/ssm">SSM</a>
     <a href="/setup/ai">AI Provider</a>
     <a href="/setup/health">Health Check</a>
+    <a href="/setup/policy">Policy</a>
+    <a href="/setup/test-plan">Test Plan</a>
   </nav>
   <h2>Overview</h2>
   <pre>${JSON.stringify({ local, ssh, ssm, ai }, null, 2)}</pre>
@@ -294,6 +300,71 @@ router.get('/health', async (req, res) => {
     <p>Status: <b class="${r.ok?'ok':'warn'}">${r.status} ${r.ok?'OK':'FAIL'}</b></p>
     <pre>${r.text.substring(0, 1000)}</pre>
   `));
+});
+
+
+// Safety policy editor
+router.get('/policy', (_req, res) => {
+  const cfg = loadRawConfig();
+  const safety = cfg.safety || {};
+  res.send(html(`
+    <h2>Safety Policy</h2>
+    <form method="post" action="/setup/policy">
+      <div><label>Confirm Regex (comma-separated)<input name="confirmRegex" value="${(Array.isArray(safety.confirmRegex)?safety.confirmRegex.join(','): (safety.confirmRegex||'')).toString()}"></label></div>
+      <div><label>Deny Regex (comma-separated)<input name="denyRegex" value="${(Array.isArray(safety.denyRegex)?safety.denyRegex.join(','): (safety.denyRegex||'')).toString()}"></label></div>
+      <p class="muted">Env variables CONFIRM_COMMAND_REGEX and DENY_COMMAND_REGEX override these config values.</p>
+      <button type="submit">Save Policy</button>
+    </form>
+  `));
+});
+
+router.post('/policy', (req, res) => {
+  const cfg = loadRawConfig();
+  cfg.safety = cfg.safety || {};
+  const c = (req.body.confirmRegex || '').toString().trim();
+  const d = (req.body.denyRegex || '').toString().trim();
+  cfg.safety.confirmRegex = c;
+  cfg.safety.denyRegex = d;
+  saveRawConfig(cfg);
+  res.redirect('/setup');
+});
+
+
+// Test Plan (dry-run execute-llm)
+router.get('/test-plan', async (_req, res) => {
+  res.send(html(`
+    <h2>Test Plan</h2>
+    <form method="post" action="/setup/test-plan">
+      <div><label>Instructions<textarea name="instructions" rows="4" placeholder="Describe what to do"></textarea></label></div>
+      <button type="submit">Generate Plan</button>
+    </form>
+  `));
+});
+
+router.post('/test-plan', async (req, res) => {
+  const instructions = (req.body.instructions || '').toString();
+  try {
+    const hostname = getSelectedServer();
+    const serverConfig = ServerManager.getServerConfig(hostname);
+    const model = getSelectedModel();
+    const system = 'You translate natural language instructions into safe, reproducible shell commands. Output strictly JSON with shape: {"commands":[{"cmd":"...","explain":"..."}]}.';
+    const user = JSON.stringify({ instructions, os: process.platform });
+    const resp = await chatForServer(serverConfig as any, { model, messages: [ { role: 'system', content: system }, { role: 'user', content: user } ] } as any);
+    const content = resp?.choices?.[0]?.message?.content || '';
+    let parsed: any;
+    try { parsed = JSON.parse(content); } catch { parsed = {}; }
+    const cmds = Array.isArray(parsed.commands) ? parsed.commands : [];
+    const safety = cmds.map((c: any) => ({ cmd: c.cmd, decision: evaluateCommandSafety(c.cmd) }));
+    res.send(html(`
+      <h2>Generated Plan</h2>
+      <pre>${JSON.stringify({ model, provider: resp.provider, commands: cmds }, null, 2)}</pre>
+      <h3>Safety</h3>
+      <pre>${JSON.stringify(safety, null, 2)}</pre>
+      <p class="muted">Execute the plan via API: POST /command/execute-llm</p>
+    `));
+  } catch (e) {
+    res.send(html(`<p class="warn">Failed to generate plan: ${(e as Error).message}</p>`));
+  }
 });
 
 export default router;

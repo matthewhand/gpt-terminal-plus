@@ -1,4 +1,5 @@
 import Debug from 'debug';
+import cfg from 'config';
 
 const debug = Debug('app:safety');
 
@@ -17,10 +18,10 @@ const DEFAULT_DENY_PATTERNS = [
   /:\/$/, // guard against commands like rm -rf /
 ];
 
-function parsePatterns(envVar?: string, defaults: RegExp[] = []): RegExp[] {
+function parsePatternsFromStringList(val?: string, defaults: RegExp[] = []): RegExp[] {
   try {
-    if (!envVar) return defaults;
-    const parts = envVar.split(',').map(s => s.trim()).filter(Boolean);
+    if (!val) return defaults;
+    const parts = val.split(',').map(s => s.trim()).filter(Boolean);
     return parts.map(p => new RegExp(p, 'i'));
   } catch (e) {
     debug('Failed to parse patterns: ' + String(e));
@@ -35,8 +36,33 @@ export interface SafetyDecision {
 }
 
 export function evaluateCommandSafety(cmd: string): SafetyDecision {
-  const deny = parsePatterns(process.env.DENY_COMMAND_REGEX, DEFAULT_DENY_PATTERNS);
-  const confirm = parsePatterns(process.env.CONFIRM_COMMAND_REGEX, DEFAULT_CONFIRM_PATTERNS);
+  // Env takes precedence, else config.safety.{denyRegex,confirmRegex}, else defaults
+  let deny: RegExp[] = [];
+  let confirm: RegExp[] = [];
+
+  const envDeny = process.env.DENY_COMMAND_REGEX;
+  const envConfirm = process.env.CONFIRM_COMMAND_REGEX;
+  if (envDeny) deny = parsePatternsFromStringList(envDeny, DEFAULT_DENY_PATTERNS);
+  if (envConfirm) confirm = parsePatternsFromStringList(envConfirm, DEFAULT_CONFIRM_PATTERNS);
+
+  if (!envDeny || !envConfirm) {
+    try {
+      if (!envDeny && cfg.has('safety.denyRegex')) {
+        const r = cfg.get<any>('safety.denyRegex');
+        const s = Array.isArray(r) ? r.join(',') : String(r);
+        deny = parsePatternsFromStringList(s, DEFAULT_DENY_PATTERNS);
+      }
+      if (!envConfirm && cfg.has('safety.confirmRegex')) {
+        const r = cfg.get<any>('safety.confirmRegex');
+        const s = Array.isArray(r) ? r.join(',') : String(r);
+        confirm = parsePatternsFromStringList(s, DEFAULT_CONFIRM_PATTERNS);
+      }
+    } catch (e) {
+      debug('Config safety parse error: ' + String(e));
+    }
+  }
+  if (deny.length === 0) deny = DEFAULT_DENY_PATTERNS;
+  if (confirm.length === 0) confirm = DEFAULT_CONFIRM_PATTERNS;
   const reasons: string[] = [];
   let hardDeny = false;
   let needsConfirm = false;
@@ -49,4 +75,3 @@ export function evaluateCommandSafety(cmd: string): SafetyDecision {
   }
   return { hardDeny, needsConfirm, reasons };
 }
-
