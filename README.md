@@ -67,7 +67,12 @@ Examples and details in `docs/API.md`.
 
 ## Evidence
 
-Sample outputs from a real run are captured in `docs/EVIDENCE.md`:
+Sample outputs from a real run are captured in `docs/EVIDENCE.generated.md` (auto‑generated) and the curated `docs/EVIDENCE.md`.
+
+Generate fresh evidence locally:
+
+- `API_TOKEN=secret BASE_URL=http://localhost:5005 OLLAMA_URL=http://localhost:11434 npm run evidence`
+
 
 - Setup Health Check: see section 1
 - Model APIs: see section 2
