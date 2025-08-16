@@ -65,6 +65,18 @@ See docs/API.md → AI Error Analysis.
 
 Examples and details in `docs/API.md`.
 
+## Evidence
+
+Sample outputs from a real run are captured in `docs/EVIDENCE.md`:
+
+- Setup Health Check: see section 1
+- Model APIs: see section 2
+- Chat (non-stream + stream): see sections 3–4
+- AI Error Analysis on failures: see section 5
+- NL Execution dry-run and streaming: see sections 6–8
+- SSM non-stream execution: see section 9
+
+
 ## Setup UI
 
 Navigate to `/setup` (requires the same API auth) to configure:
