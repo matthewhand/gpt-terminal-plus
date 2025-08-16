@@ -3,19 +3,18 @@ import request from 'supertest';
 import { setupApiRouter } from '../src/routes/index';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 
-// Mock chatStream to yield deterministic chunks
+// Mock chatStream to throw an error
 jest.mock('../src/llm', () => {
   const original = jest.requireActual('../src/llm');
   return {
     ...original,
     chatStream: async function* () {
-      yield 'Hello';
-      yield ' world';
+      throw new Error('mock stream failure');
     }
   };
 });
 
-describe('Chat Routes Streaming', () => {
+describe('Chat Routes Streaming Error', () => {
   let app: express.Express;
   let token: string;
 
@@ -28,23 +27,20 @@ describe('Chat Routes Streaming', () => {
     setupApiRouter(app);
   });
 
-  it('should stream SSE chunks for chat', async () => {
+  it('should send an error event and [DONE] on failure', async () => {
     const res = await request(app)
       .post('/chat/completions')
       .set('Authorization', `Bearer ${token}`)
       .set('Accept', 'text/event-stream')
       .send({
         stream: true,
-        messages: [
-          { role: 'user', content: 'Say hello' }
-        ]
+        messages: [ { role: 'user', content: 'Trigger error' } ]
       });
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/text\/event-stream/);
-    expect(res.text).toContain(': connected');
-    expect(res.text).toContain('data:');
-    expect(res.text).toContain('Hello');
+    expect(res.text).toContain('event: error');
     expect(res.text).toContain('[DONE]');
   });
 });
+

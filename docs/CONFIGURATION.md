@@ -245,3 +245,14 @@ data: [DONE]
 ```
 
 Note: `config/production.json` may be ignored by version control per `.gitignore`. Keep your production overrides locally or manage them via deployment secrets.
+
+### Streaming Heartbeat Interval
+
+You can tweak the SSE heartbeat interval with an environment variable:
+
+```ini
+# Milliseconds between keep-alive comments in SSE responses
+SSE_HEARTBEAT_MS=15000
+```
+
+Defaults to `15000` (15s). In tests, it defaults to `50ms`.

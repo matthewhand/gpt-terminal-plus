@@ -66,8 +66,9 @@ curl -N -X POST http://localhost:5005/chat/completions \
   - `data: {"choices":[{"index":0,"delta":{"content":"..."}}]}`
   - End of stream: `data: [DONE]`
 
+- Heartbeats: the stream sends `: keep-alive` comments periodically and an initial `: connected` comment to keep connections healthy.
+
 ## MCP (optional)
 
 - `GET /mcp/messages` (SSE) is available if `USE_MCP=true`.
 - The server registers tools that mirror selected Express routes, including model list/select.
-

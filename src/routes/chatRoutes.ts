@@ -34,17 +34,40 @@ router.post('/completions', async (req: Request, res: Response) => {
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders?.();
 
+      // Initial connected comment for clients
+      res.write(`: connected\n\n`);
+
+      // Heartbeat keep-alive
+      const heartbeatMs = Number(process.env.SSE_HEARTBEAT_MS || (process.env.NODE_ENV === 'test' ? 50 : 15000));
+      const heartbeat = setInterval(() => {
+        try { res.write(`: keep-alive\n\n`); } catch { /* ignore */ }
+      }, isNaN(heartbeatMs) ? 15000 : heartbeatMs);
+
+      // Cleanup on client disconnect
+      const onClose = () => {
+        clearInterval(heartbeat);
+        try { res.end(); } catch { /* ignore */ }
+      };
+      // @ts-ignore
+      (req as any).on?.('close', onClose);
+
       let sentAny = false;
-      for await (const delta of chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
-        sentAny = true;
-        res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: delta } }] })}\n\n`);
+      try {
+        for await (const delta of chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
+          sentAny = true;
+          res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: delta } }] })}\n\n`);
+        }
+      } catch (err) {
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ message: (err as Error).message })}\n\n`);
+      } finally {
+        if (!sentAny) {
+          res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: '' } }] })}\n\n`);
+        }
+        res.write('data: [DONE]\n\n');
+        clearInterval(heartbeat);
+        res.end();
       }
-      // Send done signal
-      if (!sentAny) {
-        res.write(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: '' } }] })}\n\n`);
-      }
-      res.write('data: [DONE]\n\n');
-      res.end();
     } else {
       const response = await chat({ model: selectedModel, messages: safeMessages, stream: false });
       res.status(200).json(response);
