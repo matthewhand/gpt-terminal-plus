@@ -58,13 +58,38 @@ export const executeLlm = async (req: Request, res: Response) => {
       cwd: (await getServerHandler(req).presentWorkingDirectory?.()) || process.cwd(),
     });
 
-    const resp = await chatForServer(serverConfig, {
-      model: selectedModel,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: user }
-      ]
-    } as any);
+    // Setup streaming headers early if streaming to allow error events
+    let heartbeat: NodeJS.Timeout | undefined;
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.write(`: connected\n\n`);
+      const hbMs = Number(process.env.SSE_HEARTBEAT_MS || (process.env.NODE_ENV === 'test' ? 50 : 15000));
+      heartbeat = setInterval(() => { try { res.write(`: keep-alive\n\n`); } catch {} }, isNaN(hbMs)?15000:hbMs);
+      // Cleanup
+      // @ts-ignore
+      (req as any).on?.('close', () => { if (heartbeat) clearInterval(heartbeat); try { res.end(); } catch {} });
+    }
+
+    let resp;
+    try {
+      resp = await chatForServer(serverConfig, {
+        model: selectedModel,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user }
+        ]
+      } as any);
+    } catch (e) {
+      if (stream) {
+        res.write('event: error\n');
+        res.write(`data: ${JSON.stringify({ message: (e as Error).message })}\n\n`);
+        if (heartbeat) clearInterval(heartbeat);
+        return res.end();
+      }
+      throw e;
+    }
 
     const content = resp?.choices?.[0]?.message?.content || '';
     const parsed = extractJsonArray(content);
@@ -74,13 +99,11 @@ export const executeLlm = async (req: Request, res: Response) => {
 
     if (dryRun || commands.length === 0) {
       if (stream) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
         res.write(`event: plan\n`);
         res.write(`data: ${JSON.stringify(plan)}\n\n`);
         res.write('event: done\n');
         res.write('data: {}\n\n');
+        if (heartbeat) clearInterval(heartbeat);
         return res.end();
       }
       return res.status(200).json({ plan, results: [] });
@@ -93,9 +116,6 @@ export const executeLlm = async (req: Request, res: Response) => {
       if (serverConfig.protocol === 'ssm') {
         return res.status(501).json({ error: 'execute-llm streaming is not supported for SSM protocol' });
       }
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
       res.write(`event: plan\n`);
       res.write(`data: ${JSON.stringify(plan)}\n\n`);
     }
@@ -106,7 +126,17 @@ export const executeLlm = async (req: Request, res: Response) => {
         res.write(`event: step\n`);
         res.write(`data: ${JSON.stringify({ index: i, status: 'start', cmd: step.cmd, explain: step.explain })}\n\n`);
       }
-      const r = await handler.executeCommand(step.cmd);
+      let r;
+      try {
+        r = await handler.executeCommand(step.cmd);
+      } catch (e) {
+        if (stream) {
+          res.write('event: error\n');
+          res.write(`data: ${JSON.stringify({ index: i, message: (e as Error).message })}\n\n`);
+          break;
+        }
+        throw e;
+      }
       let aiAnalysis;
       if ((r?.exitCode !== undefined && r.exitCode !== 0) || r?.error) {
         aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
@@ -123,6 +153,7 @@ export const executeLlm = async (req: Request, res: Response) => {
     if (stream) {
       res.write('event: done\n');
       res.write('data: {}\n\n');
+      if (heartbeat) clearInterval(heartbeat);
       return res.end();
     }
 

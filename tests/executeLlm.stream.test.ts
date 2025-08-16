@@ -37,9 +37,9 @@ describe('execute-llm streaming', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/text\/event-stream/);
+    expect(res.text).toContain(': connected');
     expect(res.text).toContain('event: plan');
     expect(res.text).toContain('event: step');
     expect(res.text).toContain('event: done');
   });
 });
-

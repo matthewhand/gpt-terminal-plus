@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import { loadRawConfig, saveRawConfig, getConfigPaths } from '../utils/configIO';
+import http from 'http';
+import https from 'https';
 
 const router = express.Router();
 
@@ -31,6 +33,7 @@ router.get('/', (_req: Request, res: Response) => {
     <a href="/setup/ssh">SSH</a>
     <a href="/setup/ssm">SSM</a>
     <a href="/setup/ai">AI Provider</a>
+    <a href="/setup/health">Health Check</a>
   </nav>
   <h2>Overview</h2>
   <pre>${JSON.stringify({ local, ssh, ssm, ai }, null, 2)}</pre>
@@ -53,6 +56,7 @@ router.get('/local', (_req, res) => {
         <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
         <div><label>Base URL<input name="llm.baseUrl" placeholder="http://localhost:11434"/></label></div>
       </div>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
       <button type="submit">Save Local</button>
     </form>
   `));
@@ -67,6 +71,9 @@ router.post('/local', (req, res) => {
   const llm: any = {};
   if (req.body['llm.provider']) llm.provider = req.body['llm.provider'];
   if (req.body['llm.baseUrl']) llm.baseUrl = req.body['llm.baseUrl'];
+  if (req.body['llm.modelMap']) {
+    try { llm.modelMap = JSON.parse(req.body['llm.modelMap']); } catch {}
+  }
   if (Object.keys(llm).length) cfg.local.llm = llm;
   saveRawConfig(cfg);
   res.redirect('/setup');
@@ -89,6 +96,7 @@ router.get('/ssh', (_req, res) => {
         <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
         <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434"/></label></div>
       </div>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
       <button type="submit">Add SSH Host</button>
     </form>
   `));
@@ -107,6 +115,9 @@ router.post('/ssh', (req, res) => {
   const llm: any = {};
   if (req.body['llm.provider']) llm.provider = req.body['llm.provider'];
   if (req.body['llm.baseUrl']) llm.baseUrl = req.body['llm.baseUrl'];
+  if (req.body['llm.modelMap']) {
+    try { llm.modelMap = JSON.parse(req.body['llm.modelMap']); } catch {}
+  }
   if (Object.keys(llm).length) host.llm = llm;
   cfg.ssh.hosts.push(host);
   saveRawConfig(cfg);
@@ -127,6 +138,7 @@ router.get('/ssm', (_req, res) => {
         <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
         <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434"/></label></div>
       </div>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
       <button type="submit">Add SSM Target</button>
     </form>
   `));
@@ -144,6 +156,9 @@ router.post('/ssm', (req, res) => {
   const llm: any = {};
   if (req.body['llm.provider']) llm.provider = req.body['llm.provider'];
   if (req.body['llm.baseUrl']) llm.baseUrl = req.body['llm.baseUrl'];
+  if (req.body['llm.modelMap']) {
+    try { llm.modelMap = JSON.parse(req.body['llm.modelMap']); } catch {}
+  }
   if (Object.keys(llm).length) target.llm = llm;
   cfg.ssm.targets.push(target);
   saveRawConfig(cfg);
@@ -182,5 +197,55 @@ router.post('/ai', (req, res) => {
   res.redirect('/setup');
 });
 
-export default router;
+function fetchCompat(urlStr: string): Promise<{ ok: boolean; status: number; text: string }> {
+  return new Promise((resolve) => {
+    try {
+      const u = new URL(urlStr);
+      const lib = u.protocol === 'https:' ? https : http;
+      const req = lib.request(urlStr, { method: 'GET' }, (resp) => {
+        const chunks: Buffer[] = [];
+        resp.on('data', (d) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
+        resp.on('end', () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          resolve({ ok: (resp.statusCode||0) >= 200 && (resp.statusCode||0) < 300, status: resp.statusCode||0, text });
+        });
+      });
+      req.on('error', () => resolve({ ok: false, status: 0, text: 'connection error' }));
+      req.end();
+    } catch {
+      resolve({ ok: false, status: 0, text: 'invalid url' });
+    }
+  });
+}
 
+router.get('/health', async (req, res) => {
+  const provider = (req.query.provider as string) || '';
+  const baseUrl = (req.query.baseUrl as string) || '';
+  if (!provider || !baseUrl) {
+    return res.send(html(`
+      <h2>Health Check</h2>
+      <form method="get" action="/setup/health">
+        <div class="row">
+          <div><label>Provider<select name="provider"><option>ollama</option></select></label></div>
+          <div><label>Base URL<input name="baseUrl" placeholder="http://host:11434"/></label></div>
+        </div>
+        <button type="submit">Check</button>
+      </form>
+    `));
+  }
+
+  if (provider !== 'ollama') {
+    return res.status(400).send(html(`<p class="warn">Only ollama health checks are supported here.</p>`));
+  }
+  const pingUrl = new URL('/api/tags', baseUrl).toString();
+  const r = await fetchCompat(pingUrl);
+  return res.send(html(`
+    <h2>Health Check Result</h2>
+    <p>Provider: <b>${provider}</b></p>
+    <p>Base URL: <code>${baseUrl}</code></p>
+    <p>Status: <b class="${r.ok?'ok':'warn'}">${r.status} ${r.ok?'OK':'FAIL'}</b></p>
+    <pre>${r.text.substring(0, 1000)}</pre>
+  `));
+});
+
+export default router;
