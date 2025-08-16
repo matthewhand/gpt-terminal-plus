@@ -272,35 +272,61 @@ function fetchCompat(urlStr: string): Promise<{ ok: boolean; status: number; tex
   });
 }
 
+
 router.get('/health', async (req, res) => {
   const provider = (req.query.provider as string) || '';
   const baseUrl = (req.query.baseUrl as string) || '';
+  const apiKey = (req.query.apiKey as string) || '';
   if (!provider || !baseUrl) {
     return res.send(html(`
       <h2>Health Check</h2>
       <form method="get" action="/setup/health">
         <div class="row">
-          <div><label>Provider<select name="provider"><option>ollama</option></select></label></div>
-          <div><label>Base URL<input name="baseUrl" placeholder="http://host:11434"/></label></div>
+          <div><label>Provider<select name="provider"><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
+          <div><label>Base URL<input name="baseUrl" placeholder="http://host:11434 or https://api.openai.com"/></label></div>
         </div>
+        <div><label>API Key (for OpenAI)<input name="apiKey" placeholder="sk-..."/></label></div>
         <button type="submit">Check</button>
       </form>
     `));
   }
 
-  if (provider !== 'ollama') {
-    return res.status(400).send(html(`<p class="warn">Only ollama health checks are supported here.</p>`));
+  let url: string = baseUrl;
+  let result: { ok: boolean; status: number; text: string } = { ok: false, status: 0, text: '' };
+  if (provider === 'ollama') {
+    url = new URL('/api/tags', baseUrl).toString();
+    result = await fetchCompat(url);
+  } else if (provider === 'lmstudio') {
+    url = new URL('/v1/models', baseUrl).toString();
+    result = await fetchCompat(url);
+  } else if (provider === 'openai') {
+    url = new URL('/v1/models', baseUrl).toString();
+    result = await new Promise((resolve) => {
+      try {
+        const u = new URL(url);
+        const lib = u.protocol === 'https:' ? https : http;
+        const req2 = lib.request(url, { method: 'GET', headers: { Authorization: `Bearer ${apiKey}` } }, (resp) => {
+          const chunks: Buffer[] = [];
+          resp.on('data', (d) => chunks.push(Buffer.isBuffer(d) ? d : Buffer.from(d)));
+          resp.on('end', () => resolve({ ok: (resp.statusCode||0) >= 200 && (resp.statusCode||0) < 300, status: resp.statusCode||0, text: Buffer.concat(chunks).toString('utf8') }));
+        });
+        req2.on('error', () => resolve({ ok: false, status: 0, text: 'connection error' }));
+        req2.end();
+      } catch { resolve({ ok: false, status: 0, text: 'invalid url' }); }
+    });
+  } else {
+    return res.status(400).send(html(`<p class="warn">Unsupported provider: ${provider}</p>`));
   }
-  const pingUrl = new URL('/api/tags', baseUrl).toString();
-  const r = await fetchCompat(pingUrl);
+
   return res.send(html(`
     <h2>Health Check Result</h2>
     <p>Provider: <b>${provider}</b></p>
     <p>Base URL: <code>${baseUrl}</code></p>
-    <p>Status: <b class="${r.ok?'ok':'warn'}">${r.status} ${r.ok?'OK':'FAIL'}</b></p>
-    <pre>${r.text.substring(0, 1000)}</pre>
+    <p>Status: <b class="${result.ok?'ok':'warn'}">${result.status} ${result.ok?'OK':'FAIL'}</b></p>
+    <pre>${result.text.substring(0, 2000)}</pre>
   `));
 });
+
 
 
 // Safety policy editor
