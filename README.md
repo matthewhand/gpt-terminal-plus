@@ -48,6 +48,14 @@ The primary purpose of GPT Terminal Plus is to grant access to system CLI utilit
 - **GitHub Workflows for CI/CD**: Automated testing, Docker registry uploads, and Fly.io deployment.
 - **Multistage Builds for Performance Optimisation**: Includes a TypeScript compiler to improve performance and optimise the final image size.
 
+## API Overview
+
+- Models: list/select current model via `/model` routes.
+- Chat: generate replies via `POST /chat/completions`.
+- Streaming: add `"stream": true` for Server‑Sent Events (SSE).
+
+Examples and details in `docs/API.md`.
+
 ## Advanced Setup
 
 For more advanced setup options, such as using Docker or deploying to Fly.io, refer to the following documentation:
@@ -56,6 +64,7 @@ For more advanced setup options, such as using Docker or deploying to Fly.io, re
 - [Fly.io Deployment](docs/FLY_IO_DEPLOYMENT.md)
 - [Configuration Details](docs/CONFIGURATION.md)
 - [Supporting Scripts](docs/SUPPORTING_SCRIPTS.md)
+ - [API Guide](docs/API.md)
 
 ## Configuration
 
