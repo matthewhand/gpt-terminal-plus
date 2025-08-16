@@ -43,6 +43,7 @@ router.get('/', (_req: Request, res: Response) => {
 router.get('/local', (_req, res) => {
   const cfg = loadRawConfig();
   const local = cfg.local || { hostname: 'localhost', code: true };
+  const llm = (local && local.llm) || {};
   res.send(html(`
     <h2>Local Endpoint</h2>
     <form method="post" action="/setup/local">
@@ -53,10 +54,15 @@ router.get('/local', (_req, res) => {
       <div><label>post-command<input name="postCommand" value="${local['post-command'] || ''}"/></label></div>
       <h3>Per-Server LLM (optional)</h3>
       <div class="row">
-        <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
-        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://localhost:11434"/></label></div>
+        <div><label>Provider<select name="llm.provider">
+          <option ${!llm.provider?'selected':''}></option>
+          <option ${llm.provider==='ollama'?'selected':''}>ollama</option>
+          <option ${llm.provider==='lmstudio'?'selected':''}>lmstudio</option>
+          <option ${llm.provider==='openai'?'selected':''}>openai</option>
+        </select></label></div>
+        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://localhost:11434" value="${llm.baseUrl||''}"/></label></div>
       </div>
-      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'>${llm.modelMap?JSON.stringify(llm.modelMap):''}</textarea></label></div>
       <button type="submit">Save Local</button>
     </form>
   `));
@@ -79,25 +85,36 @@ router.post('/local', (req, res) => {
   res.redirect('/setup');
 });
 
-router.get('/ssh', (_req, res) => {
+router.get('/ssh', (req, res) => {
+  const cfg = loadRawConfig();
+  const edit = (req.query.edit as string) || '';
+  const host = (cfg.ssh && cfg.ssh.hosts || []).find((h: any) => h.hostname === edit);
+  const llm = (host && host.llm) || {};
+  const isEdit = !!host;
   res.send(html(`
-    <h2>Add SSH Host</h2>
+    <h2>${isEdit ? 'Edit SSH Host' : 'Add SSH Host'}</h2>
     <form method="post" action="/setup/ssh">
+      ${isEdit ? `<input type="hidden" name="edit" value="${host.hostname}"/>` : ''}
       <div class="row">
-        <div><label>Hostname<input name="hostname" required/></label></div>
-        <div><label>Port<input name="port" value="22"/></label></div>
+        <div><label>Hostname<input name="hostname" ${isEdit?'readonly':''} value="${host?.hostname || ''}" ${isEdit?'':'required'} /></label></div>
+        <div><label>Port<input name="port" value="${host?.port || 22}"/></label></div>
       </div>
       <div class="row">
-        <div><label>Username<input name="username" value="chatgpt"/></label></div>
-        <div><label>Private Key Path<input name="privateKeyPath" value="/home/user/.ssh/id_rsa"/></label></div>
+        <div><label>Username<input name="username" value="${host?.username || 'chatgpt'}"/></label></div>
+        <div><label>Private Key Path<input name="privateKeyPath" value="${host?.privateKeyPath || '/home/user/.ssh/id_rsa'}"/></label></div>
       </div>
       <h3>Per-Server LLM (optional)</h3>
       <div class="row">
-        <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
-        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434"/></label></div>
+        <div><label>Provider<select name="llm.provider">
+          <option ${!llm.provider?'selected':''}></option>
+          <option ${llm.provider==='ollama'?'selected':''}>ollama</option>
+          <option ${llm.provider==='lmstudio'?'selected':''}>lmstudio</option>
+          <option ${llm.provider==='openai'?'selected':''}>openai</option>
+        </select></label></div>
+        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434" value="${llm.baseUrl||''}"/></label></div>
       </div>
-      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
-      <button type="submit">Add SSH Host</button>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'>${llm.modelMap?JSON.stringify(llm.modelMap):''}</textarea></label></div>
+      <button type="submit">${isEdit ? 'Save SSH Host' : 'Add SSH Host'}</button>
     </form>
   `));
 });
@@ -105,7 +122,8 @@ router.get('/ssh', (_req, res) => {
 router.post('/ssh', (req, res) => {
   const cfg = loadRawConfig();
   cfg.ssh = cfg.ssh || { hosts: [] };
-  const host: any = {
+  const isEdit = !!req.body.edit;
+  let host: any = {
     protocol: 'ssh',
     hostname: req.body.hostname,
     port: Number(req.body.port) || 22,
@@ -119,27 +137,47 @@ router.post('/ssh', (req, res) => {
     try { llm.modelMap = JSON.parse(req.body['llm.modelMap']); } catch {}
   }
   if (Object.keys(llm).length) host.llm = llm;
-  cfg.ssh.hosts.push(host);
+  if (isEdit) {
+    const i = cfg.ssh.hosts.findIndex((h: any) => h.hostname === req.body.edit);
+    if (i >= 0) {
+      cfg.ssh.hosts[i] = { ...cfg.ssh.hosts[i], ...host };
+    } else {
+      cfg.ssh.hosts.push(host);
+    }
+  } else {
+    cfg.ssh.hosts.push(host);
+  }
   saveRawConfig(cfg);
   res.redirect('/setup');
 });
 
-router.get('/ssm', (_req, res) => {
+router.get('/ssm', (req, res) => {
+  const cfg = loadRawConfig();
+  const edit = (req.query.edit as string) || '';
+  const target = (cfg.ssm && cfg.ssm.targets || []).find((t: any) => t.instanceId === edit);
+  const llm = (target && target.llm) || {};
+  const isEdit = !!target;
   res.send(html(`
-    <h2>Add SSM Target</h2>
+    <h2>${isEdit ? 'Edit SSM Target' : 'Add SSM Target'}</h2>
     <form method="post" action="/setup/ssm">
+      ${isEdit ? `<input type=hidden name="edit" value="${target.instanceId}"/>` : ''}
       <div class="row">
-        <div><label>Instance ID<input name="instanceId" required/></label></div>
-        <div><label>Region<input name="region" value="us-west-2"/></label></div>
+        <div><label>Instance ID<input name="instanceId" ${isEdit?'readonly':''} value="${target?.instanceId || ''}" ${isEdit?'':'required'} /></label></div>
+        <div><label>Region<input name="region" value="${target?.region || 'us-west-2'}"/></label></div>
       </div>
-      <div><label>Hostname (label)<input name="hostname" placeholder="optional label"/></label></div>
+      <div><label>Hostname (label)<input name="hostname" value="${target?.hostname || ''}" placeholder="optional label"/></label></div>
       <h3>Per-Server LLM (optional)</h3>
       <div class="row">
-        <div><label>Provider<select name="llm.provider"><option></option><option>ollama</option><option>lmstudio</option><option>openai</option></select></label></div>
-        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434"/></label></div>
+        <div><label>Provider<select name="llm.provider">
+          <option ${!llm.provider?'selected':''}></option>
+          <option ${llm.provider==='ollama'?'selected':''}>ollama</option>
+          <option ${llm.provider==='lmstudio'?'selected':''}>lmstudio</option>
+          <option ${llm.provider==='openai'?'selected':''}>openai</option>
+        </select></label></div>
+        <div><label>Base URL<input name="llm.baseUrl" placeholder="http://host:11434" value="${llm.baseUrl||''}"/></label></div>
       </div>
-      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'></textarea></label></div>
-      <button type="submit">Add SSM Target</button>
+      <div><label>Model Map (JSON)<textarea name="llm.modelMap" rows="4" placeholder='{"gpt-oss:20b":"llama3.1:8b-instruct"}'>${llm.modelMap?JSON.stringify(llm.modelMap):''}</textarea></label></div>
+      <button type="submit">${isEdit ? 'Save SSM Target' : 'Add SSM Target'}</button>
     </form>
   `));
 });
@@ -147,7 +185,8 @@ router.get('/ssm', (_req, res) => {
 router.post('/ssm', (req, res) => {
   const cfg = loadRawConfig();
   cfg.ssm = cfg.ssm || { targets: [], region: req.body.region || 'us-west-2' };
-  const target: any = {
+  const isEdit = !!req.body.edit;
+  let target: any = {
     protocol: 'ssm',
     instanceId: req.body.instanceId,
     region: req.body.region || cfg.ssm.region,
@@ -160,7 +199,13 @@ router.post('/ssm', (req, res) => {
     try { llm.modelMap = JSON.parse(req.body['llm.modelMap']); } catch {}
   }
   if (Object.keys(llm).length) target.llm = llm;
-  cfg.ssm.targets.push(target);
+  if (isEdit) {
+    const i = cfg.ssm.targets.findIndex((t: any) => t.instanceId === req.body.edit);
+    if (i >= 0) cfg.ssm.targets[i] = { ...cfg.ssm.targets[i], ...target };
+    else cfg.ssm.targets.push(target);
+  } else {
+    cfg.ssm.targets.push(target);
+  }
   saveRawConfig(cfg);
   res.redirect('/setup');
 });
