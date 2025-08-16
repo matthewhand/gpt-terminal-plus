@@ -65,13 +65,13 @@ See docs/API.md → AI Error Analysis.
 
 Examples and details in `docs/API.md`.
 
-## Evidence
+## Showcase
 
-Sample outputs from a real run are captured in `docs/EVIDENCE.generated.md` (auto‑generated) and the curated `docs/EVIDENCE.md`.
+Sample outputs from a real run are captured in `docs/SHOWCASE.generated.md` (auto‑generated) and the curated `docs/SHOWCASE.md`.
 
 Generate fresh evidence locally:
 
-- `API_TOKEN=secret BASE_URL=http://localhost:5005 OLLAMA_URL=http://localhost:11434 npm run evidence`
+- `API_TOKEN=secret BASE_URL=http://localhost:5005 OLLAMA_URL=http://localhost:11434 npm run showcase`
 
 
 - Setup Health Check: see section 1

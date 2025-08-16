@@ -17,10 +17,10 @@ JQ=${JQ:-jq}
 HAS_JQ=1
 command -v jq >/dev/null 2>&1 || HAS_JQ=0
 
-outfile="docs/EVIDENCE.generated.md"
+outfile="docs/SHOWCASE.generated.md"
 mkdir -p docs
 {
-  echo "# Evidence (Auto-Generated)"
+  echo "# Showcase (Auto-Generated)"
   echo
   echo "Generated on: $(date -Is)"
 } > "$outfile"
