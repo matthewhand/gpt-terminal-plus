@@ -30,7 +30,7 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         // Placeholder for SSH command execution
         sshServerDebug(`Executing SSH command: ${command}`);
-        return { stdout: 'SSH command executed', stderr: '' };
+        return { stdout: 'SSH command executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**
@@ -39,7 +39,7 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         // Placeholder implementation
         sshServerDebug(`Executing SSH code: ${code} in language: ${language}`);
-        return { stdout: 'SSH code executed', stderr: '' };
+        return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**

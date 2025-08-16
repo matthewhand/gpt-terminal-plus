@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Debug from "debug";
 import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
+import { analyzeError } from "../../llm/errorAdvisor";
 
 const debug = Debug("app:command:execute-code");
 
@@ -25,10 +26,20 @@ export const executeCode = async (req: Request, res: Response) => {
   try {
     const server = getServerHandler(req);
     const result = await server.executeCode(code, language);
-    debug(`Code executed: ${code}, result: ${result}`);
-    res.status(200).json({ result });
+    debug(`Code executed: ${code}, result: ${JSON.stringify(result)}`);
+    let aiAnalysis;
+    if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
+      aiAnalysis = await analyzeError({ kind: 'code', input: code, language, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
+    }
+    res.status(200).json({ result, aiAnalysis });
   } catch (err) {
     debug(`Error executing code: ${err instanceof Error ? err.message : String(err)}`);
-    handleServerError(err, res, "Error executing code");
+    try {
+      const msg = err instanceof Error ? err.message : String(err);
+      const aiAnalysis = await analyzeError({ kind: 'code', input: code, language, stderr: msg });
+      res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
+    } catch (_) {
+      handleServerError(err, res, "Error executing code");
+    }
   }
 };

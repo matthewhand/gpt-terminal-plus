@@ -1,5 +1,6 @@
 export interface ExecutionResult {
   stdout: string;
   stderr: string;
-  error?: boolean; // Make error optional
+  error?: boolean;
+  exitCode?: number;
 }

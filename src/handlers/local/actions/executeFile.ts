@@ -37,13 +37,14 @@ export async function executeFile(
     // Execute the file and capture the output
     const { stdout, stderr } = await execFileAsync(filename, [], options);
     executeFileDebug(`Execution successful. stdout: ${stdout}, stderr: ${stderr}`);
-    return { stdout, stderr, error: false };
+    return { stdout, stderr, error: false, exitCode: 0 };
   } catch (error) {
     executeFileDebug(`Execution failed. Error: ${(error as Error).message}`);
     return {
       stdout: '',
       stderr: (error as Error).message,
-      error: true
+      error: true,
+      exitCode: (error as any)?.code ?? 1
     };
   }
 }

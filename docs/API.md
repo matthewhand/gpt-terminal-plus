@@ -83,3 +83,27 @@ curl -N -X POST http://localhost:5005/chat/completions \
 
 - `GET /mcp/messages` (SSE) is available if `USE_MCP=true`.
 - The server registers tools that mirror selected Express routes, including model list/select.
+
+## AI Error Analysis
+
+When an execution returns a non‑zero exit code, endpoints attach an `aiAnalysis` field with concise, actionable guidance.
+
+- Affected endpoints:
+  - `POST /command/execute`
+  - `POST /command/execute-code`
+  - `POST /command/execute-file`
+
+- Response shape (example):
+  ```json
+  {
+    "result": { "stdout": "", "stderr": "No such file or directory", "exitCode": 127, "error": true },
+    "aiAnalysis": {
+      "model": "gpt-oss:20b",
+      "text": "The command failed because X. Try installing Y or updating PATH: ..."
+    }
+  }
+  ```
+
+- Behavior:
+  - Prefers `gpt-oss:20b` if supported; otherwise falls back to the currently selected model.
+  - The feature can be disabled with `AUTO_ANALYZE_ERRORS=false`.

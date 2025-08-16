@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Debug from 'debug';
 import { handleServerError } from '../../utils/handleServerError';
 import { getServerHandler } from '../../utils/getServerHandler';
+import { analyzeError } from '../../llm/errorAdvisor';
 
 const debug = Debug("app:command:execute-file");
 
@@ -24,9 +25,19 @@ export const executeFile = async (req: Request, res: Response) => {
     const server = getServerHandler(req);
     const result = await server.executeFile(filename, directory);
     debug(`File executed: ${filename}, result: ${JSON.stringify(result)}`);
-    res.status(200).json({ result });
+    let aiAnalysis;
+    if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
+      aiAnalysis = await analyzeError({ kind: 'file', input: filename, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
+    }
+    res.status(200).json({ result, aiAnalysis });
   } catch (err) {
     debug(`Error executing file: ${err instanceof Error ? err.message : String(err)}`);
-    handleServerError(err, res, "Error executing file");
+    try {
+      const msg = err instanceof Error ? err.message : String(err);
+      const aiAnalysis = await analyzeError({ kind: 'file', input: filename, stderr: msg });
+      res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
+    } catch (_) {
+      handleServerError(err, res, "Error executing file");
+    }
   }
 };

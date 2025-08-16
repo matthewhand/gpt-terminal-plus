@@ -25,7 +25,7 @@ export async function executeLocalCode(
     throw new Error('Language is required for code execution.');
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     // Construct the command to execute, optionally including the directory
     const command = directory
       ? `cd ${directory} && ${language} -c "${code}"`
@@ -33,10 +33,11 @@ export async function executeLocalCode(
 
     exec(command, { timeout: timeout }, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error('Failed to execute code: ' + error.message));
+        const exitCode = (error as any)?.code ?? 1;
+        resolve({ stdout, stderr, error: true, exitCode });
         return;
       }
-      resolve({ stdout, stderr });
+      resolve({ stdout, stderr, error: false, exitCode: 0 });
     });
   });
 }

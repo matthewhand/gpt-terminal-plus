@@ -30,7 +30,7 @@ export class SsmServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         // Placeholder for SSM command execution
         ssmServerDebug(`Executing SSM command: ${command}`);
-        return { stdout: 'SSM command executed', stderr: '' };
+        return { stdout: 'SSM command executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**
@@ -39,7 +39,7 @@ export class SsmServerHandler extends AbstractServerHandler {
     async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         // Placeholder implementation
         ssmServerDebug(`Executing SSM code: ${code} in language: ${language}`);
-        return { stdout: 'SSM code executed', stderr: '' };
+        return { stdout: 'SSM code executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**

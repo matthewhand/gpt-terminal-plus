@@ -30,10 +30,11 @@ export async function executeFile(
         sshClient.exec(command, (err, stream) => {
             if (err) {
                 executeFileDebug(`Error executing file: ${err.message}`);
-                return reject({
+                return resolve({
                     stdout: '',
                     stderr: err.message,
                     error: true,
+                    exitCode: 1,
                 } as ExecutionResult);
             }
 
@@ -45,7 +46,8 @@ export async function executeFile(
                 resolve({
                     stdout,
                     stderr,
-                    error: code !== 0,
+                    error: (code ?? 1) !== 0,
+                    exitCode: code ?? 1,
                 } as ExecutionResult);
             });
 
@@ -61,10 +63,11 @@ export async function executeFile(
                 setTimeout(() => {
                     stream.close();
                     executeFileDebug(`Timeout of ${timeout} ms reached, stream closed`);
-                    reject({
+                    resolve({
                         stdout,
                         stderr,
                         error: true,
+                        exitCode: 124,
                     } as ExecutionResult);
                 }, timeout);
             }

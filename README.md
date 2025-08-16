@@ -1,5 +1,7 @@
 # GPT Terminal Plus
 
+Competition entry: AI-assisted CLI with automatic error diagnosis powered by gpt-oss:20b.
+
 ## Quickstart
 
 ### Run Directly from Docker Hub
@@ -31,7 +33,7 @@ For more detailed instructions and alternative installation methods, please refe
 
 ## Introduction
 
-GPT Terminal Plus provides a secure and isolated environment where system CLI utilities can be accessed via HTTP endpoints. These endpoints allow chatbots, such as custom GPT models, to execute commands and retrieve results, ensuring strong isolation and security.
+GPT Terminal Plus provides a secure and isolated environment where system CLI utilities can be accessed via HTTP endpoints. Beyond simple command execution, it performs automatic AI analysis of failures and returns actionable fixes back to the calling AI.
 
 ## Purpose
 
@@ -40,13 +42,20 @@ The primary purpose of GPT Terminal Plus is to grant access to system CLI utilit
 - **Resource Management**: Docker allows setting resource limits for each container, ensuring one tool does not consume excessive resources, preventing denial-of-service scenarios caused by resource exhaustion.
 - **Scalability**: Docker containers are lightweight and can be easily scaled up or down based on demand, allowing for efficient resource utilisation and potential cost savings in cloud environments.
 
-## Key Features
-- **File Management**: Create, read, update, and delete files securely.
-- **Command Execution**: Run system commands using various shells (Python, PowerShell, Bash).
-- **Remote Server Control**: Use SSH or AWS SSM for managing servers.
-- **Extensibility with Docker**: Configure using Docker for environment variables and storage.
-- **GitHub Workflows for CI/CD**: Automated testing, Docker registry uploads, and Fly.io deployment.
-- **Multistage Builds for Performance Optimisation**: Includes a TypeScript compiler to improve performance and optimise the final image size.
+## Primary Feature
+
+- AI Error Analysis and Autodiagnostics: when a shell, code, or file execution exits non‑zero, the system invokes `gpt-oss:20b` (if available) to analyze `stderr`, `stdout`, and `exitCode`, returning concise remediation steps and suggested fixes in the response. This provides immediate, high‑value feedback to the calling AI.
+
+See details in docs/API.md under “AI Error Analysis”.
+
+## Secondary Features
+- Command Execution: Run system commands using Bash; execute code (Python, TypeScript); run files.
+- Model Selection: Choose logical models via `/model` routes; providers: Ollama, LM Studio, OpenAI.
+- Streaming Chat: `POST /chat/completions` with SSE streaming, heartbeats, and error events.
+- File Management: Create, read, update, and delete files securely.
+- Remote Server Control: Use SSH or AWS SSM for managing servers.
+- Extensibility with Docker: Configure using Docker for environment variables and storage.
+- CI/CD and Packaging: GitHub workflows and multistage builds for performance.
 
 ## API Overview
 
@@ -74,19 +83,13 @@ This document details the environment variables used in the GPT Terminal Plus ap
 
 Refer to [Configuration Details](docs/CONFIGURATION.md) for detailed information.
 
-## Contribution
+## Competition Entry and Contribution
 
-Contributions are welcome for CLI software that follows a similar architecture. Each tool should have an exposed HTTP endpoint for ChatGPT custom GPT to access.
+This project is repackaged from an original ChatGPT action to emphasize autonomous AI diagnosis and recovery. Contributions are welcome, especially enhancements that improve the error analysis feedback loop, execution safety, and portability.
 
 - **Examples**: Refer to the `docker/` directory for customised Docker container examples.
 - **Deployment**: Refer to `.github/workflows/` for CI/CD setup and `fly_configs/` for deployment examples on Fly.io.
 
-## TODO
+## Roadmap
 
-- Implement `gpt-oss:20b` model support:
-  - Add model registration and configuration.
-  - Expose selection via config/env and API.
-  - Ensure tokenizer/streaming compatibility and tests.
-  - Update docs and examples.
-
-For a fuller list, see `docs/TODO.md`.
+See `docs/ROADMAP.md` for an ambitious, multi‑phase plan and deep TODOs.

@@ -1,14 +1,14 @@
 import { PaginatedResponse } from './PaginatedResponse';
 import { SystemInfo } from './SystemInfo';
 import { ServerConfig } from './ServerConfig';
-import { ExecutionResult } from './ExecutionResult'; // Importing the type for executeCode
+import { ExecutionResult } from './ExecutionResult';
 
 export interface ServerHandler {
   setServerConfig(serverConfig: ServerConfig): void;
   getSystemInfo(): Promise<SystemInfo>;
   changeDirectory(directory: string): Promise<boolean>;
   presentWorkingDirectory(): Promise<string>;
-  executeCommand(command: string, timeout?: number, directory?: string): Promise<{ stdout: string; stderr: string }>;
+  executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
   executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
   executeFile(filename: string, directory?: string, timeout?: number): Promise<ExecutionResult>;
   createFile(filePath: string, content: string, backup: boolean): Promise<boolean>;
