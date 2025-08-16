@@ -65,6 +65,15 @@ See docs/API.md → AI Error Analysis.
 
 Examples and details in `docs/API.md`.
 
+## Setup UI
+
+Navigate to `/setup` (requires the same API auth) to configure:
+
+- Local/SSH/SSM endpoints that can execute shell, code, and LLM plans.
+- Global AI provider defaults (Ollama, LM Studio, OpenAI).
+- Optional per-server LLM endpoints (e.g., remote Ollama instances).
+
+
 ## Advanced Setup
 
 For more advanced setup options, such as using Docker or deploying to Fly.io, refer to the following documentation:
