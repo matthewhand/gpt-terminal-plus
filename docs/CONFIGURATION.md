@@ -199,6 +199,11 @@ The chat API uses a provider adapter with sensible defaults. You can configure t
 ```ini
 # Optional: default logical model to use if none selected
 DEFAULT_MODEL=gpt-oss:20b
+AI_PROVIDER=ollama   # or lmstudio, openai
+OLLAMA_BASE_URL=http://localhost:11434
+LMSTUDIO_BASE_URL=http://localhost:1234
+OPENAI_BASE_URL=https://api.openai.com
+OPENAI_API_KEY=sk-...
 ```
 
 ### Config Structure (config/production.json or config/test/test.json)

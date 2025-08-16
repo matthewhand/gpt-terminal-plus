@@ -3,16 +3,18 @@ import Debug from 'debug';
 import { ChatRequest, ChatResponse } from './types';
 import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama';
 import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio';
+import { chatWithOpenAI, chatWithOpenAIStream, OpenAIConfig } from './providers/openai';
 
 const debug = Debug('app:llm:index');
 
-export type ProviderName = 'ollama' | 'lmstudio';
+export type ProviderName = 'ollama' | 'lmstudio' | 'openai';
 
 interface AIConfig {
   provider: ProviderName;
   providers: {
     ollama?: OllamaConfig;
     lmstudio?: LmStudioConfig;
+    openai?: OpenAIConfig;
   };
 }
 
@@ -31,6 +33,10 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
       const cfg: LmStudioConfig = aiCfg.providers?.lmstudio || { baseUrl: 'http://localhost:1234' };
       return chatWithLmStudio(cfg, req);
     }
+    case 'openai': {
+      const cfg: OpenAIConfig = aiCfg.providers?.openai || { baseUrl: 'https://api.openai.com' };
+      return chatWithOpenAI(cfg, req);
+    }
   }
 }
 
@@ -39,14 +45,29 @@ export function getAIConfig(): AIConfig {
     // Expecting config under key 'ai'
     const ai = config.has('ai') ? config.get<AIConfig>('ai') : {
       provider: 'ollama',
-      providers: { ollama: { baseUrl: 'http://localhost:11434' }, lmstudio: { baseUrl: 'http://localhost:1234' } }
+      providers: { ollama: { baseUrl: 'http://localhost:11434' }, lmstudio: { baseUrl: 'http://localhost:1234' }, openai: { baseUrl: 'https://api.openai.com' } }
     } as AIConfig;
+    // Environment overrides
+    const envProvider = process.env.AI_PROVIDER as ProviderName | undefined;
+    if (envProvider) ai.provider = envProvider;
+    if (process.env.OLLAMA_BASE_URL) {
+      ai.providers.ollama = { ...(ai.providers.ollama || {} as any), baseUrl: process.env.OLLAMA_BASE_URL };
+    }
+    if (process.env.LMSTUDIO_BASE_URL) {
+      ai.providers.lmstudio = { ...(ai.providers.lmstudio || {} as any), baseUrl: process.env.LMSTUDIO_BASE_URL };
+    }
+    if (process.env.OPENAI_BASE_URL) {
+      ai.providers.openai = { ...(ai.providers.openai || {} as any), baseUrl: process.env.OPENAI_BASE_URL };
+    }
+    if (process.env.OPENAI_API_KEY) {
+      ai.providers.openai = { ...(ai.providers.openai || {} as any), apiKey: process.env.OPENAI_API_KEY };
+    }
     return ai;
   } catch (e) {
     debug('AI config not found, using defaults');
     return {
       provider: 'ollama',
-      providers: { ollama: { baseUrl: 'http://localhost:11434' }, lmstudio: { baseUrl: 'http://localhost:1234' } }
+      providers: { ollama: { baseUrl: 'http://localhost:11434' }, lmstudio: { baseUrl: 'http://localhost:1234' }, openai: { baseUrl: 'https://api.openai.com' } }
     };
   }
 }
@@ -60,6 +81,13 @@ export async function* chatStream(req: ChatRequest): AsyncGenerator<string> {
     case 'lmstudio': {
       const cfg: LmStudioConfig = aiCfg.providers?.lmstudio || { baseUrl: 'http://localhost:1234' };
       for await (const chunk of chatWithLmStudioStream(cfg, req)) {
+        yield chunk;
+      }
+      break;
+    }
+    case 'openai': {
+      const cfg: OpenAIConfig = aiCfg.providers?.openai || { baseUrl: 'https://api.openai.com' };
+      for await (const chunk of chatWithOpenAIStream(cfg, req)) {
         yield chunk;
       }
       break;

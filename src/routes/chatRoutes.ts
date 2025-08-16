@@ -79,3 +79,48 @@ router.post('/completions', async (req: Request, res: Response) => {
 });
 
 export default router;
+/**
+ * GET /chat/models
+ * Returns logical supported models and provider model map.
+ */
+router.get('/models', (_req: Request, res: Response) => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getSupportedModels } = require('../common/models');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getAIConfig } = require('../llm');
+    const supported = getSupportedModels();
+    const aiCfg = getAIConfig();
+    const modelMaps: Record<string, Record<string, string> | undefined> = {
+      ollama: aiCfg.providers?.ollama?.modelMap,
+      lmstudio: aiCfg.providers?.lmstudio?.modelMap,
+      openai: aiCfg.providers?.openai?.modelMap,
+    };
+    res.status(200).json({ supported, modelMaps, provider: aiCfg.provider });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load model maps', error: (error as Error).message });
+  }
+});
+
+/**
+ * GET /chat/providers
+ * Returns configured provider and endpoints (sanitized).
+ */
+router.get('/providers', (_req: Request, res: Response) => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getAIConfig } = require('../llm');
+    const aiCfg = getAIConfig();
+    const providers = {
+      provider: aiCfg.provider,
+      endpoints: {
+        ollama: aiCfg.providers?.ollama?.baseUrl,
+        lmstudio: aiCfg.providers?.lmstudio?.baseUrl,
+        openai: aiCfg.providers?.openai?.baseUrl,
+      }
+    };
+    res.status(200).json(providers);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to load providers', error: (error as Error).message });
+  }
+});

@@ -68,6 +68,17 @@ curl -N -X POST http://localhost:5005/chat/completions \
 
 - Heartbeats: the stream sends `: keep-alive` comments periodically and an initial `: connected` comment to keep connections healthy.
 
+## Chat Utility Endpoints
+
+- `GET /chat/models` — returns:
+  - `supported`: logical supported models for this app
+  - `modelMaps`: provider-specific model mappings
+  - `provider`: the active provider name
+
+- `GET /chat/providers` — returns:
+  - `provider`: the active provider
+  - `endpoints`: provider base URLs (sanitized)
+
 ## MCP (optional)
 
 - `GET /mcp/messages` (SSE) is available if `USE_MCP=true`.
