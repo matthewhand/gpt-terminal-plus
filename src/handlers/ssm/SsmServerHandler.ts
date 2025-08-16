@@ -4,6 +4,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import Debug from 'debug';
+import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
 
 const ssmServerDebug = Debug('app:SsmServerHandler');
 
@@ -28,9 +29,42 @@ export class SsmServerHandler extends AbstractServerHandler {
      * Executes a command on the SSM server.
      */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        // Placeholder for SSM command execution
-        ssmServerDebug(`Executing SSM command: ${command}`);
-        return { stdout: 'SSM command executed', stderr: '', error: false, exitCode: 0 };
+        ssmServerDebug(`Executing SSM command via AWS SSM: ${command}`);
+        const client = new SSMClient({ region: this.ssmConfig.region });
+        const script = directory ? `cd ${directory} && ${command}` : command;
+        try {
+            const send = await client.send(new SendCommandCommand({
+                InstanceIds: [ this.ssmConfig.instanceId ],
+                DocumentName: 'AWS-RunShellScript',
+                Parameters: { commands: [ script ] }
+            }));
+            const commandId = send.Command?.CommandId as string;
+            const start = Date.now();
+            const maxMs = timeout && timeout > 0 ? timeout : 300000; // default 5m
+            while (true) {
+                const inv = await client.send(new GetCommandInvocationCommand({
+                    CommandId: commandId,
+                    InstanceId: this.ssmConfig.instanceId
+                }));
+                const status = inv.Status;
+                if (status === 'Success' || status === 'Failed' || status === 'Cancelled' || status === 'TimedOut') {
+                    const exitCode = inv.ResponseCode ?? (status === 'Success' ? 0 : 1);
+                    return {
+                        stdout: inv.StandardOutputContent || '',
+                        stderr: inv.StandardErrorContent || '',
+                        error: exitCode !== 0,
+                        exitCode
+                    };
+                }
+                if (Date.now() - start > maxMs) {
+                    return { stdout: '', stderr: 'SSM command timeout', error: true, exitCode: 124 };
+                }
+                await new Promise(r => setTimeout(r, 1500));
+            }
+        } catch (e) {
+            ssmServerDebug('SSM execute error: ' + String(e));
+            return { stdout: '', stderr: String(e), error: true, exitCode: 1 };
+        }
     }
 
     /**

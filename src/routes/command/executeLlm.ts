@@ -23,7 +23,7 @@ function extractJsonArray(text: string): any {
 }
 
 export const executeLlm = async (req: Request, res: Response) => {
-  const { instructions, dryRun = false, model } = req.body || {};
+  const { instructions, dryRun = false, model, stream = false } = req.body || {};
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });
   }
@@ -37,8 +37,8 @@ export const executeLlm = async (req: Request, res: Response) => {
     }
 
     // Gate: allow local by default; for ssh require per-server llm with provider 'ollama'; ssm not implemented
-    if (serverConfig.protocol === 'ssm') {
-      return res.status(501).json({ error: `execute-llm not implemented for protocol ${serverConfig.protocol}` });
+    if (serverConfig.protocol === 'ssm' && stream) {
+      return res.status(501).json({ error: 'execute-llm streaming is not supported for SSM protocol' });
     }
     if (serverConfig.protocol === 'ssh') {
       const ok = !!(serverConfig as any).llm && (serverConfig as any).llm.provider === 'ollama' && (serverConfig as any).llm.baseUrl;
@@ -73,19 +73,57 @@ export const executeLlm = async (req: Request, res: Response) => {
     const plan = { model: selectedModel, provider: resp.provider, commands };
 
     if (dryRun || commands.length === 0) {
+      if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.write(`event: plan\n`);
+        res.write(`data: ${JSON.stringify(plan)}\n\n`);
+        res.write('event: done\n');
+        res.write('data: {}\n\n');
+        return res.end();
+      }
       return res.status(200).json({ plan, results: [] });
     }
 
     const handler = getServerHandler(req);
     const results = [] as any[];
-    for (const step of commands) {
+
+    if (stream) {
+      if (serverConfig.protocol === 'ssm') {
+        return res.status(501).json({ error: 'execute-llm streaming is not supported for SSM protocol' });
+      }
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.write(`event: plan\n`);
+      res.write(`data: ${JSON.stringify(plan)}\n\n`);
+    }
+
+    for (let i = 0; i < commands.length; i++) {
+      const step = commands[i];
+      if (stream) {
+        res.write(`event: step\n`);
+        res.write(`data: ${JSON.stringify({ index: i, status: 'start', cmd: step.cmd, explain: step.explain })}\n\n`);
+      }
       const r = await handler.executeCommand(step.cmd);
       let aiAnalysis;
       if ((r?.exitCode !== undefined && r.exitCode !== 0) || r?.error) {
         aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
       }
-      results.push({ cmd: step.cmd, explain: step.explain, ...r, aiAnalysis });
+      const payload = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, ...r, aiAnalysis };
+      results.push(payload);
+      if (stream) {
+        res.write(`event: step\n`);
+        res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      }
       if (r?.exitCode && r.exitCode !== 0) break; // stop on first failure
+    }
+
+    if (stream) {
+      res.write('event: done\n');
+      res.write('data: {}\n\n');
+      return res.end();
     }
 
     res.status(200).json({ plan, results });
