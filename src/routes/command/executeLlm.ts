@@ -36,6 +36,11 @@ export const executeLlm = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Selected server not found in config' });
     }
 
+    // Gate: only local protocol supported for now
+    if (serverConfig.protocol !== 'local') {
+      return res.status(501).json({ error: `execute-llm not implemented for protocol ${serverConfig.protocol}` });
+    }
+
     const selectedModel = model || getSelectedModel();
     const system = 'You translate natural language instructions into safe, reproducible shell commands.' +
       ' Output strictly JSON with shape: {"commands":[{"cmd":"...","explain":"..."}]}.' +
