@@ -5,6 +5,7 @@ import { chatForServer } from '../../llm';
 import { ServerManager } from '../../managers/ServerManager';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
+import { evaluateCommandSafety } from '../../utils/safety';
 
 const debug = Debug('app:command:execute-llm');
 
@@ -97,27 +98,56 @@ export const executeLlm = async (req: Request, res: Response) => {
 
     const plan = { model: selectedModel, provider: resp.provider, commands };
 
+    // Safety evaluation for plan
+    const safety = commands.map(c => ({ cmd: c.cmd, decision: evaluateCommandSafety(c.cmd) }));
+    const hasDeny = safety.some(s => s.decision.hardDeny);
+    const needsConfirm = safety.some(s => s.decision.needsConfirm);
+
     if (dryRun || commands.length === 0) {
       if (stream) {
         res.write(`event: plan\n`);
-        res.write(`data: ${JSON.stringify(plan)}\n\n`);
+        res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
         res.write('event: done\n');
         res.write('data: {}\n\n');
         if (heartbeat) clearInterval(heartbeat);
         return res.end();
       }
-      return res.status(200).json({ plan, results: [] });
+      return res.status(200).json({ plan, safety, results: [] });
     }
 
     const handler = getServerHandler(req);
     const results = [] as any[];
+    // Enforce safety
+    const confirmFlag = !!req.body?.confirm;
+    if (hasDeny) {
+      if (stream) {
+        res.write('event: policy\n');
+        res.write(`data: ${JSON.stringify({ blocked: true, reason: 'hard-deny', safety })}\n\n`);
+        res.write('event: done\n');
+        res.write('data: {}\n\n');
+        if (heartbeat) clearInterval(heartbeat);
+        return res.end();
+      }
+      return res.status(403).json({ error: 'Plan blocked by policy (deny)', safety, plan });
+    }
+    if (needsConfirm && !confirmFlag) {
+      if (stream) {
+        res.write('event: policy\n');
+        res.write(`data: ${JSON.stringify({ blocked: true, reason: 'needs-confirmation', safety })}\n\n`);
+        res.write('event: done\n');
+        res.write('data: {}\n\n');
+        if (heartbeat) clearInterval(heartbeat);
+        return res.end();
+      }
+      return res.status(409).json({ error: 'Confirmation required to proceed', safety, plan });
+    }
 
     if (stream) {
       if (serverConfig.protocol === 'ssm') {
         return res.status(501).json({ error: 'execute-llm streaming is not supported for SSM protocol' });
       }
       res.write(`event: plan\n`);
-      res.write(`data: ${JSON.stringify(plan)}\n\n`);
+      res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
     }
 
     for (let i = 0; i < commands.length; i++) {

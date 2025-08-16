@@ -235,9 +235,12 @@ router.post('/ai', (req, res) => {
   cfg.ai = cfg.ai || { provider: 'ollama', providers: {} };
   cfg.ai.provider = req.body.provider || cfg.ai.provider;
   cfg.ai.providers = cfg.ai.providers || {};
-  cfg.ai.providers.ollama = { ...(cfg.ai.providers.ollama || {}), baseUrl: req.body['ollama.baseUrl'] };
-  cfg.ai.providers.lmstudio = { ...(cfg.ai.providers.lmstudio || {}), baseUrl: req.body['lmstudio.baseUrl'] };
-  cfg.ai.providers.openai = { ...(cfg.ai.providers.openai || {}), baseUrl: req.body['openai.baseUrl'], apiKey: req.body['openai.apiKey'] };
+  cfg.ai.providers.ollama = { ...(cfg.ai.providers.ollama || {}), baseUrl: req.body['ollama.baseUrl'] } as any;
+  cfg.ai.providers.lmstudio = { ...(cfg.ai.providers.lmstudio || {}), baseUrl: req.body['lmstudio.baseUrl'] } as any;
+  cfg.ai.providers.openai = { ...(cfg.ai.providers.openai || {}), baseUrl: req.body['openai.baseUrl'], apiKey: req.body['openai.apiKey'] } as any;
+  try { if (req.body['ollama.modelMap']) (cfg.ai.providers.ollama as any).modelMap = JSON.parse(req.body['ollama.modelMap']); } catch {}
+  try { if (req.body['lmstudio.modelMap']) (cfg.ai.providers.lmstudio as any).modelMap = JSON.parse(req.body['lmstudio.modelMap']); } catch {}
+  try { if (req.body['openai.modelMap']) (cfg.ai.providers.openai as any).modelMap = JSON.parse(req.body['openai.modelMap']); } catch {}
   saveRawConfig(cfg);
   res.redirect('/setup');
 });
