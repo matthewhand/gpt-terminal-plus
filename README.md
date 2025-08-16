@@ -1,6 +1,6 @@
 # GPT Terminal Plus
 
-Competition entry: AI-assisted CLI with automatic error diagnosis powered by gpt-oss:20b.
+Competition entry: AI-assisted CLI with gpt-oss:20b for automatic error diagnosis and natural-language execution.
 
 ## Quickstart
 
@@ -42,11 +42,11 @@ The primary purpose of GPT Terminal Plus is to grant access to system CLI utilit
 - **Resource Management**: Docker allows setting resource limits for each container, ensuring one tool does not consume excessive resources, preventing denial-of-service scenarios caused by resource exhaustion.
 - **Scalability**: Docker containers are lightweight and can be easily scaled up or down based on demand, allowing for efficient resource utilisation and potential cost savings in cloud environments.
 
-## Primary Feature
+## Primary Features (Two Ways We Use gpt-oss:20b)
 
 - AI Error Analysis and Autodiagnostics: when a shell, code, or file execution exits non‑zero, the system invokes `gpt-oss:20b` (if available) to analyze `stderr`, `stdout`, and `exitCode`, returning concise remediation steps and suggested fixes in the response. This provides immediate, high‑value feedback to the calling AI.
 
-See details in docs/API.md under “AI Error Analysis”.
+See docs/API.md → AI Error Analysis.
 
 ## Secondary Features
 - Command Execution: Run system commands using Bash; execute code (Python, TypeScript); run files.

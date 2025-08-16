@@ -8,6 +8,7 @@ import { createFile } from "../routes/file/createFile";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
 import { getSupportedModels, isSupportedModel } from "../common/models";
 import { getSelectedModel, setSelectedModel } from "../utils/GlobalStateHelper";
+import { executeLlm } from "../routes/command/executeLlm";
 
 /**
  * Registers MCP tools to expose Express routes as discoverable MCP tools.
@@ -149,6 +150,19 @@ export const registerMcpTools = (server: McpServer) => {
     async () => {
       const selected = getSelectedModel();
       return { content: [{ type: "text", text: JSON.stringify({ selected }) }] };
+    }
+  );
+
+  // Execute LLM Tool
+  server.tool(
+    "command/execute-llm",
+    {
+      instructions: z.string(),
+      dryRun: z.boolean().optional()
+    },
+    async ({ instructions, dryRun }: { instructions: string, dryRun?: boolean }) => {
+      const result = await executeLlm({ body: { instructions, dryRun } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] } as any;
     }
   );
 };

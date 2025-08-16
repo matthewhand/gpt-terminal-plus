@@ -3,6 +3,12 @@ export interface ServerConfig {
     protocol: 'local' | 'ssh' | 'ssm';
     code?: boolean;
     'post-command'?: string;
+    llm?: {
+        provider?: 'ollama' | 'lmstudio' | 'openai';
+        baseUrl?: string;
+        apiKey?: string;
+        modelMap?: Record<string, string>;
+    };
 }
 
 export interface LocalServerConfig extends ServerConfig {

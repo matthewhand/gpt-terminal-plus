@@ -3,6 +3,7 @@ import { changeDirectory } from './command/changeDirectory';
 import { executeCommand } from './command/executeCommand';
 import { executeCode } from './command/executeCode';
 import { executeFile } from './command/executeFile'; 
+import { executeLlm } from './command/executeLlm';
 
 const router = express.Router();
 
@@ -56,6 +57,18 @@ router.post('/execute-code', (req, res) => {
 router.post('/execute-file', (req, res) => {
   console.debug('Request received for /command/execute-file with body:', req.body);
   executeFile(req, res);
+});
+
+/**
+ * Route to execute natural language instructions via an LLM plan.
+ * @route POST /command/execute-llm
+ * @access Public
+ * @param {string} instructions - High-level natural language instructions.
+ * @param {boolean} [dryRun] - If true, returns plan only without executing.
+ */
+router.post('/execute-llm', (req, res) => {
+  console.debug('Request received for /command/execute-llm with body:', req.body);
+  executeLlm(req, res);
 });
 
 export default router;

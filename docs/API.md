@@ -107,3 +107,30 @@ When an execution returns a non‑zero exit code, endpoints attach an `aiAnalysi
 - Behavior:
   - Prefers `gpt-oss:20b` if supported; otherwise falls back to the currently selected model.
   - The feature can be disabled with `AUTO_ANALYZE_ERRORS=false`.
+## LLM Execution (Natural Language → Shell)
+
+`POST /command/execute-llm`
+
+- Body:
+  ```json
+  {
+    "instructions": "Install jq and parse a JSON file",
+    "dryRun": true,
+    "model": "gpt-oss:20b"
+  }
+  ```
+- Behavior:
+  - Uses the selected model (prefers `gpt-oss:20b`) to translate natural language into a JSON plan of shell commands.
+  - If `dryRun` is `true`, returns the plan only.
+  - If `dryRun` is `false`, executes each command sequentially on the selected server and attaches `aiAnalysis` to any failing step.
+- Response example (dry-run):
+  ```json
+  {
+    "plan": {
+      "model": "gpt-oss:20b",
+      "provider": "ollama",
+      "commands": [ { "cmd": "sudo apt-get update", "explain": "Refresh package lists" } ]
+    },
+    "results": []
+  }
+  ```

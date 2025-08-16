@@ -1,6 +1,7 @@
 import config from 'config';
 import Debug from 'debug';
 import { ChatRequest, ChatResponse } from './types';
+import { ServerConfig } from '../types/ServerConfig';
 import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama';
 import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio';
 import { chatWithOpenAI, chatWithOpenAIStream, OpenAIConfig } from './providers/openai';
@@ -101,4 +102,23 @@ export async function* chatStream(req: ChatRequest): AsyncGenerator<string> {
       break;
     }
   }
+}
+
+// Per-server overrides: use llm provider settings from server config if present
+export async function chatForServer(server: ServerConfig, req: ChatRequest): Promise<ChatResponse> {
+  const llm = server.llm;
+  if (llm?.provider === 'ollama') {
+    const cfg: OllamaConfig = { baseUrl: llm.baseUrl || 'http://localhost:11434', modelMap: llm.modelMap };
+    return chatWithOllama(cfg, req);
+  }
+  if (llm?.provider === 'lmstudio') {
+    const cfg: LmStudioConfig = { baseUrl: llm.baseUrl || 'http://localhost:1234', modelMap: llm.modelMap } as any;
+    return chatWithLmStudio(cfg, req);
+  }
+  if (llm?.provider === 'openai') {
+    const cfg: OpenAIConfig = { baseUrl: llm.baseUrl || 'https://api.openai.com', apiKey: llm.apiKey, modelMap: llm.modelMap };
+    return chatWithOpenAI(cfg, req);
+  }
+  // Fallback to global config
+  return chat(req);
 }
