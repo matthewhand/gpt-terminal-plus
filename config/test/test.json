@@ -25,5 +25,16 @@
       }
     ],
     "region": "us-west-2"
+  },
+  "ai": {
+    "provider": "ollama",
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://localhost:11434",
+        "modelMap": {
+          "gpt-oss:20b": "llama3.1:8b-instruct"
+        }
+      }
+    }
   }
 }

@@ -189,3 +189,75 @@ HTTPS_CERT_PATH=path/to/your/certificate.crt
 - **HTTPS_CERT_PATH**
   - **Description**: Path to the HTTPS certificate file.
   - **Default**: path/to/your/certificate.crt
+
+## AI Providers and Models
+
+The chat API uses a provider adapter with sensible defaults. You can configure the provider and model mapping via your config files under the `ai` key, and control the default logical model with `DEFAULT_MODEL`.
+
+### Environment Variables
+
+```ini
+# Optional: default logical model to use if none selected
+DEFAULT_MODEL=gpt-oss:20b
+AI_PROVIDER=ollama   # or lmstudio, openai
+OLLAMA_BASE_URL=http://localhost:11434
+LMSTUDIO_BASE_URL=http://localhost:1234
+OPENAI_BASE_URL=https://api.openai.com
+OPENAI_API_KEY=sk-...
+```
+
+### Config Structure (config/production.json or config/test/test.json)
+
+```json
+{
+  "ai": {
+    "provider": "ollama", // or "lmstudio"
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://localhost:11434",
+        "modelMap": {
+          "gpt-oss:20b": "llama3.1:8b-instruct"
+        }
+      },
+      "lmstudio": {
+        "baseUrl": "http://localhost:1234",
+        "modelMap": {
+          "gpt-oss:20b": "gpt-oss:20b"
+        }
+      }
+    }
+  }
+}
+```
+
+- **`provider`**: selects which runtime to use. Supported: `ollama`, `lmstudio`.
+- **`providers.ollama.baseUrl`**: your Ollama server URL.
+- **`providers.lmstudio.baseUrl`**: your LM Studio server URL (OpenAI-compatible).
+- **`modelMap`**: maps logical model names (e.g., `gpt-oss:20b`) to provider-specific model identifiers.
+
+### Streaming
+
+Set `"stream": true` in `POST /chat/completions` to receive Server-Sent Events (SSE). Each event contains a delta in the shape:
+
+```json
+{ "choices": [ { "index": 0, "delta": { "content": "..." } } ] }
+```
+
+The stream ends with:
+
+```
+data: [DONE]
+```
+
+Note: `config/production.json` may be ignored by version control per `.gitignore`. Keep your production overrides locally or manage them via deployment secrets.
+
+### Streaming Heartbeat Interval
+
+You can tweak the SSE heartbeat interval with an environment variable:
+
+```ini
+# Milliseconds between keep-alive comments in SSE responses
+SSE_HEARTBEAT_MS=15000
+```
+
+Defaults to `15000` (15s). In tests, it defaults to `50ms`.
