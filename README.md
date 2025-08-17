@@ -119,3 +119,10 @@ This project is repackaged from an original ChatGPT action to emphasize autonomo
 ## Roadmap
 
 See `docs/ROADMAP.md` for an ambitious, multi‑phase plan and deep TODOs.
+
+### execute command v2 (flex args + defaults)
+- `POST /command/execute`
+- Supports key/value payloads or nameless params (`params`, `args`, or `text`)
+- `set_default` to update in-memory defaults (mode, shell, pythonEngine, remote)
+- `listModes: true` to discover available modes and current defaults
+- Back-compat: `{ command: "exit 2" }` still emits `aiAnalysis.text`
