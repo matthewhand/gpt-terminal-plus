@@ -1,4 +1,5 @@
 import express from 'express';
+import { registerSettingsRoutes } from './settingsRoutes';
 
 /** --- Test harness (mocks) — used ONLY when NODE_ENV==='test' --- */
 import testCommandRouter from './commandRoutes';
@@ -57,6 +58,9 @@ export function setupApiRouter(app: express.Application): void {
   if (setupRoutes)  app.use('/setup', setupRoutes);
   // model routes under /model (/, /select, /selected)
   if (modelsRoutes) app.use('/model', modelsRoutes);
+
+  // settings routes exposed at root (/settings, /settings/llm/test)
+  registerSettingsRoutes(app);
 }
 
 /** Default export kept for flexibility */

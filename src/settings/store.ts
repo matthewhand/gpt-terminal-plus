@@ -53,7 +53,11 @@ function scheduleSave() {
 export const SettingsStore = {
   get(): Settings {
     ensureLoaded();
-    return JSON.parse(JSON.stringify(_settings));
+    const copy: Settings = JSON.parse(JSON.stringify(_settings));
+    if (copy.llm && 'apiKey' in copy.llm) {
+      (copy.llm as any).apiKey = '';
+    }
+    return copy;
   },
 
   set(partial: Partial<Settings>): Settings {
@@ -77,6 +81,16 @@ export const SettingsStore = {
           }
         : _settings.features,
       app: partial.app ? { ..._settings.app, ...partial.app } : _settings.app,
+      llm: partial.llm
+        ? {
+            ..._settings.llm,
+            ...partial.llm,
+            apiKey:
+              partial.llm.apiKey !== undefined
+                ? partial.llm.apiKey
+                : _settings.llm?.apiKey,
+          }
+        : _settings.llm,
     });
     _settings = merged;
     scheduleSave();

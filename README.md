@@ -87,7 +87,7 @@ Generate fresh evidence locally:
 Navigate to `/setup` (requires the same API auth) to configure:
 
 - Local/SSH/SSM endpoints that can execute shell, code, and LLM plans.
-- Global AI provider defaults (Ollama, LM Studio, OpenAI).
+- LLM toggle and provider selection (None, OpenAI, LiteLLM, Ollama, LM Studio) with a Test button.
 - Optional per-server LLM endpoints (e.g., remote Ollama instances).
 
 

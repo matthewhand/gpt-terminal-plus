@@ -32,6 +32,18 @@ export const ExecuteLlmSchema = z.object({
   ssm: RemoteTargetSchema.default({ enabled: false, timeoutMs: 180_000 }),
 });
 
+export const LlmConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  provider: z
+    .enum(['none', 'openai', 'litellm', 'ollama', 'lmstudio'])
+    .optional(),
+  defaultModel: z.string().optional(),
+  baseURL: z.string().optional(),
+  apiKey: z.string().optional(),
+  ollamaURL: z.string().optional(),
+  lmstudioURL: z.string().optional(),
+});
+
 export const SettingsSchema = z.object({
   app: z.object({
     corsOrigins: z.array(z.string()).default([
@@ -44,6 +56,7 @@ export const SettingsSchema = z.object({
     executeCode: ExecuteCodeSchema.default({}),
     executeLlm: ExecuteLlmSchema.default({}),
   }).default({}),
+  llm: LlmConfigSchema.default({}),
 });
 
 export type Settings = z.infer<typeof SettingsSchema>;

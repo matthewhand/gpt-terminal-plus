@@ -10,6 +10,52 @@ export function registerSettingsRoutes(app: Application) {
     return res.status(200).json(SettingsStore.get());
   });
 
+  router.post('/settings/llm/test', async (req: Request, res: Response) => {
+    const cfg: any = req.body || {};
+    try {
+      let models: string[] = [];
+      const g: any = globalThis as any;
+      const baseFetch: any = g.fetch;
+      if (!baseFetch) throw new Error('fetch_not_available');
+
+      if (cfg.provider === 'ollama') {
+        const base = String(cfg.ollamaURL || '').replace(/\/+$/, '');
+        const resp = await baseFetch(base + '/api/tags');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const json = await resp.json();
+        models = (json.models || json.data || [])
+          .map((m: any) => m.name || m.id)
+          .filter(Boolean);
+      } else if (cfg.provider === 'lmstudio') {
+        const base = String(cfg.lmstudioURL || cfg.baseURL || '').replace(/\/+$/, '');
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (cfg.apiKey) headers.Authorization = `Bearer ${cfg.apiKey}`;
+        const resp = await baseFetch(base + '/v1/models', { headers });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const json = await resp.json();
+        models = (json.data || []).map((m: any) => m.id).filter(Boolean);
+      } else if (cfg.provider === 'openai' || cfg.provider === 'litellm') {
+        const base = String(cfg.baseURL || 'https://api.openai.com').replace(/\/+$/, '');
+        const headers: any = { 'Content-Type': 'application/json' };
+        if (cfg.apiKey) headers.Authorization = `Bearer ${cfg.apiKey}`;
+        const resp = await baseFetch(base + '/v1/models', { headers });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const json = await resp.json();
+        models = (json.data || []).map((m: any) => m.id).filter(Boolean);
+      } else {
+        return res.status(200).json({ ok: false, details: 'unknown provider' });
+      }
+      return res.status(200).json({ ok: true, models });
+    } catch (err: any) {
+      let details = String(err?.message || err);
+      const apiKey = (req.body || {}).apiKey;
+      if (apiKey) {
+        details = details.replace(apiKey, '[redacted]');
+      }
+      return res.status(200).json({ ok: false, details });
+    }
+  });
+
   router.put('/settings', (req: Request, res: Response) => {
     try {
       // Partial update first
