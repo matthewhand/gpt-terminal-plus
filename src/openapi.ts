@@ -1,278 +1,86 @@
-import express, { Request, Response } from 'express';
+import express, { Request } from 'express';
 
-/** Determine the public base URL for the OpenAPI `servers` stanza. */
-export function getPublicBaseUrl(): string {
-  // Highest precedence: explicit PUBLIC_BASE_URL
+/** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
+export function getPublicBaseUrl(req?: Request): string {
   const envUrl = process.env.PUBLIC_BASE_URL;
   if (envUrl && /^https?:\/\//i.test(envUrl)) return envUrl.replace(/\/+$/, '');
 
-  // Next: HTTPS_ENABLED + PORT + PUBLIC_HOST
+  if (req) {
+    const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3100';
+    return `${proto}://${host}`;
+  }
+
   const protocol = process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http';
   const port = process.env.PORT ? Number(process.env.PORT) : 3100;
   const host = process.env.PUBLIC_HOST || 'localhost';
   return `${protocol}://${host}:${port}`;
 }
 
-/** Helpers for YAML */
-function isPlainObject(v: any): v is Record<string, any> {
-  return v !== null && typeof v === 'object' && !Array.isArray(v);
-}
-function yamlScalar(v: any): string {
-  switch (typeof v) {
-    case 'string': return JSON.stringify(v); // safe quoting
-    case 'number': return Number.isFinite(v) ? String(v) : JSON.stringify(v);
-    case 'boolean': return v ? 'true' : 'false';
-    default: return v === null ? 'null' : JSON.stringify(v);
-  }
-}
-
-/**
- * Convert JSON -> YAML with consistent block style for arrays.
- * - Objects: keys on their own line when value is object/array
- * - Arrays: always block sequence
- * This is intentionally minimal but produces valid, clean YAML for our spec.
- */
+/** Minimal JSON -> YAML with correct indentation for arrays/objects and inline empty arrays. */
 function jsonToYaml(value: any, indent = 0): string {
   const pad = '  '.repeat(indent);
+  const str = (s: string) => JSON.stringify(s);
+
+  if (value === null) return 'null';
 
   if (Array.isArray(value)) {
     if (value.length === 0) return '[]';
     return value
       .map((item) => {
-        if (isPlainObject(item) || Array.isArray(item)) {
-          return `${pad}-\n${jsonToYaml(item, indent + 1)}`;
+        const rendered = jsonToYaml(item, indent + 1);
+        if (rendered.includes('\n')) {
+          const [first, ...rest] = rendered.split('\n');
+          const tail = rest.map(l => '  '.repeat(indent + 1) + l).join('\n');
+          return tail ? `${pad}- ${first}\n${tail}` : `${pad}- ${first}`;
         }
-        return `${pad}- ${yamlScalar(item)}`;
+        return `${pad}- ${rendered}`;
       })
       .join('\n');
   }
 
-  if (isPlainObject(value)) {
-    const entries = Object.entries(value);
-    if (entries.length === 0) return '{}';
-    return entries
-      .map(([k, v]) => {
-        if (isPlainObject(v) || Array.isArray(v)) {
-          return `${pad}${k}:\n${jsonToYaml(v, indent + 1)}`;
+  switch (typeof value) {
+    case 'string': return str(value);
+    case 'number': return String(value);
+    case 'boolean': return value ? 'true' : 'false';
+    case 'object': {
+      const entries = Object.entries(value);
+      if (entries.length === 0) return '{}';
+      return entries.map(([k, v]) => {
+        if (v === null) return `${pad}${k}: null`;
+        if (Array.isArray(v)) {
+          if (v.length === 0) return `${pad}${k}: []`;
+          const arr = jsonToYaml(v, indent + 1);
+          return arr.includes('\n') ? `${pad}${k}:\n${arr}` : `${pad}${k}: ${arr}`;
         }
-        return `${pad}${k}: ${yamlScalar(v)}`;
-      })
-      .join('\n');
+        if (typeof v === 'object') {
+          const obj = jsonToYaml(v, indent + 1);
+          return `${pad}${k}:\n${obj}`;
+        }
+        // scalar
+        return `${pad}${k}: ${jsonToYaml(v, indent + 1).trim()}`;
+      }).join('\n');
+    }
+    default:
+      return str(String(value));
   }
-
-  return pad + yamlScalar(value);
 }
 
-/** Build the OpenAPI JSON spec based on runtime toggles. */
-export function buildOpenAPISpec() {
-  const baseUrl = getPublicBaseUrl();
+/** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
+function buildSpec(req?: Request) {
+  const baseUrl = getPublicBaseUrl(req);
 
-  // feature toggles (can be expanded later)
-  const enableExecute = true;
-  const enableExecuteCode = true;
-  const enableExecuteFile = true;
-  const enableExecuteLlm = true;
-  const enableServerList = true;
-
-  const paths: Record<string, any> = {};
-
-  if (enableServerList) {
-    paths['/server/list'] = {
-      get: {
-        summary: 'List servers for this API token',
-        responses: {
-          200: {
-            description: 'OK',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    servers: { type: 'array', items: { type: 'object' } },
-                  },
-                  required: ['servers'],
-                },
-              },
-            },
-          },
-        },
-        security: [{ bearerAuth: [] }],
-      },
-    };
-  }
-
-  if (enableExecute) {
-    paths['/command/execute'] = {
-      post: {
-        summary: 'Execute a command',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: { command: { type: 'string' } },
-                required: ['command'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Execution complete',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    result: { $ref: '#/components/schemas/ExecutionResult' },
-                    aiAnalysis: { type: 'object' },
-                  },
-                  required: ['result'],
-                },
-              },
-            },
-          },
-        },
-        security: [{ bearerAuth: [] }],
-      },
-    };
-  }
-
-  if (enableExecuteCode) {
-    paths['/command/execute-code'] = {
-      post: {
-        summary: 'Execute a code snippet',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  language: { type: 'string' },
-                  code: { type: 'string' },
-                  timeoutMs: { type: 'integer' },
-                },
-                required: ['language', 'code'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Execution complete',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    result: { $ref: '#/components/schemas/ExecutionResult' },
-                    aiAnalysis: { type: 'object' },
-                  },
-                  required: ['result'],
-                },
-              },
-            },
-          },
-        },
-        security: [{ bearerAuth: [] }],
-      },
-    };
-  }
-
-  if (enableExecuteFile) {
-    paths['/command/execute-file'] = {
-      post: {
-        summary: 'Execute a file present on the server/target',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  filename: { type: 'string' },
-                  directory: { type: 'string' },
-                  timeoutMs: { type: 'integer' },
-                },
-                required: ['filename'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'Execution complete',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    result: { $ref: '#/components/schemas/ExecutionResult' },
-                    aiAnalysis: { type: 'object' },
-                  },
-                  required: ['result'],
-                },
-              },
-            },
-          },
-        },
-        security: [{ bearerAuth: [] }],
-      },
-    };
-  }
-
-  if (enableExecuteLlm) {
-    paths['/command/execute-llm'] = {
-      post: {
-        summary: 'Run an LLM plan or direct instruction',
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  instructions: { type: 'string' },
-                  dryRun: { type: 'boolean' },
-                  stream: { type: 'boolean' },
-                },
-                required: ['instructions'],
-              },
-            },
-          },
-        },
-        responses: {
-          200: {
-            description: 'LLM execution complete',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    plan: { type: 'object' },
-                    results: { type: 'array', items: { type: 'object' } },
-                  },
-                },
-              },
-            },
-          },
-        },
-        security: [{ bearerAuth: [] }],
-      },
-    };
-  }
-
-  return {
+  // NOTE: keep summaries and shapes aligned with routes; tests only require presence.
+  const spec = {
     openapi: '3.0.3',
     info: {
       title: 'gpt-terminal-plus API',
       version: '0.1.0',
-      description:
-        'Runtime OpenAPI surface for listing servers and executing commands/code/LLM.',
+      description: 'Runtime OpenAPI surface for listing servers and executing commands/code/LLM.',
     },
-    servers: [{ url: baseUrl, description: 'Runtime base URL' }],
+    servers: [
+      { url: baseUrl, description: 'Runtime base URL' },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'API_TOKEN' },
@@ -290,29 +98,198 @@ export function buildOpenAPISpec() {
         },
       },
     },
-    security: [{ bearerAuth: [] }],
-    paths,
+    security: [ { bearerAuth: [] as any[] } ],
+    paths: {
+      '/server/list': {
+        get: {
+          summary: 'List servers for this API token',
+          responses: {
+            200: {
+              description: 'OK',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      servers: { type: 'array', items: { type: 'object' } },
+                    },
+                    required: ['servers'],
+                  },
+                },
+              },
+            },
+          },
+          security: [ { bearerAuth: [] as any[] } ],
+        },
+      },
+      '/command/execute': {
+        post: {
+          summary: 'Execute a command',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { command: { type: 'string' } },
+                  required: ['command'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Execution complete',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      result: { $ref: '#/components/schemas/ExecutionResult' },
+                      aiAnalysis: { type: 'object' },
+                    },
+                    required: ['result'],
+                  },
+                },
+              },
+            },
+          },
+          security: [ { bearerAuth: [] as any[] } ],
+        },
+      },
+      '/command/execute-code': {
+        post: {
+          summary: 'Execute a code snippet',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    language: { type: 'string' },
+                    code: { type: 'string' },
+                    timeoutMs: { type: 'integer' },
+                  },
+                  required: ['language', 'code'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Execution complete',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      result: { $ref: '#/components/schemas/ExecutionResult' },
+                      aiAnalysis: { type: 'object' },
+                    },
+                    required: ['result'],
+                  },
+                },
+              },
+            },
+          },
+          security: [ { bearerAuth: [] as any[] } ],
+        },
+      },
+      '/command/execute-file': {
+        post: {
+          summary: 'Execute a file present on the server/target',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filename: { type: 'string' },
+                    directory: { type: 'string' },
+                    timeoutMs: { type: 'integer' },
+                  },
+                  required: ['filename'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Execution complete',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      result: { $ref: '#/components/schemas/ExecutionResult' },
+                      aiAnalysis: { type: 'object' },
+                    },
+                    required: ['result'],
+                  },
+                },
+              },
+            },
+          },
+          security: [ { bearerAuth: [] as any[] } ],
+        },
+      },
+      '/command/execute-llm': {
+        post: {
+          summary: 'Run an LLM plan or direct instruction',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    instructions: { type: 'string' },
+                    dryRun: { type: 'boolean' },
+                    stream: { type: 'boolean' },
+                  },
+                  required: ['instructions'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'LLM execution complete',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      plan: { type: 'object' },
+                      results: { type: 'array', items: { type: 'object' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [ { bearerAuth: [] as any[] } ],
+        },
+      },
+    },
   };
+
+  return spec;
 }
 
-/** Register dynamic OpenAPI endpoints (/openapi.json and /openapi.yaml). */
+/** Register dynamic OpenAPI routes. */
 export function registerOpenAPIRoutes(app: express.Application): void {
-  app.get('/openapi.json', (_req: Request, res: Response) => {
-    const spec = buildOpenAPISpec();
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.status(200).json(spec);
+  app.get('/openapi.json', (req, res) => {
+    res.json(buildSpec(req));
   });
 
-  const sendYaml = (_req: Request, res: Response) => {
-    const spec = buildOpenAPISpec();
-    const yaml = jsonToYaml(spec, 0) + '\n';
-    res.setHeader('Content-Type', 'text/yaml; charset=utf-8');
-    res.status(200).send(yaml);
-  };
-
-  // Both aliases for convenience
-  app.get('/openapi.yaml', sendYaml);
-  app.get('/openai.yaml', sendYaml);
+  app.get('/openapi.yaml', (req, res) => {
+    const yaml = jsonToYaml(buildSpec(req));
+    res.type('application/yaml').send(yaml + '\n');
+  });
 }
 
+/** Backward-compatible export name (some imports use camel-case Api). */
 export const registerOpenApiRoutes = registerOpenAPIRoutes;
