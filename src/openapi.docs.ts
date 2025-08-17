@@ -54,7 +54,7 @@
  * /command/execute:
  *   post:
  *     operationId: executeCommand
- *     summary: Execute a command
+ *     summary: Execute using first available mode
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -129,7 +129,8 @@
  * /command/execute-file:
  *   post:
  *     operationId: executeFile
- *     summary: Execute a file present on the server/target
+ *     summary: Execute a file present on the server/target (deprecated)
+ *     deprecated: true
  *     security:
  *       - bearerAuth: []
  *     requestBody:
