@@ -9,18 +9,13 @@ module.exports = {
     "^@llm/(.*)$": "<rootDir>/src/llm/$1",
     "^@message/(.*)$": "<rootDir>/src/message/$1",
     "^@modules/(.*)$": "<rootDir>/src/modules/$1",
-    "^@modules/(.*)$": "<rootDir>/src/modules/$1",
     "^@webhook/(.*)$": "<rootDir>/src/webhook/$1",
     "^@integrations/(.*)$": "<rootDir>/src/integrations/$1",
     "^@types/(.*)$": "<rootDir>/src/types/$1"
   },
   transform: {
-    "^.+\\.tsx?$": "ts-jest",
-    "^.+\\.jsx?$": "babel-jest"
+    "^.+\\.tsx?$": "ts-jest"
   },
-  transformIgnorePatterns: [
-    "/node_modules/(?!(chai)/)"
-  ],
   globals: {
     "ts-jest": {
       tsconfig: "tsconfig.json"
