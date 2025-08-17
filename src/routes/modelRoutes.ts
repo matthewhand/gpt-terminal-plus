@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSupportedModels, isSupportedModel } from '../common/models';
-import { getSelectedModel, setSelectedModel } from '../utils/GlobalStateHelper';
+import { getDefaultModel } from '../common/models';
+import { getResolvedLlmConfig } from '../common/llmConfig';
+import { getLlmClient } from '../llm/client';
+import { setSelectedModel } from '../utils/GlobalStateHelper';
 
 const debug = Debug('app:modelRoutes');
 const router = express.Router();
@@ -10,11 +12,27 @@ const router = express.Router();
  * GET /model
  * Returns supported models and the currently selected model.
  */
-router.get('/', (_req: Request, res: Response) => {
-  const supported = getSupportedModels();
-  const selected = getSelectedModel();
+router.get('/', async (_req: Request, res: Response) => {
+  const cfg = getResolvedLlmConfig();
+  if (!cfg.enabled || cfg.provider === 'none') {
+    return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+  }
+  const client = getLlmClient();
+  if (!client) {
+    return res.status(503).json({ error: 'No LLM client available' });
+  }
+  let supported: string[] = [];
+  let warning: string | undefined;
+  if (client.listModels) {
+    try { supported = await client.listModels(); } catch { supported = []; }
+  } else {
+    warning = 'Model listing not supported for provider';
+  }
+  const selected = getDefaultModel();
+  const payload: any = { supported, selected };
+  if (warning) payload.warning = warning;
   debug('Returning supported and selected models');
-  res.status(200).json({ supported, selected });
+  res.status(200).json(payload);
 });
 
 /**
@@ -22,7 +40,15 @@ router.get('/', (_req: Request, res: Response) => {
  * Returns the currently selected model only.
  */
 router.get('/selected', (_req: Request, res: Response) => {
-  const selected = getSelectedModel();
+  const cfg = getResolvedLlmConfig();
+  if (!cfg.enabled || cfg.provider === 'none') {
+    return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+  }
+  const client = getLlmClient();
+  if (!client) {
+    return res.status(503).json({ error: 'No LLM client available' });
+  }
+  const selected = getDefaultModel();
   debug('Returning selected model: ' + selected);
   res.status(200).json({ selected });
 });
@@ -32,7 +58,15 @@ router.get('/selected', (_req: Request, res: Response) => {
  * Body: { model: string }
  * Sets the selected model if supported.
  */
-router.post('/select', (req: Request, res: Response) => {
+router.post('/select', async (req: Request, res: Response) => {
+  const cfg = getResolvedLlmConfig();
+  if (!cfg.enabled || cfg.provider === 'none') {
+    return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+  }
+  const client = getLlmClient();
+  if (!client) {
+    return res.status(503).json({ error: 'No LLM client available' });
+  }
   const { model } = req.body || {};
   debug('Request to select model: ' + model);
 
@@ -40,9 +74,16 @@ router.post('/select', (req: Request, res: Response) => {
     return res.status(400).json({ message: 'Invalid request. Missing "model" field.' });
   }
 
-  if (!isSupportedModel(model)) {
-    debug('Attempt to select unsupported model: ' + model);
-    return res.status(400).json({ message: 'Unsupported model', model });
+  if (client.listModels) {
+    try {
+      const available = await client.listModels();
+      if (!available.includes(model)) {
+        debug('Attempt to select unsupported model: ' + model);
+        return res.status(400).json({ message: 'Unsupported model', model });
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   try {

@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSelectedModel, getSelectedServer } from '../../utils/GlobalStateHelper';
+import { getSelectedServer } from '../../utils/GlobalStateHelper';
 import { chatForServer } from '../../llm';
 import { ServerManager } from '../../managers/ServerManager';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { evaluateCommandSafety } from '../../utils/safety';
+import { getDefaultModel } from '../../common/models';
+import { getResolvedLlmConfig } from '../../common/llmConfig';
+import { getLlmClient } from '../../llm/client';
 
 const debug = Debug('app:command:execute-llm');
 
@@ -30,6 +33,14 @@ export const executeLlm = async (req: Request, res: Response) => {
   }
 
   try {
+    const cfg = getResolvedLlmConfig();
+    if (!cfg.enabled || cfg.provider === 'none') {
+      return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+    }
+    const client = getLlmClient();
+    if (!client) {
+      return res.status(503).json({ error: 'No LLM client available' });
+    }
     // Resolve server and per-server LLM provider if present
     const hostname = getSelectedServer();
     const serverConfig = ServerManager.getServerConfig(hostname);
@@ -48,7 +59,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       }
     }
 
-    const selectedModel = model || getSelectedModel();
+    const selectedModel = model || getDefaultModel();
     const system = 'You translate natural language instructions into safe, reproducible shell commands.' +
       ' Output strictly JSON with shape: {"commands":[{"cmd":"...","explain":"..."}]}.' +
       ' Prefer POSIX sh/bash. Avoid destructive commands unless explicitly requested. No commentary outside JSON.';

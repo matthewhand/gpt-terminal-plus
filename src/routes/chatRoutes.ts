@@ -1,8 +1,9 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSelectedModel } from '../utils/GlobalStateHelper';
-import { chat, chatStream } from '../llm';
 import { ChatMessage } from '../llm/types';
+import { getDefaultModel } from '../common/models';
+import { getResolvedLlmConfig } from '../common/llmConfig';
+import { getLlmClient } from '../llm/client';
 
 const debug = Debug('app:chatRoutes');
 const router = express.Router();
@@ -12,6 +13,15 @@ const router = express.Router();
  */
 router.post('/completions', async (req: Request, res: Response) => {
   try {
+    const cfg = getResolvedLlmConfig();
+    if (!cfg.enabled || cfg.provider === 'none') {
+      return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+    }
+    const client = getLlmClient();
+    if (!client) {
+      return res.status(503).json({ error: 'No LLM client available' });
+    }
+
     const { messages, model, stream = false } = (req.body || {}) as any;
 
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -23,7 +33,7 @@ router.post('/completions', async (req: Request, res: Response) => {
       content: String(m.content ?? '')
     }));
 
-    const selectedModel = model || getSelectedModel();
+    const selectedModel = model || getDefaultModel();
     debug('Generating chat completion with model: ' + selectedModel);
 
     if (stream) {
@@ -60,7 +70,7 @@ router.post('/completions', async (req: Request, res: Response) => {
 
       let sentAny = false;
       try {
-        for await (const delta of chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
+        for await (const delta of client.chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
           sentAny = true;
           res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: String(delta) } }] }) + '\n\n');
         }
@@ -76,7 +86,7 @@ router.post('/completions', async (req: Request, res: Response) => {
         res.end();
       }
     } else {
-      const response = await chat({ model: selectedModel, messages: safeMessages, stream: false });
+      const response = await client.chat({ model: selectedModel, messages: safeMessages, stream: false });
       res.status(200).json(response);
     }
   } catch (error) {
@@ -86,18 +96,26 @@ router.post('/completions', async (req: Request, res: Response) => {
 });
 
 /** GET /chat/models */
-router.get('/models', (_req: Request, res: Response) => {
+router.get('/models', async (_req: Request, res: Response) => {
   try {
-    const { getSupportedModels } = require('../common/models');
-    const { getAIConfig } = require('../llm');
-    const supported = getSupportedModels();
-    const aiCfg = getAIConfig();
-    const modelMaps: Record<string, Record<string, string> | undefined> = {
-      ollama: aiCfg.providers?.ollama?.modelMap,
-      lmstudio: aiCfg.providers?.lmstudio?.modelMap,
-      openai: aiCfg.providers?.openai?.modelMap,
-    };
-    res.status(200).json({ supported, modelMaps, provider: aiCfg.provider });
+    const cfg = getResolvedLlmConfig();
+    if (!cfg.enabled || cfg.provider === 'none') {
+      return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+    }
+    const client = getLlmClient();
+    if (!client) {
+      return res.status(503).json({ error: 'No LLM client available' });
+    }
+    let supported: string[] = [];
+    let warning: string | undefined;
+    if (client.listModels) {
+      try { supported = await client.listModels(); } catch { supported = []; }
+    } else {
+      warning = 'Model listing not supported for provider';
+    }
+    const payload: any = { supported, provider: cfg.provider, modelMaps: {} };
+    if (warning) payload.warning = warning;
+    res.status(200).json(payload);
   } catch (error) {
     res.status(500).json({ message: 'Failed to load model maps', error: (error as Error).message });
   }
@@ -106,6 +124,14 @@ router.get('/models', (_req: Request, res: Response) => {
 /** GET /chat/providers */
 router.get('/providers', (_req: Request, res: Response) => {
   try {
+    const cfg = getResolvedLlmConfig();
+    if (!cfg.enabled || cfg.provider === 'none') {
+      return res.status(409).json({ error: { code: 'LLM_DISABLED', message: 'This instance isn\u2019t configured for LLM. Enable it in Setup \u2192 LLM.' } });
+    }
+    const client = getLlmClient();
+    if (!client) {
+      return res.status(503).json({ error: 'No LLM client available' });
+    }
     const { getAIConfig } = require('../llm');
     const aiCfg = getAIConfig();
     const providers = {

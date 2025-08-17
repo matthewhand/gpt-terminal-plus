@@ -1,4 +1,4 @@
-export type LlmProvider = 'ollama' | 'open-interpreter';
+export type LlmProvider = 'ollama' | 'open-interpreter' | 'none';
 
 export const llmConfig = {
   provider: (process.env.LLM_PROVIDER as LlmProvider) || 'ollama',
@@ -19,4 +19,20 @@ export const llmConfig = {
 
   // In CI/tests we keep the simple shim behavior so tests remain deterministic
   useShim: process.env.NODE_ENV === 'test' && !process.env.LLM_PROVIDER,
+};
+
+export interface ResolvedLlmConfig {
+  enabled: boolean;
+  provider: LlmProvider | 'none';
+}
+
+/**
+ * Resolves the effective LLM configuration taking environment overrides into account.
+ * Defaults to enabled unless explicitly disabled via `LLM_ENABLED=false`.
+ */
+export const getResolvedLlmConfig = (): ResolvedLlmConfig => {
+  const enabledEnv = process.env.LLM_ENABLED;
+  const enabled = enabledEnv !== undefined ? enabledEnv === 'true' || enabledEnv === '1' : true;
+  const provider = (process.env.LLM_PROVIDER as LlmProvider) || llmConfig.provider || 'none';
+  return { enabled, provider };
 };
