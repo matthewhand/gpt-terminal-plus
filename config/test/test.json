@@ -36,5 +36,31 @@
         }
       }
     }
+  },
+  "llm": {
+    "provider": "ollama"
+  },
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://127.0.0.1:11434"
+    }
+  },
+  "hostname": "localhost",
+  "policy": {
+    "confirmRegex": "rm\\s+-rf",
+    "denyRegex": ":/$"
+  },
+  "servers": {
+    "ssh-bash.example.com": {
+      "type": "ssh",
+      "hostname": "ssh-bash.example.com",
+      "port": 22,
+      "username": "chatgpt",
+      "privateKeyPath": "/home/chatgpt/.ssh/id_rsa",
+      "llm": {
+        "provider": "ollama",
+        "baseUrl": "http://sshhost:11434"
+      }
+    }
   }
 }
