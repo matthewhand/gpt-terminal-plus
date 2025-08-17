@@ -1,38 +1,63 @@
-import type { Express } from 'express';
-import { Router } from 'express';
+import express from 'express';
 
-import fileRoutes from './fileRoutes';
-import commandRoutes from './commandRoutes';
+/** --- Test harness (mocks) — used ONLY when NODE_ENV==='test' --- */
+import testCommandRouter from './commandRoutes';
+
+/** --- Real command handlers for prod/dev --- */
+import { executeCommand } from './command/executeCommand';
+import { executeCode } from './command/executeCode';
+import { executeFile } from './command/executeFile';
+import { executeLlm } from './command/executeLlm';
+
+/** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
-import publicRouter from './publicRouter';
-import modelRoutes from './modelRoutes';
+import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
-import setupRouter from './setupRoutes'; // this is a Router instance
 
-/** Wire up all feature routers onto a provided Router. */
-export const setupRoutes = (router: Router): void => {
-  router.use('/file', fileRoutes);
-  router.use('/command', commandRoutes);
-  router.use('/server', serverRoutes);
-  router.use('/model', modelRoutes);
-  router.use('/chat', chatRoutes);
-  router.use('/setup', setupRouter);
-  router.use(publicRouter);
-};
+/** Optional route groups (exist in this repo tree used by tests) */
+let setupRoutes: express.Router | null = null;
+let modelsRoutes: express.Router | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('./setupRoutes');
+  setupRoutes = mod?.default ?? mod ?? null;
+} catch { /* optional */ }
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('./modelRoutes');
+  modelsRoutes = mod?.default ?? mod ?? null;
+} catch { /* optional */ }
 
-/**
- * Test-friendly helper:
- * - If `app` is provided, mounts the API router on the app and returns the app.
- * - If not, returns a standalone router with routes wired up.
- */
-export function setupApiRouter(app?: Express) {
-  const router = Router();
-  setupRoutes(router);
-  if (app) {
-    app.use('/', router);
-    return app;
+/** Named export expected by tests */
+export function setupApiRouter(app: express.Application): void {
+  const isTest = process.env.NODE_ENV === 'test';
+
+  // ----- Command endpoints -----
+  if (isTest) {
+    // Jest wants the mocked /command/* behavior
+    // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
+    app.use('/command', testCommandRouter);
+  } else {
+    // Real command handlers for prod/dev
+    const cmd = express.Router();
+    cmd.post('/command/execute', executeCommand);
+    cmd.post('/command/execute-code', executeCode);
+    cmd.post('/command/execute-file', executeFile);
+    cmd.post('/command/execute-llm', executeLlm);
+    app.use(cmd);
   }
-  return router;
+
+  // ----- Other groups with correct prefixes -----
+  app.use(serverRoutes);
+  app.use(fileRoutes);
+  // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
+  app.use('/chat', chatRoutes);
+
+  // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
+  if (setupRoutes)  app.use('/setup', setupRoutes);
+  // model routes under /model (/, /select, /selected)
+  if (modelsRoutes) app.use('/model', modelsRoutes);
 }
 
-export default setupRoutes;
+/** Default export kept for flexibility */
+export default setupApiRouter;

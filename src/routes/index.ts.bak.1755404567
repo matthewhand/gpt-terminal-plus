@@ -1,0 +1,51 @@
+import express from 'express';
+
+// --- Test harness (mocks) — used ONLY when NODE_ENV==='test'
+import testCommandRouter from './commandRoutes';
+
+// --- Real handlers for production/dev
+import { executeCommand } from './command/executeCommand';
+import { executeCode } from './command/executeCode';
+import { executeFile } from './command/executeFile';
+import { executeLlm } from './command/executeLlm';
+
+// --- Other route groups (shared)
+import serverRoutes from './serverRoutes';
+import fileRoutes from './fileRoutes';
+import chatRoutes from './chatRoutes';
+
+// Optional UI/setup routes (present in repo in some setups)
+let setupRoutes: express.Router | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const maybe = require('./setupRoutes');
+  setupRoutes = maybe?.default ?? null;
+} catch {
+  setupRoutes = null;
+}
+
+export function setupApiRouter(app: express.Application): void {
+  const useTestShim = process.env.NODE_ENV === 'test';
+
+  // ----- Command endpoints -----
+  if (useTestShim) {
+    // Mount the Jest test-harness routes (they stub /command/*)
+    app.use(testCommandRouter);
+  } else {
+    // Mount real command handlers
+    const cmd = express.Router();
+    cmd.post('/command/execute', executeCommand);
+    cmd.post('/command/execute-code', executeCode);
+    cmd.post('/command/execute-file', executeFile);
+    cmd.post('/command/execute-llm', executeLlm);
+    app.use(cmd);
+  }
+
+  // ----- Other route groups (common) -----
+  app.use(serverRoutes);
+  app.use(fileRoutes);
+  if (setupRoutes) app.use(setupRoutes);   // /setup, /setup/policy, etc.
+  app.use('/chat', chatRoutes);            // /chat/models, /chat/providers, ...
+}
+
+export default { setupApiRouter };

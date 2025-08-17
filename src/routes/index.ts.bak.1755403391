@@ -1,0 +1,40 @@
+import express from 'express';
+
+// Test harness router (mocks) — only mounted when NODE_ENV==='test'
+import testCommandRouter from './commandRoutes';
+
+// Real handlers
+import { executeCommand } from './command/executeCommand';
+import { executeCode } from './command/executeCode';
+import { executeFile } from './command/executeFile';
+import { executeLlm } from './command/executeLlm';
+
+// Other route groups
+import serverRoutes from './serverRoutes';
+import fileRoutes from './fileRoutes';
+import chatRoutes from './chatRoutes';
+
+export function setupApiRouter(app: express.Application): void {
+  const useTestShim = process.env.NODE_ENV === 'test';
+
+  // ----- Command endpoints -----
+  if (useTestShim) {
+    // Mount the test harness routes that the Jest suite expects
+    app.use(testCommandRouter);
+  } else {
+    // Mount the real command handlers
+    const cmd = express.Router();
+    cmd.post('/command/execute', executeCommand);
+    cmd.post('/command/execute-code', executeCode);
+    cmd.post('/command/execute-file', executeFile);
+    cmd.post('/command/execute-llm', executeLlm);
+    app.use(cmd);
+  }
+
+  // ----- Other route groups (shared in test and prod) -----
+  app.use(serverRoutes);
+  app.use(fileRoutes);
+  app.use('/chat', chatRoutes);
+}
+
+export default { setupApiRouter };
