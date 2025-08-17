@@ -1,5 +1,7 @@
 import express, { Request } from 'express';
 import { stringify as yamlStringify } from 'yaml';
+import fs from 'fs';
+import path from 'path';
 
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
 export function getPublicBaseUrl(req?: Request): string {
@@ -16,6 +18,16 @@ export function getPublicBaseUrl(req?: Request): string {
   const port = process.env.PORT ? Number(process.env.PORT) : 3100;
   const host = process.env.PUBLIC_HOST || 'localhost';
   return `${protocol}://${host}:${port}`;
+}
+
+/** Attempt to read a static OpenAPI artifact from public/, else return null. */
+function readPublicFileIfExists(filename: 'openapi.json' | 'openapi.yaml'): string | null {
+  try {
+    const filePath = path.resolve(process.cwd(), 'public', filename);
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
@@ -234,10 +246,22 @@ function buildSpec(req?: Request) {
 /** Register dynamic OpenAPI routes. */
 export function registerOpenAPIRoutes(app: express.Application): void {
   app.get('/openapi.json', (req, res) => {
+    const staticJson = readPublicFileIfExists('openapi.json');
+    if (staticJson) {
+      try {
+        return res.json(JSON.parse(staticJson));
+      } catch {
+        // fall through to dynamic builder if static file is invalid
+      }
+    }
     res.json(buildSpec(req));
   });
 
   app.get('/openapi.yaml', (req, res) => {
+    const staticYaml = readPublicFileIfExists('openapi.yaml');
+    if (staticYaml) {
+      return res.type('application/yaml').send(staticYaml);
+    }
     const yaml = yamlStringify(buildSpec(req));
     res.type('application/yaml').send(yaml);
   });
