@@ -16,7 +16,7 @@ export const setServer = (req: Request, res: Response): void => {
   }
 
   try {
-    const serverManager = new ServerManager(hostname);
+    new ServerManager(hostname);
     debug('Server set to:', hostname);
     res.status(200).json({ message: `Server set to: ${hostname}` });
   } catch (error) {

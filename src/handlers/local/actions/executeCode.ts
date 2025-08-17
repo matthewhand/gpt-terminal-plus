@@ -63,7 +63,7 @@ export async function executeLocalCode(
     // Try 3-arg form first; if the mock only supports (cmd, cb), fall back.
     try {
       execAny(cmd, { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 }, cb);
-    } catch (firstErr: any) {
+    } catch {
       try {
         execAny(cmd, cb);
       } catch (secondErr) {

@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { SystemInfo } from '../../../types/SystemInfo';
 import Debug from 'debug';
 import util from 'util';
-import path from 'path';
+
 import fs from 'fs';
 import { getScriptPath } from '../../../utils/scriptUtils';
 

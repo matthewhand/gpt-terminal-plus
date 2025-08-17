@@ -10,6 +10,12 @@ export const llmConfig = {
   // Open Interpreter server host/port (http://host:port)
   interpHost: process.env.INTERPRETER_SERVER_HOST || '127.0.0.1',
   interpPort: Number(process.env.INTERPRETER_SERVER_PORT || 8000),
+  interpOffline: process.env.INTERPRETER_OFFLINE
+    ? process.env.INTERPRETER_OFFLINE === 'true'
+    : false,
+  interpVerbose: process.env.INTERPRETER_VERBOSE
+    ? process.env.INTERPRETER_VERBOSE === 'true'
+    : true,
 
   // In CI/tests we keep the simple shim behavior so tests remain deterministic
   useShim: process.env.NODE_ENV === 'test' && !process.env.LLM_PROVIDER,

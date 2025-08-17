@@ -14,7 +14,7 @@ interface LlmPlanCommand { cmd: string; explain?: string }
 function extractJsonArray(text: string): any {
   try {
     return JSON.parse(text);
-  } catch (_) {
+  } catch {
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       try { return JSON.parse(match[0]); } catch { /* ignore */ }

@@ -36,7 +36,7 @@ export const executeFile = async (req: Request, res: Response) => {
       const msg = err instanceof Error ? err.message : String(err);
       const aiAnalysis = await analyzeError({ kind: 'file', input: filename, stderr: msg });
       res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
-    } catch (_) {
+    } catch {
       handleServerError(err, res, "Error executing file");
     }
   }

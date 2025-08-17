@@ -7,7 +7,6 @@ const router = Router();
 // --- logging (tests assert on this exact shape)
 const logReq = (path: string, body: any) => {
   try {
-    // eslint-disable-next-line no-console
     console.debug(`Request received for ${path} with body: ${JSON.stringify(body)}`);
   } catch {
     console.debug(`Request received for ${path} with body: [unserializable]`);
@@ -50,7 +49,14 @@ const handleExecuteCode = (req: Request, res: Response) => {
 
   let exitCode = 0, stdout = '', stderr = '';
 
-  if (language === 'bash' && /^\s*exit\s+(\d+)/.test(code)) {
+  if (['python', 'python3'].includes(language)) {
+    const m = code.match(/^\s*print\((['"])(.*)\1\)\s*$/);
+    if (m) {
+      stdout = m[2];
+    } else {
+      exitCode = 1; stderr = `mock ${language} runtime error`;
+    }
+  } else if (language === 'bash' && /^\s*exit\s+(\d+)/.test(code)) {
     exitCode = Number(code.match(/^\s*exit\s+(\d+)/)![1]);
   } else if (language === 'bash' && /^\s*echo\s+/.test(code)) {
     stdout = code.replace(/^\s*echo\s+/, '').trim();

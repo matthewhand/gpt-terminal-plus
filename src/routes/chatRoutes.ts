@@ -88,9 +88,7 @@ router.post('/completions', async (req: Request, res: Response) => {
 /** GET /chat/models */
 router.get('/models', (_req: Request, res: Response) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getSupportedModels } = require('../common/models');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getAIConfig } = require('../llm');
     const supported = getSupportedModels();
     const aiCfg = getAIConfig();
@@ -108,7 +106,6 @@ router.get('/models', (_req: Request, res: Response) => {
 /** GET /chat/providers */
 router.get('/providers', (_req: Request, res: Response) => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { getAIConfig } = require('../llm');
     const aiCfg = getAIConfig();
     const providers = {

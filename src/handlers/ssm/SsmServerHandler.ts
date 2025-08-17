@@ -70,7 +70,7 @@ export class SsmServerHandler extends AbstractServerHandler {
     /**
      * Executes code in a specified language on the SSM server.
      */
-    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+    async executeCode(code: string, language: string): Promise<ExecutionResult> {
         // Placeholder implementation
         ssmServerDebug(`Executing SSM code: ${code} in language: ${language}`);
         return { stdout: 'SSM code executed', stderr: '', error: false, exitCode: 0 };
@@ -79,7 +79,7 @@ export class SsmServerHandler extends AbstractServerHandler {
     /**
      * Creates a file on the SSM server.
      */
-    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    async createFile(filePath: string): Promise<boolean> {
         // Placeholder for SSM file creation
         ssmServerDebug(`Creating file on SSM server: ${filePath}`);
         return true;

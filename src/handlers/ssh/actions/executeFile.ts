@@ -19,7 +19,7 @@ export async function executeFile(
     directory?: string,
     timeout?: number
 ): Promise<ExecutionResult> {
-    return new Promise<ExecutionResult>((resolve, reject) => {
+    return new Promise<ExecutionResult>((resolve) => {
         let command: string = `./${filename}`;
         if (directory) {
             command = `cd ${directory} && ${command}`;

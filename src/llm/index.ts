@@ -64,7 +64,7 @@ export function getAIConfig(): AIConfig {
       ai.providers.openai = { ...(ai.providers.openai || {} as any), apiKey: process.env.OPENAI_API_KEY };
     }
     return ai;
-  } catch (e) {
+  } catch {
     debug('AI config not found, using defaults');
     return {
       provider: 'ollama',

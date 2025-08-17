@@ -1,73 +1,89 @@
 # TODO
 
+## High Priority
+- [ ] **`execute_llm` type: OpenAI-compatible endpoint**
+  - Accept config via server/target (all optional): `apiKey`, `model`, `endpoint`.
+  - If not provided, **warn** and suggest completing via **WebUI** or **env vars** (advanced).
+  - Implement non-stream and SSE stream; add tests with a mocked OpenAI-compatible server.
+- [ ] **Open-Interpreter defaults**
+  - Default `INTERPRETER_OFFLINE=false` (enable “computer”), `INTERPRETER_VERBOSE=true`.
+  - Env overrides respected; prove via tests.
+- [ ] **Auth-scoped Server/Target list**
+  - Server config supports `allowedTokens: string[]`.
+  - `/server/list` returns only servers available to the caller’s token.
+  - Admin utilities to rotate tokens safely (no logging of secrets).
+- [ ] **OpenAPI & Plugin endpoints**
+  - Serve `GET /openapi.json`, `GET /openapi.yaml`, `GET /.well-known/ai-plugin.json`, `GET /docs`.
+  - On `npm start`, print those URLs.
+  - CI step to **lint/validate** the spec (e.g., `redocly lint`).
+
+## Execution Runtimes
+- [ ] **Python “uv run” engine** (template-constrained)
+  - Templates: `name`, `packages`, `python`, `constraints {timeout,memory,network}`, optional `prelude`.
+  - `/command/execute-code` supports `engine:"uv"` + `template:"<name>"`.
+  - Best-effort network sandbox (Linux: `firejail --net=none`).
+  - Tests: skip if `uv` absent; otherwise prove `numpy/pandas` hello world.
+- [ ] **Shell runner hardening**
+  - Timeouts & output caps configurable per target.
+  - Redact secrets in logs by default.
+
+## Settings WebUI
+- [ ] MVP panel to configure:
+  - LLM providers (Open-Interpreter, Ollama, OpenAI-compatible).
+  - Python templates (uv) CRUD with validation.
+  - Server/target list with `allowedTokens`.
+  - Health checks (“ping provider”, “list models”).
+- [ ] **Docs:** env var reference for advanced users (**no secrets in examples**; use `${...}` placeholders).
+- [ ] “Add to ChatGPT” instructions (point to `/openapi.json` or `/openapi.yaml`).
+
 ## LLM Provider Plumbing
-- [x] Support provider selection via `LLM_PROVIDER=ollama|open-interpreter`
-- [x] Default model via `LLM_MODEL` (fallback: `gpt-oss:20b`)
-- [x] Ollama host override via `OLLAMA_HOST` (e.g., `http://127.0.0.1:11434`)
-- [x] Open Interpreter host/port via `INTERPRETER_SERVER_HOST`/`INTERPRETER_SERVER_PORT`
-- [x] Keep existing test shim behavior when `NODE_ENV=test` and no provider set
+- [ ] Implement `execute_llm(openaiCompat)` (non-stream & stream).
+- [ ] Model suggestion endpoints for Ollama/LmStudio if available.
+- [ ] Retry/backoff on transient provider errors with clear messages.
 
 ## Dockerized Runtimes (future)
 - [ ] **Ollama in Docker**
   - Image: `ollama/ollama:latest`
-  - Map persistent model cache and expose `11434`
-  - Allow selecting "docker mode" per server config in Settings UI
+  - Map model cache & expose `11434`
+  - Settings UI toggle “docker mode”
   - Auto-set `OLLAMA_HOST=http://127.0.0.1:11434` for local-docker target
 - [ ] **Open Interpreter in Docker**
-  - Build a minimal image that runs the interpreter server (exposes `:8000`)
-  - Allow `INTERPRETER_SERVER_HOST`/`INTERPRETER_SERVER_PORT` to target the container
-  - Toggle "docker mode" per server config in Settings UI
-
-## Settings WebUI (future)
-- [ ] Add a Providers section:
-  - Choose provider: Ollama / Open Interpreter
-  - Model text input (with sensible defaults)
-  - **Transport**:
-    - Local process (CLI)
-    - Remote env (use provided HOST/PORT envvars)
-    - **Docker mode** (start/stop container for this server profile)
-  - Validate connectivity (ping/test button) and show friendly errors
+  - Minimal image running interpreter server (exposes `:8000`)
+  - Target via `INTERPRETER_SERVER_HOST`/`INTERPRETER_SERVER_PORT`
+  - Settings UI toggle “docker mode”
 
 ## Nice-to-haves
-- [ ] Model suggestions per provider (e.g., list models from Ollama `/api/tags`)
+- [ ] Model suggestions per provider (Ollama `/api/tags`)
 - [ ] Log viewer for provider streams
 - [ ] Retry/backoff on transient errors
-- [ ] Dockerize Open-Interpreter and allow enabling per server config (future Settings UI toggle)
-- [ ] Dockerize Ollama and allow enabling per server config (future Settings UI toggle)
+- [ ] makePlan toggle for execute-llm (OFF by default)
+- [ ] /execute can run multiple modes concurrently; server-side toggles can override client config
+- [ ] Add LLM error analysis/feedback for execute_shell & execute_code (name/perm diagnostics)
+- [ ] Research parity: Open-Interpreter & Ollama support for tools/personas/templates
 
-## TODO: `execute` command v2 (flex args + defaults)
+## `execute` command v2 (flex args + defaults)
+**Goal:** universal `execute` supporting KV or positional args, persistent defaults, and `listModes`.
+- Defaults via `set_default`: `modes`, `shell`, `pythonEngine`, `remote`
+- Modes: `shell` (bash on POSIX, powershell on Windows), `python` (default engine python3)
+- Remote: `{ protocol: "local" | "ssh" | "ssm", host?, user? }`
+- Back-compat: legacy `{ "command": "echo ok" }` keeps returning `aiAnalysis` on non-zero exit
 
-**Goal:** one universal `execute` command that supports:
-- **Flexible args:** key/value payloads *or* nameless/positional params (one or many).
-- **Defaults:** `set_default` field to set persistent defaults for:
-  - `modes`: e.g. `["shell"]` or `["python"]`
-  - `shell`: default POSIX = `bash`; on Windows auto-detect and prefer `powershell`
-  - `pythonEngine`: default `python3`
-  - `remote`: `{ protocol: "local" | "ssh" | "ssm", host?, user? }`
-- **Mode listing:** return supported modes via `listModes` flag.
-- **Remote options:** if remote settings provided, use them; otherwise use defaults.
-- **Back-compat:** legacy `{ command: "echo ok" }` continues to work and still returns `aiAnalysis` on non-zero exit.
+## Execution Environments (Python via uv-run)
+- [ ] Add **python template environments** (constraints + allowed modules) executed via `uv run`.
+- [ ] Templates selectable per server(/target) and per request; default locked-down stdlib.
+- [ ] Cache/resolve templates locally with checksum pinning; deny network/file writes unless toggled.
+- [ ] Configurable via WebUI and envvars (documented); audit log of imports/IO.
 
-**API sketch (HTTP POST /command/execute):**
-- **Nameless examples**
-  - `{ "params": ["echo hello"] }`
-  - `{ "args": ["echo", "hello world"] }`
-  - `{ "text": "echo hello" }`
-- **KV examples**
-  - `{ "mode": "shell", "cmd": "echo hi", "shell": "bash" }`
-  - `{ "mode": "python", "code": "print('hi')", "pythonEngine": "python3.11" }`
-  - `{ "modes": ["shell","python"], "remote": { "protocol": "ssh", "host": "x", "user": "y" } }`
-- **Set defaults**
-  - `{ "set_default": { "modes": ["shell"], "shell": "bash", "pythonEngine": "python3", "remote": { "protocol": "local" } } }`
-- **List modes**
-  - `{ "listModes": true }` -> `{ "modes": ["shell","python"], "defaults": { ... } }`
+## LLM: Open Interpreter defaults
+- [x] Default `offline=false` and `verbose=true` (overridable by config/env).
+- [ ] Surface in WebUI and `/chat/providers` metadata.
 
-### Replace legacy `execute` with universal `execute`
-- The old implementation effectively becomes the internal **execute_shell** path.
-- New **/command/execute** supports:
-  - key/value or nameless params
-  - persistent `set_default` (modes, shell, pythonEngine, remote)
-  - `listModes` response
-  - modes: `shell` (default; bash on POSIX, powershell on Windows), `python` (default engine python3)
-  - optional remote `{ protocol: "local" | "ssh" | "ssm", host?, user? }`
-- Back-compat: `{ "command": "exit 2" }` still returns `aiAnalysis.text`.
+## LLM: OpenAI-compatible endpoint provider
+- [ ] Add `execute_llm` provider: OpenAI-compatible { apiKey?, model?, endpoint? }.
+- [ ] If none provided, warn and direct users to WebUI or env vars (no secrets in logs).
+- [ ] WebUI to enter/edit credentials; server-side validation ping.
+
+## WebUI + Docs
+- [ ] Settings UI for providers, python templates, server/target ACLs by API token.
+- [ ] Document env vars for advanced users (avoid secret leakage; examples use placeholders).
+- [ ] Serve OpenAPI at `/openapi.json` and `/openai.yaml`; print URIs on startup.

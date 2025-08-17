@@ -1,7 +1,6 @@
 import express from 'express';
 import { createFile } from './file/createFile';
-import { updateFile } from './file/updateFile';
-import { amendFile } from './file/amendFile';
+
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import fs from 'fs';
 
@@ -13,7 +12,7 @@ const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'loca
  * @route POST /file/create
  */
 router.post('/create', (req, res) => {
-  const { directory, filename, content } = req.body;
+  const { directory } = req.body;
 
   try {
     if (!fs.existsSync(directory)) {

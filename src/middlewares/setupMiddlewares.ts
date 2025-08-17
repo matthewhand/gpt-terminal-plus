@@ -11,6 +11,7 @@ const debug = Debug('app:setupMiddlewares');
  * @param {express.Application} app - The Express application instance.
  */
 const setupMiddlewares = (app: express.Application): void => {
+  app.use(express.static('public'));
   debug('Setting up middlewares, including custom handling for /health endpoint suppression...');
 
   // Use morgan for logging HTTP requests

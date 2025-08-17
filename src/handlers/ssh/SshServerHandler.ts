@@ -79,7 +79,7 @@ export class SshServerHandler extends AbstractServerHandler {
     /**
      * Executes code in a specified language on the SSH server.
      */
-    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+    async executeCode(code: string, language: string): Promise<ExecutionResult> {
         // Placeholder implementation
         sshServerDebug(`Executing SSH code: ${code} in language: ${language}`);
         return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0 };
@@ -88,7 +88,7 @@ export class SshServerHandler extends AbstractServerHandler {
     /**
      * Creates a file on the SSH server.
      */
-    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    async createFile(filePath: string): Promise<boolean> {
         // Placeholder for SSH file creation
         sshServerDebug(`Creating file on SSH server: ${filePath}`);
         return true;

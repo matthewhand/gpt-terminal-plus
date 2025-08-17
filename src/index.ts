@@ -12,7 +12,7 @@ import express from "express";
 import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
-import { getOrGenerateApiToken } from './common/apiToken';
+
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
@@ -21,7 +21,7 @@ import './modules/ngrok';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
-const app = express();
+export const app = express();
 
 // Validate environment variables
 validateEnvironmentVariables();
@@ -106,8 +106,12 @@ const main = async (): Promise<void> => {
     }
 
     server.listen(port, () => {
-      console.log("Server running on " + (process.env.HTTPS_ENABLED === "true" ? "https" : "http") + "://localhost:" + port);
-    });
+      const protocol = process.env.HTTPS_ENABLED === "true" ? "https" : "http";
+      console.log(`Server running on ${protocol}://localhost:${port}`);
+      console.log(`OpenAPI JSON: ${protocol}://localhost:${port}/openapi.json`);
+      console.log(`OpenAPI YAML: ${protocol}://localhost:${port}/openapi.yaml`);
+      console.log(`Plugin manifest: ${protocol}://localhost:${port}/.well-known/ai-plugin.json`);
+      console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);});
 
     // Graceful shutdown handling
     process.on("SIGINT", () => shutdown(server));
@@ -145,5 +149,16 @@ const main = async (): Promise<void> => {
   }
 };
 
-// Start the main function
-main();
+// Export start to allow programmatic boot
+export const start = main;
+
+// Only auto-start when executed directly
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Fatal startup error:", err);
+    process.exit(1);
+  });
+}
+
+// Export the Express app for external usage (e.g., server.ts, tests)
+export default app;

@@ -4,6 +4,8 @@ export function interpreterChatStream(message: string) {
   const base = `http://${llmConfig.interpHost}:${llmConfig.interpPort}`;
   const url = new URL(`${base}/chat`);
   url.searchParams.set('message', message);
+  url.searchParams.set('offline', llmConfig.interpOffline.toString());
+  url.searchParams.set('verbose', llmConfig.interpVerbose.toString());
   return fetch(url, {
     method: 'GET',
     headers: { Accept: 'text/event-stream' },

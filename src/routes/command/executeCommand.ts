@@ -45,7 +45,7 @@ export const executeCommand = async (req: Request, res: Response) => {
         result: { stdout: '', stderr: msg, error: true, exitCode: 1 },
         aiAnalysis,
       });
-    } catch (_) {
+    } catch {
       handleServerError(err, res, "Error executing command");
     }
   }

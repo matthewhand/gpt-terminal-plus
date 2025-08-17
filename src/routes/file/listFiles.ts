@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import path from "path";
+
 import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
 
 export const listFiles = async (req: Request, res: Response) => {
-  const { directory, limit, offset, orderBy } = req.body;
+  const { directory } = req.body;
 
   try {
     const ServerHandler = getServerHandler(req);

@@ -1,26 +1,28 @@
-// @ts-nocheck
 import request from 'supertest';
-import express from 'express';
+import express, { Router } from 'express';
+import setupMiddlewares from '../src/middlewares/setupMiddlewares';
+import * as routesMod from '../src/routes';
+import { getOrGenerateApiToken } from '../src/common/apiToken';
 
-const setupMiddlewares = require('../src/middlewares/setupMiddlewares').default
-  || require('../src/middlewares/setupMiddlewares');
-const routesMod = require('../src/routes');
-const mountRoutes = routesMod.setupApiRouter
-  ? (app: any) => routesMod.setupApiRouter(app)
-  : (app: any) => {
-      const { Router } = require('express');
-      const router = Router();
-      const setup = routesMod.setupRoutes || routesMod.default;
-      setup(router);
-      app.use('/', router);
-      return app;
-    };
-
-const app = mountRoutes(setupMiddlewares(express()));
-const { getOrGenerateApiToken } = require('../src/common/apiToken');
-const token = getOrGenerateApiToken();
+function makeApp() {
+  const app = express();
+  setupMiddlewares(app);
+  const anyRoutes: any = routesMod as any;
+  if (typeof anyRoutes.setupApiRouter === 'function') {
+    anyRoutes.setupApiRouter(app);
+  } else {
+    const router = Router();
+    const setup = anyRoutes.setupRoutes || anyRoutes.default;
+    if (typeof setup === 'function') setup(router);
+    app.use('/', router);
+  }
+  return app;
+}
 
 describe('GET /server/list', () => {
+  const app = makeApp();
+  const token = getOrGenerateApiToken();
+
   it('returns 200 and an array of servers', async () => {
     const res = await request(app)
       .get('/server/list')

@@ -1,34 +1,40 @@
-// @ts-nocheck
 import request from 'supertest';
-import express from 'express';
+import express, { Router } from 'express';
+import setupMiddlewares from '../src/middlewares/setupMiddlewares';
+import * as routesMod from '../src/routes';
+import { getOrGenerateApiToken } from '../src/common/apiToken';
 
-const setupMiddlewares = require('../src/middlewares/setupMiddlewares').default
-  || require('../src/middlewares/setupMiddlewares');
-const routesMod = require('../src/routes');
-const mountRoutes = routesMod.setupApiRouter
-  ? (app: any) => routesMod.setupApiRouter(app)
-  : (app: any) => {
-      const { Router } = require('express');
-      const router = Router();
-      const setup = routesMod.setupRoutes || routesMod.default;
-      setup(router);
-      app.use('/', router);
-      return app;
-    };
+function makeApp() {
+  const app = express();
+  // middlewares does not return app; it mutates in place
+  setupMiddlewares(app);
 
-const app = mountRoutes(setupMiddlewares(express()));
-const { getOrGenerateApiToken } = require('../src/common/apiToken');
-const token = getOrGenerateApiToken();
+  const anyRoutes: any = routesMod as any;
 
-describe('POST /command/execute (shell)', () => {
-  it('executes "echo ok" with exitCode 0', async () => {
+  if (typeof anyRoutes.setupApiRouter === 'function') {
+    anyRoutes.setupApiRouter(app);
+  } else {
+    const router = Router();
+    const setup = anyRoutes.setupRoutes || anyRoutes.default;
+    if (typeof setup === 'function') setup(router);
+    app.use('/', router);
+  }
+  return app;
+}
+
+describe('execute (shell) smoke', () => {
+  const app = makeApp();
+  const token = getOrGenerateApiToken();
+
+  it('runs echo via /command/execute', async () => {
     const res = await request(app)
       .post('/command/execute')
       .set('Authorization', `Bearer ${token}`)
+      .set('Content-Type', 'application/json')
       .send({ command: 'echo ok' });
 
     expect(res.status).toBe(200);
-    expect(res.body.result?.exitCode).toBe(0);
-    expect(String(res.body.result?.stdout || '')).toContain('ok');
+    expect(res.body?.result?.exitCode).toBe(0);
+    expect(res.body?.result?.stdout?.trim()).toBe('ok');
   });
 });

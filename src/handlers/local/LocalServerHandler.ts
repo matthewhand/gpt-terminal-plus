@@ -86,7 +86,7 @@ export class LocalServerHandler extends AbstractServerHandler {
             const command = `${this.postCommand} ${filePath}`;
             localServerDebug(`Running post-command: ${command}`);
             return new Promise((resolve) => {
-                exec(command, (error, stdout, stderr) => {
+                exec(command, (error, stdout) => {
                     if (error) {
                         localServerDebug(`Error running post-command: ${error.message}`);
                         resolve({ exitCode: error.code || 1, advice: 'Post-command failed. Consider checking syntax or permissions.' });
