@@ -18,7 +18,8 @@
     "test:debug": "cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
     "test:monitor": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "showcase": "bash scripts/capture_showcase.sh",
-    "ncu": "ncu"
+    "ncu": "ncu",
+    "smoke": "bash scripts/smoke.sh"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
