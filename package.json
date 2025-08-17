@@ -19,7 +19,10 @@
     "test:monitor": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "showcase": "bash scripts/capture_showcase.sh",
     "ncu": "ncu",
-    "smoke": "bash scripts/smoke.sh"
+    "smoke": "bash scripts/smoke.sh",
+    "openapi:generate": "node scripts/generate-openapi.cjs",
+    "postbuild": "npm run openapi:generate",
+    "prestart": "npm run openapi:generate"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
@@ -81,6 +84,7 @@
     "ssh2": "^1.15.0",
     "ssh2-sftp-client": "^10.0.3",
     "swagger-ui-express": "^5.0.1",
+    "swagger-jsdoc": "^6.2.8",
     "url": "^0.11.4",
     "uuid": "^10.0.0",
     "yaml": "^2.8.1",
