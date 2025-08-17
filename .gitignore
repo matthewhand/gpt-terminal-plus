@@ -131,6 +131,12 @@ Thumbs.db
 config/*
 
 # But not these files...
+
+babel.config.js
+src/handlers/local/actions/getSystemInfo.ts
+src/utils/ssh/
+tests/common/
+tests/handlers/local/actions/getSystemInfo.test.ts
 !config/default.json
 !config/test.json
 !config/test/*
