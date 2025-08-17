@@ -6,100 +6,103 @@ export function getPublicBaseUrl(): string {
   const envUrl = process.env.PUBLIC_BASE_URL;
   if (envUrl && /^https?:\/\//i.test(envUrl)) return envUrl.replace(/\/+$/, '');
 
-  // Next: HTTPS_ENABLED + PORT
+  // Next: HTTPS_ENABLED + PORT + PUBLIC_HOST
   const protocol = process.env.HTTPS_ENABLED === 'true' ? 'https' : 'http';
   const port = process.env.PORT ? Number(process.env.PORT) : 3100;
-
-  // Optional host override (eg behind reverse proxy)
   const host = process.env.PUBLIC_HOST || 'localhost';
-
   return `${protocol}://${host}:${port}`;
 }
 
-/** Tiny JSON -> YAML emitter (safe for our simple OpenAPI structure). */
-function jsonToYaml(value: any, indent = 0): string {
-  const pad = '  '.repeat(indent);
-  const str = (s: string) => JSON.stringify(s);
-
-  if (value === null) return 'null';
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '[]';
-    return value.map(v => `${pad}- ${jsonToYaml(v, indent + 1).replace(/^\s+/, '')}`).join('\n');
-  }
-  switch (typeof value) {
-    case 'string': return str(value);
-    case 'number': return String(value);
-    case 'boolean': return value ? 'true' : 'false';
-    case 'object': {
-      const entries = Object.entries(value);
-      if (entries.length === 0) return '{}';
-      return entries.map(([k, v]) => {
-        const rendered = jsonToYaml(v, indent + 1);
-        const needsBlock = typeof v === 'object' && v !== null && !Array.isArray(v);
-        return needsBlock
-          ? `${pad}${k}:\n${rendered}`
-          : `${pad}${k}: ${rendered}`;
-      }).join('\n');
-    }
-    default: return str(String(value));
+/** Helpers for YAML */
+function isPlainObject(v: any): v is Record<string, any> {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+function yamlScalar(v: any): string {
+  switch (typeof v) {
+    case 'string': return JSON.stringify(v); // safe quoting
+    case 'number': return Number.isFinite(v) ? String(v) : JSON.stringify(v);
+    case 'boolean': return v ? 'true' : 'false';
+    default: return v === null ? 'null' : JSON.stringify(v);
   }
 }
 
-/** Build the OpenAPI spec using runtime context. */
-export function buildOpenApiSpec(_app: express.Application) {
-  const components = {
-    securitySchemes: {
-      bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'API_TOKEN' },
-    },
-    schemas: {
-      ExecutionResult: {
-        type: 'object',
-        properties: {
-          stdout: { type: 'string' },
-          stderr: { type: 'string' },
-          exitCode: { type: 'integer' },
-          error: { type: 'boolean' },
-        },
-        required: ['stdout','stderr','exitCode','error'],
-      },
-    },
-  } as const;
+/**
+ * Convert JSON -> YAML with consistent block style for arrays.
+ * - Objects: keys on their own line when value is object/array
+ * - Arrays: always block sequence
+ * This is intentionally minimal but produces valid, clean YAML for our spec.
+ */
+function jsonToYaml(value: any, indent = 0): string {
+  const pad = '  '.repeat(indent);
 
-  const paths: Record<string, any> = {
-    '/server/list': {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    return value
+      .map((item) => {
+        if (isPlainObject(item) || Array.isArray(item)) {
+          return `${pad}-\n${jsonToYaml(item, indent + 1)}`;
+        }
+        return `${pad}- ${yamlScalar(item)}`;
+      })
+      .join('\n');
+  }
+
+  if (isPlainObject(value)) {
+    const entries = Object.entries(value);
+    if (entries.length === 0) return '{}';
+    return entries
+      .map(([k, v]) => {
+        if (isPlainObject(v) || Array.isArray(v)) {
+          return `${pad}${k}:\n${jsonToYaml(v, indent + 1)}`;
+        }
+        return `${pad}${k}: ${yamlScalar(v)}`;
+      })
+      .join('\n');
+  }
+
+  return pad + yamlScalar(value);
+}
+
+/** Build the OpenAPI JSON spec based on runtime toggles. */
+export function buildOpenAPISpec() {
+  const baseUrl = getPublicBaseUrl();
+
+  // feature toggles (can be expanded later)
+  const enableExecute = true;
+  const enableExecuteCode = true;
+  const enableExecuteFile = true;
+  const enableExecuteLlm = true;
+  const enableServerList = true;
+
+  const paths: Record<string, any> = {};
+
+  if (enableServerList) {
+    paths['/server/list'] = {
       get: {
         summary: 'List servers for this API token',
         responses: {
           200: {
-            description: 'List of servers',
+            description: 'OK',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['servers'],
                   properties: {
-                    servers: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        required: ['key','label','protocol'],
-                        properties: {
-                          key: { type: 'string' },
-                          label: { type: 'string' },
-                          protocol: { type: 'string' },
-                          hostname: { type: 'string', nullable: true },
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    '/command/execute': {
+                    servers: { type: 'array', items: { type: 'object' } },
+                  },
+                  required: ['servers'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    };
+  }
+
+  if (enableExecute) {
+    paths['/command/execute'] = {
       post: {
         summary: 'Execute a command',
         requestBody: {
@@ -108,15 +111,11 @@ export function buildOpenApiSpec(_app: express.Application) {
             'application/json': {
               schema: {
                 type: 'object',
+                properties: { command: { type: 'string' } },
                 required: ['command'],
-                properties: {
-                  command: { type: 'string' },
-                  timeoutMs: { type: 'integer' },
-                  directory: { type: 'string' },
-                }
-              }
-            }
-          }
+              },
+            },
+          },
         },
         responses: {
           200: {
@@ -125,37 +124,40 @@ export function buildOpenApiSpec(_app: express.Application) {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['result'],
                   properties: {
                     result: { $ref: '#/components/schemas/ExecutionResult' },
                     aiAnalysis: { type: 'object' },
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    '/command/execute-code': {
+                  },
+                  required: ['result'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    };
+  }
+
+  if (enableExecuteCode) {
+    paths['/command/execute-code'] = {
       post: {
-        summary: 'Execute code (e.g., python, bash)',
+        summary: 'Execute a code snippet',
         requestBody: {
           required: true,
           content: {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['language','code'],
                 properties: {
-                  language: { type: 'string', enum: ['bash','python','python3'] },
+                  language: { type: 'string' },
                   code: { type: 'string' },
                   timeoutMs: { type: 'integer' },
-                  directory: { type: 'string' },
-                }
-              }
-            }
-          }
+                },
+                required: ['language', 'code'],
+              },
+            },
+          },
         },
         responses: {
           200: {
@@ -164,19 +166,23 @@ export function buildOpenApiSpec(_app: express.Application) {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['result'],
                   properties: {
                     result: { $ref: '#/components/schemas/ExecutionResult' },
                     aiAnalysis: { type: 'object' },
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    '/command/execute-file': {
+                  },
+                  required: ['result'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    };
+  }
+
+  if (enableExecuteFile) {
+    paths['/command/execute-file'] = {
       post: {
         summary: 'Execute a file present on the server/target',
         requestBody: {
@@ -185,15 +191,15 @@ export function buildOpenApiSpec(_app: express.Application) {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['filename'],
                 properties: {
                   filename: { type: 'string' },
                   directory: { type: 'string' },
                   timeoutMs: { type: 'integer' },
-                }
-              }
-            }
-          }
+                },
+                required: ['filename'],
+              },
+            },
+          },
         },
         responses: {
           200: {
@@ -202,19 +208,23 @@ export function buildOpenApiSpec(_app: express.Application) {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['result'],
                   properties: {
                     result: { $ref: '#/components/schemas/ExecutionResult' },
                     aiAnalysis: { type: 'object' },
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    '/command/execute-llm': {
+                  },
+                  required: ['result'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    };
+  }
+
+  if (enableExecuteLlm) {
+    paths['/command/execute-llm'] = {
       post: {
         summary: 'Run an LLM plan or direct instruction',
         requestBody: {
@@ -223,56 +233,86 @@ export function buildOpenApiSpec(_app: express.Application) {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['instructions'],
                 properties: {
                   instructions: { type: 'string' },
                   dryRun: { type: 'boolean' },
                   stream: { type: 'boolean' },
-                }
-              }
-            }
-          }
+                },
+                required: ['instructions'],
+              },
+            },
+          },
         },
         responses: {
           200: {
-            description: 'Plan execution (or dry run)',
-            content: { 'application/json': { schema: { type: 'object' } } }
-          }
-        }
-      }
-    }
-  };
+            description: 'LLM execution complete',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    plan: { type: 'object' },
+                    results: { type: 'array', items: { type: 'object' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] }],
+      },
+    };
+  }
 
-  const openapi = {
+  return {
     openapi: '3.0.3',
     info: {
       title: 'gpt-terminal-plus API',
       version: '0.1.0',
-      description: 'Dynamic OpenAPI surface for servers and command/code/LLM execution',
+      description:
+        'Runtime OpenAPI surface for listing servers and executing commands/code/LLM.',
     },
-    servers: [{ url: getPublicBaseUrl(), description: 'Public base URL' }],
-    components,
+    servers: [{ url: baseUrl, description: 'Runtime base URL' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'API_TOKEN' },
+      },
+      schemas: {
+        ExecutionResult: {
+          type: 'object',
+          properties: {
+            stdout: { type: 'string' },
+            stderr: { type: 'string' },
+            exitCode: { type: 'integer' },
+            error: { type: 'boolean' },
+          },
+          required: ['stdout', 'stderr', 'exitCode', 'error'],
+        },
+      },
+    },
     security: [{ bearerAuth: [] }],
     paths,
   };
-
-  return openapi;
 }
 
-/** Register dynamic OpenAPI routes on the provided app. */
-export function registerOpenApiRoutes(app: express.Application) {
-  // JSON
+/** Register dynamic OpenAPI endpoints (/openapi.json and /openapi.yaml). */
+export function registerOpenAPIRoutes(app: express.Application): void {
   app.get('/openapi.json', (_req: Request, res: Response) => {
-    const spec = buildOpenApiSpec(app);
-    res.type('application/json').status(200).send(spec);
+    const spec = buildOpenAPISpec();
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.status(200).json(spec);
   });
-  // YAML (two aliases)
-  app.get('/openapi.yaml', (_req: Request, res: Response) => {
-    const spec = buildOpenApiSpec(app);
-    res.type('application/yaml').status(200).send(jsonToYaml(spec) + '\n');
-  });
-  app.get('/openai.yaml', (_req: Request, res: Response) => {
-    const spec = buildOpenApiSpec(app);
-    res.type('application/yaml').status(200).send(jsonToYaml(spec) + '\n');
-  });
+
+  const sendYaml = (_req: Request, res: Response) => {
+    const spec = buildOpenAPISpec();
+    const yaml = jsonToYaml(spec, 0) + '\n';
+    res.setHeader('Content-Type', 'text/yaml; charset=utf-8');
+    res.status(200).send(yaml);
+  };
+
+  // Both aliases for convenience
+  app.get('/openapi.yaml', sendYaml);
+  app.get('/openai.yaml', sendYaml);
 }
+
+export const registerOpenApiRoutes = registerOpenAPIRoutes;

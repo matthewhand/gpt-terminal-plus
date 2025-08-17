@@ -14,6 +14,11 @@ const debug = Debug('app:setupMiddlewares');
 const setupMiddlewares = (app: express.Application): void => {
   app.use(express.static('public'));
   debug('Setting up middlewares, including custom handling for /health endpoint suppression...');
+// OpenAPI spec endpoints
+  try {
+    const { registerOpenAPIRoutes } = require("../openapi");
+    if (typeof registerOpenAPIRoutes === "function") registerOpenAPIRoutes(app);
+  } catch { /* optional */ }
 
   
   // Register dynamic OpenAPI endpoints
