@@ -91,7 +91,7 @@ When an execution returns a non‑zero exit code, endpoints attach an `aiAnalysi
 - Affected endpoints:
   - `POST /command/execute`
   - `POST /command/execute-code`
-  - `POST /command/execute-file`
+  - ~~`POST /command/execute-file`~~ (deprecated; use `/command/execute` with a shell command)
 
 - Response shape (example):
   ```json

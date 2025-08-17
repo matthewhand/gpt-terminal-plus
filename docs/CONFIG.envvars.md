@@ -62,6 +62,19 @@ BACKUP_EXTENSION=.bak
 - **`BACKUP_EXTENSION`**
   - **Description**: Specifies the extension used for backup files.
   - **Default**: `.bak`
+ 
+## LLM Configuration (optional)
+
+```ini
+LLM_ENABLED=false
+LLM_PROVIDER=none  # ollama, lmstudio, openai
+DEFAULT_MODEL=gpt-oss:20b
+OLLAMA_BASE_URL=http://localhost:11434  # LLM_PROVIDER=ollama
+LMSTUDIO_BASE_URL=http://localhost:1234  # LLM_PROVIDER=lmstudio
+OPENAI_BASE_URL=https://api.openai.com  # OpenAI or LiteLLM proxy
+OPENAI_API_KEY= # required when LLM_PROVIDER=openai
+AUTO_ANALYZE_ERRORS=true # ignored when LLM_ENABLED=false
+```
 
 ## Third-Party Service Configuration
 

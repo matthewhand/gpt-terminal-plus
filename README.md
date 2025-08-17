@@ -2,6 +2,8 @@
 
 Competition entry: AI-assisted CLI with gpt-oss:20b for automatic error diagnosis and natural-language execution.
 
+**Works without AI**: Core features run with zero LLM configuration; AI helpers are optional and disabled by default.
+
 ## Quickstart
 
 ### Run Directly from Docker Hub
@@ -31,6 +33,19 @@ Competition entry: AI-assisted CLI with gpt-oss:20b for automatic error diagnosi
 For more detailed instructions and alternative installation methods, please refer to the sections below.
 
 
+## Enable LLM (optional)
+
+LLM features are off by default. Enable them with one-line environment overrides:
+
+- **LiteLLM proxy (OpenAI-compatible)**
+  ```sh
+  LLM_ENABLED=true LLM_PROVIDER=openai OPENAI_BASE_URL=http://localhost:4000 OPENAI_API_KEY=sk-xxx npm start
+  ```
+- **Ollama**
+  ```sh
+  LLM_ENABLED=true LLM_PROVIDER=ollama OLLAMA_BASE_URL=http://localhost:11434 npm start
+  ```
+
 ## Introduction
 
 GPT Terminal Plus provides a secure and isolated environment where system CLI utilities can be accessed via HTTP endpoints. Beyond simple command execution, it performs automatic AI analysis of failures and returns actionable fixes back to the calling AI.
@@ -45,11 +60,12 @@ The primary purpose of GPT Terminal Plus is to grant access to system CLI utilit
 ## Primary Features (Two Ways We Use gpt-oss:20b)
 
 - AI Error Analysis and Autodiagnostics: when a shell, code, or file execution exits non‑zero, the system invokes `gpt-oss:20b` (if available) to analyze `stderr`, `stdout`, and `exitCode`, returning concise remediation steps and suggested fixes in the response. This provides immediate, high‑value feedback to the calling AI.
+  - When `LLM_ENABLED=false`, this analysis silently disables itself.
 
 See docs/API.md → AI Error Analysis.
 
 ## Secondary Features
-- Command Execution: Run system commands using Bash; execute code (Python, TypeScript); run files.
+- Command Execution: Run system commands using Bash; execute code (Python, TypeScript); run files. `executeFile` is deprecated—use `/command/execute` with a shell command instead.
 - Model Selection: Choose logical models via `/model` routes; providers: Ollama, LM Studio, OpenAI.
 - Streaming Chat: `POST /chat/completions` with SSE streaming, heartbeats, and error events.
 - File Management: Create, read, update, and delete files securely.

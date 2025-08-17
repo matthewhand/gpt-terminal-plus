@@ -192,19 +192,19 @@ HTTPS_CERT_PATH=path/to/your/certificate.crt
 
 ## AI Providers and Models
 
-The chat API uses a provider adapter with sensible defaults. You can configure the provider and model mapping via your config files under the `ai` key, and control the default logical model with `DEFAULT_MODEL`.
+The chat API uses a provider adapter with sensible defaults. LLM features are optional and disabled unless `LLM_ENABLED=true`. You can configure the provider and model mapping via your config files under the `ai` key and control the default logical model with `DEFAULT_MODEL`.
 
 ### Environment Variables
 
 ```ini
-# Optional: default logical model to use if none selected
+LLM_ENABLED=false
+LLM_PROVIDER=none   # ollama, lmstudio, openai
 DEFAULT_MODEL=gpt-oss:20b
-AI_PROVIDER=ollama   # or lmstudio, openai
-OLLAMA_BASE_URL=http://localhost:11434
-LMSTUDIO_BASE_URL=http://localhost:1234
-OPENAI_BASE_URL=https://api.openai.com
-OPENAI_API_KEY=sk-...
-AUTO_ANALYZE_ERRORS=true
+OLLAMA_BASE_URL=http://localhost:11434   # required when LLM_PROVIDER=ollama
+LMSTUDIO_BASE_URL=http://localhost:1234   # required when LLM_PROVIDER=lmstudio
+OPENAI_BASE_URL=https://api.openai.com   # OpenAI or LiteLLM proxy
+OPENAI_API_KEY=sk-...                    # required when LLM_PROVIDER=openai
+AUTO_ANALYZE_ERRORS=true                 # ignored when LLM_ENABLED=false
 ```
 
 ### Config Structure (config/production.json or config/test/test.json)

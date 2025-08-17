@@ -130,6 +130,9 @@
  *   post:
  *     operationId: executeFile
  *     summary: Execute a file present on the server/target
+ *     deprecated: true
+ *     description: |
+ *       Deprecated. Use `/command/execute` with a shell command instead.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
