@@ -12,6 +12,7 @@ import express from "express";
 import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
+import { registerOpenApiRoutes } from "./openapi";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
@@ -32,6 +33,9 @@ setupMiddlewares(app);
 // Setup API Router
 setupApiRouter(app);
 
+
+  // Dynamic OpenAPI routes
+  registerOpenApiRoutes(app);
 if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");
   const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
@@ -108,7 +112,8 @@ const main = async (): Promise<void> => {
     server.listen(port, () => {
       const protocol = process.env.HTTPS_ENABLED === "true" ? "https" : "http";
       console.log(`Server running on ${protocol}://localhost:${port}`);
-      console.log(`OpenAPI JSON: ${protocol}://localhost:${port}/openapi.json`);
+      console.log(`OpenAPI (JSON): ${protocol}://localhost:${port}/openapi.json`);
+      console.log(`OpenAPI (YAML): ${protocol}://localhost:${port}/openapi.yaml`);
       console.log(`OpenAPI YAML: ${protocol}://localhost:${port}/openapi.yaml`);
       console.log(`Plugin manifest: ${protocol}://localhost:${port}/.well-known/ai-plugin.json`);
       console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);});

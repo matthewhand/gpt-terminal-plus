@@ -1,4 +1,5 @@
 import express from 'express';
+import { registerOpenApiRoutes } from '../openapi';
 import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -14,7 +15,10 @@ const setupMiddlewares = (app: express.Application): void => {
   app.use(express.static('public'));
   debug('Setting up middlewares, including custom handling for /health endpoint suppression...');
 
-  // Use morgan for logging HTTP requests
+  
+  // Register dynamic OpenAPI endpoints
+  registerOpenApiRoutes(app);
+// Use morgan for logging HTTP requests
   app.use(morgan('combined'));
 
   // Custom middleware to suppress /health logs
