@@ -1,10 +1,12 @@
 import request from 'supertest';
-import app from '../src/app';
+import express from 'express';
+import { setupApiRouter } from '../src/routes';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 
-describe('POST /command/execute (shell)', () => {
-  const token = getOrGenerateApiToken();
+const app = setupApiRouter(express());
+const token = getOrGenerateApiToken();
 
+describe('POST /command/execute (shell)', () => {
   it('executes "echo ok" with exitCode 0', async () => {
     const res = await request(app)
       .post('/command/execute')
@@ -13,6 +15,6 @@ describe('POST /command/execute (shell)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.result?.exitCode).toBe(0);
-    expect(res.body.result?.stdout || '').toContain('ok');
+    expect((res.body.result?.stdout || '') as string).toContain('ok');
   });
 });
