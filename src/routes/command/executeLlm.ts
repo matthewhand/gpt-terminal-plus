@@ -167,11 +167,11 @@ export const executeLlm = async (req: Request, res: Response) => {
         }
         throw e;
       }
-      let aiAnalysis;
+      const payload: any = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, ...r };
       if ((r?.exitCode !== undefined && r.exitCode !== 0) || r?.error) {
-        aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
+        const aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
+        if (aiAnalysis) payload.aiAnalysis = aiAnalysis;
       }
-      const payload = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, ...r, aiAnalysis };
       results.push(payload);
       if (stream) {
         res.write(`event: step\n`);

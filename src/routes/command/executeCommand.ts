@@ -24,9 +24,9 @@ export const executeCommand = async (req: Request, res: Response) => {
     const server = getServerHandler(req);
     const result = await server.executeCommand(command);
     debug(`Command executed: ${command}, result: ${JSON.stringify(result)}`);
-    let aiAnalysis;
+    const payload: any = { result };
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
-      aiAnalysis = await analyzeError({
+      const aiAnalysis = await analyzeError({
         kind: 'command',
         input: command,
         stdout: result.stdout,
@@ -34,17 +34,19 @@ export const executeCommand = async (req: Request, res: Response) => {
         exitCode: result.exitCode,
         cwd: await getPresentWorkingDirectory(),
       });
+      if (aiAnalysis) payload.aiAnalysis = aiAnalysis;
     }
-    res.status(200).json({ result, aiAnalysis });
+    res.status(200).json(payload);
   } catch (err) {
     debug(`Error executing command: ${err instanceof Error ? err.message : String(err)}`);
     try {
       const msg = err instanceof Error ? err.message : String(err);
       const aiAnalysis = await analyzeError({ kind: 'command', input: command, stderr: msg, cwd: await getPresentWorkingDirectory() });
-      res.status(200).json({
+      const resp: any = {
         result: { stdout: '', stderr: msg, error: true, exitCode: 1 },
-        aiAnalysis,
-      });
+      };
+      if (aiAnalysis) resp.aiAnalysis = aiAnalysis;
+      res.status(200).json(resp);
     } catch {
       handleServerError(err, res, "Error executing command");
     }

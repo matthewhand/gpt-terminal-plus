@@ -25,17 +25,20 @@ export const executeFile = async (req: Request, res: Response) => {
     const server = getServerHandler(req);
     const result = await server.executeFile(filename, directory);
     debug(`File executed: ${filename}, result: ${JSON.stringify(result)}`);
-    let aiAnalysis;
+    const payload: any = { result };
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
-      aiAnalysis = await analyzeError({ kind: 'file', input: filename, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
+      const aiAnalysis = await analyzeError({ kind: 'file', input: filename, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
+      if (aiAnalysis) payload.aiAnalysis = aiAnalysis;
     }
-    res.status(200).json({ result, aiAnalysis });
+    res.status(200).json(payload);
   } catch (err) {
     debug(`Error executing file: ${err instanceof Error ? err.message : String(err)}`);
     try {
       const msg = err instanceof Error ? err.message : String(err);
       const aiAnalysis = await analyzeError({ kind: 'file', input: filename, stderr: msg });
-      res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
+      const resp: any = { result: { stdout: '', stderr: msg, error: true, exitCode: 1 } };
+      if (aiAnalysis) resp.aiAnalysis = aiAnalysis;
+      res.status(200).json(resp);
     } catch {
       handleServerError(err, res, "Error executing file");
     }

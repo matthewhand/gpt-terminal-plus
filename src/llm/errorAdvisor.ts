@@ -1,7 +1,8 @@
 import Debug from 'debug';
-import { chat } from './index';
 import { getSupportedModels } from '../common/models';
 import { getSelectedModel } from '../utils/GlobalStateHelper';
+import { llmConfig } from '../common/llmConfig';
+import { chat } from './index';
 
 const debug = Debug('app:llm:errorAdvisor');
 
@@ -20,9 +21,19 @@ export interface ErrorAnalysis {
   text: string;
 }
 
-export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | undefined> {
+function getLlmClient() {
+  return { chat };
+}
+
+export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | null> {
+  // Evaluate feature flag and llm config early
+  const cfg = llmConfig;
   const auto = process.env.AUTO_ANALYZE_ERRORS !== 'false';
-  if (!auto) return undefined;
+  if (!auto) return null;
+  if (process.env.LLM_ENABLED === 'false' || (cfg as any).provider === 'none') return null;
+
+  const client = getLlmClient();
+  if (!client) return null;
 
   const supported = getSupportedModels();
   const prefer = 'gpt-oss:20b';
@@ -49,12 +60,12 @@ export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | u
       }
     ];
 
-    const resp = await chat({ model, messages } as any);
+    const resp = await client.chat({ model, messages } as any);
     const text = resp?.choices?.[0]?.message?.content || '';
     return { model, text };
   } catch (err) {
     debug('Error during AI analysis: ' + String(err));
-    return undefined;
+    return null;
   }
 }
 
