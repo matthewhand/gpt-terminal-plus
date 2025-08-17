@@ -144,6 +144,13 @@ export async function* chatWithOllamaStream(cfg: OllamaConfig, req: ChatRequest)
   }
 }
 
+export function createOllamaClient(baseUrl: string) {
+  return {
+    chat: (req: ChatRequest) => chatWithOllama({ baseUrl }, req),
+    chatStream: (req: ChatRequest) => chatWithOllamaStream({ baseUrl }, req),
+  };
+}
+
 // Streaming compatibility shim - returns an async iterable of Buffer
 async function streamCompat(urlStr: string, options: any): Promise<AsyncIterable<Buffer>> {
   const g: any = (globalThis as any);

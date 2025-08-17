@@ -77,6 +77,7 @@ export const SettingsStore = {
           }
         : _settings.features,
       app: partial.app ? { ..._settings.app, ...partial.app } : _settings.app,
+      llm: partial.llm ? { ..._settings.llm, ...partial.llm } : _settings.llm,
     });
     _settings = merged;
     scheduleSave();
@@ -105,3 +106,7 @@ export const SettingsStore = {
     });
   },
 };
+
+export function getSettings(): Settings {
+  return SettingsStore.get();
+}
