@@ -2,9 +2,24 @@ import config from 'config';
 import Debug from 'debug';
 import { ChatRequest, ChatResponse } from './types';
 import { ServerConfig } from '../types/ServerConfig';
-import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama';
-import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio';
-import { chatWithOpenAI, chatWithOpenAIStream, OpenAIConfig } from './providers/openai';
+import {
+  chatWithOllama,
+  chatWithOllamaStream,
+  OllamaConfig,
+  createOllamaClient,
+} from './providers/ollama';
+import {
+  chatWithLmStudio,
+  chatWithLmStudioStream,
+  LmStudioConfig,
+  createLmStudioClient,
+} from './providers/lmstudio';
+import {
+  chatWithOpenAI,
+  chatWithOpenAIStream,
+  getOpenAIClient,
+} from './providers/openai';
+import { getResolvedLlmConfig } from './config';
 
 const debug = Debug('app:llm:index');
 
@@ -15,7 +30,7 @@ interface AIConfig {
   providers: {
     ollama?: OllamaConfig;
     lmstudio?: LmStudioConfig;
-    openai?: OpenAIConfig;
+    openai?: any;
   };
 }
 
@@ -35,8 +50,7 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
       return chatWithLmStudio(cfg, req);
     }
     case 'openai': {
-      const cfg: OpenAIConfig = aiCfg.providers?.openai || { baseUrl: 'https://api.openai.com' };
-      return chatWithOpenAI(cfg, req);
+      return chatWithOpenAI(req);
     }
   }
 }
@@ -87,8 +101,7 @@ export async function* chatStream(req: ChatRequest): AsyncGenerator<string> {
       break;
     }
     case 'openai': {
-      const cfg: OpenAIConfig = aiCfg.providers?.openai || { baseUrl: 'https://api.openai.com' };
-      for await (const chunk of chatWithOpenAIStream(cfg, req)) {
+      for await (const chunk of chatWithOpenAIStream(req)) {
         yield chunk;
       }
       break;
@@ -104,6 +117,27 @@ export async function* chatStream(req: ChatRequest): AsyncGenerator<string> {
   }
 }
 
+export function getLlmClient() {
+  const cfg = getResolvedLlmConfig();
+  if (!cfg.enabled || cfg.provider === 'none') return null;
+  switch (cfg.provider) {
+    case 'openai':
+    case 'litellm':
+      return getOpenAIClient();
+    case 'ollama':
+      return createOllamaClient(cfg.ollamaURL || '');
+    case 'lmstudio':
+      return createLmStudioClient(cfg.lmstudioURL || '');
+    default:
+      return null;
+  }
+}
+
+export function getDefaultModel() {
+  const cfg = getResolvedLlmConfig();
+  return cfg.defaultModel || 'gpt-4o-mini';
+}
+
 // Per-server overrides: use llm provider settings from server config if present
 export async function chatForServer(server: ServerConfig, req: ChatRequest): Promise<ChatResponse> {
   const llm = server.llm;
@@ -116,8 +150,7 @@ export async function chatForServer(server: ServerConfig, req: ChatRequest): Pro
     return chatWithLmStudio(cfg, req);
   }
   if (llm?.provider === 'openai') {
-    const cfg: OpenAIConfig = { baseUrl: llm.baseUrl || 'https://api.openai.com', apiKey: llm.apiKey, modelMap: llm.modelMap };
-    return chatWithOpenAI(cfg, req);
+    return chatWithOpenAI(req);
   }
   // Fallback to global config
   return chat(req);
