@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GPT Terminal Plus</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #22d3ee;
+      --link: #60a5fa;
+      --ok: #34d399;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial;
+      background: linear-gradient(180deg, #0b1022 0%, #0f172a 100%);
+      color: var(--text);
+    }
+    header {
+      padding: 2rem 1rem 1rem;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      letter-spacing: .3px;
+    }
+    header p {
+      margin: .5rem 0 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    main {
+      max-width: 900px;
+      margin: 1rem auto 2.5rem;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+    .card h2 {
+      margin: 0 0 .25rem;
+      font-size: 1.15rem;
+    }
+    .card p {
+      margin: 0 0 .75rem;
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.35rem;
+    }
+    ul.links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: .5rem;
+    }
+    ul.links a {
+      color: var(--link);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(96,165,250,.35);
+    }
+    ul.links a:hover { color: #93c5fd; border-bottom-color: rgba(147,197,253,.55); }
+    code {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.08);
+      padding: .2rem .4rem;
+      border-radius: 6px;
+      color: #e5e7eb;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
+      font-size: .9rem;
+    }
+    footer {
+      max-width: 900px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1rem;
+      color: var(--muted);
+      font-size: .9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GPT Terminal Plus</h1>
+    <p>Static-first OpenAPI with dynamic fallback, Convict-configured server, and secure settings viewer.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>API Documentation</h2>
+      <p>Deterministic artifacts are served from <code>/public</code>. Swagger UI points at the static JSON.</p>
+      <ul class="links">
+        <li><a href="/docs">Swagger UI (/docs)</a></li>
+        <li><a href="/openapi.json" rel="noopener">OpenAPI JSON (/openapi.json)</a></li>
+        <li><a href="/openapi.yaml" rel="noopener">OpenAPI YAML (/openapi.yaml)</a></li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Settings (Redacted)</h2>
+      <p>View configuration grouped by category. Secrets are masked; env-overridden values are read-only.</p>
+      <ul class="links">
+        <li><a href="/settings.html">Open Settings UI</a></li>
+        <li><a href="/docs-static/ENVIRONMENT.md" rel="noopener">Environment & Configuration Guide</a></li>
+      </ul>
+      <p style="margin-top:.75rem">
+        Provide a bearer token as: <code>Authorization: Bearer YOUR_API_TOKEN</code>.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Plugin Manifest</h2>
+      <p>Manifest is exposed for compatibility and discovery.</p>
+      <ul class="links">
+        <li><a href="/.well-known/ai-plugin.json">/.well-known/ai-plugin.json</a></li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>ChatGPT Integration</h2>
+      <p>Configure a Custom GPT to call your deployment using the OpenAPI spec.</p>
+      <ul class="links">
+        <li><a href="/docs-static/CHATGPT_configuration.md" rel="noopener">Setup Guide</a></li>
+        <li><a href="/openapi.yaml" rel="noopener">OpenAPI YAML (/openapi.yaml)</a></li>
+        <li><a href="/openapi.json" rel="noopener">OpenAPI JSON (/openapi.json)</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    Server logs print absolute URLs at startup. If deploying behind a proxy, set <code>PUBLIC_BASE_URL</code> to ensure servers[0].url resolves correctly in OpenAPI.
+  </footer>
+</body>
+</html>
