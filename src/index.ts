@@ -96,7 +96,20 @@ const main = async (): Promise<void> => {
   }
 
   // Load the configuration and start the application
-  const port = config.has("port") ? config.get<number>("port") : 5005;
+  // Prefer explicit env PORT if provided and valid; otherwise fall back to config or default
+  const rawEnvPort = process.env.PORT;
+  let port: number;
+  if (rawEnvPort && !Number.isNaN(Number(rawEnvPort))) {
+    port = Number(rawEnvPort);
+    console.debug(`Port selection: honoring process.env.PORT=${rawEnvPort}`);
+  } else {
+    port = config.has("port") ? config.get<number>("port") : 5005;
+    console.debug(
+      `Port selection: using config/default (${port})${
+        rawEnvPort ? " (ignored invalid PORT)" : ""
+      }`
+    );
+  }
   console.debug("Application will start on port:", port);
 
   /**

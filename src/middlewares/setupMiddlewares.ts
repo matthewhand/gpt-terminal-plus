@@ -1,9 +1,9 @@
 import express from 'express';
-import { registerOpenApiRoutes } from '../openapi';
 import morgan from 'morgan';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import Debug from 'debug';
+import { errorHandler } from './errorHandler';
 
 const debug = Debug('app:setupMiddlewares');
 
@@ -12,27 +12,17 @@ const debug = Debug('app:setupMiddlewares');
  * @param {express.Application} app - The Express application instance.
  */
 const setupMiddlewares = (app: express.Application): void => {
-  app.use(express.static('public'));
-  debug('Setting up middlewares, including custom handling for /health endpoint suppression...');
-// OpenAPI spec endpoints
-  try {
-    const { registerOpenAPIRoutes } = require("../openapi");
-    if (typeof registerOpenAPIRoutes === "function") registerOpenAPIRoutes(app);
-  } catch { /* optional */ }
+  debug('Setting up middlewares, with conditional /health logging suppression...');
 
-  
-  // Register dynamic OpenAPI endpoints
-  registerOpenApiRoutes(app);
-// Use morgan for logging HTTP requests
-  app.use(morgan('combined'));
-
-  // Custom middleware to suppress /health logs
+  // HTTP request logging with optional /health suppression
+  const httpLogger = morgan('combined');
   app.use((req, res, next) => {
-    if (req.path !== '/health' || process.env.DISABLE_HEALTH_LOG !== 'true') {
-      debug('Logging request to ' + req.path); morgan('combined')(req, res, next);
-    } else {
-      next();
+    const suppressHealth = req.path === '/health' && process.env.DISABLE_HEALTH_LOG === 'true';
+    if (suppressHealth) {
+      return next();
     }
+    debug('Logging request to ' + req.path);
+    return httpLogger(req, res, next);
   });
 
   // Determine CORS origin based on environment variable or use defaults
@@ -44,6 +34,9 @@ const setupMiddlewares = (app: express.Application): void => {
   app.use(cors({ origin: corsOrigin }));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+
+  // Error handling middleware (must be last)
+  app.use(errorHandler);
 
   debug('Middlewares setup completed.');
 };
