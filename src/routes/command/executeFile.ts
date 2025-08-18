@@ -17,6 +17,7 @@ export const executeFile = async (req: Request, res: Response) => {
     debug("Filename is required but not provided.");
     return res.status(400).json({ error: "Filename is required." });
   }
+
   if (!warned) {
     warned = true;
     console.warn('executeFile is deprecated; use /command/execute with a shell command instead.');
