@@ -31,15 +31,8 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
-/**
- * Static assets
- * - Serve public/ at /
- * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
- */
 // Serve static assets from public/
 app.use(express.static(path.resolve(__dirname, '..', 'public')));
-// Serve documentation markdown as static files
-app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router
 setupApiRouter(app);
