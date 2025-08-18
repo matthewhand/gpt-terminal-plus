@@ -16,8 +16,8 @@ router.use(checkAuthToken as any);
  */
 router.get('/', (_req: Request, res: Response) => {
   try {
-    const payload = getRedactedSettings();
-    res.status(200).json(payload);
+    const settings = getRedactedSettings();
+    res.status(200).json({ settings });
   } catch (err: any) {
     debug('Error generating redacted settings: %s', err?.message ?? err);
     res.status(500).json({ error: 'internal_error', message: err?.message ?? 'unknown' });

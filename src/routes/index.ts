@@ -6,7 +6,7 @@ import testCommandRouter from './commandRoutes';
 /** --- Real command handlers for prod/dev --- */
 import { executeCommand } from './command/executeCommand';
 import { executeCode } from './command/executeCode';
-import { executeFile } from './command/executeFile';
+
 import { executeLlm } from './command/executeLlm';
 
 /** --- Shared route groups (present in repo) --- */
@@ -39,16 +39,15 @@ export function setupApiRouter(app: express.Application): void {
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
-    cmd.post('/command/execute', executeCommand);
+    cmd.post('/command/execute-shell', executeCommand);
     cmd.post('/command/execute-code', executeCode);
-    cmd.post('/command/execute-file', executeFile);
     cmd.post('/command/execute-llm', executeLlm);
     app.use(cmd);
   }
 
   // ----- Other groups with correct prefixes -----
   app.use('/server', serverRoutes);
-  app.use(fileRoutes);
+  app.use('/file', fileRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', chatRoutes);
   // settings (redacted view), protected by bearer token

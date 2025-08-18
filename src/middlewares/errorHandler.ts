@@ -12,6 +12,11 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ): void => {
+  // Handle null/undefined errors
+  if (!err) {
+    err = { message: 'Unknown error occurred' };
+  }
+
   // GPT Actions expect specific error format
   const errorResponse: GPTActionError = {
     message: err.message || 'Internal server error',

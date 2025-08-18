@@ -26,9 +26,9 @@ describe('execute (shell) smoke', () => {
   const app = makeApp();
   const token = getOrGenerateApiToken();
 
-  it('runs echo via /command/execute', async () => {
+  it('runs echo via /command/execute-shell', async () => {
     const res = await request(app)
-      .post('/command/execute')
+      .post('/command/execute-shell')
       .set('Authorization', `Bearer ${token}`)
       .set('Content-Type', 'application/json')
       .send({ command: 'echo ok' });
@@ -36,5 +36,35 @@ describe('execute (shell) smoke', () => {
     expect(res.status).toBe(200);
     expect(res.body?.result?.exitCode).toBe(0);
     expect(res.body?.result?.stdout?.trim()).toBe('ok');
+  });
+
+  it('handles exit codes', async () => {
+    const res = await request(app)
+      .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ command: 'exit 1' });
+
+    expect(res.status).toBe(200);
+    expect(res.body?.result?.exitCode).toBe(1);
+    expect(res.body?.aiAnalysis).toBeDefined();
+  });
+
+  it('works without auth in test mode', async () => {
+    const res = await request(app)
+      .post('/command/execute-shell')
+      .send({ command: 'echo test' });
+
+    expect(res.status).toBe(200);
+    expect(res.body?.result?.stdout?.trim()).toBe('test');
+  });
+
+  it('validates command parameter', async () => {
+    const res = await request(app)
+      .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body?.result?.exitCode).toBe(1);
   });
 });
