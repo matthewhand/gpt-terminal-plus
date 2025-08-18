@@ -33,6 +33,7 @@
   - Python templates (uv) CRUD with validation.
   - Server/target list with `allowedTokens`.
   - Health checks (“ping provider”, “list models”).
+- [ ] **Stretch:** Runtime config editing UI (respect env-overridden fields as read-only)
 - [ ] **Docs:** env var reference for advanced users (**no secrets in examples**; use `${...}` placeholders).
 - [ ] “Add to ChatGPT” instructions (point to `/openapi.json` or `/openapi.yaml`).
 

@@ -201,3 +201,52 @@
  *                   items:
  *                     type: object
  */
+/**
+ * @openapi
+ * /settings:
+ *   get:
+ *     operationId: getSettings
+ *     summary: Get redacted configuration settings
+ *     description: Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Redacted settings grouped by category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties:
+ *                 type: object
+ *                 description: A settings group (e.g., server, security, llm, compat)
+ *                 additionalProperties:
+ *                   type: object
+ *                   properties:
+ *                     value:
+ *                       oneOf:
+ *                         - type: string
+ *                         - type: number
+ *                         - type: boolean
+ *                         - type: object
+ *                         - type: array
+ *                         - type: 'null'
+ *                     readOnly:
+ *                       type: boolean
+ *                   required:
+ *                     - value
+ *                     - readOnly
+ *             examples:
+ *               sample:
+ *                 summary: Example response
+ *                 value:
+ *                   server:
+ *                     port: { value: 5005, readOnly: false }
+ *                     httpsEnabled: { value: false, readOnly: false }
+ *                   security:
+ *                     apiToken: { value: "*****", readOnly: true }
+ *                   llm:
+ *                     provider: { value: "openai", readOnly: false }
+ *                     openai.baseUrl: { value: "", readOnly: false }
+ *                     openai.apiKey: { value: "*****", readOnly: true }
+ */

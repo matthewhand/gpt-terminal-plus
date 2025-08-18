@@ -13,6 +13,7 @@ import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
+import swaggerUi from "swagger-ui-express";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
@@ -30,13 +31,20 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
+// Serve static assets from public/
+app.use(express.static(path.resolve(__dirname, '..', 'public')));
+
 // Setup API Router
 setupApiRouter(app);
 
 
   // Dynamic OpenAPI routes
   registerOpenApiRoutes(app);
-if (process.env.USE_MCP === "true") {
+
+  // Swagger UI at /docs, static-first pointing to /openapi.json
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
+
+ if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");
   const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
   

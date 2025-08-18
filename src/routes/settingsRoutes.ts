@@ -1,39 +1,27 @@
-import type { Application, Request, Response } from 'express';
-import express from 'express';
-import { SettingsSchema } from '../settings/schema';
-import { SettingsStore } from '../settings/store';
+import express, { Request, Response } from 'express';
+import Debug from 'debug';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { getRedactedSettings } from '../config/convictConfig';
 
-export function registerSettingsRoutes(app: Application) {
-  const router = express.Router();
+const debug = Debug('app:settingsRoutes');
+const router = express.Router();
 
-  router.get('/settings', (_req: Request, res: Response) => {
-    return res.status(200).json(SettingsStore.get());
-  });
+// Secure settings endpoints with bearer token auth
+router.use(checkAuthToken as any);
 
-  router.put('/settings', (req: Request, res: Response) => {
-    try {
-      // Partial update first
-      const updated = SettingsStore.set(req.body ?? {});
-      return res.status(200).json(updated);
-    } catch {
-      // Fallback to full replace if they sent the whole object
-      try {
-        const full = SettingsSchema.parse(req.body ?? {});
-        const replaced = SettingsStore.replace(full);
-        return res.status(200).json(replaced);
-      } catch (err: any) {
-        return res.status(400).json({
-          error: 'Invalid settings payload',
-          detail: String(err?.message ?? err),
-        });
-      }
-    }
-  });
+/**
+ * GET /settings
+ * Returns a redacted snapshot of configuration settings.
+ * Values overridden by environment variables are marked readOnly: true.
+ */
+router.get('/settings', (_req: Request, res: Response) => {
+  try {
+    const payload = getRedactedSettings();
+    res.status(200).json(payload);
+  } catch (err: any) {
+    debug('Error generating redacted settings: %s', err?.message ?? err);
+    res.status(500).json({ error: 'internal_error', message: err?.message ?? 'unknown' });
+  }
+});
 
-  app.use(router);
-}
-
-export default function attach(app: Application) {
-  registerSettingsRoutes(app);
-  return app;
-}
+export default router;
