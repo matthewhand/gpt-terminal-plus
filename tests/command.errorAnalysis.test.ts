@@ -30,7 +30,7 @@ describe('Error Analysis on Non-zero Exit', () => {
 
   it('attaches aiAnalysis when command exits non-zero', async () => {
     const res = await request(app)
-      .post('/command/execute')
+      .post('/command/execute-shell')
       .set('Authorization', `Bearer ${token}`)
       .send({ command: 'exit 2' });
 

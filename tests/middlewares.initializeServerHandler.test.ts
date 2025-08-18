@@ -20,7 +20,7 @@ describe('middleware/initializeServerHandler', () => {
 
   it('attaches server handler and responds 200 for a simple route', async () => {
     const res = await request(app)
-      .post('/command/execute')
+      .post('/command/execute-shell')
       .set('Authorization', `Bearer ${token}`)
       .send({ command: 'echo ok' });
     expect(res.status).toBe(200);

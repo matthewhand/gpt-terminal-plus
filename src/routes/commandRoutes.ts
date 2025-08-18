@@ -24,7 +24,7 @@ function sseWrite(res: Response, event: string, data: any) {
 }
 
 const handleExecute = (req: Request, res: Response) => {
-  logReq('/command/execute', req.body);
+  logReq('/command/execute-shell', req.body);
   const cmd: string = String(req.body?.command ?? '');
 
   let exitCode = 0, stdout = '', stderr = '';
@@ -69,21 +69,7 @@ const handleExecuteCode = (req: Request, res: Response) => {
   res.status(200).json({ result, aiAnalysis });
 };
 
-const handleExecuteFile = (req: Request, res: Response) => {
-  logReq('/command/execute-file', req.body);
-  const filename: string = String(req.body?.filename ?? '');
-  const exists = filename && fs.existsSync(filename);
 
-  const result = exists
-    ? { stdout: `executed ${filename}`, stderr: '', exitCode: 0, error: false }
-    : { stdout: '', stderr: 'ENOENT', exitCode: 1, error: true };
-
-  const aiAnalysis = result.error
-    ? { text: 'Mock analysis: file not found. Check name, path, or permissions.' }
-    : undefined;
-
-  res.status(200).json({ result, aiAnalysis });
-};
 
 const handleExecuteLlm = (req: Request, res: Response) => {
   logReq('/command/execute-llm', req.body);
@@ -136,9 +122,8 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 };
 
 // Mount under /command (app.ts should do: app.use('/command', router))
-router.post('/execute', handleExecute);
+router.post('/execute-shell', handleExecute);
 router.post('/execute-code', handleExecuteCode);
-router.post('/execute-file', handleExecuteFile);
 router.post('/execute-llm', handleExecuteLlm);
 
 export default router;

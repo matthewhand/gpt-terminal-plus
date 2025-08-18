@@ -48,6 +48,18 @@ export function setSelectedModel(model: string) {
   getGlobalState().selectedModel = model;
 }
 
+export function setCurrentServerHandler(handler: any) {
+  setSelectedServer(handler);
+}
+
+export function getCurrentServerHandler() {
+  return getSelectedServer();
+}
+
+export function clearGlobalState() {
+  state = null;
+}
+
 export default {
   getGlobalState,
   _resetGlobalStateForTests,
@@ -57,4 +69,7 @@ export default {
   setPresentWorkingDirectory,
   getSelectedModel,
   setSelectedModel,
+  setCurrentServerHandler,
+  getCurrentServerHandler,
+  clearGlobalState,
 };
