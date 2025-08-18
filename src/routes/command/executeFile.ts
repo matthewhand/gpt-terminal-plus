@@ -1,15 +1,12 @@
 import { Request, Response } from 'express';
 import Debug from 'debug';
-import { handleServerError } from '../../utils/handleServerError';
-import { getServerHandler } from '../../utils/getServerHandler';
-import { analyzeError } from '../../llm/errorAdvisor';
+import { executeShell } from './executeShell';
 
 const debug = Debug("app:command:execute-file");
+let warned = false;
 
 /**
- * Function to execute a file on the server.
- * @param {Request} req - The Express request object.
- * @param {Response} res - The Express response object.
+ * Deprecated file execution route. Delegates to shell executor.
  */
 export const executeFile = async (req: Request, res: Response) => {
   const { filename, directory } = req.body;
@@ -21,23 +18,13 @@ export const executeFile = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Filename is required." });
   }
 
-  try {
-    const server = getServerHandler(req);
-    const result = await server.executeFile(filename, directory);
-    debug(`File executed: ${filename}, result: ${JSON.stringify(result)}`);
-    let aiAnalysis;
-    if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
-      aiAnalysis = await analyzeError({ kind: 'file', input: filename, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
-    }
-    res.status(200).json({ result, aiAnalysis });
-  } catch (err) {
-    debug(`Error executing file: ${err instanceof Error ? err.message : String(err)}`);
-    try {
-      const msg = err instanceof Error ? err.message : String(err);
-      const aiAnalysis = await analyzeError({ kind: 'file', input: filename, stderr: msg });
-      res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
-    } catch {
-      handleServerError(err, res, "Error executing file");
-    }
+  if (!warned) {
+    warned = true;
+    console.warn('executeFile is deprecated; use /command/execute with a shell command instead.');
   }
+  res.setHeader('Warning', '299 - "executeFile is deprecated; use /command/execute instead"');
+
+  const cmd = directory ? `cd ${directory} && ./${filename}` : `./${filename}`;
+  req.body = { command: cmd };
+  return executeShell(req, res);
 };
