@@ -49,7 +49,7 @@ The primary purpose of GPT Terminal Plus is to grant access to system CLI utilit
 See docs/API.md → AI Error Analysis.
 
 ## Secondary Features
-- Command Execution: Run system commands using Bash; execute code (Python, TypeScript); run files.
+- Command Execution: `POST /command/execute` delegates to the first enabled mode (shell > code > LLM) and returns 409 if none are configured. `/command/execute-file` is deprecated and now shells out internally.
 - Model Selection: Choose logical models via `/model` routes; providers: Ollama, LM Studio, OpenAI.
 - Streaming Chat: `POST /chat/completions` with SSE streaming, heartbeats, and error events.
 - File Management: Create, read, update, and delete files securely.

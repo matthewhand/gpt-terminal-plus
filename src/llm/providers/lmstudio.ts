@@ -86,6 +86,13 @@ export async function* chatWithLmStudioStream(cfg: LmStudioConfig, req: ChatRequ
   }
 }
 
+export function createLmStudioClient(baseUrl: string) {
+  return {
+    chat: (req: ChatRequest) => chatWithLmStudio({ baseUrl }, req),
+    chatStream: (req: ChatRequest) => chatWithLmStudioStream({ baseUrl }, req),
+  };
+}
+
 // Fetch compatibility shim
 async function fetchCompat(url: string, options: any): Promise<{ ok: boolean; status: number; json: () => Promise<any>; text: () => Promise<string>; }> {
   const g: any = (globalThis as any);

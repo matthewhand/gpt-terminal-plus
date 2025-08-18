@@ -87,7 +87,7 @@ function buildSpec(req?: Request) {
       '/command/execute': {
         post: {
           operationId: 'executeCommand',
-          summary: 'Execute a command',
+          summary: 'Execute using first available mode',
           requestBody: {
             required: true,
             content: {
@@ -163,7 +163,8 @@ function buildSpec(req?: Request) {
       '/command/execute-file': {
         post: {
           operationId: 'executeFile',
-          summary: 'Execute a file present on the server/target',
+          summary: 'Execute a file present on the server/target (deprecated)',
+          deprecated: true,
           requestBody: {
             required: true,
             content: {

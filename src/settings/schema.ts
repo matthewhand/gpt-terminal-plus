@@ -36,12 +36,12 @@ export const LlmConfigSchema = z.object({
   enabled: z.boolean().default(false),
   provider: z
     .enum(['none', 'openai', 'litellm', 'ollama', 'lmstudio'])
-    .optional(),
-  defaultModel: z.string().optional(),
-  baseURL: z.string().optional(),
-  apiKey: z.string().optional(),
-  ollamaURL: z.string().optional(),
-  lmstudioURL: z.string().optional(),
+    .default('none'),
+  defaultModel: z.string().default(''),
+  baseURL: z.string().default(''),
+  apiKey: z.string().default(''),
+  ollamaURL: z.string().default('http://localhost:11434'),
+  lmstudioURL: z.string().default('http://localhost:1234/v1'),
 });
 
 export const SettingsSchema = z.object({

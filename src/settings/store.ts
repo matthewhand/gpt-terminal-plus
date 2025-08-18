@@ -119,3 +119,7 @@ export const SettingsStore = {
     });
   },
 };
+
+export function getSettings(): Settings {
+  return SettingsStore.get();
+}
