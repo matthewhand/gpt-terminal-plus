@@ -78,4 +78,5 @@ export async function executeLocalCode(
   return res;
 }
 
-export default { executeLocalCode };
+export const executeCode = executeLocalCode;
+export default { executeLocalCode, executeCode };

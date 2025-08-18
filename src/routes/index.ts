@@ -47,12 +47,12 @@ export function setupApiRouter(app: express.Application): void {
   }
 
   // ----- Other groups with correct prefixes -----
-  app.use(serverRoutes);
+  app.use('/server', serverRoutes);
   app.use(fileRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', chatRoutes);
   // settings (redacted view), protected by bearer token
-  app.use(settingsRoutes);
+  app.use('/settings', settingsRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);

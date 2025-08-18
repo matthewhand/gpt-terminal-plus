@@ -34,7 +34,7 @@ const handleServerList = (req: Request, res: Response) => {
   }
 };
 
-router.get('/server/list', handleServerList);
+/* '/server/list' inside router is redundant when mounted at '/server' (would become '/server/server/list'). */
 router.get('/list', handleServerList);
 
 export default router;
