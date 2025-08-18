@@ -62,22 +62,33 @@ describe('executeCommand()', () => {
   });
 
   it('execFile path: respects USE_EXECFILE=true', async () => {
+    jest.resetModules();
     process.env.USE_EXECFILE = 'true';
 
-    mockExecFile.mockImplementation((file: string, args: string[], options: any, callback: any) => {
+    const execFileMock = jest.fn((file: string, args: string[], options: any, callback: any) => {
       if (typeof options === 'function') {
         callback = options;
       }
       callback(null, 'OK', '');
       return {} as any;
     });
+    const execMock = jest.fn();
 
-    const res = await executeCommand('echo OK', 0, '/work', '/bin/bash');
+    // Dynamically mock child_process for this isolated import
+    jest.doMock('child_process', () => ({
+      exec: execMock,
+      execFile: execFileMock,
+    }));
+
+    // Import after doMock so the implementation sees the mocked module
+    const { executeCommand: executeCommandExecFile } = await import('../../../../src/handlers/local/actions/executeCommand');
+
+    const res = await executeCommandExecFile('echo OK', 0, '/work', '/bin/bash');
     expect(res).toEqual({
       stdout: 'OK',
       stderr: '',
       presentWorkingDirectory: '/work',
     });
-    expect(mockExecFile).toHaveBeenCalled();
+    expect(execFileMock).toHaveBeenCalled();
   });
 });
