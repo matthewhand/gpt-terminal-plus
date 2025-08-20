@@ -45,17 +45,14 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
-    // Resolve interpreter path; allow local ts-node fallback if not globally available
+    // Resolve interpreter path; use npx for ts-node to avoid PATH issues
     let interpreterCmd = interpreter;
     if (interpreter === 'ts-node') {
-      const localTsNode = path.resolve(process.cwd(), 'node_modules', '.bin', process.platform === 'win32' ? 'ts-node.cmd' : 'ts-node');
-      if (fs.existsSync(localTsNode)) {
-        interpreterCmd = localTsNode;
-      }
+      interpreterCmd = 'npx';
     }
 
-    // Check for potential interpreter availability (skip which if using local path)
-    const checkResult = interpreterCmd !== interpreter
+    // Check for potential interpreter availability (skip which for npx)
+    const checkResult = interpreterCmd === 'npx'
       ? { exitCode: 0 }
       : await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
     if (checkResult.exitCode !== 0) {
@@ -73,8 +70,8 @@ export const executeCode = async (req: Request, res: Response) => {
     await fsp.writeFile(codePath, String(code), { mode: 0o600 });
 
     const escapedPath = shellEscape([codePath]);
-    const runCmd = interpreterCmd.endsWith('ts-node') || interpreterCmd.endsWith('ts-node.cmd') || interpreterCmd === 'ts-node'
-      ? `${shellEscape([interpreterCmd])} -T ${escapedPath}`
+    const runCmd = interpreterCmd === 'npx'
+      ? `npx -y ts-node -T ${escapedPath}`
       : `${shellEscape([interpreterCmd])} ${escapedPath}`;
 
     const timeout = getExecuteTimeout('code');
