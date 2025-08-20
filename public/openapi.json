@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5005",
+      "url": "http://localhost:3100",
       "description": "Public base URL"
     }
   ],

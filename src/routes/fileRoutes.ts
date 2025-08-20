@@ -9,8 +9,8 @@ import { readFile } from './file/readFile';
 import { updateFile } from './file/updateFile';
 import { amendFile } from './file/amendFile';
 import { setPostCommand } from './file/setPostCommand';
-import { applyDiff } from './file/applyDiff';
-import { applyPatch } from './file/applyPatch';
+import { applyDiff } from './file/diff';
+import { applyPatch } from './file/patch';
 
 const router = express.Router();
 
