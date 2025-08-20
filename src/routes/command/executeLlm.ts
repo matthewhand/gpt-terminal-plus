@@ -194,7 +194,7 @@ export const executeLlm = async (req: Request, res: Response) => {
         if (heartbeat) clearInterval(heartbeat);
         return res.end();
       }
-      return res.status(200).json({ plan, safety, results: [] });
+      return res.status(200).json({ runtime: 'llm:remote', engine: resp.provider || 'remote', model: selectedModel, plan, safety, results: [] });
     }
 
     const handler = getServerHandler(req);
@@ -275,7 +275,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       return res.end();
     }
 
-    res.status(200).json({ plan, results });
+    res.status(200).json({ runtime: 'llm:remote', engine: resp.provider || 'remote', model: selectedModel, plan, results });
   } catch (err) {
     debug('execute-llm failed: ' + String(err));
     res.status(500).json({ error: 'execute-llm failed', message: (err as Error).message });

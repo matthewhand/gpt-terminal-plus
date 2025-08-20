@@ -32,7 +32,7 @@ export const convictConfig = () => {
         enabled: {
           doc: 'Enable LLM execution endpoints',
           format: Boolean,
-          default: false,
+          default: true,
           env: 'LLM_ENABLED'
         }
       }

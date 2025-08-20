@@ -80,3 +80,19 @@ Notes
 - When deploying behind a proxy, set `PUBLIC_BASE_URL` to ensure OpenAPI `servers[0].url` is correct
 - Do not log secrets; examples use placeholders like `${OPENAI_API_KEY}`
 - [x] executeShell (bash) works
+
+## Windows Binary
+
+You can run GPT Terminal Plus without Node.js by using prebuilt Windows binaries.
+
+- x64: `jit-win-x64.exe`
+- arm64: `jit-win-arm64.exe`
+
+Build locally:
+
+```bash
+npm run build
+npm run pkg:win
+```
+
+Artifacts will be placed in `release/`.

@@ -21,14 +21,26 @@ export function getPublicBaseUrl(req?: Request): string {
   return `${protocol}://${host}:${port}`;
 }
 
-/** Attempt to read a static OpenAPI artifact from public/, else return null. */
+/** Attempt to read a static OpenAPI artifact from public/, else return null.
+ * Prefer pkg-friendly path relative to build output; fall back to process.cwd().
+ */
 function readPublicFileIfExists(filename: 'openapi.json' | 'openapi.yaml'): string | null {
-  try {
-    const filePath = path.resolve(process.cwd(), 'public', filename);
-    return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
-  } catch {
-    return null;
+  const candidates = [
+    // When bundled with pkg, assets are available relative to __dirname
+    path.resolve(__dirname, '..', 'public', filename),
+    // Fallback for plain node execution from repo root
+    path.resolve(process.cwd(), 'public', filename),
+  ];
+  for (const filePath of candidates) {
+    try {
+      if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8');
+      }
+    } catch {
+      /* try next candidate */
+    }
   }
+  return null;
 }
 
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */

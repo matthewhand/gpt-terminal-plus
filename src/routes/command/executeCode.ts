@@ -28,7 +28,9 @@ export const executeCode = async (req: Request, res: Response) => {
       python3: { cmd: 'python3', ext: '.py' },
       node: { cmd: 'node', ext: '.js' },
       nodejs: { cmd: 'node', ext: '.js' },
-      typescript: { cmd: 'ts-node', ext: '.ts' }
+      typescript: { cmd: 'ts-node', ext: '.ts' },
+      bash: { cmd: 'bash', ext: '.sh' },
+      sh: { cmd: 'sh', ext: '.sh' }
     };
 
     const mapping = map[(language || '').toLowerCase()];
@@ -59,7 +61,9 @@ export const executeCode = async (req: Request, res: Response) => {
     await fsp.writeFile(codePath, String(code), { mode: 0o600 });
 
     const escapedPath = shellEscape([codePath]);
-    const runCmd = `${interpreter} ${escapedPath}`;
+    const runCmd = interpreter === 'ts-node'
+      ? `${interpreter} -T ${escapedPath}`
+      : `${interpreter} ${escapedPath}`;
 
     const timeout = getExecuteTimeout('code');
     let result: any;
