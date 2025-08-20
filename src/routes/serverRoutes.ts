@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { listServersForToken, type ServerDescriptor } from '../managers/serverList';
+import { registerServer } from './server/registerServer';
+import { removeServer } from './server/removeServer';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -36,5 +38,7 @@ const handleServerList = (req: Request, res: Response) => {
 
 /* '/server/list' inside router is redundant when mounted at '/server' (would become '/server/server/list'). */
 router.get('/list', handleServerList);
+router.post('/register', registerServer);
+router.delete('/:hostname', removeServer);
 
 export default router;

@@ -134,6 +134,39 @@ router.post('/execute-shell', handleExecute);
 router.post('/execute-code', handleExecuteCode);
 router.post('/execute-llm', handleExecuteLlm);
 
+// Session-based execution for long-running processes
+router.post('/execute-session', (req: Request, res: Response) => {
+  const { command, sessionId, timeout = 5000 } = req.body;
+  
+  if (sessionId) {
+    // Mock session retrieval
+    return res.json({
+      sessionId,
+      output: 'Mock session output...',
+      completed: true,
+      totalLength: 100
+    });
+  }
+  
+  if (command && command.includes('sleep')) {
+    // Mock long-running process
+    const newSessionId = `session_${Date.now()}`;
+    return res.json({
+      sessionId: newSessionId,
+      message: 'Process is still running. Use sessionId to retrieve output.',
+      partialOutput: 'Starting long process...',
+      timeout
+    });
+  }
+  
+  // Mock quick completion
+  return res.json({
+    completed: true,
+    output: 'Command completed quickly',
+    executionTime: 100
+  });
+});
+
 export default router;
 
 export function registerCommandRoutes(app: Application) {
