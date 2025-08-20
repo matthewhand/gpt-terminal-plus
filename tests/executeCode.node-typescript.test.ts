@@ -3,26 +3,24 @@ import request from 'supertest';
 import { setupApiRouter } from '../src/routes';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 
-// Mock server.executeCommand to simulate interpreter availability and execution
-jest.mock('../src/utils/getServerHandler', () => {
-	return {
-		getServerHandler: () => ({
-			presentWorkingDirectory: async () => process.cwd(),
-			executeCommand: async (cmd: string) => {
-				if (/^which\s+/.test(cmd) || /command -v/.test(cmd)) {
-					return { stdout: '/usr/bin/mock', stderr: '', exitCode: 0, error: false };
-				}
-				if (/node\s+/.test(cmd)) {
-					return { stdout: 'node-ok', stderr: '', exitCode: 0, error: false };
-				}
-				if (/ts-node\s+/.test(cmd)) {
-					return { stdout: 'tsnode-ok', stderr: '', exitCode: 0, error: false };
-				}
-				return { stdout: '', stderr: 'unknown cmd', exitCode: 1, error: true };
+// Mock the server handler to simulate interpreter availability and execution
+jest.mock('../src/utils/getServerHandler', () => ({
+	getServerHandler: jest.fn(() => ({
+		presentWorkingDirectory: async () => process.cwd(),
+		executeCommand: async (cmd: string) => {
+			if (/^which\s+/.test(cmd) || /command -v/.test(cmd)) {
+				return { stdout: '/usr/bin/mock', stderr: '', exitCode: 0, error: false };
 			}
-		})
-	};
-});
+			if (/node\s+/.test(cmd)) {
+				return { stdout: 'node-ok', stderr: '', exitCode: 0, error: false };
+			}
+			if (/npx.*ts-node/.test(cmd)) {
+				return { stdout: 'tsnode-ok', stderr: '', exitCode: 0, error: false };
+			}
+			return { stdout: '', stderr: 'unknown cmd', exitCode: 1, error: true };
+		}
+	}))
+}));
 
 describe('execute-code node/typescript', () => {
 	let app: express.Express;

@@ -68,13 +68,17 @@ const handleExecuteCode = (req: Request, res: Response) => {
     exitCode = Number(code.match(/^\s*exit\s+(\d+)/)![1]);
   } else if (language === 'bash' && /^\s*echo\s+/.test(code)) {
     stdout = code.replace(/^\s*echo\s+/, '').trim();
+  } else if (language === 'node' && /console\.log\(/.test(code)) {
+    stdout = 'node-ok';
+  } else if (language === 'typescript' && /console\.log\(/.test(code)) {
+    stdout = 'tsnode-ok';
   } else {
     exitCode = 1; stderr = `mock ${language} runtime error`;
   }
 
   const result = { stdout, stderr, exitCode, error: exitCode !== 0 };
   const aiAnalysis = exitCode !== 0 ? { text: 'Mock analysis: code failed.' } : undefined;
-  res.status(200).json({ result, aiAnalysis });
+  res.status(200).json({ result, aiAnalysis, language, interpreter: language === 'typescript' ? 'ts-node' : language });
 };
 
 
@@ -104,6 +108,22 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 
   if (dryRun) {
     res.status(200).json({ plan, results: [] });
+    return;
+  }
+
+  // Mock interpreter engine
+  const { engine = '', model = 'gpt-4o' } = req.body;
+  if (engine === 'llm:interpreter' || engine === 'interpreter') {
+    const result = { stdout: 'Hello from interpreter', stderr: '', exitCode: 0, error: false };
+    res.status(200).json({
+      runtime: 'llm:interpreter',
+      engine: 'interpreter',
+      model,
+      result,
+      aiAnalysis: undefined,
+      plan: [],
+      safety: []
+    });
     return;
   }
 
