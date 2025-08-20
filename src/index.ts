@@ -15,7 +15,7 @@ import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
 import publicRouter from "./routes/publicRouter";
-import { mountAdmin } from "./admin";
+import { mountSimpleAdmin } from "./admin/simple";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
@@ -33,8 +33,8 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
-// Mount AdminJS
-mountAdmin(app);
+// Mount Simple Admin
+mountSimpleAdmin(app);
 
 /**
  * Static assets
