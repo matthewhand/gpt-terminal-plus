@@ -64,11 +64,10 @@ export const listFiles = async (
   // Extract the command output from the result
   const fileList = commandOutput
     .trim()
-    .split("
-")
+    .split('\n')
     .filter((line: string) => line.length > 0);
 
-  debug("Files listed: " + fileList.join(", "));
+  debug('Files listed: ' + fileList.join(', '));
 
   return fileList;
 };
