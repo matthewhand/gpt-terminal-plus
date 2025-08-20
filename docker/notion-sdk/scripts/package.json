@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "yargs": "^17.7.2"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "port": 5004,
+  "local": {
+    "host": "teamstinky"
+  },
+
+  "ssh": {
+
+    "hosts": [
+      {
+        "hostname": "worker1",
+        "port": 22,
+        "username": "chatgpt",
+        "privateKeyPath": "/home/chatgpt/.ssh/id_rsa"
+      },
+      {
+        "hostname": "worker2",
+        "port": 22,
+        "username": "chatgpt",
+        "privateKeyPath": "/home/chatgpt/.ssh/id_rsa"
+      }
+
+    ]
+  },
+  "ssm": 
+  {
+  "region": "us-west-2",
+  "targets": [
+    {
+      "instanceId": "mi-0ac2f75950416c84c",
+      "hostname": "GAMINGPC.WORKGROUP",
+      "platform": "Windows 11 Education"
+    },
+    {
+      "instanceId": "mi-018ff0cf808611ed0",
+      "hostname": "ubuntu-gtx.domain.home",
+      "platform": "Ubuntu 22.04"
+    },
+    {
+      "instanceId": "mi-070673dd211e82add",
+      "hostname": "ubuntu-gamingpc",
+      "platform": "Ubuntu 22.04"
+    },
+    {
+      "instanceId": "mi-0e63bb1cebcb61bbc",
+      "hostname": "beast",
+      "platform": "Debian GNU/Linux 12"
+    },
+    {
+      "instanceId": "mi-0c3de947cbbf98917",
+      "hostname": "rover",
+      "platform": "Debian GNU/Linux 12"
+    },
+    {
+      "instanceId": "mi-0e43ce4622e85dcdd",
+      "hostname": "WIN2019.domain.home",
+      "platform": "Windows Server 2022 Datacenter"
+    },
+    {
+      "instanceId": "mi-0140cc38fc5f1951e",
+      "hostname": "WINDOWS2.WORKGROUP",
+      "platform": "Windows Server 2022 Datacenter"
+    },
+    {
+      "instanceId": "mi-02f113372641f2d98",
+      "hostname": "proxmox1.domain.home",
+      "platform": "Debian GNU/Linux 11"
+    },
+    {
+      "instanceId": "mi-005674486ba04541c",
+      "hostname": "ubuntu.domain.home",
+      "platform": "Ubuntu 22.04"
+    },
+    {
+      "instanceId": "mi-0964b559b0ece17ba",
+      "hostname": "proxmox2.domain.home",
+      "platform": "Debian GNU/Linux 11"
+    }
+  ]
+ }
+}
