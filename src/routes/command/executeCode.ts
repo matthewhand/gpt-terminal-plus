@@ -4,6 +4,7 @@ import { handleServerError } from '../../utils/handleServerError';
 import { getExecuteTimeout } from '../../utils/timeout';
 import os from 'os';
 import path from 'path';
+import fs from 'fs';
 import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
@@ -34,7 +35,7 @@ export const executeCode = async (req: Request, res: Response) => {
     };
 
     const mapping = map[(language || '').toLowerCase()];
-    const interpreter = mapping?.cmd;
+    let interpreter = mapping?.cmd;
     if (!interpreter) {
       const supportedLanguages = Object.keys(map).join(', ');
       return res.status(400).json({ 
@@ -44,8 +45,19 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
-    // Check for potential interpreter availability
-    const checkResult = await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
+    // Resolve interpreter path; allow local ts-node fallback if not globally available
+    let interpreterCmd = interpreter;
+    if (interpreter === 'ts-node') {
+      const localTsNode = path.resolve(process.cwd(), 'node_modules', '.bin', process.platform === 'win32' ? 'ts-node.cmd' : 'ts-node');
+      if (fs.existsSync(localTsNode)) {
+        interpreterCmd = localTsNode;
+      }
+    }
+
+    // Check for potential interpreter availability (skip which if using local path)
+    const checkResult = interpreterCmd !== interpreter
+      ? { exitCode: 0 }
+      : await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
     if (checkResult.exitCode !== 0) {
       return res.status(400).json({
         error: `Interpreter '${interpreter}' not available`,
@@ -61,9 +73,9 @@ export const executeCode = async (req: Request, res: Response) => {
     await fsp.writeFile(codePath, String(code), { mode: 0o600 });
 
     const escapedPath = shellEscape([codePath]);
-    const runCmd = interpreter === 'ts-node'
-      ? `${interpreter} -T ${escapedPath}`
-      : `${interpreter} ${escapedPath}`;
+    const runCmd = interpreterCmd.endsWith('ts-node') || interpreterCmd.endsWith('ts-node.cmd') || interpreterCmd === 'ts-node'
+      ? `${shellEscape([interpreterCmd])} -T ${escapedPath}`
+      : `${shellEscape([interpreterCmd])} ${escapedPath}`;
 
     const timeout = getExecuteTimeout('code');
     let result: any;

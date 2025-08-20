@@ -96,3 +96,7 @@ npm run pkg:win
 ```
 
 Artifacts will be placed in `release/`.
+
+## Additional Documentation
+
+More details are available in the [docs/](./docs) folder.

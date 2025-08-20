@@ -10,3 +10,9 @@ coverage/
 .nyc_output/
 data/
 *.backup.*
+
+# Contest cleanup
+coverage/
+*.log
+*.out
+test-results.json
