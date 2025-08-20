@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { handleServerError } from '../../utils/handleServerError';
+import { getExecuteTimeout } from '../../utils/timeout';
 
 /**
  * Execute code using interpreters
@@ -33,8 +34,14 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
-    // Execute code via interpreter
-    const result = await server.executeCommand(`${interpreter} -c "${code.replace(/"/g, '\\"')}"`);
+    // Execute code via interpreter with timeout
+    const timeout = getExecuteTimeout('code');
+    const result = await Promise.race([
+      server.executeCommand(`${interpreter} -c "${code.replace(/"/g, '\\"')}"`),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
+      )
+    ]) as any;
 
     res.json({
       result,

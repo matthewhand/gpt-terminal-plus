@@ -133,6 +133,12 @@ export function mountSimpleAdmin(app: Application): void {
                 </select>
             </div>
             
+            <div class="form-group">
+                <label>Execute Timeout (milliseconds):</label>
+                <input type="number" id="executeTimeout" value="${process.env.EXECUTE_TIMEOUT_MS || 120000}" min="1000" max="600000" step="1000" />
+                <small>Default: 120000ms (2 minutes). Override with EXECUTE_TIMEOUT_MS env var.</small>
+            </div>
+            
             <button type="submit">💾 Save Settings</button>
         </form>
     </div>

@@ -6,6 +6,7 @@ import { ServerManager } from '../../managers/ServerManager';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { evaluateCommandSafety } from '../../utils/safety';
+import { getExecuteTimeout } from '../../utils/timeout';
 
 const debug = Debug('app:command:execute-llm');
 
@@ -158,7 +159,13 @@ export const executeLlm = async (req: Request, res: Response) => {
       }
       let r;
       try {
-        r = await handler.executeCommand(step.cmd);
+        const timeout = getExecuteTimeout('llm');
+        r = await Promise.race([
+          handler.executeCommand(step.cmd),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`LLM command timed out after ${timeout}ms`)), timeout)
+          )
+        ]) as any;
       } catch (e) {
         if (stream) {
           res.write('event: error\n');

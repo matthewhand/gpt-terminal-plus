@@ -11,23 +11,26 @@ export const RemoteTargetSchema = z.object({
 
 export const ExecuteShellSchema = z.object({
   enabled: z.boolean().default(true),
-  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 60_000 }),
+  timeoutMs: z.number().int().positive().default(120_000), // 2 minutes default
+  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 120_000 }),
   ssh: RemoteTargetSchema.default({ enabled: false, timeoutMs: 120_000 }),
   ssm: RemoteTargetSchema.default({ enabled: false, timeoutMs: 180_000 }),
 });
 
 export const ExecuteCodeSchema = z.object({
   enabled: z.boolean().default(true),
+  timeoutMs: z.number().int().positive().default(120_000), // 2 minutes default
   languages: z.array(z.string()).default(['bash', 'python', 'node']),
-  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 60_000 }),
+  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 120_000 }),
   ssh: RemoteTargetSchema.default({ enabled: false, timeoutMs: 120_000 }),
   ssm: RemoteTargetSchema.default({ enabled: false, timeoutMs: 180_000 }),
 });
 
 export const ExecuteLlmSchema = z.object({
   enabled: z.boolean().default(true),
+  timeoutMs: z.number().int().positive().default(120_000), // 2 minutes default
   providersAllowed: z.array(z.string()).default(['local-mock']),
-  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 90_000 }),
+  local: RemoteTargetSchema.default({ enabled: true, timeoutMs: 120_000 }),
   ssh: RemoteTargetSchema.default({ enabled: false, timeoutMs: 180_000 }),
   ssm: RemoteTargetSchema.default({ enabled: false, timeoutMs: 180_000 }),
 });

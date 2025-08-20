@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { handleServerError } from '../../utils/handleServerError';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
+import { getExecuteTimeout } from '../../utils/timeout';
 
 const debug = Debug('app:command:execute-shell');
 
@@ -41,7 +42,13 @@ export const executeShell = async (req: Request, res: Response) => {
 
   try {
     const server = getServerHandler(req);
-    const result = await server.executeCommand(finalCommand);
+    const timeout = getExecuteTimeout('shell');
+    const result = await Promise.race([
+      server.executeCommand(finalCommand),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout)
+      )
+    ]) as any;
     
     let aiAnalysis;
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
