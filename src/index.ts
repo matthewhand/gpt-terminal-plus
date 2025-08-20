@@ -56,8 +56,15 @@ app.use(publicRouter);
   // Dynamic OpenAPI routes
   registerOpenApiRoutes(app);
 
-  // Swagger UI at /docs, static-first pointing to /openapi.json
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
+  // Enhanced Swagger UI at /docs
+  const swaggerOptions = {
+    swaggerUrl: '/openapi.json',
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'GPT Terminal Plus API',
+    customfavIcon: '/favicon.ico'
+  };
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
 
  if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");

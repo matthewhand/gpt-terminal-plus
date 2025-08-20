@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { SettingsSchema, Settings } from '../settings/schema';
+import { ServerManager } from '../managers/ServerManager';
 
 // Simple file-based settings store
 class SettingsStore {
@@ -71,6 +72,60 @@ function getOrCreateAdminCredentials(credentialsPath: string) {
 }
 
 const settingsStore = new SettingsStore();
+
+// Server management store
+class ServerStore {
+  private serversPath = path.join(process.cwd(), 'data', 'admin-servers.json');
+
+  constructor() {
+    const dataDir = path.dirname(this.serversPath);
+    if (!existsSync(dataDir)) {
+      require('fs').mkdirSync(dataDir, { recursive: true });
+    }
+  }
+
+  getServers() {
+    try {
+      if (existsSync(this.serversPath)) {
+        return JSON.parse(readFileSync(this.serversPath, 'utf8'));
+      }
+    } catch {
+      console.warn('Failed to load servers, using defaults');
+    }
+    return [];
+  }
+
+  saveServers(servers: any[]) {
+    writeFileSync(this.serversPath, JSON.stringify(servers, null, 2));
+  }
+
+  addServer(server: any) {
+    const servers = this.getServers();
+    servers.push({ ...server, id: crypto.randomBytes(8).toString('hex') });
+    this.saveServers(servers);
+    return servers[servers.length - 1];
+  }
+
+  updateServer(id: string, updates: any) {
+    const servers = this.getServers();
+    const index = servers.findIndex((s: any) => s.id === id);
+    if (index >= 0) {
+      servers[index] = { ...servers[index], ...updates };
+      this.saveServers(servers);
+      return servers[index];
+    }
+    return null;
+  }
+
+  deleteServer(id: string) {
+    const servers = this.getServers();
+    const filtered = servers.filter((s: any) => s.id !== id);
+    this.saveServers(filtered);
+    return filtered.length < servers.length;
+  }
+}
+
+const serverStore = new ServerStore();
 
 // AdminJS Resource for Settings
 const SettingsResource = {
@@ -149,6 +204,85 @@ const SettingsResource = {
   }
 };
 
+// AdminJS Resource for Servers
+const ServersResource = {
+  resource: {
+    model: class ServersModel {
+      static async find() {
+        return serverStore.getServers();
+      }
+      
+      static async findOne(id: string) {
+        const servers = serverStore.getServers();
+        return servers.find((s: any) => s.id === id);
+      }
+      
+      static async create(payload: any) {
+        return serverStore.addServer(payload);
+      }
+      
+      static async update(id: string, payload: any) {
+        return serverStore.updateServer(id, payload);
+      }
+      
+      static async delete(id: string) {
+        serverStore.deleteServer(id);
+        return { id };
+      }
+    },
+    primaryKey: 'id'
+  },
+  options: {
+    id: 'Servers',
+    properties: {
+      id: { isVisible: { list: true, show: true, edit: false, filter: true } },
+      hostname: {
+        type: 'string',
+        isRequired: true,
+        description: 'Server hostname or identifier'
+      },
+      protocol: {
+        type: 'string',
+        availableValues: [
+          { value: 'local', label: 'Local' },
+          { value: 'ssh', label: 'SSH' },
+          { value: 'ssm', label: 'AWS SSM' }
+        ],
+        isRequired: true,
+        description: 'Connection protocol'
+      },
+      host: {
+        type: 'string',
+        description: 'SSH host address (for SSH protocol)'
+      },
+      port: {
+        type: 'number',
+        description: 'SSH port (default: 22)'
+      },
+      username: {
+        type: 'string',
+        description: 'SSH username'
+      },
+      privateKeyPath: {
+        type: 'string',
+        description: 'Path to SSH private key'
+      },
+      instanceId: {
+        type: 'string',
+        description: 'AWS EC2 instance ID (for SSM protocol)'
+      },
+      region: {
+        type: 'string',
+        description: 'AWS region (for SSM protocol)'
+      },
+      enabled: {
+        type: 'boolean',
+        description: 'Enable this server'
+      }
+    }
+  }
+};
+
 export function mountAdmin(app: Application): void {
   const admin = new AdminJS({
     rootPath: '/admin',
@@ -157,7 +291,7 @@ export function mountAdmin(app: Application): void {
       logo: false,
       favicon: '/favicon.ico'
     },
-    resources: [SettingsResource]
+    resources: [SettingsResource, ServersResource]
   });
 
   // Generate secure credentials on first run
