@@ -5,11 +5,35 @@ import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { getExecuteTimeout } from '../../utils/timeout';
 import { validateFileOperations } from '../../utils/fileOperations';
+import os from 'os';
+import path from 'path';
+import { promises as fsp } from 'fs';
+import shellEscape from 'shell-escape';
 
 const debug = Debug('app:command:execute-shell');
 
 function getDefaultShell(): string {
   return process.platform === 'win32' ? 'powershell' : 'bash';
+}
+
+// Escape for double-quoted shell strings; keep single quotes intact.
+function dq(s: string): string {
+  return s.replace(/(["\\$`])/g, '\\$1').replace(/\n/g, '\\n');
+}
+
+function wrapWithShell(shellName: string, rawCommand: string): string {
+  const cmd = dq(rawCommand);
+  switch ((shellName || '').toLowerCase()) {
+    case 'bash':
+      return `bash -lc "${cmd}"`;
+    case 'sh':
+      return `sh -lc "${cmd}"`;
+    case 'powershell':
+      // Keep simple; caller can pass full PS if needed
+      return `powershell -NoProfile -Command "${cmd}"`;
+    default:
+      return rawCommand;
+  }
 }
 
 export const executeShell = async (req: Request, res: Response) => {
@@ -31,19 +55,14 @@ export const executeShell = async (req: Request, res: Response) => {
     }
   }
   
-  // Direct execution without double shell wrapping
-  let finalCommand: string;
-  if (args && Array.isArray(args)) {
-    // Literal mode: command + args array (no shell expansion)
-    finalCommand = [command, ...args].join(' ');
-  } else {
-    // Raw command mode: pass through as-is
-    finalCommand = command;
-  }
+  // Build a human-readable preview of what will execute (used for validation and AI analysis)
+  const previewCommand: string = (args && Array.isArray(args))
+    ? [command, ...args].join(' ')
+    : command;
 
   try {
-    // Check for file operations in command
-    const hasFileOps = /\b(echo|cat|touch|mkdir|rm|cp|mv|>|>>|<<)\b/.test(finalCommand);
+    // Check for file operations in the ACTUAL script content, not the wrapper
+    const hasFileOps = /\b(echo|cat|touch|mkdir|rm|cp|mv|>|>>|<<)\b/.test(command);
     if (hasFileOps) {
       const fileCheck = validateFileOperations();
       if (!fileCheck.allowed) {
@@ -52,19 +71,61 @@ export const executeShell = async (req: Request, res: Response) => {
     }
 
     const server = getServerHandler(req);
+
+    // Ensure requested shell is available (mirrors executeCode interpreter check)
+    const check = await server.executeCommand(`which ${selectedShell} || command -v ${selectedShell}`);
+    if (check.exitCode !== 0) {
+      return res.status(400).json({
+        error: `Shell '${selectedShell}' not available`,
+        message: `${selectedShell} is not installed or not in PATH`,
+      });
+    }
+    
+    // Write the provided command/script to a temp file and execute it via the selected shell.
+    // This avoids quoting/heredoc issues and supports multi-line scripts safely.
+    const tmpDir = os.tmpdir();
+    const ext = selectedShell.toLowerCase() === 'powershell' ? '.ps1' : '.sh';
+    const scriptPath = path.join(tmpDir, `jit-shell-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    await fsp.writeFile(scriptPath, String(command), { mode: 0o600 });
+    
+    // Build execution command; no need to chmod +x when invoking via the interpreter
+    const escapedPath = shellEscape([scriptPath]);
+    const escapedArgs = Array.isArray(args) && args.length > 0 ? ' ' + shellEscape(args.map(String)) : '';
+    let execCmd: string;
+    switch (selectedShell.toLowerCase()) {
+      case 'bash':
+        execCmd = `bash ${escapedPath}${escapedArgs}`;
+        break;
+      case 'sh':
+        execCmd = `sh ${escapedPath}${escapedArgs}`;
+        break;
+      case 'powershell':
+        execCmd = `powershell -NoProfile -ExecutionPolicy Bypass -File ${escapedPath}${escapedArgs}`;
+        break;
+      default:
+        execCmd = `${selectedShell} ${escapedPath}${escapedArgs}`;
+        break;
+    }
+
     const timeout = getExecuteTimeout('shell');
-    const result = await Promise.race([
-      server.executeCommand(finalCommand),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout)
-      )
-    ]) as any;
+    let result: any;
+    try {
+      result = await Promise.race([
+        server.executeCommand(execCmd),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Command timed out after ${timeout}ms`)), timeout)
+        )
+      ]) as any;
+    } finally {
+      // Best-effort cleanup
+      try { await fsp.unlink(scriptPath); } catch {}
+    }
     
     let aiAnalysis;
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
       aiAnalysis = await analyzeError({
         kind: 'command',
-        input: command,
+        input: previewCommand,
         shell: selectedShell,
         stdout: result.stdout,
         stderr: result.stderr,

@@ -79,3 +79,4 @@ Package scripts of interest
 Notes
 - When deploying behind a proxy, set `PUBLIC_BASE_URL` to ensure OpenAPI `servers[0].url` is correct
 - Do not log secrets; examples use placeholders like `${OPENAI_API_KEY}`
+- [x] executeShell (bash) works

@@ -2,7 +2,10 @@
   "name": "gpt-terminal-plus",
   "version": "latest",
   "description": "ChatGPT terminal action for Custom GPT",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "bin": {
+    "jit": "dist/index.js"
+  },
   "type": "commonjs",
   "scripts": {
     "lint": "npx eslint src/",
@@ -24,6 +27,7 @@
     "openapi:generate": "node scripts/generate-openapi.cjs",
     "openapi:lint": "npx @redocly/cli@latest lint public/openapi.yaml",
     "postbuild": "npm run openapi:generate",
+    "pkg:win": "npm run build && npx pkg . --targets node18-win-x64,node18-win-arm64 --out-path release",
     "prestart": "npm run openapi:generate"
   },
   "keywords": [],
@@ -65,7 +69,8 @@
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "pkg": "^5.8.1"
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.665.0",
@@ -101,6 +106,18 @@
     "uuid": "^10.0.0",
     "yaml": "^2.8.1",
     "zod": "^3.24.1"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/**/*.js"
+    ],
+    "assets": [
+      "README.md",
+      "TODO.md",
+      "public/**/*",
+      "docs/**/*",
+      "config/**/*"
+    ]
   },
   "_moduleAliases": {
     "@src": "src"

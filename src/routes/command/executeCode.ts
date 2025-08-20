@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { handleServerError } from '../../utils/handleServerError';
 import { getExecuteTimeout } from '../../utils/timeout';
+import os from 'os';
+import path from 'path';
+import { promises as fsp } from 'fs';
+import shellEscape from 'shell-escape';
+import { analyzeError } from '../../llm/errorAdvisor';
 
 /**
  * Execute code using interpreters
@@ -16,18 +21,20 @@ export const executeCode = async (req: Request, res: Response) => {
 
   try {
     const server = getServerHandler(req);
-    
-    // Map language to command (interpreters only, not shells)
-    const interpreters: Record<string, string> = {
-      python: 'python3',
-      python3: 'python3',
-      node: 'node',
-      nodejs: 'node'
+
+    // Map language to interpreter and extension
+    const map: Record<string, { cmd: string; ext: string }> = {
+      python: { cmd: 'python3', ext: '.py' },
+      python3: { cmd: 'python3', ext: '.py' },
+      node: { cmd: 'node', ext: '.js' },
+      nodejs: { cmd: 'node', ext: '.js' },
+      typescript: { cmd: 'ts-node', ext: '.ts' }
     };
 
-    const interpreter = interpreters[language.toLowerCase()];
+    const mapping = map[(language || '').toLowerCase()];
+    const interpreter = mapping?.cmd;
     if (!interpreter) {
-      const supportedLanguages = Object.keys(interpreters).join(', ');
+      const supportedLanguages = Object.keys(map).join(', ');
       return res.status(400).json({ 
         error: `Language '${language}' not supported`,
         message: `executeCode is for interpreters only. Supported: ${supportedLanguages}`,
@@ -45,20 +52,41 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
-    // Execute code via interpreter with timeout
-    const timeout = getExecuteTimeout('code');
-    const result = await Promise.race([
-      server.executeCommand(`${interpreter} -c "${code.replace(/"/g, '\\"')}"`),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
-      )
-    ]) as any;
+    // Write to a temp file and execute via interpreter to support multi-line code safely
+    const tmpDir = os.tmpdir();
+    const ext = mapping.ext;
+    const codePath = path.join(tmpDir, `jit-code-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    await fsp.writeFile(codePath, String(code), { mode: 0o600 });
 
-    res.json({
-      result,
-      language,
-      interpreter
-    });
+    const escapedPath = shellEscape([codePath]);
+    const runCmd = `${interpreter} ${escapedPath}`;
+
+    const timeout = getExecuteTimeout('code');
+    let result: any;
+    try {
+      result = await Promise.race([
+        server.executeCommand(runCmd),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
+        )
+      ]) as any;
+    } finally {
+      try { await fsp.unlink(codePath); } catch {}
+    }
+
+    let aiAnalysis;
+    if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
+      aiAnalysis = await analyzeError({
+        kind: 'code',
+        input: String(code),
+        language: String(language),
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.exitCode
+      });
+    }
+
+    res.json({ result, aiAnalysis, language, interpreter });
 
   } catch (error) {
     handleServerError(error, res, 'Error executing code');

@@ -218,6 +218,8 @@ function buildSpec(req?: Request) {
                     instructions: { type: 'string' },
                     dryRun: { type: 'boolean' },
                     stream: { type: 'boolean' },
+                    engine: { type: 'string', description: 'LLM engine (e.g., llm:interpreter, auto)' },
+                    model: { type: 'string', description: 'Model for selected engine (e.g., gpt-4o)' },
                   },
                   required: ['instructions'],
                 },
