@@ -17,20 +17,31 @@ export const executeCode = async (req: Request, res: Response) => {
   try {
     const server = getServerHandler(req);
     
-    // Map language to command
+    // Map language to command (interpreters only, not shells)
     const interpreters: Record<string, string> = {
       python: 'python3',
       python3: 'python3',
       node: 'node',
-      nodejs: 'node',
-      bash: 'bash',
-      sh: 'bash'
+      nodejs: 'node'
     };
 
     const interpreter = interpreters[language.toLowerCase()];
     if (!interpreter) {
+      const supportedLanguages = Object.keys(interpreters).join(', ');
       return res.status(400).json({ 
-        error: `Unsupported language: ${language}` 
+        error: `Language '${language}' not supported`,
+        message: `executeCode is for interpreters only. Supported: ${supportedLanguages}`,
+        hint: `For shell commands like bash, use /command/execute-shell instead`
+      });
+    }
+
+    // Check for potential interpreter availability
+    const checkResult = await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
+    if (checkResult.exitCode !== 0) {
+      return res.status(400).json({
+        error: `Interpreter '${interpreter}' not available`,
+        message: `${language} interpreter (${interpreter}) is not installed or not in PATH`,
+        hint: `Install ${interpreter} or use a different language`
       });
     }
 

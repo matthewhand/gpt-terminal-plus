@@ -4,6 +4,7 @@ import { handleServerError } from '../../utils/handleServerError';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { getExecuteTimeout } from '../../utils/timeout';
+import { validateFileOperations } from '../../utils/fileOperations';
 
 const debug = Debug('app:command:execute-shell');
 
@@ -41,6 +42,15 @@ export const executeShell = async (req: Request, res: Response) => {
   }
 
   try {
+    // Check for file operations in command
+    const hasFileOps = /\b(echo|cat|touch|mkdir|rm|cp|mv|>|>>|<<)\b/.test(finalCommand);
+    if (hasFileOps) {
+      const fileCheck = validateFileOperations();
+      if (!fileCheck.allowed) {
+        return res.status(403).json({ error: fileCheck.error });
+      }
+    }
+
     const server = getServerHandler(req);
     const timeout = getExecuteTimeout('shell');
     const result = await Promise.race([
