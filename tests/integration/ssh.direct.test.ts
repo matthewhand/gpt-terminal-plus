@@ -5,7 +5,6 @@ describe('Direct SSH Integration Tests', () => {
     const handler = new SshServerHandler({
       protocol: 'ssh',
       hostname: 'worker1',
-      host: 'worker1',
       username: process.env.USER || 'chatgpt',
       port: 22
     });
@@ -22,7 +21,6 @@ describe('Direct SSH Integration Tests', () => {
     const handler = new SshServerHandler({
       protocol: 'ssh',
       hostname: 'worker2',
-      host: 'worker2',
       username: process.env.USER || 'chatgpt',
       port: 22
     });
@@ -38,7 +36,6 @@ describe('Direct SSH Integration Tests', () => {
     const handler = new SshServerHandler({
       protocol: 'ssh',
       hostname: 'worker1',
-      host: 'worker1',
       username: process.env.USER || 'chatgpt',
       port: 22
     });
@@ -48,7 +45,7 @@ describe('Direct SSH Integration Tests', () => {
 
     // Create file
     const createResult = await handler.createFile(testFile, testContent);
-    expect(createResult.success).toBe(true);
+    expect(createResult).toBe(true);
 
     // Read file back
     const content = await handler.getFileContent(testFile);
@@ -62,14 +59,13 @@ describe('Direct SSH Integration Tests', () => {
     const handler = new SshServerHandler({
       protocol: 'ssh',
       hostname: 'worker1',
-      host: 'worker1',
       username: process.env.USER || 'chatgpt',
       port: 22
     });
 
-    const files = await handler.listFiles('/tmp');
+    const files = await handler.listFiles({ directory: '/tmp' });
     
     expect(Array.isArray(files)).toBe(true);
-    expect(files.length).toBeGreaterThan(0);
+    expect(files.items.length).toBeGreaterThan(0);
   }, 15000);
 });

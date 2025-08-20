@@ -135,6 +135,11 @@ router.post('/execute-code', handleExecuteCode);
 router.post('/execute-llm', handleExecuteLlm);
 
 // Session-based execution for long-running processes
+// Import executeCode
+const { executeCode } = require('./command/executeCode');
+
+router.post('/execute-code', executeCode);
+
 router.post('/execute-session', (req: Request, res: Response) => {
   const { command, sessionId, timeout = 5000 } = req.body;
   

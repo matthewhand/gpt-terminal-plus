@@ -35,7 +35,8 @@ export const applyDiff = async (req: Request, res: Response) => {
     } catch (error) {
       await unlink(tempFile);
       return res.status(400).json({ 
-        error: 'Invalid diff format', 
+        error: 'Invalid diff format',
+        message: 'Diff validation failed',
         details: error instanceof Error ? error.message : String(error)
       });
     }
