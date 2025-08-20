@@ -76,7 +76,7 @@
     "@ngrok/ngrok": "^1.4.1",
     "@types/shell-escape": "^0.2.3",
     "@types/swagger-ui-express": "^4.1.8",
-    "adminjs": "^7.8.17",
+    "adminjs": "^7.6.1",
     "axios": "^1.11.0",
     "body-parser": "^1.20.2",
     "config": "^3.3.12",

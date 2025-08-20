@@ -44,10 +44,11 @@ GPT Terminal Plus is a production-ready backend that enables ChatGPT to execute 
 - **CI/CD ready** with GitHub Actions and automated testing
 
 ### 🌐 Deployment Options
-- **Local development** - Run on your desktop
-- **Cloud servers** - Deploy to VPS or dedicated servers
-- **Serverless** - Fly.io and Vercel configurations included
-- **Docker support** - Multi-stage builds and production images
+- **Local development** - Run on your desktop with `npm start`
+- **Fly.io** - Serverless deployment with `./scripts/deploy.sh fly`
+- **Vercel** - Edge deployment with `./scripts/deploy.sh vercel`
+- **Docker** - Containerized deployment with `./scripts/deploy.sh docker`
+- **VPS/Cloud** - Traditional server deployment with PM2/systemd
 
 ### 🔒 Security Features
 - **Authentication** - Bearer token protection for all endpoints
@@ -161,11 +162,33 @@ gpt-terminal-plus/
 - **Version control** - Clean git history with professional commits
 - **CI/CD ready** - GitHub Actions for automated testing and deployment
 
+## Quick Deployment
+
+```bash
+# Local development
+npm ci && npm run build && npm start
+
+# Production deployment
+./scripts/deploy.sh fly     # Deploy to Fly.io
+./scripts/deploy.sh vercel  # Deploy to Vercel
+./scripts/deploy.sh docker  # Build Docker image
+```
+
 ## Getting Started
 
-1. **Read** [README.md](README.md) for quick overview
-2. **Deploy** using [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-3. **Configure** ChatGPT with [docs/GPT_ACTION.md](docs/GPT_ACTION.md)
-4. **Extend** using [AGENTS.md](AGENTS.md) guidelines
+1. **Deploy** using deployment script or [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+2. **Access admin** at `/admin` (credentials auto-generated on first run)
+3. **Configure ChatGPT** with [docs/GPT_ACTION.md](docs/GPT_ACTION.md)
+4. **Manage servers** via AdminJS interface at `/admin`
+5. **API documentation** at `/docs` (Swagger UI)
+
+## Production Features
+
+✅ **Complete Admin Interface** - Settings & server management  
+✅ **Secure Authentication** - Auto-generated credentials  
+✅ **Multi-platform Deployment** - Fly.io, Vercel, Docker  
+✅ **Comprehensive Testing** - 361+ tests passing  
+✅ **Production Security** - CORS, input validation, audit logging  
+✅ **ChatGPT Integration** - Ready-to-use Custom GPT Actions  
 
 This is a complete, production-ready solution for bridging ChatGPT with real system administration capabilities.

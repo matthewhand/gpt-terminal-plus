@@ -14,24 +14,41 @@ Static-first OpenAPI artifacts with deterministic generation, an Express server 
 - Plugin Manifest:
   - GET [/.well-known/ai-plugin.json](/.well-known/ai-plugin.json)
 
-Quick start
-- Install and build:
-  - `npm ci`
-  - `npm run build` (deterministically regenerates OpenAPI artifacts via postbuild hook)
-- Run:
-  - `npm start`
-- Visit:
-  - Swagger UI at [/docs](/docs) (uses static /openapi.json)
-  - Settings UI at [public/settings.html](public/settings.html)
-- Auth header for protected endpoints:
-  - `Authorization: Bearer YOUR_API_TOKEN`
+## Quick Start
 
-Add to ChatGPT (Custom GPT Actions)
-- Follow the guide: [docs/CHATGPT_configuration.md](docs/CHATGPT_configuration.md)
-- Use the OpenAPI spec:
-  - [public/openapi.yaml](public/openapi.yaml)
-  - [public/openapi.json](public/openapi.json)
-- Ensure the endpoint matches your deployment domain and set `API_TOKEN` consistently.
+### 1. Install and Build
+```bash
+npm ci
+npm run build
+npm start
+```
+
+### 2. Access Interfaces
+- **Admin Panel**: http://localhost:5004/admin (credentials in console)
+- **API Docs**: http://localhost:5004/docs (Swagger UI)
+- **Health Check**: http://localhost:5004/health
+
+### 3. Production Deployment
+```bash
+./scripts/deploy.sh fly     # Deploy to Fly.io
+./scripts/deploy.sh vercel  # Deploy to Vercel
+./scripts/deploy.sh docker  # Build Docker image
+```
+
+### 4. ChatGPT Integration
+- Use OpenAPI spec: [/openapi.json](/openapi.json) or [/openapi.yaml](/openapi.yaml)
+- Follow setup guide: [docs/GPT_ACTION.md](docs/GPT_ACTION.md)
+- Auth header: `Authorization: Bearer YOUR_API_TOKEN`
+
+## Features
+
+✅ **AdminJS Interface** - Complete settings and server management  
+✅ **Multi-Server Support** - Local, SSH, AWS SSM execution  
+✅ **File Operations** - Create, read, patch, diff with git integration  
+✅ **AI Delegation** - Route tasks to specialized LLMs  
+✅ **Secure Authentication** - Auto-generated admin credentials  
+✅ **Production Ready** - 361+ tests, comprehensive security  
+✅ **ChatGPT Integration** - Ready-to-use Custom GPT Actions  
 
 Deterministic OpenAPI generation
 - Generated from JSDoc via [scripts/generate-openapi.cjs](scripts/generate-openapi.cjs)
