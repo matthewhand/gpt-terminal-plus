@@ -8,8 +8,20 @@ app.use(express.json());
 app.use((req: any, res, next) => {
   req.serverHandler = {
     protocol: 'local',
-    hostname: 'localhost'
+    hostname: 'localhost',
+    executeCommand: async () => ({ success: true, stdout: '', stderr: '', exitCode: 0 })
   };
+  next();
+});
+// Add middleware for server handler
+app.use('/file/diff', (req: any, res, next) => {
+  if (!req.serverHandler) {
+    req.serverHandler = {
+      protocol: 'local',
+      hostname: 'localhost',
+      executeCommand: async () => ({ success: true, stdout: '', stderr: '', exitCode: 0 })
+    };
+  }
   next();
 });
 app.post('/file/diff', applyDiff);

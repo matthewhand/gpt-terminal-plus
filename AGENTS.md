@@ -1,19 +1,22 @@
-# Project Agents.md Guide for SysAdmin Assistant
+# AI Agent Development Guide
 
-This Agents.md file provides comprehensive guidance for AI agents (like OpenAI Codex or ChatGPT-based assistants) working with this codebase.
+**For complete system overview, architecture, and use cases, see [PACKAGE.md](PACKAGE.md)**
 
-## Project Structure for Agent Navigation
+This guide provides specific coding and development guidance for AI agents working with the GPT Terminal Plus codebase.
 
-- /src: Core application source code
-  - /handlers: Server handlers for local, SSH, and SSM command execution
-  - /routes: Express route definitions (including command, code, llm, and file operations)
-  - /config: Configuration management with convict
-  - /settings: Settings schema for runtime configuration and WebUI exposure
-  - /managers: Server and connection managers
-  - /middlewares: Express middlewares
-  - /services and /utils: Supporting logic and utilities
-- /config: JSON configs for environments (development, production, test)
-- /tests: Jest test files that must be maintained and extended
+## Quick Reference
+
+- **System overview**: [PACKAGE.md](PACKAGE.md) - Complete solution architecture
+- **Deployment**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - All deployment options
+- **ChatGPT setup**: [docs/GPT_ACTION.md](docs/GPT_ACTION.md) - Custom GPT configuration
+- **AI delegation**: [docs/AI_DELEGATION.md](docs/AI_DELEGATION.md) - execute-llm patterns
+
+## Core Development Areas
+
+- `/src/routes/` - API endpoints (command, file, server operations)
+- `/src/handlers/` - Server execution (local, SSH, SSM)
+- `/tests/` - Comprehensive test suite (375+ tests)
+- `/docs/` - Complete documentation package
 
 ## Coding Conventions for Agent Implementation
 
