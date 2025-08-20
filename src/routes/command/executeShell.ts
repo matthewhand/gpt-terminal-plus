@@ -22,11 +22,11 @@ export const executeShell = async (req: Request, res: Response) => {
   
   // Shell validation when shell is explicitly specified
   if (shell) {
-    const shellAllowed = process.env.SHELL_ALLOWED || '';
+    const shellAllowed = process.env.SHELL_ALLOWED || 'bash,sh,powershell';
     const allowedShells = shellAllowed.split(',').map(s => s.trim()).filter(Boolean);
-    // If SHELL_ALLOWED is empty or shell not in list, reject
-    if (shellAllowed === '' || !allowedShells.includes(shell)) {
-      return res.status(403).json({ error: `Shell '${shell}' is not allowed. Allowed shells: ${allowedShells.join(', ') || 'none'}` });
+    // If shell not in allowed list, reject
+    if (!allowedShells.includes(shell)) {
+      return res.status(403).json({ error: `Shell '${shell}' is not allowed. Allowed shells: ${allowedShells.join(', ')}` });
     }
   }
   
