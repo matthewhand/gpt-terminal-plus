@@ -1,12 +1,17 @@
 import { SshServerHandler } from '../../src/handlers/ssh/SshServerHandler';
 
 describe('Direct SSH Integration Tests', () => {
+  const sshConfig = {
+    protocol: 'ssh' as const,
+    username: process.env.USER || 'chatgpt',
+    port: 22,
+    privateKeyPath: process.env.HOME + '/.ssh/id_rsa'
+  };
+
   test('connects to worker1 and executes command', async () => {
     const handler = new SshServerHandler({
-      protocol: 'ssh',
-      hostname: 'worker1',
-      username: process.env.USER || 'chatgpt',
-      port: 22
+      ...sshConfig,
+      hostname: 'worker1'
     });
 
     const result = await handler.executeCommand('hostname && echo "Direct SSH test successful"');
@@ -19,10 +24,8 @@ describe('Direct SSH Integration Tests', () => {
 
   test('connects to worker2 and executes command', async () => {
     const handler = new SshServerHandler({
-      protocol: 'ssh',
-      hostname: 'worker2',
-      username: process.env.USER || 'chatgpt',
-      port: 22
+      ...sshConfig,
+      hostname: 'worker2'
     });
 
     const result = await handler.executeCommand('hostname && uptime');
@@ -34,10 +37,8 @@ describe('Direct SSH Integration Tests', () => {
 
   test('creates and reads file on worker1', async () => {
     const handler = new SshServerHandler({
-      protocol: 'ssh',
-      hostname: 'worker1',
-      username: process.env.USER || 'chatgpt',
-      port: 22
+      ...sshConfig,
+      hostname: 'worker1'
     });
 
     const testContent = `Direct SSH integration test ${Date.now()}`;
@@ -57,15 +58,13 @@ describe('Direct SSH Integration Tests', () => {
 
   test('lists files on worker1', async () => {
     const handler = new SshServerHandler({
-      protocol: 'ssh',
-      hostname: 'worker1',
-      username: process.env.USER || 'chatgpt',
-      port: 22
+      ...sshConfig,
+      hostname: 'worker1'
     });
 
     const files = await handler.listFiles({ directory: '/tmp' });
     
-    expect(Array.isArray(files)).toBe(true);
+    expect(Array.isArray(files.items)).toBe(true);
     expect(files.items.length).toBeGreaterThan(0);
   }, 15000);
 });
