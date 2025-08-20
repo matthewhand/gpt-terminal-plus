@@ -1,0 +1,553 @@
+/**
+ * @openapi
+ * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: API_TOKEN
+ *   schemas:
+ *     ExecutionResult:
+ *       type: object
+ *       properties:
+ *         stdout:
+ *           type: string
+ *         stderr:
+ *           type: string
+ *         exitCode:
+ *           type: integer
+ *         error:
+ *           type: boolean
+ *       required:
+ *         - stdout
+ *         - stderr
+ *         - exitCode
+ *         - error
+ */
+
+/**
+ * @openapi
+ * /server/list:
+ *   get:
+ *     operationId: serverList
+ *     summary: List servers for this API token
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 servers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *               required:
+ *                 - servers
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /file/read:
+ *   post:
+ *     operationId: fileRead
+ *     summary: Read a single file with optional line range
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath:
+ *                 type: string
+ *               startLine:
+ *                 type: integer
+ *                 description: 1-based inclusive start line
+ *               endLine:
+ *                 type: integer
+ *                 description: 1-based inclusive end line
+ *               encoding:
+ *                 type: string
+ *                 default: utf8
+ *               maxBytes:
+ *                 type: integer
+ *                 default: 1048576
+ *             required:
+ *               - filePath
+ *     responses:
+ *       '200':
+ *         description: File content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 filePath: { type: string }
+ *                 encoding: { type: string }
+ *                 startLine: { type: integer }
+ *                 endLine: { type: integer }
+ *                 truncated: { type: boolean }
+ *                 content: { type: string }
+ *               required:
+ *                 - filePath
+ *                 - content
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /command/execute:
+ *   post:
+ *     operationId: executeCommand
+ *     summary: Execute using first available mode
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command:
+ *                 type: string
+ *             required:
+ *               - command
+ *     responses:
+ *       '200':
+ *         description: Execution complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   $ref: '#/components/schemas/ExecutionResult'
+ *                 aiAnalysis:
+ *                   type: object
+ *               required:
+ *                 - result
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /command/execute-code:
+ *   post:
+ *     operationId: executeCode
+ *     summary: Execute a code snippet
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               language:
+ *                 type: string
+ *               code:
+ *                 type: string
+ *               timeoutMs:
+ *                 type: integer
+ *             required:
+ *               - language
+ *               - code
+ *     responses:
+ *       '200':
+ *         description: Execution complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   $ref: '#/components/schemas/ExecutionResult'
+ *                 aiAnalysis:
+ *                   type: object
+ *               required:
+ *                 - result
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /command/execute-shell:
+ *   post:
+ *     operationId: executeShell
+ *     summary: Execute a command (literal by default)
+ *     description: Default runs the binary with args via spawn (no shell expansion). If `shell` is provided (e.g., bash, powershell), the command runs under that shell.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command:
+ *                 type: string
+ *               args:
+ *                 type: array
+ *                 items: { type: string }
+ *               shell:
+ *                 type: string
+ *                 description: Optional shell to run under (bash, powershell, etc). If omitted, defaults to safe literal mode with no shell expansion.
+ *             required:
+ *               - command
+ *     responses:
+ *       '200':
+ *         description: Execution complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 result:
+ *                   $ref: '#/components/schemas/ExecutionResult'
+ *                 aiAnalysis:
+ *                   type: object
+ *               required:
+ *                 - result
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /command/execute-llm:
+ *   post:
+ *     operationId: executeLlm
+ *     summary: Run an LLM plan or direct instruction
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               instructions:
+ *                 type: string
+ *               dryRun:
+ *                 type: boolean
+ *               stream:
+ *                 type: boolean
+ *             required:
+ *               - instructions
+ *     responses:
+ *       '200':
+ *         description: LLM execution complete
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 plan:
+ *                   type: object
+ *                 results:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       '400':
+ *         description: Bad request
+ */
+
+/**
+ * @openapi
+ * /file/create:
+ *   post:
+ *     operationId: fileCreate
+ *     summary: Create or replace a file on the active server
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               content: { type: string }
+ *               backup: { type: boolean, default: true }
+ *             required: [ filePath ]
+ *     responses:
+ *       '200': { description: File created }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/list:
+ *   post:
+ *     operationId: fileList
+ *     summary: List files in a directory on the active server
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               directory: { type: string }
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 files:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items: { type: string }
+ *                     total: { type: integer }
+ *                     limit: { type: integer }
+ *                     offset: { type: integer }
+ *               required: [ files ]
+ *   get:
+ *     operationId: fileListGet
+ *     summary: List files (GET shim)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: directory
+ *         schema: { type: string }
+ *     responses:
+ *       '200': { description: OK }
+ */
+
+/**
+ * @openapi
+ * /file/update:
+ *   post:
+ *     operationId: fileUpdate
+ *     summary: Regex replace within a file
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               pattern: { type: string }
+ *               replacement: { type: string }
+ *               backup: { type: boolean, default: true }
+ *               multiline: { type: boolean, default: false }
+ *             required: [ filePath, pattern, replacement ]
+ *     responses:
+ *       '200': { description: Updated }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/amend:
+ *   post:
+ *     operationId: fileAmend
+ *     summary: Append content to a file
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               content: { type: string }
+ *               backup: { type: boolean, default: true }
+ *             required: [ filePath, content ]
+ *     responses:
+ *       '200': { description: Amended }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/diff:
+ *   post:
+ *     operationId: fileApplyDiff
+ *     summary: Apply a unified diff using git apply
+ *     description: Validates with `git apply --check`, then applies with `git apply`. Currently supported only for the local server handler.
+ *     security:
+ *       - bearerAuth: []
+ *     x-openai-isConsequential: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               diff: { type: string }
+ *               dryRun: { type: boolean, default: false }
+ *               whitespaceNowarn: { type: boolean, default: true }
+ *             required: [ diff ]
+ *     responses:
+ *       '200': { description: Applied }
+ *       '400': { description: Validation failed }
+ */
+
+/**
+ * @openapi
+ * /file/patch:
+ *   post:
+ *     operationId: fileApplyPatch
+ *     summary: Apply a structured patch via git apply
+ *     description: Generates a minimal unified diff for the target file and applies it with git apply. Currently supported only for the local server handler.
+ *     security:
+ *       - bearerAuth: []
+ *     x-openai-isConsequential: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               search: { type: string }
+ *               oldText: { type: string }
+ *               replace: { type: string }
+ *               all: { type: boolean, default: false }
+ *               startLine: { type: integer }
+ *               endLine: { type: integer }
+ *               dryRun: { type: boolean, default: false }
+ *               whitespaceNowarn: { type: boolean, default: true }
+ *             required: [ filePath, replace ]
+ *     responses:
+ *       '200': { description: Applied }
+ *       '400': { description: Validation failed }
+ */
+
+/**
+ * @openapi
+ * /file/set-post-command:
+ *   post:
+ *     operationId: fileSetPostCommand
+ *     summary: Configure a post-execution command for the active server handler
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command: { type: string }
+ *             required: [ command ]
+ *     responses:
+ *       '200': { description: Updated }
+ *       '400': { description: Bad request }
+ */
+/**
+ * @openapi
+ * /settings:
+ *   get:
+ *     operationId: getSettings
+ *     summary: Get redacted configuration settings
+ *     description: Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Redacted settings grouped by category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 server:
+ *                   type: object
+ *                   properties:
+ *                     port:
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: number
+ *                         readOnly:
+ *                           type: boolean
+ *                     httpsEnabled:
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: boolean
+ *                         readOnly:
+ *                           type: boolean
+ *                 security:
+ *                   type: object
+ *                   properties:
+ *                     apiToken:
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: string
+ *                         readOnly:
+ *                           type: boolean
+ *                 llm:
+ *                   type: object
+ *                   properties:
+ *                     provider:
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: string
+ *                         readOnly:
+ *                           type: boolean
+ *                     "openai.baseUrl":
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: string
+ *                         readOnly:
+ *                           type: boolean
+ *                     "openai.apiKey":
+ *                       type: object
+ *                       properties:
+ *                         value:
+ *                           type: string
+ *                         readOnly:
+ *                           type: boolean
+ *             examples:
+ *               sample:
+ *                 summary: Example response
+ *                 value:
+ *                   server:
+ *                     port: { value: 5005, readOnly: false }
+ *                     httpsEnabled: { value: false, readOnly: false }
+ *                   security:
+ *                     apiToken: { value: "*****", readOnly: true }
+ *                   llm:
+ *                     provider: { value: "openai", readOnly: false }
+ *                     "openai.baseUrl": { value: "", readOnly: false }
+ *                     "openai.apiKey": { value: "*****", readOnly: true }
+ *       '400':
+ *         description: Bad request
+ */

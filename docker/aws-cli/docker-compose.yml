@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aws-cli-app
+    ports:
+      - "${AWS_CLI_PORT_HOST:-5007}:${AWS_CLI_PORT_CONTAINER:-5005}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - API_TOKEN=${API_TOKEN}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - ENABLE_COMMAND_MANAGEMENT=true
+      - ENABLE_FILE_MANAGEMENT=false
+      - ENABLE_SERVER_MANAGEMENT=false
+    volumes:
+      - ~/.aws:/root/.aws:ro
+    restart: unless-stopped

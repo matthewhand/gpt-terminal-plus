@@ -1,0 +1,19 @@
+services:
+  vercel-cli-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vercel-cli-app
+    ports:
+      - "${VERCEL_CLI_PORT_HOST:-5012}:${VERCEL_CLI_PORT_CONTAINER:-5005}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - VERCEL_TOKEN=${VERCEL_TOKEN} # mandatory
+      - VERCEL_ORG_ID=${VERCEL_ORG_ID} # optional
+      - VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID} # optional
+    restart: unless-stopped
+    #volumes:
+    #  - ./config:/app/config:ro # If passing through host credentials ie vercel login

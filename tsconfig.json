@@ -1,20 +1,35 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "CommonJS",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "target": "ES6",
+    "module": "commonjs",
+    "lib": ["es6"],
+    "allowJs": false,
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "outDir": "dist",
-    "types": ["jest", "node"],
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@common/*": ["src/common/*"],
+      "@config/*": ["src/config/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@managers/*": ["src/managers/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@modules/*": ["src/modules/*"],
+      "@routes/*": ["src/routes/*"],
+      "@tests/*": ["tests/*"],
+      "@types/*": ["src/types/*"]
+    }
   },
-  "include": [
-    "src/**/*",
-    "src/global.d.ts"
-  ],
-  "files": [
-    "src/types/express.d.ts",
-    "src/global.d.ts"
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/tests/**",
+    "src/handlers/ssh/actions/**"
   ]
 }

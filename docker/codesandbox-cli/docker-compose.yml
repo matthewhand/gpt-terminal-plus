@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  codesandbox-cli-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: codesandbox-cli-app
+    ports:
+      - "${CODESANDBOX_CLI_PORT_HOST:-5014}:${CODESANDBOX_CLI_PORT_CONTAINER:-5005}"
+    env_file:
+      - ../../.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DEBUG=${DEBUG}
+      - CODESANDBOX_AUTH_TOKEN=${CODESANDBOX_AUTH_TOKEN}
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro # Read-only if needed

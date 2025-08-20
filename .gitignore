@@ -10,6 +10,8 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.docker
+docker-compose.override.yml
 
 # Logs
 *.log
@@ -124,9 +126,25 @@ dist
 # Windows
 Thumbs.db
 
+# VSCode settings
+.vscode/
+
 # Ignore everything in the config directory
 config/*
 
 # But not these files...
 !config/default.json
 !config/test.json
+!config/test/*
+.vercel
+.env*.local
+
+# Allow for dev instance containers to persist dynamic scripts at runtime
+docker/*/scripts/
+
+# Allow for customisation of the container on per app basis
+docker/*/.bashrc
+*.js
+
+# Amazon Q artifacts
+.amazonq/

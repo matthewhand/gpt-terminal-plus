@@ -1,18 +1,18 @@
 {
   "schema_version": "v1",
-  "name_for_human": "Terminal Plugin (No Auth)",
-  "name_for_model": "terminalPlus",
-  "description_for_human": "Plugin for running terminal commands, managing files, and/or interacting with Visual Studio Code.",
-  "description_for_model": "Plugin enables system administration. Follow this sequence for optimal use: 1. setServer 2. runCommand or createFile or amendFile 3. iterate through pages for response id with pages>1",
+  "name_for_human": "GPT Terminal Plus",
+  "name_for_model": "gpt_terminal_plus",
+  "description_for_human": "Execute commands, run code, and view server settings via a secure API.",
+  "description_for_model": "Provides endpoints to execute shell commands and code, manage files, and retrieve a redacted configuration view. Static-first OpenAPI artifacts are served with dynamic fallback. Some routes require bearer auth via API_TOKEN.",
   "auth": {
     "type": "none"
   },
   "api": {
     "type": "openapi",
-    "url": "http://localhost:5004/openapi.yaml",
+    "url": "/openapi.json",
     "is_user_authenticated": false
   },
-  "logo_url": "http://localhost/logo.png",
-  "contact_email": "matthewhandau@gmail.com",
-  "legal_info_url": "http://teamstinky.duckdns.org/legal"
+  "logo_url": "/icon.png",
+  "contact_email": "support@localhost",
+  "legal_info_url": "https://example.com/legal"
 }

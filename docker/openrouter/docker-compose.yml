@@ -1,0 +1,15 @@
+services:
+  openrouter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openrouter
+    ports:
+      - "${OPENROUTER_PORT_HOST:-5016}:${OPENROUTER_PORT_CONTAINER:-5005}"
+    env_file:
+      - .env
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - API_TOKEN=${API_TOKEN}
+    restart: unless-stopped
+

@@ -1,166 +1,100 @@
-import express, { Response } from 'express';
-import { ServerHandler } from '../handlers/ServerHandler';
-import { ServerConfig } from '../types';
-import { escapeRegExp } from '../utils/escapeRegExp';
-import path from 'path';
-import config from 'config';
-import lockfile from 'proper-lockfile';
-import { ensureServerIsSet } from '../middlewares';
-import Debug from 'debug';
-const debug = Debug('app:fileRoutes');
+import express from 'express';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+
+// File route handlers
+import { createFile } from './file/createFile';
+import { listFiles } from './file/listFiles';
+import { readFile } from './file/readFile';
+import { updateFile } from './file/updateFile';
+import { amendFile } from './file/amendFile';
+import { setPostCommand } from './file/setPostCommand';
+import { applyDiff } from './file/applyDiff';
+import { applyPatch } from './file/applyPatch';
+
 const router = express.Router();
-router.use(ensureServerIsSet);
 
-const serverConfig = config.get<ServerConfig>('serverConfig');
+// Secure routes and ensure a ServerHandler is attached to req
+router.use(checkAuthToken as any);
+router.use(initializeServerHandler as any);
 
-// Helper function to ensure serverHandler is initialized
-async function getServerHandler(res: Response): Promise<ServerHandler | null> {
-  try {
-    // Use the host property from serverConfig to get the instance
-    const serverHandler = await ServerHandler.getInstance(serverConfig.host);
-    return serverHandler;
-  } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : 'Server handler not initialized' });
-    return null;
-  }
-}
+/**
+ * POST /file/create
+ * Create or replace a file using the active ServerHandler.
+ * Body: { filePath: string, content: string, backup?: boolean }
+ */
+router.post('/create', createFile);
 
-// Set the current directory
-router.post('/set-current-folder', async (req, res) => {
-  const directory = req.body.directory;
-  const serverHandler = await getServerHandler(res);
-  if (!serverHandler) return;
+/**
+ * POST /file/list
+ * List files in a directory using the active ServerHandler.
+ * Body: { directory?: string }
+ */
+router.post('/list', listFiles);
 
-  try {
-    const success = await serverHandler.setCurrentDirectory(directory);
-    if (success) {
-      res.status(200).json({ output: 'Current directory set to ' + directory });
-    } else {
-      res.status(400).json({ output: 'Directory does not exist.' });
-    }
-  } catch (err) {
-    const error = err as Error;
-    res.status(500).json({ error: error.message });
-  }
-  
+/**
+ * Optional GET shim for list — maps query to body for compatibility.
+ * GET /file/list?directory=...  -> same as POST /file/list
+ */
+router.get('/list', (req, res) => {
+  const { directory } = req.query as { directory?: string };
+  req.body = { ...(req.body || {}), ...(directory ? { directory } : {}) };
+  return listFiles(req as any, res);
 });
 
-// Combined create or replace a file route
-router.post(['/create-file'], async (req, res) => {
-  const { filename, content, backup = true, directory } = req.body;
-  const serverHandler = await getServerHandler(res);
-  if (!serverHandler) return;
+/**
+ * POST /file/read
+ * Read a single file, optionally constrained by line range.
+ * Body: { filePath: string, startLine?: number, endLine?: number, encoding?: string, maxBytes?: number }
+ */
+router.post('/read', readFile);
 
-  const targetDirectory = directory || await serverHandler.getCurrentDirectory();
-  const fullPath = path.join(targetDirectory, filename);
-
-  try {
-    // Lock the file to prevent concurrent writes
-    const release = await lockfile.lock(fullPath, { realpath: false });
-
-    try {
-      // Perform the file creation or replacement
-      const success = await serverHandler.createFile(targetDirectory, filename, content, backup);
-      if (success) {
-        res.status(200).json({ message: 'File created or replaced successfully.' });
-      } else {
-        res.status(400).json({ error: 'Failed to create or replace file.' });
-      }
-    } finally {
-      // Always release the lock
-      await release();
-    }
-  } catch (err) {
-    // Handle errors
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
+/**
+ * Optional GET shim for read — maps query to body.
+ * GET /file/read?filePath=...&startLine=..&endLine=..
+ */
+router.get('/read', (req, res) => {
+  const { filePath, startLine, endLine, encoding, maxBytes } = req.query as Record<string, string>;
+  const body: any = { ...(req.body || {}) };
+  if (filePath) body.filePath = filePath;
+  if (startLine) body.startLine = Number(startLine);
+  if (endLine) body.endLine = Number(endLine);
+  if (encoding) body.encoding = encoding;
+  if (maxBytes) body.maxBytes = Number(maxBytes);
+  req.body = body;
+  return readFile(req as any, res);
 });
 
+/**
+ * POST /file/update
+ * Regex replace within a file. Body: { filePath, pattern, replacement, backup?, multiline? }
+ */
+router.post('/update', updateFile);
 
-router.post('/update-file', async (req, res) => {
-  const { filename, pattern, replacement, backup = true, directory = "" } = req.body;
-  const serverHandler = await getServerHandler(res); // Added await here
-  if (!serverHandler) return;
+/**
+ * POST /file/amend
+ * Append content to a file. Body: { filePath, content, backup? }
+ */
+router.post('/amend', amendFile);
 
-  // Validate that none of the parameters are empty
-  if (!filename || !pattern || !replacement || !directory.trim()) {
-    return res.status(400).json({ error: 'All parameters must be provided and non-empty.' });
-  }
+/**
+ * POST /file/set-post-command
+ * Configure a post-execution command on the selected server handler. Body: { command }
+ */
+router.post('/set-post-command', setPostCommand);
 
-  const targetDirectory = directory || await serverHandler.getCurrentDirectory(); // Added await here
-  const fullPath = path.join(targetDirectory, filename);
+/**
+ * POST /file/diff
+ * Apply a unified diff using git apply with validation.
+ * Body: { diff: string, dryRun?: boolean }
+ */
+router.post('/diff', applyDiff);
 
-  try {
-    // Lock the file
-    const release = await lockfile.lock(fullPath);
-
-    try {
-      // Perform the file update
-      const updateResult = await serverHandler.updateFile(fullPath, escapeRegExp(pattern), replacement, backup); // This is correct
-      if (updateResult) {
-        res.status(200).json({ message: 'File updated successfully.' });
-      } else {
-        res.status(400).json({ error: 'Failed to update the file.' });
-      }
-    } finally {
-      // Unlock the file, ignoring any errors during unlock
-      await release();
-    }
-  } catch (err) {
-    // Handle error
-    if (err instanceof Error) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.status(500).json({ error: 'An unknown error occurred' });
-    }
-  }
-});
-
-// Amend a file
-router.post('/amend-file', async (req, res) => {
-  const { filename, content, directory = "" } = req.body;
-  const serverHandler = await getServerHandler(res); 
-  if (!serverHandler) return;
-
-  const targetDirectory = directory || await serverHandler.getCurrentDirectory(); 
-  const fullPath = path.join(targetDirectory, filename);
-
-  try {
-    // Lock the file to prevent concurrent writes
-    const release = await lockfile.lock(fullPath, { realpath: false });
-
-    try {
-      // Perform the file amendment
-      const success = await serverHandler.amendFile(fullPath, content);
-      if (success) {
-        res.status(200).json({ message: 'File amended successfully.' });
-      } else {
-        res.status(400).json({ error: 'Failed to amend file.' });
-      }
-    } finally {
-      // Always release the lock
-      await release();
-    }
-  } catch (err) {
-    // If locking fails, respond with the error message
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Locking failed' });
-  }
-});
-
-router.post('/list-files', async (req, res) => {
-  const { directory, orderBy = 'filename', limit = 42, offset = 0 } = req.body;
-  const serverHandler = await getServerHandler(res); // Make sure to await the Promise here
-  if (!serverHandler) return;
-
-  try {
-    // Perform the list files operation
-    const files = await serverHandler.listFiles(directory, limit, offset, orderBy); 
-    res.status(200).json({ files });
-  } catch (err) {
-    // If an error occurs, respond with the error message
-    res.status(500).json({ error: err instanceof Error ? err.message : 'Unknown error' });
-  }
-});
-
+/**
+ * POST /file/patch
+ * Apply a structured patch by generating a minimal unified diff and using git apply.
+ * Body: { filePath: string, search?: string, oldText?: string, replace: string, all?: boolean, startLine?: number, endLine?: number, dryRun?: boolean }
+ */
+router.post('/patch', applyPatch);
 
 export default router;

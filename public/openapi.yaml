@@ -1,16 +1,69 @@
 openapi: 3.1.0
 info:
-  title: System Info and Command Runner Plugin
-  description: A plugin that allows users to run command line programs after obtaining the system information to accomplish its goal.
-  version: 'v1.1'
+  title: gpt-terminal-plus API
+  version: 0.1.0
+  description: OpenAPI generated from JSDoc annotations.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://terminal.teamstinky.duckdns.org/
+  - url: http://localhost:5005
+    description: Public base URL
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API_TOKEN
+  schemas:
+    ExecutionResult:
+      type: object
+      properties:
+        stdout:
+          type: string
+        stderr:
+          type: string
+        exitCode:
+          type: integer
+        error:
+          type: boolean
+      required:
+        - stdout
+        - stderr
+        - exitCode
+        - error
 paths:
-  /set-server:
-    post:
-      summary: Set the server to a predefined hostname listed by list-servers.
-      operationId: setServer
+  /server/list:
+    get:
+      operationId: serverList
+      summary: List servers for this API token
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  servers:
+                    type: array
+                    items:
+                      type: object
+                required:
+                  - servers
+        "400":
+          description: Bad request
       x-openai-isConsequential: false
+  /file/read:
+    post:
+      operationId: fileRead
+      summary: Read a single file with optional line range
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -18,78 +71,240 @@ paths:
             schema:
               type: object
               properties:
-                server:
+                filePath:
                   type: string
-                  description: The server to set.
+                startLine:
+                  type: integer
+                  description: 1-based inclusive start line
+                endLine:
+                  type: integer
+                  description: 1-based inclusive end line
+                encoding:
+                  type: string
+                  default: utf8
+                maxBytes:
+                  type: integer
+                  default: 1048576
+              required:
+                - filePath
       responses:
-        '200':
-          description: The server was successfully set.
+        "200":
+          description: File content
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  output:
+                  filePath:
                     type: string
-                    description: A message indicating the server was successfully set.
-                  systemInfo: 
-                    type: object
-                    description: Information about the system of the set server.
-        '400':
-          description: Bad request due to invalid input.
-          content:
-            text/plain:
-              schema:
-                type: string
-        '500':
-          description: Internal server error.
-          content:
-            text/plain:
-              schema:
-                type: string  
-  /run:
-      post:
-        summary: Run a command
-        operationId: runCommand
-        x-openai-isConsequential: false
-        required:
-          - command
-          - directory
-        requestBody:
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  command:
+                  encoding:
                     type: string
-                    description: The command to run.
-                  directory:
+                  startLine:
+                    type: integer
+                  endLine:
+                    type: integer
+                  truncated:
+                    type: boolean
+                  content:
                     type: string
-                    description: The directory to set as the current working directory before running the command.
-                  shell:
-                    type: string
-                    description: The shell environment in which to run the command.
-        responses:
-          '200':
-            description: OK
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    output:
-                      type: string
-                      description: The output of the command.  
-
-  /list-files:
-    post:
-      summary: List files in a directory with pagination
-      operationId: listFiles
+                required:
+                  - filePath
+                  - content
+        "400":
+          description: Bad request
       x-openai-isConsequential: false
-      required:
-        - directory
+  /command/execute:
+    post:
+      operationId: executeCommand
+      summary: Execute using first available mode
+      security:
+        - bearerAuth: []
       requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+              required:
+                - command
+      responses:
+        "200":
+          description: Execution complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/ExecutionResult"
+                  aiAnalysis:
+                    type: object
+                required:
+                  - result
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /command/execute-code:
+    post:
+      operationId: executeCode
+      summary: Execute a code snippet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                code:
+                  type: string
+                timeoutMs:
+                  type: integer
+              required:
+                - language
+                - code
+      responses:
+        "200":
+          description: Execution complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/ExecutionResult"
+                  aiAnalysis:
+                    type: object
+                required:
+                  - result
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /command/execute-shell:
+    post:
+      operationId: executeShell
+      summary: Execute a command (literal by default)
+      description: Default runs the binary with args via spawn (no shell expansion).
+        If `shell` is provided (e.g., bash, powershell), the command runs under
+        that shell.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                args:
+                  type: array
+                  items:
+                    type: string
+                shell:
+                  type: string
+                  description: Optional shell to run under (bash, powershell, etc). If omitted,
+                    defaults to safe literal mode with no shell expansion.
+              required:
+                - command
+      responses:
+        "200":
+          description: Execution complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    $ref: "#/components/schemas/ExecutionResult"
+                  aiAnalysis:
+                    type: object
+                required:
+                  - result
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /command/execute-llm:
+    post:
+      operationId: executeLlm
+      summary: Run an LLM plan or direct instruction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instructions:
+                  type: string
+                dryRun:
+                  type: boolean
+                stream:
+                  type: boolean
+              required:
+                - instructions
+      responses:
+        "200":
+          description: LLM execution complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plan:
+                    type: object
+                  results:
+                    type: array
+                    items:
+                      type: object
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /file/create:
+    post:
+      operationId: fileCreate
+      summary: Create or replace a file on the active server
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                content:
+                  type: string
+                backup:
+                  type: boolean
+                  default: true
+              required:
+                - filePath
+      responses:
+        "200":
+          description: File created
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /file/list:
+    post:
+      operationId: fileList
+      summary: List files in a directory on the active server
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
         content:
           application/json:
             schema:
@@ -97,21 +312,8 @@ paths:
               properties:
                 directory:
                   type: string
-                  description: The directory to list files from.
-                orderBy:
-                  type: string
-                  description: Order files by 'datetime' or 'filename'.
-                  enum: ['datetime', 'filename']
-                limit:
-                  type: integer
-                  description: The maximum number of files to return.
-                  default: 42
-                offset:
-                  type: integer
-                  description: The starting index for pagination.
-                  default: 0
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
@@ -119,102 +321,107 @@ paths:
                 type: object
                 properties:
                   files:
-                    type: array
-                    items:
-                      type: string
-                    description: The list of files in the directory.
-  /list-servers:
-    get:
-      summary: Get the list of available servers.
-      operationId: listServers
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          type: string
+                      total:
+                        type: integer
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                required:
+                  - files
       x-openai-isConsequential: false
-      responses:
-        '200':
-          description: The list of available servers.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListServersResponse'
-
-  /response/{id}/{page}:
     get:
-      operationId: retrieveExtraResponsePages
-      summary: Use this endpoint to retrieve additional pages of a response when the output is too large for a single response. Provide the responseId of the original response and the page number you want to retrieve. For example, to retrieve the second page of a response with ID 12345, use /response/12345/page/2. 
-      x-openai-isConsequential: false
+      operationId: fileListGet
+      summary: List files (GET shim)
+      security:
+        - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
+        - in: query
+          name: directory
           schema:
-            type: integer
-          description: The unique ID of the response.
-        - name: page
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: The page number to retrieve.
+            type: string
       responses:
-        '200':
-          description: A specific page of the response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResponsePage'
-        '404':
-          description: Response not found.
-  /create-file:
+        "200":
+          description: OK
+      x-openai-isConsequential: false
+  /file/update:
     post:
-      operationId: createFile
-      x-openai-isConsequential: true
-      summary: Create a file in a specified working directory (overwrites).
-      description: |
-        This endpoint allows the creation or replacement of a file in a specified working directory. If the file already exists, it can be optionally backed up before being replaced. This function is useful for managing files both locally and remotely.
+      operationId: fileUpdate
+      summary: Regex replace within a file
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateFileRequest'
+              type: object
+              properties:
+                filePath:
+                  type: string
+                pattern:
+                  type: string
+                replacement:
+                  type: string
+                backup:
+                  type: boolean
+                  default: true
+                multiline:
+                  type: boolean
+                  default: false
+              required:
+                - filePath
+                - pattern
+                - replacement
       responses:
-        '200':
-          description: The file was created or replaced successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: A success message indicating the operation's outcome.
-  /amend-file:
+        "200":
+          description: Updated
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /file/amend:
     post:
-      operationId: amendFile
-      summary: Amend a file in a specified working directory.
-      x-openai-isConsequential: true
-      description: |
-        This endpoint allows the amendment of a file in a specified working directory. The content will be inserted at the specified position.
+      operationId: fileAmend
+      summary: Append content to a file
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AmendFileRequest'
+              type: object
+              properties:
+                filePath:
+                  type: string
+                content:
+                  type: string
+                backup:
+                  type: boolean
+                  default: true
+              required:
+                - filePath
+                - content
       responses:
-        '200':
-          description: The file was amended successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: A success message indicating the operation's outcome.
-  /set-current-folder:
+        "200":
+          description: Amended
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /file/diff:
     post:
-      operationId: setCurrentFolder
-      summary: Set the current directory
+      operationId: fileApplyDiff
+      summary: Apply a unified diff using git apply
+      description: Validates with `git apply --check`, then applies with `git apply`.
+        Currently supported only for the local server handler.
+      security:
+        - bearerAuth: []
       x-openai-isConsequential: false
       requestBody:
         required: true
@@ -222,170 +429,183 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - directory
               properties:
-                directory:
+                diff:
                   type: string
-                  description: The directory to set as the current directory
+                dryRun:
+                  type: boolean
+                  default: false
+                whitespaceNowarn:
+                  type: boolean
+                  default: true
+              required:
+                - diff
       responses:
-        200:
-          description: Current directory set successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-        400:
-          description: Directory does not exist or is not provided
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-  /update-file:
+        "200":
+          description: Applied
+        "400":
+          description: Validation failed
+  /file/patch:
     post:
-      operationId: updateFile
-      summary: Update a file
-      x-openai-isConsequential: true
-      parameters:
-        - in: body
-          name: filename
-          required: true
-          schema:
-            type: string
-            description: The file to update
-        - in: body
-          name: pattern
-          required: true
-          schema:
-            type: string
-            description: The pattern to search for in the file
-        - in: body
-          name: replacement
-          required: true
-          schema:
-            type: string
-            description: The replacement content for the pattern
-        - in: body
-          name: backup
-          required: false
-          schema:
-            type: boolean
-            description: Whether to create a backup of the file before updating (default true)
-        - in: body
-          name: directory
-          required: false
-          schema:
-            type: string
-            description: The working directory for the file (default to current directory)
-        - in: body
-          name: openInEditor
-          required: false
-          schema:
-            type: boolean
-            default: true
-            description: Whether to open the file at the pattern location in the editor (default true)
+      operationId: fileApplyPatch
+      summary: Apply a structured patch via git apply
+      description: Generates a minimal unified diff for the target file and applies it
+        with git apply. Currently supported only for the local server handler.
+      security:
+        - bearerAuth: []
+      x-openai-isConsequential: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filePath:
+                  type: string
+                search:
+                  type: string
+                oldText:
+                  type: string
+                replace:
+                  type: string
+                all:
+                  type: boolean
+                  default: false
+                startLine:
+                  type: integer
+                endLine:
+                  type: integer
+                dryRun:
+                  type: boolean
+                  default: false
+                whitespaceNowarn:
+                  type: boolean
+                  default: true
+              required:
+                - filePath
+                - replace
       responses:
-        200:
-          description: File updated successfully
-        400:
-          description: Current folder must be set first or other input error
-        500:
-          description: An error occurred while updating the file
-
-components:
-  schemas:
-    SetServerResponse:
-      type: object
-      properties:
-        output:
-          type: string
-        systemInfo:
-          type: object
-          properties:
-            homeFolder:
-              type: string
-            type:
-              type: string
-            release:
-              type: string
-            platform:
-              type: string
-            cpuCores:
-              type: integer
-            totalMemory:
-              type: integer
-            localTime:
-              type: string
-            currentFolder:
-              type: string
-    CurrentFolderResponse:
-      type: object
-      properties:
-        current_folder:
-          type: string
-          description: The current folder.
-    RunCommandResponse:
-      type: object
-      properties:
-        responseId:
-          type: string
-        page:
-          type: integer
-        numPages:
-          type: integer
-        data:
-          type: string
-    ListServersResponse:
-      type: object
-      properties:
-        servers:
-          type: array
-          items:
-            type: string
-          description: The list of available servers.
-    CreateFileRequest:
-      type: object
-      properties:
-        filename:
-          type: string
-          description: The name of the file to create or replace.
+        "200":
+          description: Applied
+        "400":
+          description: Validation failed
+  /file/set-post-command:
+    post:
+      operationId: fileSetPostCommand
+      summary: Configure a post-execution command for the active server handler
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
         content:
-          type: string
-          description: The content to write to the file.
-        backup:
-          type: boolean
-          default: true
-          description: Whether to backup the file if it already exists (defaults to true).
-        directory:
-          type: string
-          default: ""
-          description: The working directory where the file should be created or replaced. 
-    ResponsePage:
-      type: object
-      properties:
-        responseId:
-          type: string
-        page:
-          type: integer
-        data:
-          type: string
-    AmendFileRequest:
-      type: object
-      properties:
-        filename:
-          type: string
-        content:
-          type: string
-        directory:
-          type: string
-      required:
-        - filename
-        - content
-        - position
-
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+              required:
+                - command
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+  /settings:
+    get:
+      operationId: getSettings
+      summary: Get redacted configuration settings
+      description: Returns grouped configuration values with secrets redacted. Values
+        overridden by environment variables are marked as readOnly.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Redacted settings grouped by category
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server:
+                    type: object
+                    properties:
+                      port:
+                        type: object
+                        properties:
+                          value:
+                            type: number
+                          readOnly:
+                            type: boolean
+                      httpsEnabled:
+                        type: object
+                        properties:
+                          value:
+                            type: boolean
+                          readOnly:
+                            type: boolean
+                  security:
+                    type: object
+                    properties:
+                      apiToken:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                          readOnly:
+                            type: boolean
+                  llm:
+                    type: object
+                    properties:
+                      provider:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                          readOnly:
+                            type: boolean
+                      openai.baseUrl:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                          readOnly:
+                            type: boolean
+                      openai.apiKey:
+                        type: object
+                        properties:
+                          value:
+                            type: string
+                          readOnly:
+                            type: boolean
+              examples:
+                sample:
+                  summary: Example response
+                  value:
+                    server:
+                      port:
+                        value: 5005
+                        readOnly: false
+                      httpsEnabled:
+                        value: false
+                        readOnly: false
+                    security:
+                      apiToken:
+                        value: "*****"
+                        readOnly: true
+                    llm:
+                      provider:
+                        value: openai
+                        readOnly: false
+                      openai.baseUrl:
+                        value: ""
+                        readOnly: false
+                      openai.apiKey:
+                        value: "*****"
+                        readOnly: true
+        "400":
+          description: Bad request
+      x-openai-isConsequential: false
+tags: []

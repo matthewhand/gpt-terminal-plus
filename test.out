@@ -1,0 +1,2026 @@
+
+> gpt-terminal-plus@latest pretest
+> rm -rf dist
+
+
+> gpt-terminal-plus@latest test
+> NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand
+
+2025-08-19T08:05:56.335Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:56.338Z app:SsmServerHandler Executing SSM command via AWS SSM: echo "Hello World"
+2025-08-19T08:05:56.379Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:56.380Z app:SsmServerHandler Executing SSM command via AWS SSM: invalid-command
+2025-08-19T08:05:56.383Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:56.385Z app:SsmServerHandler Executing SSM command via AWS SSM: sleep 100
+2025-08-19T08:05:57.389Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.389Z app:SsmServerHandler Executing SSM command via AWS SSM: echo test
+2025-08-19T08:05:57.390Z app:SsmServerHandler SSM execute error: Error: AWS SDK Error
+2025-08-19T08:05:57.392Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.393Z app:SsmServerHandler Executing SSM command via AWS SSM: echo test
+2025-08-19T08:05:57.393Z app:SsmServerHandler SSM execute error: TypeError: Cannot read properties of undefined (reading 'Status')
+2025-08-19T08:05:57.395Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.396Z app:SsmServerHandler Executing SSM code: print("Hello from Python") in language: python (timeout=none, dir=cwd)
+2025-08-19T08:05:57.397Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.398Z app:SsmServerHandler Executing SSM code: print( in language: python (timeout=none, dir=cwd)
+2025-08-19T08:05:57.399Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.400Z app:SsmServerHandler Creating file on SSM server: /tmp/test.txt (backup=true) contentLength=0
+2025-08-19T08:05:57.402Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.402Z app:SsmServerHandler Creating file on SSM server: /root/test.txt (backup=true) contentLength=0
+2025-08-19T08:05:57.404Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.406Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.408Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.409Z app:SsmServerHandler Executing SSM command via AWS SSM: cat '/tmp/test.txt'
+2025-08-19T08:05:57.410Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.410Z app:SsmServerHandler Executing SSM command via AWS SSM: cat '/root/secret.txt'
+2025-08-19T08:05:57.410Z app:SsmServerHandler SSM execute error: Error: Permission denied
+2025-08-19T08:05:57.414Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.414Z app:SsmServerHandler Executing SSM command via AWS SSM: echo test
+2025-08-19T08:05:57.415Z app:SsmServerHandler SSM execute error: Error: Network error
+2025-08-19T08:05:57.416Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.416Z app:SsmServerHandler Executing SSM command via AWS SSM: failing-command
+2025-08-19T08:05:57.416Z app:SsmServerHandler SSM execute error: Error: Command failed
+2025-08-19T08:05:57.417Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.420Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance',
+  instanceId: 'i-1234567890abcdef0',
+  region: 'us-east-1'
+}
+2025-08-19T08:05:57.420Z app:SsmServerHandler Initialized SsmServerHandler with config: {
+  protocol: 'ssm',
+  hostname: 'test-instance-2',
+  instanceId: 'i-abcdef1234567890',
+  region: 'eu-west-1'
+}
+FAIL tests/handlers/ssm/SsmServerHandler.test.ts
+  ● SSM Server Handler › executeCommand › should execute command successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "",
+    +   "error": false,
+        "exitCode": 0,
+    -   "output": "Hello World",
+    +   "stderr": "",
+    +   "stdout": "Hello World",
+        "success": true,
+      }
+
+      51 |       const result = await ssmHandler.executeCommand('echo "Hello World"');
+      52 |
+    > 53 |       expect(result).toEqual({
+         |                      ^
+      54 |         success: true,
+      55 |         output: 'Hello World',
+      56 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:53:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle command execution failure
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "Command not found",
+    +   "error": true,
+        "exitCode": 1,
+    -   "output": "",
+    +   "stderr": "Command not found",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      83 |       const result = await ssmHandler.executeCommand('invalid-command');
+      84 |
+    > 85 |       expect(result).toEqual({
+         |                      ^
+      86 |         success: false,
+      87 |         output: '',
+      88 |         error: 'Command not found',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:85:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle command timeout
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "Command execution timed out",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 124,
+    +   "stderr": "SSM command timeout",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      114 |       const result = await ssmHandler.executeCommand('sleep 100', 1000);
+      115 |
+    > 116 |       expect(result).toEqual({
+          |                      ^
+      117 |         success: false,
+      118 |         output: '',
+      119 |         error: 'Command execution timed out',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:116:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle AWS SDK errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "AWS SDK Error",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 1,
+    +   "stderr": "Error: AWS SDK Error",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      130 |       const result = await ssmHandler.executeCommand('echo test');
+      131 |
+    > 132 |       expect(result).toEqual({
+          |                      ^
+      133 |         success: false,
+      134 |         output: '',
+      135 |         error: 'AWS SDK Error',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:132:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle missing command ID in response
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "Failed to get command ID from AWS response",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 1,
+    +   "stderr": "TypeError: Cannot read properties of undefined (reading 'Status')",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      147 |       const result = await ssmHandler.executeCommand('echo test');
+      148 |
+    > 149 |       expect(result).toEqual({
+          |                      ^
+      150 |         success: false,
+      151 |         output: '',
+      152 |         error: 'Failed to get command ID from AWS response',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:149:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCode › should execute Python code successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "",
+    +   "error": false,
+        "exitCode": 0,
+    -   "output": "Hello from Python",
+    +   "stderr": "",
+    +   "stdout": "SSM code executed",
+        "success": true,
+      }
+
+      177 |       const result = await ssmHandler.executeCode('print("Hello from Python")', 'python');
+      178 |
+    > 179 |       expect(result).toEqual({
+          |                      ^
+      180 |         success: true,
+      181 |         output: 'Hello from Python',
+      182 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:179:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCode › should handle code execution errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 5
+
+      Object {
+    -   "error": "SyntaxError: invalid syntax",
+    -   "exitCode": 1,
+    -   "output": "",
+    -   "success": false,
+    +   "error": false,
+    +   "exitCode": 0,
+    +   "stderr": "",
+    +   "stdout": "SSM code executed",
+    +   "success": true,
+      }
+
+      205 |       const result = await ssmHandler.executeCode('print(', 'python');
+      206 |
+    > 207 |       expect(result).toEqual({
+          |                      ^
+      208 |         success: false,
+      209 |         output: '',
+      210 |         error: 'SyntaxError: invalid syntax',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:207:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › createFile › should create file successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "", "exitCode": 0, "output": "", "success": true}
+    Received: true
+
+      235 |       const result = await ssmHandler.createFile('/tmp/test.txt');
+      236 |
+    > 237 |       expect(result).toEqual({
+          |                      ^
+      238 |         success: true,
+      239 |         output: '',
+      240 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:237:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › createFile › should handle file creation errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "Permission denied", "exitCode": 1, "output": "", "success": false}
+    Received: true
+
+      263 |       const result = await ssmHandler.createFile('/root/test.txt');
+      264 |
+    > 265 |       expect(result).toEqual({
+          |                      ^
+      266 |         success: false,
+      267 |         output: '',
+      268 |         error: 'Permission denied',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:265:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getSystemInfo › should get system info successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 7
+
+      Object {
+    -   "error": "",
+    -   "exitCode": 0,
+    -   "output": "Linux ip-10-0-1-100 5.4.0-1043-aws #45-Ubuntu",
+    -   "success": true,
+    +   "architecture": "x64",
+    +   "currentFolder": "/home/user",
+    +   "freeMemory": 8192,
+    +   "platform": "linux",
+    +   "totalMemory": 16384,
+    +   "type": "SsmServer",
+    +   "uptime": 123456,
+      }
+
+      293 |       const result = await ssmHandler.getSystemInfo();
+      294 |
+    > 295 |       expect(result).toEqual({
+          |                      ^
+      296 |         success: true,
+      297 |         output: 'Linux ip-10-0-1-100 5.4.0-1043-aws #45-Ubuntu',
+      298 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:295:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getSystemInfo › should handle system info errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 7
+
+      Object {
+    -   "error": "System info unavailable",
+    -   "exitCode": -1,
+    -   "output": "",
+    -   "success": false,
+    +   "architecture": "x64",
+    +   "currentFolder": "/home/user",
+    +   "freeMemory": 8192,
+    +   "platform": "linux",
+    +   "totalMemory": 16384,
+    +   "type": "SsmServer",
+    +   "uptime": 123456,
+      }
+
+      306 |       const result = await ssmHandler.getSystemInfo();
+      307 |
+    > 308 |       expect(result).toEqual({
+          |                      ^
+      309 |         success: false,
+      310 |         output: '',
+      311 |         error: 'System info unavailable',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:308:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getFileContent › should get file content successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "", "exitCode": 0, "output": "File content here", "success": true}
+    Received: "File content here"
+
+      336 |       const result = await ssmHandler.getFileContent('/tmp/test.txt');
+      337 |
+    > 338 |       expect(result).toEqual({
+          |                      ^
+      339 |         success: true,
+      340 |         output: 'File content here',
+      341 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:338:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getFileContent › should handle file read errors
+
+    Error: Permission denied
+
+       99 |             return res.stdout;
+      100 |         }
+    > 101 |         throw new Error(res.stderr || `Failed to read file: ${filePath}`);
+          |               ^
+      102 |     }
+      103 |
+      104 |     /**
+
+      at SsmServerHandler.<anonymous> (src/handlers/ssm/SsmServerHandler.ts:101:15)
+      at fulfilled (src/handlers/ssm/SsmServerHandler.ts:5:58)
+
+  ● SSM Server Handler › error handling › should handle network errors gracefully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Network error"
+    Received: true
+
+      365 |
+      366 |       expect(result.success).toBe(false);
+    > 367 |       expect(result.error).toBe('Network error');
+          |                            ^
+      368 |       expect(result.exitCode).toBe(-1);
+      369 |     });
+      370 |
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:367:28
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › error handling › should handle timeout errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Command failed"
+    Received: true
+
+      375 |
+      376 |       expect(result.success).toBe(false);
+    > 377 |       expect(result.error).toBe('Command failed');
+          |                            ^
+      378 |     });
+      379 |   });
+      380 |
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:377:28
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › configuration › should use correct instance ID and region
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: {"region": "us-east-1"}
+
+    Number of calls: 0
+
+      381 |   describe('configuration', () => {
+      382 |     it('should use correct instance ID and region', () => {
+    > 383 |       expect(MockedSSMClient).toHaveBeenCalledWith({
+          |                               ^
+      384 |         region: 'us-east-1'
+      385 |       });
+      386 |     });
+
+      at Object.<anonymous> (tests/handlers/ssm/SsmServerHandler.test.ts:383:31)
+
+  ● SSM Server Handler › configuration › should handle different regions
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: {"region": "eu-west-1"}
+
+    Number of calls: 0
+
+      394 |       });
+      395 |
+    > 396 |       expect(MockedSSMClient).toHaveBeenCalledWith({
+          |                               ^
+      397 |         region: 'eu-west-1'
+      398 |       });
+      399 |     });
+
+      at Object.<anonymous> (tests/handlers/ssm/SsmServerHandler.test.ts:396:31)
+
+PASS tests/mcpSse.test.ts
+2025-08-19T08:05:58.636Z app:serverRoutes initializing server routes
+2025-08-19T08:05:58.688Z app:setupMiddlewares Setting up middlewares, with conditional /health logging suppression...
+2025-08-19T08:05:58.697Z app:setupMiddlewares Middlewares setup completed.
+2025-08-19T08:05:58.712Z app:setupMiddlewares Logging request to /openapi.json
+2025-08-19T08:05:58.725Z app:setupMiddlewares Logging request to /openapi.yaml
+PASS tests/openapi.test.js
+  ● Console
+
+    console.log
+      CORS configuration set to: https://chat.openai.com, https://chatgpt.com
+
+      at setupMiddlewares (src/middlewares/setupMiddlewares.ts:33:11)
+
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:58 +0000] "GET /openapi.json HTTP/1.1" 200 9245 "-" "-"
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:58 +0000] "GET /openapi.yaml HTTP/1.1" 200 14803 "-" "-"
+2025-08-19T08:05:58.859Z app:ssh-connection-manager SSH connection established
+2025-08-19T08:05:58.863Z app:ssh-connection-manager SSH connection established
+2025-08-19T08:05:58.866Z app:ssh-connection-manager SSH connection error: Connection failed
+2025-08-19T08:05:58.885Z app:ssh-connection-manager SSH connection established
+2025-08-19T08:05:58.887Z app:ssh-connection-manager SSH connection established
+2025-08-19T08:05:58.923Z app:ssh-connection-manager Command execution error: Execution failed
+2025-08-19T08:05:58.945Z app:ssh-connection-manager SSH connection closed
+2025-08-19T08:05:58.946Z app:ssh-connection-manager SSH connection closed
+2025-08-19T08:05:58.946Z app:ssh-connection-manager SSH connection closed
+2025-08-19T08:05:58.949Z app:ssh-connection-manager SSH connection established
+2025-08-19T08:05:58.961Z app:ssh-connection-manager SSH connection closed
+PASS tests/managers/SSHConnectionManager.comprehensive.test.ts
+2025-08-19T08:05:59.128Z app:serverRoutes initializing server routes
+2025-08-19T08:05:59.138Z app:models Fetching supported models
+PASS tests/chat.providers.test.ts
+2025-08-19T08:05:59.319Z app:serverRoutes initializing server routes
+2025-08-19T08:05:59.322Z app:setupMiddlewares Setting up middlewares, with conditional /health logging suppression...
+2025-08-19T08:05:59.327Z app:setupMiddlewares Middlewares setup completed.
+2025-08-19T08:05:59.332Z app:setupMiddlewares Logging request to /command/execute-shell
+2025-08-19T08:05:59.353Z app:setupMiddlewares Logging request to /command/execute-shell
+2025-08-19T08:05:59.368Z app:setupMiddlewares Logging request to /command/execute-shell
+2025-08-19T08:05:59.377Z app:setupMiddlewares Logging request to /command/execute-shell
+2025-08-19T08:05:59.385Z app:setupMiddlewares Logging request to /command/execute-shell
+PASS tests/execute.shell.simple.test.ts
+  ● Console
+
+    console.log
+      CORS configuration set to: https://chat.openai.com, https://chatgpt.com
+
+      at setupMiddlewares (src/middlewares/setupMiddlewares.ts:33:11)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":"echo ok"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":"exit 1"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":"echo test"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+    console.debug
+      Request received for /command/execute-shell with body: {}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"shell":"python","command":"print(\"hello from python\")"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:05:59.561Z app:serverRoutes initializing server routes
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:59 +0000] "POST /command/execute-shell HTTP/1.1" 200 65 "-" "-"
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:59 +0000] "POST /command/execute-shell HTTP/1.1" 200 117 "-" "-"
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:59 +0000] "POST /command/execute-shell HTTP/1.1" 200 67 "-" "-"
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:59 +0000] "POST /command/execute-shell HTTP/1.1" 200 152 "-" "-"
+::ffff:127.0.0.1 - - [19/Aug/2025:08:05:59 +0000] "POST /command/execute-shell HTTP/1.1" 200 80 "-" "-"
+PASS tests/execute.shell.edge.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":""}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"notCommand":"echo test"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:05:59.747Z app:serverRoutes initializing server routes
+PASS tests/middlewares.initializeServerHandler.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":"echo ok"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:05:59.818Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  privateKeyPath: '/path/to/key',
+  code: true
+}
+2025-08-19T08:05:59.819Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  privateKeyPath: '/path/to/key'
+}
+2025-08-19T08:05:59.820Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  code: true
+}
+2025-08-19T08:05:59.821Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  privateKeyPath: '/path/to/key',
+  code: true
+}
+2025-08-19T08:05:59.822Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  privateKeyPath: '/path/to/key',
+  code: true
+}
+2025-08-19T08:05:59.823Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  privateKeyPath: '/path/to/key',
+  code: true
+}
+2025-08-19T08:05:59.823Z app:SshServerHandler Executing SSH command: echo test
+2025-08-19T08:05:59.863Z app:SshServerHandler Initialized SshServerHandler with config: {
+  hostname: 'test.example.com',
+  protocol: 'ssh',
+  port: 22,
+  username: 'testuser',
+  code: true
+}
+2025-08-19T08:05:59.863Z app:SshServerHandler Executing SSH command: echo test
+PASS tests/handlers/ssh/SshServerHandler.test.ts
+2025-08-19T08:06:00.115Z app:serverRoutes initializing server routes
+2025-08-19T08:06:00.123Z app:models Fetching supported models
+2025-08-19T08:06:00.123Z app:modelRoutes Returning supported and selected models
+2025-08-19T08:06:00.131Z app:modelRoutes Request to select model: gpt-oss:20b
+2025-08-19T08:06:00.131Z app:models Fetching supported models
+2025-08-19T08:06:00.131Z app:models Model gpt-oss:20b supported: true
+2025-08-19T08:06:00.135Z app:modelRoutes Returning selected model: gpt-oss:20b
+2025-08-19T08:06:00.139Z app:modelRoutes Request to select model: not-a-real-model
+2025-08-19T08:06:00.139Z app:models Fetching supported models
+2025-08-19T08:06:00.139Z app:models Model not-a-real-model supported: false
+2025-08-19T08:06:00.139Z app:modelRoutes Attempt to select unsupported model: not-a-real-model
+PASS tests/models.test.ts
+2025-08-19T08:06:00.290Z app:serverRoutes initializing server routes
+PASS tests/executeLlm.stream.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-llm with body: {"instructions":"say hi","stream":true}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:06:00.461Z app:serverRoutes initializing server routes
+2025-08-19T08:06:00.479Z app:checkAuthToken checkAuthToken middleware called.
+2025-08-19T08:06:00.479Z app:checkAuthToken API token validated successfully.
+PASS tests/executeLlm.ssh.stream.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-llm with body: {"instructions":"echo remote","stream":true}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:06:00.641Z app:serverRoutes initializing server routes
+PASS tests/setup.policy.test.ts
+2025-08-19T08:06:00.817Z app:serverRoutes initializing server routes
+2025-08-19T08:06:00.829Z app:chatRoutes Generating chat completion with model: auto
+2025-08-19T08:06:00.830Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:00.830Z app:llm:ollama POST http://localhost:11434/api/chat model=auto
+PASS tests/chat.test.ts
+2025-08-19T08:06:00.997Z app:serverRoutes initializing server routes
+2025-08-19T08:06:01.001Z app:setupMiddlewares Setting up middlewares, with conditional /health logging suppression...
+2025-08-19T08:06:01.002Z app:setupMiddlewares Middlewares setup completed.
+2025-08-19T08:06:01.006Z app:setupMiddlewares Logging request to /command/execute-shell
+PASS tests/execute.python.test.ts
+  ● Console
+
+    console.log
+      CORS configuration set to: https://chat.openai.com, https://chatgpt.com
+
+      at setupMiddlewares (src/middlewares/setupMiddlewares.ts:33:11)
+
+    console.debug
+      Request received for /command/execute-shell with body: {"shell":"python","command":"print(\"hey\")"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:06:01.176Z app:serverRoutes initializing server routes
+::ffff:127.0.0.1 - - [19/Aug/2025:08:06:01 +0000] "POST /command/execute-shell HTTP/1.1" 200 66 "-" "-"
+PASS tests/setup.ssh.edit.test.ts
+2025-08-19T08:06:01.347Z app:serverRoutes initializing server routes
+2025-08-19T08:06:01.350Z app:setupMiddlewares Setting up middlewares, with conditional /health logging suppression...
+2025-08-19T08:06:01.352Z app:setupMiddlewares Middlewares setup completed.
+2025-08-19T08:06:01.356Z app:setupMiddlewares Logging request to /server/list
+2025-08-19T08:06:01.356Z app:checkAuthToken checkAuthToken middleware called.
+2025-08-19T08:06:01.356Z app:checkAuthToken API token validated successfully.
+PASS tests/server.list.test.ts
+  ● Console
+
+    console.log
+      CORS configuration set to: https://chat.openai.com, https://chatgpt.com
+
+      at setupMiddlewares (src/middlewares/setupMiddlewares.ts:33:11)
+
+2025-08-19T08:06:01.513Z app:serverRoutes initializing server routes
+::ffff:127.0.0.1 - - [19/Aug/2025:08:06:01 +0000] "GET /server/list HTTP/1.1" 200 95 "-" "-"
+PASS tests/executeLlm.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-llm with body: {"instructions":"Say hello","dryRun":true}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:06:01.726Z app:serverRoutes initializing server routes
+2025-08-19T08:06:01.776Z app:chatRoutes Generating chat completion with model: auto
+PASS tests/chat.stream.error.test.ts
+2025-08-19T08:06:01.924Z app:serverRoutes initializing server routes
+PASS tests/setup.ui.test.ts
+2025-08-19T08:06:02.084Z app:serverRoutes initializing server routes
+2025-08-19T08:06:02.100Z app:chatRoutes Generating chat completion with model: auto
+PASS tests/chat.stream.test.ts
+2025-08-19T08:06:02.198Z app:command:execute-shell Error executing shell command: Server handler not found on request object
+2025-08-19T08:06:02.199Z app:models Fetching supported models
+2025-08-19T08:06:02.199Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.199Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.218Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+2025-08-19T08:06:02.220Z app:command:execute-code Code and language are required but not provided.
+2025-08-19T08:06:02.221Z app:command:execute-code Code and language are required but not provided.
+2025-08-19T08:06:02.222Z app:command:execute-code Code and language are required but not provided.
+2025-08-19T08:06:02.223Z app:command:execute-code Code and language are required but not provided.
+2025-08-19T08:06:02.224Z app:command:execute-code Error executing code: Server handler not found on request object
+2025-08-19T08:06:02.224Z app:models Fetching supported models
+2025-08-19T08:06:02.224Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.224Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.227Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+2025-08-19T08:06:02.230Z app:ServerManager Searching for server configuration with hostname: null
+2025-08-19T08:06:02.230Z app:ServerManager Listing available servers from configuration
+2025-08-19T08:06:02.230Z app:ServerManager Loaded local config: {"protocol":"local","hostname":"localhost","code":false}
+2025-08-19T08:06:02.230Z app:ServerManager Loaded SSH configs: [{"hostname":"ssh-bash.example.com","port":22,"privateKeyPath":"/home/chatgpt/.ssh/id_rsa","protocol":"ssh","username":"chatgpt"}]
+2025-08-19T08:06:02.230Z app:ServerManager Loaded SSM configs: [{"hostname":"GAMINGPC.WORKGROUP","protocol":"ssm","instanceId":"i-1234567890abcdef0","region":"us-west-2"}]
+2025-08-19T08:06:02.231Z app:ServerManager Server configuration not found for hostname: null
+2025-08-19T08:06:02.231Z app:ServerManager Loading default local server configuration
+2025-08-19T08:06:02.231Z app:ServerManager Default local server config: {"protocol":"local","hostname":"localhost","code":false}
+2025-08-19T08:06:02.231Z app:command:execute-llm execute-llm failed: Error: Server handler not found on request object
+2025-08-19T08:06:02.231Z app:command:execute-shell Command is required but not provided.
+2025-08-19T08:06:02.232Z app:command:execute-shell Command is required but not provided.
+2025-08-19T08:06:02.233Z app:command:execute-shell Error executing shell command: Server handler not found on request object
+2025-08-19T08:06:02.233Z app:models Fetching supported models
+2025-08-19T08:06:02.233Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.233Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.236Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+2025-08-19T08:06:02.236Z app:command:execute-shell Error executing shell command: Server handler not found on request object
+2025-08-19T08:06:02.236Z app:models Fetching supported models
+2025-08-19T08:06:02.237Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.237Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.238Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+2025-08-19T08:06:02.239Z app:command:changeDirectory Directory is required but not provided.
+2025-08-19T08:06:02.240Z app:command:changeDirectory Error changing directory: Server handler not found on request object
+2025-08-19T08:06:02.240Z app:utils:handleServerError Error changing directory: Server handler not found on request object
+2025-08-19T08:06:02.241Z app:command:execute-code Code and language are required but not provided.
+2025-08-19T08:06:02.241Z app:command:execute-code Error executing code: Server handler not found on request object
+2025-08-19T08:06:02.241Z app:models Fetching supported models
+2025-08-19T08:06:02.241Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.241Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.243Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+2025-08-19T08:06:02.243Z app:command:execute-shell Command is required but not provided.
+2025-08-19T08:06:02.244Z app:command:execute-shell Error executing shell command: Server handler not found on request object
+2025-08-19T08:06:02.244Z app:models Fetching supported models
+2025-08-19T08:06:02.244Z app:llm:index Dispatching chat to provider: ollama
+2025-08-19T08:06:02.244Z app:llm:ollama POST http://localhost:11434/api/chat model=llama3.1:8b-instruct
+2025-08-19T08:06:02.245Z app:llm:errorAdvisor Error during AI analysis: TypeError: fetch failed
+PASS tests/routes/command/routeCommandHandlers.test.ts
+2025-08-19T08:06:02.373Z app:serverRoutes initializing server routes
+PASS tests/executeCode.errorAnalysis.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-code with body: {"code":"exit 9","language":"bash"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+2025-08-19T08:06:02.510Z app:serverRoutes initializing server routes
+PASS tests/command.errorAnalysis.test.ts
+  ● Console
+
+    console.debug
+      Request received for /command/execute-shell with body: {"command":"exit 2"}
+
+      at logReq (src/routes/commandRoutes.ts:10:13)
+
+PASS tests/config/convictConfig.test.ts
+2025-08-19T08:06:02.686Z app:createFile Received parameters: { filePath: '', content: 'content', backup: true }
+2025-08-19T08:06:02.686Z app:createFile File path must be provided and must be a string.
+2025-08-19T08:06:02.701Z app:createFile Received parameters: { filePath: null, content: 'content', backup: true }
+2025-08-19T08:06:02.701Z app:createFile File path must be provided and must be a string.
+2025-08-19T08:06:02.702Z app:createFile Received parameters: { filePath: 123, content: 'content', backup: true }
+2025-08-19T08:06:02.702Z app:createFile File path must be provided and must be a string.
+2025-08-19T08:06:02.704Z app:createFile Received parameters: { filePath: '/test/file.txt', content: '', backup: true }
+2025-08-19T08:06:02.704Z app:createFile Content must be provided and must be a string.
+2025-08-19T08:06:02.705Z app:createFile Received parameters: { filePath: '/test/file.txt', content: null, backup: true }
+2025-08-19T08:06:02.705Z app:createFile Content must be provided and must be a string.
+2025-08-19T08:06:02.706Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 123, backup: true }
+2025-08-19T08:06:02.706Z app:createFile Content must be provided and must be a string.
+2025-08-19T08:06:02.708Z app:createFile Received parameters: {
+  filePath: '/absolute/path/file.txt',
+  content: 'content',
+  backup: true
+}
+2025-08-19T08:06:02.708Z app:createFile Resolved full path: /absolute/path/file.txt
+2025-08-19T08:06:02.708Z app:createFile File exists: false
+2025-08-19T08:06:02.708Z app:createFile Writing file to path: /absolute/path/file.txt with content: content
+2025-08-19T08:06:02.708Z app:createFile File created successfully
+2025-08-19T08:06:02.709Z app:createFile Received parameters: { filePath: 'relative/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.709Z app:createFile Resolved full path: /home/user/relative/file.txt
+2025-08-19T08:06:02.709Z app:createFile File exists: false
+2025-08-19T08:06:02.709Z app:createFile Writing file to path: /home/user/relative/file.txt with content: content
+2025-08-19T08:06:02.709Z app:createFile File created successfully
+2025-08-19T08:06:02.710Z app:createFile Received parameters: { filePath: 'config.json', content: 'content', backup: true }
+2025-08-19T08:06:02.710Z app:createFile Resolved full path: /config/dir/config.json
+2025-08-19T08:06:02.710Z app:createFile File exists: false
+2025-08-19T08:06:02.710Z app:createFile Writing file to path: /config/dir/config.json with content: content
+2025-08-19T08:06:02.710Z app:createFile File created successfully
+2025-08-19T08:06:02.712Z app:createFile Received parameters: { filePath: '../parent/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.712Z app:createFile Resolved full path: /parent/file.txt
+2025-08-19T08:06:02.712Z app:createFile File exists: false
+2025-08-19T08:06:02.712Z app:createFile Writing file to path: /parent/file.txt with content: content
+2025-08-19T08:06:02.712Z app:createFile File created successfully
+2025-08-19T08:06:02.713Z app:createFile Received parameters: { filePath: './file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.713Z app:createFile Resolved full path: /current/file.txt
+2025-08-19T08:06:02.713Z app:createFile File exists: false
+2025-08-19T08:06:02.713Z app:createFile Writing file to path: /current/file.txt with content: content
+2025-08-19T08:06:02.713Z app:createFile File created successfully
+2025-08-19T08:06:02.714Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'new content', backup: true }
+2025-08-19T08:06:02.714Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.714Z app:createFile File exists: true
+2025-08-19T08:06:02.714Z app:createFile Backing up existing file to /test/file.txt.bak
+2025-08-19T08:06:02.714Z app:createFile Writing file to path: /test/file.txt with content: new content
+2025-08-19T08:06:02.714Z app:createFile File created successfully
+2025-08-19T08:06:02.715Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'new content', backup: false }
+2025-08-19T08:06:02.715Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.715Z app:createFile File exists: true
+2025-08-19T08:06:02.715Z app:createFile Writing file to path: /test/file.txt with content: new content
+2025-08-19T08:06:02.715Z app:createFile File created successfully
+2025-08-19T08:06:02.716Z app:createFile Received parameters: { filePath: '/test/newfile.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.716Z app:createFile Resolved full path: /test/newfile.txt
+2025-08-19T08:06:02.716Z app:createFile File exists: false
+2025-08-19T08:06:02.716Z app:createFile Writing file to path: /test/newfile.txt with content: content
+2025-08-19T08:06:02.716Z app:createFile File created successfully
+2025-08-19T08:06:02.717Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.717Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.717Z app:createFile File exists: true
+2025-08-19T08:06:02.717Z app:createFile Backing up existing file to /test/file.txt.bak
+2025-08-19T08:06:02.717Z app:createFile Writing file to path: /test/file.txt with content: content
+2025-08-19T08:06:02.717Z app:createFile File created successfully
+2025-08-19T08:06:02.718Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.718Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.718Z app:createFile File exists: true
+2025-08-19T08:06:02.718Z app:createFile Backing up existing file to /test/file.txt.bak
+2025-08-19T08:06:02.719Z app:createFile Failed to create file /test/file.txt: Backup failed
+2025-08-19T08:06:02.719Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'Hello World', backup: true }
+2025-08-19T08:06:02.720Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.720Z app:createFile File exists: false
+2025-08-19T08:06:02.720Z app:createFile Writing file to path: /test/file.txt with content: Hello World
+2025-08-19T08:06:02.720Z app:createFile File created successfully
+2025-08-19T08:06:02.720Z app:createFile Received parameters: {
+  filePath: '/test/data.json',
+  content: '{"key": "value"}',
+  backup: true
+}
+2025-08-19T08:06:02.720Z app:createFile Resolved full path: /test/data.json
+2025-08-19T08:06:02.720Z app:createFile File exists: false
+2025-08-19T08:06:02.721Z app:createFile Writing file to path: /test/data.json with content: {"key": "value"}
+2025-08-19T08:06:02.721Z app:createFile File created successfully
+2025-08-19T08:06:02.721Z app:createFile Received parameters: {
+  filePath: '/test/script.js',
+  content: 'console.log("Hello");',
+  backup: true
+}
+2025-08-19T08:06:02.721Z app:createFile Resolved full path: /test/script.js
+2025-08-19T08:06:02.721Z app:createFile File exists: false
+2025-08-19T08:06:02.721Z app:createFile Writing file to path: /test/script.js with content: console.log("Hello");
+2025-08-19T08:06:02.721Z app:createFile File created successfully
+2025-08-19T08:06:02.722Z app:createFile Received parameters: {
+  filePath: '/test/multiline.txt',
+  content: 'Line 1\nLine 2\nLine 3',
+  backup: true
+}
+2025-08-19T08:06:02.722Z app:createFile Resolved full path: /test/multiline.txt
+2025-08-19T08:06:02.722Z app:createFile File exists: false
+2025-08-19T08:06:02.722Z app:createFile Writing file to path: /test/multiline.txt with content: Line 1
+Line 2
+Line 3
+2025-08-19T08:06:02.722Z app:createFile File created successfully
+2025-08-19T08:06:02.722Z app:createFile Received parameters: { filePath: '/test/empty.txt', content: '', backup: true }
+2025-08-19T08:06:02.722Z app:createFile Content must be provided and must be a string.
+2025-08-19T08:06:02.724Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.724Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.724Z app:createFile File exists: false
+2025-08-19T08:06:02.724Z app:createFile Writing file to path: /test/file.txt with content: content
+2025-08-19T08:06:02.724Z app:createFile Failed to create file /test/file.txt: Permission denied
+2025-08-19T08:06:02.725Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.725Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.725Z app:createFile File exists: false
+2025-08-19T08:06:02.725Z app:createFile Writing file to path: /test/file.txt with content: content
+2025-08-19T08:06:02.725Z app:createFile Failed to create file /test/file.txt: 'String error'
+2025-08-19T08:06:02.726Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.726Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.726Z app:createFile File exists: false
+2025-08-19T08:06:02.726Z app:createFile Writing file to path: /test/file.txt with content: content
+2025-08-19T08:06:02.726Z app:createFile Failed to create file /test/file.txt: { code: 'EACCES', message: 'Access denied' }
+2025-08-19T08:06:02.727Z app:createFile Received parameters: {
+  filePath: 'config/settings.json',
+  content: '{"theme": "dark"}',
+  backup: true
+}
+2025-08-19T08:06:02.727Z app:createFile Resolved full path: /home/user/config/settings.json
+2025-08-19T08:06:02.727Z app:createFile File exists: true
+2025-08-19T08:06:02.727Z app:createFile Backing up existing file to /home/user/config/settings.json.bak
+2025-08-19T08:06:02.727Z app:createFile Writing file to path: /home/user/config/settings.json with content: {"theme": "dark"}
+2025-08-19T08:06:02.727Z app:createFile File created successfully
+2025-08-19T08:06:02.728Z app:createFile Received parameters: { filePath: '/var/log/app.log', content: 'Log entry', backup: false }
+2025-08-19T08:06:02.728Z app:createFile Resolved full path: /var/log/app.log
+2025-08-19T08:06:02.728Z app:createFile File exists: false
+2025-08-19T08:06:02.728Z app:createFile Writing file to path: /var/log/app.log with content: Log entry
+2025-08-19T08:06:02.728Z app:createFile File created successfully
+2025-08-19T08:06:02.729Z app:createFile Received parameters: { filePath: 'app.conf', content: 'config data', backup: true }
+2025-08-19T08:06:02.729Z app:createFile Resolved full path: /app/config/app.conf
+2025-08-19T08:06:02.729Z app:createFile File exists: false
+2025-08-19T08:06:02.729Z app:createFile Writing file to path: /app/config/app.conf with content: config data
+2025-08-19T08:06:02.729Z app:createFile File created successfully
+2025-08-19T08:06:02.730Z app:createFile Received parameters: { filePath: 'readme.txt', content: 'readme content', backup: true }
+2025-08-19T08:06:02.730Z app:createFile Resolved full path: /project/readme.txt
+2025-08-19T08:06:02.730Z app:createFile File exists: false
+2025-08-19T08:06:02.730Z app:createFile Writing file to path: /project/readme.txt with content: readme content
+2025-08-19T08:06:02.730Z app:createFile File created successfully
+2025-08-19T08:06:02.730Z app:createFile Received parameters: { filePath: 'simple.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.730Z app:createFile Resolved full path: /base/simple.txt
+2025-08-19T08:06:02.731Z app:createFile File exists: false
+2025-08-19T08:06:02.731Z app:createFile Writing file to path: /base/simple.txt with content: content
+2025-08-19T08:06:02.731Z app:createFile File created successfully
+2025-08-19T08:06:02.731Z app:createFile Received parameters: { filePath: './current.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.731Z app:createFile Resolved full path: /base/current.txt
+2025-08-19T08:06:02.731Z app:createFile File exists: false
+2025-08-19T08:06:02.731Z app:createFile Writing file to path: /base/current.txt with content: content
+2025-08-19T08:06:02.731Z app:createFile File created successfully
+2025-08-19T08:06:02.731Z app:createFile Received parameters: { filePath: 'sub/dir/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.731Z app:createFile Resolved full path: /base/sub/dir/file.txt
+2025-08-19T08:06:02.731Z app:createFile File exists: false
+2025-08-19T08:06:02.731Z app:createFile Writing file to path: /base/sub/dir/file.txt with content: content
+2025-08-19T08:06:02.731Z app:createFile File created successfully
+2025-08-19T08:06:02.732Z app:createFile Received parameters: { filePath: '/absolute.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.732Z app:createFile Resolved full path: /absolute.txt
+2025-08-19T08:06:02.732Z app:createFile File exists: false
+2025-08-19T08:06:02.732Z app:createFile Writing file to path: /absolute.txt with content: content
+2025-08-19T08:06:02.732Z app:createFile File created successfully
+2025-08-19T08:06:02.733Z app:createFile Received parameters: { filePath: '/test/file1.txt', content: 'content1', backup: true }
+2025-08-19T08:06:02.733Z app:createFile Resolved full path: /test/file1.txt
+2025-08-19T08:06:02.733Z app:createFile File exists: false
+2025-08-19T08:06:02.733Z app:createFile Writing file to path: /test/file1.txt with content: content1
+2025-08-19T08:06:02.733Z app:createFile Received parameters: { filePath: '/test/file2.txt', content: 'content2', backup: true }
+2025-08-19T08:06:02.733Z app:createFile Resolved full path: /test/file2.txt
+2025-08-19T08:06:02.733Z app:createFile File exists: false
+2025-08-19T08:06:02.733Z app:createFile Writing file to path: /test/file2.txt with content: content2
+2025-08-19T08:06:02.733Z app:createFile Received parameters: { filePath: '/test/file3.txt', content: 'content3', backup: true }
+2025-08-19T08:06:02.733Z app:createFile Resolved full path: /test/file3.txt
+2025-08-19T08:06:02.733Z app:createFile File exists: false
+2025-08-19T08:06:02.733Z app:createFile Writing file to path: /test/file3.txt with content: content3
+2025-08-19T08:06:02.733Z app:createFile File created successfully
+2025-08-19T08:06:02.733Z app:createFile File created successfully
+2025-08-19T08:06:02.733Z app:createFile File created successfully
+2025-08-19T08:06:02.734Z app:createFile Received parameters: { filePath: '/test/success.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.734Z app:createFile Resolved full path: /test/success.txt
+2025-08-19T08:06:02.734Z app:createFile File exists: false
+2025-08-19T08:06:02.734Z app:createFile Writing file to path: /test/success.txt with content: content
+2025-08-19T08:06:02.734Z app:createFile File created successfully
+2025-08-19T08:06:02.735Z app:createFile Received parameters: { filePath: '/test/failure.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.735Z app:createFile Resolved full path: /test/failure.txt
+2025-08-19T08:06:02.735Z app:createFile File exists: false
+2025-08-19T08:06:02.735Z app:createFile Writing file to path: /test/failure.txt with content: content
+2025-08-19T08:06:02.735Z app:createFile Failed to create file /test/failure.txt: Disk full
+2025-08-19T08:06:02.736Z app:createFile Received parameters: { filePath: '/test/file.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.736Z app:createFile Resolved full path: /test/file.txt
+2025-08-19T08:06:02.736Z app:createFile Failed to create file /test/file.txt: File system error
+2025-08-19T08:06:02.737Z app:createFile Received parameters: { filePath: 'relative/path.txt', content: 'content', backup: true }
+2025-08-19T08:06:02.739Z app:createFile Received parameters: {
+  filePath: '/very/long/path/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt',
+  content: 'content',
+  backup: true
+}
+2025-08-19T08:06:02.739Z app:createFile Resolved full path: /very/long/path/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt
+2025-08-19T08:06:02.739Z app:createFile File exists: false
+2025-08-19T08:06:02.739Z app:createFile Writing file to path: /very/long/path/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.txt with content: content
+2025-08-19T08:06:02.739Z app:createFile File created successfully
+2025-08-19T08:06:02.740Z app:createFile Received parameters: {
+  filePath: '/test/file with spaces & symbols!@#$.txt',
+  content: 'content',
+  backup: true
+}
+2025-08-19T08:06:02.740Z app:createFile Resolved full path: /test/file with spaces & symbols!@#$.txt
+2025-08-19T08:06:02.740Z app:createFile File exists: false
+2025-08-19T08:06:02.740Z app:createFile Writing file to path: /test/file with spaces & symbols!@#$.txt with content: content
+2025-08-19T08:06:02.741Z app:createFile File created successfully
+PASS tests/handlers/local/actions/createFile.comprehensive.test.ts
+2025-08-19T08:06:02.802Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.803Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=local-model-v1
+2025-08-19T08:06:02.804Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.805Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.812Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.813Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.814Z app:llm:lmstudio STREAM POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.816Z app:llm:lmstudio STREAM POST http://localhost:1234/v1/chat/completions model=local-streaming-model
+2025-08-19T08:06:02.817Z app:llm:lmstudio STREAM POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.818Z app:llm:lmstudio STREAM POST http://localhost:1234/v1/chat/completions model=test-model
+2025-08-19T08:06:02.820Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test
+2025-08-19T08:06:02.821Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test
+2025-08-19T08:06:02.825Z app:llm:lmstudio POST https://localhost:1234/v1/chat/completions model=test
+2025-08-19T08:06:02.828Z app:llm:lmstudio POST http://localhost:1234/v1/chat/completions model=test
+2025-08-19T08:06:02.836Z app:llm:lmstudio STREAM POST http://localhost:1234/v1/chat/completions model=test
+PASS tests/llm/providers/lmstudio.test.ts
+2025-08-19T08:06:02.919Z app:setupMiddlewares Setting up middlewares, with conditional /health logging suppression...
+2025-08-19T08:06:02.920Z app:setupMiddlewares Middlewares setup completed.
+2025-08-19T08:06:02.922Z app:setupMiddlewares Logging request to /echo
+PASS tests/middlewares.setupMiddlewares.test.ts
+  ● Console
+
+    console.log
+      CORS configuration set to: https://chat.openai.com, https://chatgpt.com
+
+      at setupMiddlewares (src/middlewares/setupMiddlewares.ts:33:11)
+
+2025-08-19T08:06:02.987Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:02.988Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2:13b
+2025-08-19T08:06:02.989Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:02.996Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:02.997Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:02.998Z app:llm:ollama POST https://custom-ollama.example.com:8080/api/chat model=llama2
+2025-08-19T08:06:03.006Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:03.007Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:03.010Z app:llm:ollama POST https://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:03.012Z app:llm:ollama POST http://localhost:11434/api/chat model=llama2
+2025-08-19T08:06:03.021Z app:llm:ollama POST http://localhost:11434/api/chat model=nonexistent
+PASS tests/llm/providers/ollama.test.ts
+::ffff:127.0.0.1 - - [19/Aug/2025:08:06:02 +0000] "POST /echo HTTP/1.1" 200 25 "-" "-"
+2025-08-19T08:06:03.107Z app:checkAuthToken checkAuthToken middleware called.
+2025-08-19T08:06:03.107Z app:checkAuthToken No authorization token provided
+2025-08-19T08:06:03.111Z app:checkAuthToken checkAuthToken middleware called.
+2025-08-19T08:06:03.111Z app:checkAuthToken Authorization token mismatch
+2025-08-19T08:06:03.114Z app:checkAuthToken checkAuthToken middleware called.
+2025-08-19T08:06:03.114Z app:checkAuthToken API token validated successfully.
+PASS tests/middlewares.checkAuthToken.test.ts
+2025-08-19T08:06:03.202Z app:configHandler Generating default configuration
+PASS tests/expandedCoverage.test.ts
+2025-08-19T08:06:03.279Z app:llm:errorAdvisor Error during AI analysis: Error: API error
+PASS tests/llm/errorAdvisor.test.ts
+2025-08-19T08:06:03.328Z app:configHandler Checking if configuration file exists at: /path/to/config.json
+2025-08-19T08:06:03.329Z app:configHandler Checking if configuration file exists at: /path/to/nonexistent.json
+2025-08-19T08:06:03.330Z app:configHandler Checking if configuration file exists at: /etc/app/config.json
+2025-08-19T08:06:03.330Z app:configHandler Checking if configuration file exists at: ./config/development.json
+2025-08-19T08:06:03.331Z app:configHandler Checking if configuration file exists at: ../configs/test.json
+2025-08-19T08:06:03.331Z app:configHandler Checking if configuration file exists at: C:\Windows\config.json
+2025-08-19T08:06:03.332Z app:configHandler Checking if configuration file exists at: 
+2025-08-19T08:06:03.333Z app:configHandler Checking if configuration file exists at: /path/with spaces/config-file_v1.2.json
+2025-08-19T08:06:03.334Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.334Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.335Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.336Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.338Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.338Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.338Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.339Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.339Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.340Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.340Z app:configHandler Persisting configuration to disk at: /path/to/config.json
+2025-08-19T08:06:03.341Z app:configHandler Persisting configuration to disk at: /test/config.json
+2025-08-19T08:06:03.342Z app:configHandler Persisting configuration to disk at: /empty/config.json
+2025-08-19T08:06:03.342Z app:configHandler Persisting configuration to disk at: /test/config.json
+2025-08-19T08:06:03.343Z app:configHandler Persisting configuration to disk at: /complex/config.json
+2025-08-19T08:06:03.343Z app:configHandler Persisting configuration to disk at: /etc/app/config.json
+2025-08-19T08:06:03.344Z app:configHandler Persisting configuration to disk at: ./local-config.json
+2025-08-19T08:06:03.344Z app:configHandler Persisting configuration to disk at: ../configs/development.json
+2025-08-19T08:06:03.344Z app:configHandler Persisting configuration to disk at: C:\Windows\app-config.json
+2025-08-19T08:06:03.344Z app:configHandler Persisting configuration to disk at: /tmp/config-backup.json
+2025-08-19T08:06:03.345Z app:configHandler Persisting configuration to disk at: /array/config.json
+2025-08-19T08:06:03.345Z app:configHandler Persisting configuration to disk at: /types/config.json
+2025-08-19T08:06:03.346Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.346Z app:configHandler Persisting configuration to disk at: /integration/default-config.json
+2025-08-19T08:06:03.347Z app:configHandler Checking if configuration file exists at: /app/config.json
+2025-08-19T08:06:03.347Z app:configHandler Generating default configuration
+2025-08-19T08:06:03.347Z app:configHandler Persisting configuration to disk at: /app/config.json
+2025-08-19T08:06:03.347Z app:configHandler Checking if configuration file exists at: /app/config.json
+2025-08-19T08:06:03.348Z app:configHandler Checking if configuration file exists at: /restricted/config.json
+2025-08-19T08:06:03.359Z app:configHandler Persisting configuration to disk at: /full-disk/config.json
+PASS tests/config/configHandler.comprehensive.test.ts
+PASS tests/managers/ServerManager.test.ts
+PASS tests/middlewares/initializeServerHandler.test.ts
+2025-08-19T08:06:03.568Z app:getFileContent Retrieving content of file: /path/to/file.txt
+2025-08-19T08:06:03.571Z app:getFileContent SSH client must be provided and must be an instance of Client.
+2025-08-19T08:06:03.577Z app:getFileContent Server configuration must be provided and must be an object.
+2025-08-19T08:06:03.578Z app:getFileContent File path must be provided and must be a string.
+PASS src/tests/handlers/ssh/actions/getFileContent.test.ts
+2025-08-19T08:06:03.643Z app:safety Failed to parse patterns: SyntaxError: Invalid regular expression: /[invalid regex/i: Unterminated character class
+PASS tests/utils/safety.comprehensive.test.ts
+PASS src/tests/llm/openai.test.ts
+2025-08-19T08:06:03.778Z app:getSystemInfo SSH client must be provided and must be an instance of Client.
+2025-08-19T08:06:03.785Z app:getSystemInfo Shell must be provided and must be a string.
+2025-08-19T08:06:03.787Z app:getSystemInfo Script path must be provided and must be a string.
+PASS src/tests/handlers/ssh/actions/getSystemInfo.test.ts
+2025-08-19T08:06:03.830Z app:executeCommand Received command: ls -l
+2025-08-19T08:06:03.830Z app:executeCommand Using shell: /bin/bash
+2025-08-19T08:06:03.830Z app:executeCommand Working directory: .
+2025-08-19T08:06:03.830Z app:executeCommand Timeout: 0
+2025-08-19T08:06:03.830Z app:executeCommand Using execFile: true
+2025-08-19T08:06:03.830Z app:executeCommand Prepared command for execFile: ls with args: -l
+2025-08-19T08:06:03.830Z app:executeCommand Execution options: {"cwd":".","timeout":0,"shell":"/bin/bash","env":{"NODE_ENV":"test","NODE_CONFIG_DIR":"config/test/","SHELL":"/bin/bash","npm_command":"test","npm_config_userconfig":"/home/chatgpt/.npmrc","npm_config_cache":"/home/chatgpt/.npm","NODE":"/usr/local/bin/node","ESCAPE_BACKWARD_SLASH":"false","Q_SET_PARENT_CHECK":"1","COLOR":"0","npm_config_local_prefix":"/home/chatgpt/gpt-terminal-plus","npm_config_globalconfig":"/usr/local/etc/npmrc","EDITOR":"vi","PWD":"/home/chatgpt/gpt-terminal-plus","LOGNAME":"chatgpt","API_TOKEN":"euwSwBXH2oq9tTyRvh51iE2XqKis2NvNdkEsUcHXq9TBW44NqTwOshtg47Aef29t","SHELL_PID":"3489253","XDG_SESSION_TYPE":"tty","npm_config_init_module":"/home/chatgpt/.npm-init.js","ESCAPE_QUOTES":"false","_":"/usr/local/bin/node","MOTD_SHOWN":"pam","HOME":"/home/chatgpt","LANG":"C.UTF-8","npm_package_version":"latest","SSH_CONNECTION":"203.214.34.164 16501 10.0.0.160 22","INIT_CWD":"/home/chatgpt/gpt-terminal-plus","ESCAPE_DOLLAR":"false","npm_lifecycle_script":"NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand","ENABLE_FILE_MANAGEMENT":"false","npm_config_npm_version":"10.9.2","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","npm_package_name":"gpt-terminal-plus","npm_config_prefix":"/usr/local","USER":"chatgpt","npm_lifecycle_event":"test","SHLVL":"2","ESCAPE_BACKTICKS":"false","XDG_SESSION_ID":"4118","npm_config_user_agent":"npm/10.9.2 node/v23.9.0 linux arm64 workspaces/false","npm_execpath":"/usr/local/lib/node_modules/npm/bin/npm-cli.js","XDG_RUNTIME_DIR":"/run/user/1002","npm_config_script_shell":"bash","SSH_CLIENT":"203.214.34.164 16501 22","npm_package_json":"/home/chatgpt/gpt-terminal-plus/package.json","ESCAPE_FORWARD_SLASH":"false","USE_EXECFILE":"true","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","npm_config_noproxy":"","PATH":"/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/.local/bin:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin","npm_config_node_gyp":"/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js","ENABLE_COMMAND_MANAGEMENT":"true","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1002/bus","npm_config_global_prefix":"/usr/local","ENABLE_SERVER_MANAGEMENT":"false","SSH_TTY":"/dev/pts/7","TTY":"/dev/pts/7","DEBUG":"app:*","npm_node_execpath":"/usr/local/bin/node","OLDPWD":"/home/chatgpt/gpt-terminal-plus","GOPATH":"/home/chatgpt/go","TS_JEST":"1","JEST_WORKER_ID":"1"}}
+2025-08-19T08:06:03.831Z app:executeCommand Command executed with execFile. stdout: command output, stderr: 
+2025-08-19T08:06:03.834Z app:executeCommand Received command: invalid-command
+2025-08-19T08:06:03.834Z app:executeCommand Using shell: /bin/bash
+2025-08-19T08:06:03.834Z app:executeCommand Working directory: .
+2025-08-19T08:06:03.834Z app:executeCommand Timeout: 0
+2025-08-19T08:06:03.834Z app:executeCommand Using execFile: true
+2025-08-19T08:06:03.834Z app:executeCommand Prepared command for execFile: invalid-command with args: 
+2025-08-19T08:06:03.834Z app:executeCommand Execution options: {"cwd":".","timeout":0,"shell":"/bin/bash","env":{"NODE_ENV":"test","NODE_CONFIG_DIR":"config/test/","SHELL":"/bin/bash","npm_command":"test","npm_config_userconfig":"/home/chatgpt/.npmrc","npm_config_cache":"/home/chatgpt/.npm","NODE":"/usr/local/bin/node","ESCAPE_BACKWARD_SLASH":"false","Q_SET_PARENT_CHECK":"1","COLOR":"0","npm_config_local_prefix":"/home/chatgpt/gpt-terminal-plus","npm_config_globalconfig":"/usr/local/etc/npmrc","EDITOR":"vi","PWD":"/home/chatgpt/gpt-terminal-plus","LOGNAME":"chatgpt","API_TOKEN":"euwSwBXH2oq9tTyRvh51iE2XqKis2NvNdkEsUcHXq9TBW44NqTwOshtg47Aef29t","SHELL_PID":"3489253","XDG_SESSION_TYPE":"tty","npm_config_init_module":"/home/chatgpt/.npm-init.js","ESCAPE_QUOTES":"false","_":"/usr/local/bin/node","MOTD_SHOWN":"pam","HOME":"/home/chatgpt","LANG":"C.UTF-8","npm_package_version":"latest","SSH_CONNECTION":"203.214.34.164 16501 10.0.0.160 22","INIT_CWD":"/home/chatgpt/gpt-terminal-plus","ESCAPE_DOLLAR":"false","npm_lifecycle_script":"NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand","ENABLE_FILE_MANAGEMENT":"false","npm_config_npm_version":"10.9.2","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","npm_package_name":"gpt-terminal-plus","npm_config_prefix":"/usr/local","USER":"chatgpt","npm_lifecycle_event":"test","SHLVL":"2","ESCAPE_BACKTICKS":"false","XDG_SESSION_ID":"4118","npm_config_user_agent":"npm/10.9.2 node/v23.9.0 linux arm64 workspaces/false","npm_execpath":"/usr/local/lib/node_modules/npm/bin/npm-cli.js","XDG_RUNTIME_DIR":"/run/user/1002","npm_config_script_shell":"bash","SSH_CLIENT":"203.214.34.164 16501 22","npm_package_json":"/home/chatgpt/gpt-terminal-plus/package.json","ESCAPE_FORWARD_SLASH":"false","USE_EXECFILE":"true","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","npm_config_noproxy":"","PATH":"/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/.local/bin:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin","npm_config_node_gyp":"/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js","ENABLE_COMMAND_MANAGEMENT":"true","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1002/bus","npm_config_global_prefix":"/usr/local","ENABLE_SERVER_MANAGEMENT":"false","SSH_TTY":"/dev/pts/7","TTY":"/dev/pts/7","DEBUG":"app:*","npm_node_execpath":"/usr/local/bin/node","OLDPWD":"/home/chatgpt/gpt-terminal-plus","GOPATH":"/home/chatgpt/go","TS_JEST":"1","JEST_WORKER_ID":"1"}}
+2025-08-19T08:06:03.834Z app:executeCommand Command executed with execFile. stdout: , stderr: 
+2025-08-19T08:06:03.834Z app:executeCommand Error during command execution with execFile: execFile error
+2025-08-19T08:06:03.837Z app:executeCommand Received command: echo hello
+2025-08-19T08:06:03.837Z app:executeCommand Using shell: /bin/bash
+2025-08-19T08:06:03.837Z app:executeCommand Working directory: .
+2025-08-19T08:06:03.837Z app:executeCommand Timeout: 0
+2025-08-19T08:06:03.837Z app:executeCommand Using execFile: false
+2025-08-19T08:06:03.837Z app:executeCommand Prepared command for exec: /bin/bash -c 'echo hello'
+2025-08-19T08:06:03.837Z app:executeCommand Execution options: {"cwd":".","timeout":0,"shell":"/bin/bash","env":{"NODE_ENV":"test","NODE_CONFIG_DIR":"config/test/","SHELL":"/bin/bash","npm_command":"test","npm_config_userconfig":"/home/chatgpt/.npmrc","npm_config_cache":"/home/chatgpt/.npm","NODE":"/usr/local/bin/node","ESCAPE_BACKWARD_SLASH":"false","Q_SET_PARENT_CHECK":"1","COLOR":"0","npm_config_local_prefix":"/home/chatgpt/gpt-terminal-plus","npm_config_globalconfig":"/usr/local/etc/npmrc","EDITOR":"vi","PWD":"/home/chatgpt/gpt-terminal-plus","LOGNAME":"chatgpt","API_TOKEN":"euwSwBXH2oq9tTyRvh51iE2XqKis2NvNdkEsUcHXq9TBW44NqTwOshtg47Aef29t","SHELL_PID":"3489253","XDG_SESSION_TYPE":"tty","npm_config_init_module":"/home/chatgpt/.npm-init.js","ESCAPE_QUOTES":"false","_":"/usr/local/bin/node","MOTD_SHOWN":"pam","HOME":"/home/chatgpt","LANG":"C.UTF-8","npm_package_version":"latest","SSH_CONNECTION":"203.214.34.164 16501 10.0.0.160 22","INIT_CWD":"/home/chatgpt/gpt-terminal-plus","ESCAPE_DOLLAR":"false","npm_lifecycle_script":"NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand","ENABLE_FILE_MANAGEMENT":"false","npm_config_npm_version":"10.9.2","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","npm_package_name":"gpt-terminal-plus","npm_config_prefix":"/usr/local","USER":"chatgpt","npm_lifecycle_event":"test","SHLVL":"2","ESCAPE_BACKTICKS":"false","XDG_SESSION_ID":"4118","npm_config_user_agent":"npm/10.9.2 node/v23.9.0 linux arm64 workspaces/false","npm_execpath":"/usr/local/lib/node_modules/npm/bin/npm-cli.js","XDG_RUNTIME_DIR":"/run/user/1002","npm_config_script_shell":"bash","SSH_CLIENT":"203.214.34.164 16501 22","npm_package_json":"/home/chatgpt/gpt-terminal-plus/package.json","ESCAPE_FORWARD_SLASH":"false","USE_EXECFILE":"false","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","npm_config_noproxy":"","PATH":"/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/.local/bin:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin","npm_config_node_gyp":"/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js","ENABLE_COMMAND_MANAGEMENT":"true","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1002/bus","npm_config_global_prefix":"/usr/local","ENABLE_SERVER_MANAGEMENT":"false","SSH_TTY":"/dev/pts/7","TTY":"/dev/pts/7","DEBUG":"app:*","npm_node_execpath":"/usr/local/bin/node","OLDPWD":"/home/chatgpt/gpt-terminal-plus","GOPATH":"/home/chatgpt/go","TS_JEST":"1","JEST_WORKER_ID":"1"}}
+2025-08-19T08:06:03.837Z app:executeCommand Command executed with exec. stdout: exec output, stderr: 
+2025-08-19T08:06:03.840Z app:executeCommand Received command: non-existent-command
+2025-08-19T08:06:03.840Z app:executeCommand Using shell: /bin/bash
+2025-08-19T08:06:03.840Z app:executeCommand Working directory: .
+2025-08-19T08:06:03.840Z app:executeCommand Timeout: 0
+2025-08-19T08:06:03.840Z app:executeCommand Using execFile: false
+2025-08-19T08:06:03.840Z app:executeCommand Prepared command for exec: /bin/bash -c 'non-existent-command'
+2025-08-19T08:06:03.840Z app:executeCommand Execution options: {"cwd":".","timeout":0,"shell":"/bin/bash","env":{"NODE_ENV":"test","NODE_CONFIG_DIR":"config/test/","SHELL":"/bin/bash","npm_command":"test","npm_config_userconfig":"/home/chatgpt/.npmrc","npm_config_cache":"/home/chatgpt/.npm","NODE":"/usr/local/bin/node","ESCAPE_BACKWARD_SLASH":"false","Q_SET_PARENT_CHECK":"1","COLOR":"0","npm_config_local_prefix":"/home/chatgpt/gpt-terminal-plus","npm_config_globalconfig":"/usr/local/etc/npmrc","EDITOR":"vi","PWD":"/home/chatgpt/gpt-terminal-plus","LOGNAME":"chatgpt","API_TOKEN":"euwSwBXH2oq9tTyRvh51iE2XqKis2NvNdkEsUcHXq9TBW44NqTwOshtg47Aef29t","SHELL_PID":"3489253","XDG_SESSION_TYPE":"tty","npm_config_init_module":"/home/chatgpt/.npm-init.js","ESCAPE_QUOTES":"false","_":"/usr/local/bin/node","MOTD_SHOWN":"pam","HOME":"/home/chatgpt","LANG":"C.UTF-8","npm_package_version":"latest","SSH_CONNECTION":"203.214.34.164 16501 10.0.0.160 22","INIT_CWD":"/home/chatgpt/gpt-terminal-plus","ESCAPE_DOLLAR":"false","npm_lifecycle_script":"NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand","ENABLE_FILE_MANAGEMENT":"false","npm_config_npm_version":"10.9.2","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","npm_package_name":"gpt-terminal-plus","npm_config_prefix":"/usr/local","USER":"chatgpt","npm_lifecycle_event":"test","SHLVL":"2","ESCAPE_BACKTICKS":"false","XDG_SESSION_ID":"4118","npm_config_user_agent":"npm/10.9.2 node/v23.9.0 linux arm64 workspaces/false","npm_execpath":"/usr/local/lib/node_modules/npm/bin/npm-cli.js","XDG_RUNTIME_DIR":"/run/user/1002","npm_config_script_shell":"bash","SSH_CLIENT":"203.214.34.164 16501 22","npm_package_json":"/home/chatgpt/gpt-terminal-plus/package.json","ESCAPE_FORWARD_SLASH":"false","USE_EXECFILE":"false","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","npm_config_noproxy":"","PATH":"/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/chatgpt/gpt-terminal-plus/node_modules/.bin:/home/chatgpt/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/.local/bin:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin:/opt/aws/amazon-cloudwatch-agent/bin/:/home/chatgpt/quivr/node_modules/supabase/bin:/home/chatgpt/local/bin/:/home/chatgpt/scripts/:/home/chatgpt/.cargo/bin:/home/chatgpt/.fly/bin","npm_config_node_gyp":"/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js","ENABLE_COMMAND_MANAGEMENT":"true","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1002/bus","npm_config_global_prefix":"/usr/local","ENABLE_SERVER_MANAGEMENT":"false","SSH_TTY":"/dev/pts/7","TTY":"/dev/pts/7","DEBUG":"app:*","npm_node_execpath":"/usr/local/bin/node","OLDPWD":"/home/chatgpt/gpt-terminal-plus","GOPATH":"/home/chatgpt/go","TS_JEST":"1","JEST_WORKER_ID":"1"}}
+2025-08-19T08:06:03.841Z app:executeCommand Command executed with exec. stdout: , stderr: 
+2025-08-19T08:06:03.841Z app:executeCommand Error during command execution with exec: exec error
+PASS src/tests/handlers/local/actions/executeCommand.test.ts
+PASS tests/middlewares/errorHandler.test.ts
+PASS tests/handlers/local/actions/executeCode.test.ts
+2025-08-19T08:06:03.984Z app:getSystemInfo Executing system information retrieval function.
+2025-08-19T08:06:03.984Z app:getSystemInfo System information retrieved successfully: Mock System Info
+2025-08-19T08:06:03.986Z app:getSystemInfo Execution function must be provided and must be a function.
+2025-08-19T08:06:03.990Z app:getSystemInfo Execution function must be provided and must be a function.
+2025-08-19T08:06:03.991Z app:getSystemInfo Executing system information retrieval function.
+2025-08-19T08:06:03.991Z app:getSystemInfo Failed to retrieve system information: Execution failed
+PASS tests/common/getSystemInfo.test.ts
+PASS tests/utils.safety.test.ts
+PASS tests/llmProviderRouting.test.ts
+2025-08-19T08:06:04.146Z app:envValidation Environment variable API_TOKEN: API_TOKEN: dummy...token
+2025-08-19T08:06:04.146Z app:envValidation Environment variable NODE_CONFIG_DIR: NODE_CONFIG_DIR: ./config
+2025-08-19T08:06:04.146Z app:envValidation Environment variable HTTPS_ENABLED: HTTPS_ENABLED: false
+2025-08-19T08:06:04.146Z app:envValidation Environment variable CORS_ORIGIN: CORS_ORIGIN: *
+2025-08-19T08:06:04.146Z app:envValidation Environment variable DEFAULT_MODEL is not set.
+2025-08-19T08:06:04.147Z app:envValidation Environment variable API_TOKEN is not set.
+2025-08-19T08:06:04.147Z app:envValidation Environment variable NODE_CONFIG_DIR: NODE_CONFIG_DIR: ./config
+2025-08-19T08:06:04.147Z app:envValidation Environment variable HTTPS_ENABLED: HTTPS_ENABLED: false
+2025-08-19T08:06:04.147Z app:envValidation Environment variable CORS_ORIGIN: CORS_ORIGIN: *
+2025-08-19T08:06:04.147Z app:envValidation Environment variable DEFAULT_MODEL is not set.
+2025-08-19T08:06:04.148Z app:envValidation Environment variable API_TOKEN: API_TOKEN: dummy...token
+2025-08-19T08:06:04.148Z app:envValidation Environment variable NODE_CONFIG_DIR: NODE_CONFIG_DIR: ./config
+2025-08-19T08:06:04.148Z app:envValidation Environment variable HTTPS_ENABLED: HTTPS_ENABLED: true
+2025-08-19T08:06:04.148Z app:envValidation Environment variable CORS_ORIGIN: CORS_ORIGIN: *
+2025-08-19T08:06:04.148Z app:envValidation Environment variable DEFAULT_MODEL is not set.
+2025-08-19T08:06:04.148Z app:envValidation HTTPS is enabled but HTTPS_KEY_PATH or HTTPS_CERT_PATH is not set.
+PASS tests/utils/envValidation.test.ts
+2025-08-19T08:06:04.186Z app:configHandler Checking if configuration file exists at: /fake/path/config.json
+2025-08-19T08:06:04.188Z app:configHandler Checking if configuration file exists at: /fake/path/config.json
+2025-08-19T08:06:04.188Z app:configHandler Generating default configuration
+2025-08-19T08:06:04.190Z app:configHandler Persisting configuration to disk at: /tmp/config.json
+PASS src/tests/config/configHandler.test.ts
+2025-08-19T08:06:04.228Z app:redact Invalid key type: number. Key must be a string.
+PASS tests/utils/redact.test.ts
+PASS tests/utils/getServerHandler.test.ts
+PASS tests/common/apiToken.test.ts
+  ● Console
+
+    console.log
+      API_TOKEN not found. Generated new token: 243ada2172c54d4350a110d5347558e4
+
+      at getOrGenerateApiToken (src/common/apiToken.ts:11:13)
+
+    console.log
+      API_TOKEN not found. Generated new token: 668180f3f10608b600a3dcfaf57d8fb0
+
+      at getOrGenerateApiToken (src/common/apiToken.ts:11:13)
+
+PASS tests/utils.getServerHandler.test.ts
+2025-08-19T08:06:04.385Z app:envValidation Environment variable API_TOKEN is not set.
+2025-08-19T08:06:04.385Z app:envValidation Environment variable NODE_CONFIG_DIR: NODE_CONFIG_DIR: config/test/
+2025-08-19T08:06:04.385Z app:envValidation Environment variable HTTPS_ENABLED is not set.
+2025-08-19T08:06:04.385Z app:envValidation Environment variable CORS_ORIGIN is not set.
+2025-08-19T08:06:04.385Z app:envValidation Environment variable DEFAULT_MODEL is not set.
+2025-08-19T08:06:04.386Z app:envValidation Environment variable API_TOKEN: API_TOKEN: abc...abc
+2025-08-19T08:06:04.386Z app:envValidation Environment variable NODE_CONFIG_DIR: NODE_CONFIG_DIR: config
+2025-08-19T08:06:04.386Z app:envValidation Environment variable HTTPS_ENABLED: HTTPS_ENABLED: false
+2025-08-19T08:06:04.386Z app:envValidation Environment variable CORS_ORIGIN: CORS_ORIGIN: http://localhost
+2025-08-19T08:06:04.386Z app:envValidation Environment variable DEFAULT_MODEL: DEFAULT_MODEL: gpt-oss:20b
+PASS tests/utils.envValidation.test.ts
+PASS src/tests/common/escapeSpecialChars.test.ts
+PASS tests/config/configHandler.test.ts
+2025-08-19T08:06:04.500Z app:redact Invalid key type: number. Key must be a string.
+PASS tests/utils.redact.test.ts
+PASS tests/utils.pagination.test.ts
+PASS tests/handlers/local/actions/executeCommand.test.ts
+PASS tests/middlewares/checkAuthToken.test.ts
+PASS tests/managers/SSHConnectionManager.test.ts
+2025-08-19T08:06:04.681Z app:utils:handleServerError ctx: boom
+PASS tests/utils.handleServerError.test.ts
+PASS src/tests/utils/escapeRegExp.test.ts
+PASS tests/utils/escapeRegExp.test.ts
+PASS tests/utils.escapeRegExp.test.ts
+PASS tests/executeFile.errorAnalysis.test.ts
+PASS tests/handlers/AbstractServerHandler.test.ts
+PASS tests/types.test.ts
+PASS src/tests/simple/basic.test.ts
+PASS tests/handlers/PaginationHandler.test.ts
+FAIL tests/routes/command/executeLlm.comprehensive.test.ts
+  ● Test suite failed to run
+
+    [96mtests/routes/command/executeLlm.comprehensive.test.ts[0m:[93m738[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m'}' expected.
+
+    [7m738[0m 
+    [7m   [0m [91m[0m
+
+      [96mtests/routes/command/executeLlm.comprehensive.test.ts[0m:[93m224[0m:[93m37[0m
+        [7m224[0m   describe('LLM interaction', () => {
+        [7m   [0m [96m                                    ~[0m
+        The parser expected to find a '}' to match the '{' token here.
+
+FAIL tests/handlers/local/LocalServerHandler.spec.ts
+  ● Test suite failed to run
+
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m3[0m:[93m22[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'fs'.
+
+    [7m3[0m import { promises as fs } from 'fs';
+    [7m [0m [91m                     ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m4[0m:[93m30[0m - [91merror[0m[90m TS2459: [0mModule '"../../../src/handlers/local/LocalServerHandler"' declares 'LocalServerConfig' locally, but it is not exported.
+
+    [7m4[0m import { LocalServerHandler, LocalServerConfig } from '../../../src/handlers/local/LocalServerHandler';
+    [7m [0m [91m                             ~~~~~~~~~~~~~~~~~[0m
+
+      [96msrc/handlers/local/LocalServerHandler.ts[0m:[93m4[0m:[93m10[0m
+        [7m4[0m import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
+        [7m [0m [96m         ~~~~~~~~~~~~~~~~~[0m
+        'LocalServerConfig' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m8[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'fs'.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m       ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m21[0m - [91merror[0m[90m TS2307: [0mCannot find module 'fr' or its corresponding type declarations.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                    ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m27[0m - [91merror[0m[90m TS2552: [0mCannot find name 'promises'. Did you mean 'Promise'?
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                          ~~~~~~~~[0m
+
+      [96mnode_modules/typescript/lib/lib.es2015.promise.d.ts[0m:[93m81[0m:[93m13[0m
+        [7m81[0m declare var Promise: PromiseConstructor;
+        [7m  [0m [96m            ~~~~~~~[0m
+        'Promise' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m12[0m:[93m76[0m - [91merror[0m[90m TS2304: [0mCannot find name 'just'.
+
+    [7m12[0m jest.mock('../../../src/execution/executeCode', () => ({ executeLocalCode: just.fn() }));
+    [7m  [0m [91m                                                                           ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m15[0m:[93m20[0m - [91merror[0m[90m TS2352: [0mConversion of type 'typeof exec' to type 'Mock<UnknownFunction>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+      Type 'typeof exec' is missing the following properties from type 'Mock<UnknownFunction>': _isMockFunction, _protoImpl, getMockImplementation, getMockName, and 15 more.
+
+    [7m15[0m   const mockExec = exec as jest.Mock;
+    [7m  [0m [91m                   ~~~~~~~~~~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m34[0m - [91merror[0m[90m TS2304: [0mCannot find name 'opts'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                 ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m47[0m - [91merror[0m[90m TS2304: [0mCannot find name 'cb'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                              ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m TS2554: [0mExpected 1 arguments, but got 2.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                  ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m TS2693: [0m'any' only refers to a type, but is being used as a value here.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                  ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m61[0m - [91merror[0m[90m TS2304: [0mCannot find name 'cb'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                            ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m90[0m - [91merror[0m[90m TS2693: [0m'any' only refers to a type, but is being used as a value here.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                                                         ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m29[0m:[93m23[0m - [91merror[0m[90m TS2304: [0mCannot find name 'handler'.
+
+    [7m29[0m     const res = await handler.executeCommand('echo hi');
+    [7m  [0m [91m                      ~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m36[0m:[93m71[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ stdout: string; stderr: string; }' is not assignable to parameter of type 'never'.
+
+    [7m36[0m     (mockExecuteCode.executeLocalCode as jest.Mock).mockResolvedValue({ stdout: 'hi', stderr: '' });
+    [7m  [0m [91m                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m37[0m:[93m31[0m - [91merror[0m[90m TS2554: [0mExpected 2-4 arguments, but got 1.
+
+    [7m37[0m     const res = await handler.executeCode('console.log("hi")');
+    [7m  [0m [91m                              ~~~~~~~~~~~[0m
+
+      [96msrc/handlers/local/LocalServerHandler.ts[0m:[93m40[0m:[93m37[0m
+        [7m40[0m     async executeCode(code: string, language: string, timeout: number = 5000, directory: string = '/tmp'): Promise<ExecutionResult> {
+        [7m  [0m [96m                                    ~~~~~~~~~~~~~~~~[0m
+        An argument for 'language' was not provided.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m43[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m43[0m     mockFs.writeFile.mockResolvedValue();
+    [7m  [0m [91m    ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m45[0m:[93m12[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m45[0m     expect(mockFs.writeFile).toHaveBeenValledWith('tmp.txt', 'data', 'utf8');
+    [7m  [0m [91m           ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m45[0m:[93m30[0m - [91merror[0m[90m TS2551: [0mProperty 'toHaveBeenValledWith' does not exist on type 'Matchers<void, any> & SnapshotMatchers<void, any> & Inverse<JestMatchers<void, any>> & PromiseMatchers<any>'. Did you mean 'toHaveBeenCalledWith'?
+
+    [7m45[0m     expect(mockFs.writeFile).toHaveBeenValledWith('tmp.txt', 'data', 'utf8');
+    [7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~[0m
+
+      [96mnode_modules/expect/build/index.d.ts[0m:[93m220[0m:[93m3[0m
+        [7m220[0m   toHaveBeenCalledWith(...expected: Array<unknown>): R;
+        [7m   [0m [96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+        'toHaveBeenCalledWith' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m50[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m50[0m     mockFs.readFile.mockResolvedValue('data');
+    [7m  [0m [91m    ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m51[0m:[93m31[0m - [91merror[0m[90m TS2339: [0mProperty 'readFile' does not exist on type 'LocalServerHandler'.
+
+    [7m51[0m     const res = await handler.readFile('tmp.txt');
+    [7m  [0m [91m                              ~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m26[0m - [91merror[0m[90m TS1005: [0m';' expected.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                         ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m49[0m - [91merror[0m[90m TS1005: [0m')' expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m56[0m - [91merror[0m[90m TS1005: [0m';' expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                       ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m98[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                                                                 ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m54[0m:[93m1[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m54[0m });
+    [7m  [0m [91m~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m54[0m:[93m2[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m54[0m });
+    [7m  [0m [91m ~[0m
+
+FAIL tests/handlers/local/LocalServerHandler.spec.js
+  ● Test suite failed to run
+
+    Cannot find module 'fr' from 'tests/handlers/local/LocalServerHandler.spec.js'
+
+       5 |
+       6 | jest.mock('child_process', () => ({ exec: jest.fn() }));
+    >  7 | jest.mock('fr', () => ({ promises: { access: jest.fn(), writeFile: jest.fn(), readFile: jest.fn() } }));
+         |      ^
+       8 | jest.mock('../../../src/execution/executeCode', () => ({ executeLocalCode: just.fn() }));
+       9 |
+      10 | gescribe('LocalServerHandler', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (tests/handlers/local/LocalServerHandler.spec.js:7:6)
+
+Summary of all failing tests
+FAIL tests/handlers/ssm/SsmServerHandler.test.ts
+  ● SSM Server Handler › executeCommand › should execute command successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "",
+    +   "error": false,
+        "exitCode": 0,
+    -   "output": "Hello World",
+    +   "stderr": "",
+    +   "stdout": "Hello World",
+        "success": true,
+      }
+
+      51 |       const result = await ssmHandler.executeCommand('echo "Hello World"');
+      52 |
+    > 53 |       expect(result).toEqual({
+         |                      ^
+      54 |         success: true,
+      55 |         output: 'Hello World',
+      56 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:53:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle command execution failure
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "Command not found",
+    +   "error": true,
+        "exitCode": 1,
+    -   "output": "",
+    +   "stderr": "Command not found",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      83 |       const result = await ssmHandler.executeCommand('invalid-command');
+      84 |
+    > 85 |       expect(result).toEqual({
+         |                      ^
+      86 |         success: false,
+      87 |         output: '',
+      88 |         error: 'Command not found',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:85:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle command timeout
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "Command execution timed out",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 124,
+    +   "stderr": "SSM command timeout",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      114 |       const result = await ssmHandler.executeCommand('sleep 100', 1000);
+      115 |
+    > 116 |       expect(result).toEqual({
+          |                      ^
+      117 |         success: false,
+      118 |         output: '',
+      119 |         error: 'Command execution timed out',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:116:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle AWS SDK errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "AWS SDK Error",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 1,
+    +   "stderr": "Error: AWS SDK Error",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      130 |       const result = await ssmHandler.executeCommand('echo test');
+      131 |
+    > 132 |       expect(result).toEqual({
+          |                      ^
+      133 |         success: false,
+      134 |         output: '',
+      135 |         error: 'AWS SDK Error',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:132:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCommand › should handle missing command ID in response
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 3
+    + Received  + 4
+
+      Object {
+    -   "error": "Failed to get command ID from AWS response",
+    -   "exitCode": -1,
+    -   "output": "",
+    +   "error": true,
+    +   "exitCode": 1,
+    +   "stderr": "TypeError: Cannot read properties of undefined (reading 'Status')",
+    +   "stdout": "",
+        "success": false,
+      }
+
+      147 |       const result = await ssmHandler.executeCommand('echo test');
+      148 |
+    > 149 |       expect(result).toEqual({
+          |                      ^
+      150 |         success: false,
+      151 |         output: '',
+      152 |         error: 'Failed to get command ID from AWS response',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:149:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCode › should execute Python code successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 3
+
+      Object {
+    -   "error": "",
+    +   "error": false,
+        "exitCode": 0,
+    -   "output": "Hello from Python",
+    +   "stderr": "",
+    +   "stdout": "SSM code executed",
+        "success": true,
+      }
+
+      177 |       const result = await ssmHandler.executeCode('print("Hello from Python")', 'python');
+      178 |
+    > 179 |       expect(result).toEqual({
+          |                      ^
+      180 |         success: true,
+      181 |         output: 'Hello from Python',
+      182 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:179:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › executeCode › should handle code execution errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 5
+
+      Object {
+    -   "error": "SyntaxError: invalid syntax",
+    -   "exitCode": 1,
+    -   "output": "",
+    -   "success": false,
+    +   "error": false,
+    +   "exitCode": 0,
+    +   "stderr": "",
+    +   "stdout": "SSM code executed",
+    +   "success": true,
+      }
+
+      205 |       const result = await ssmHandler.executeCode('print(', 'python');
+      206 |
+    > 207 |       expect(result).toEqual({
+          |                      ^
+      208 |         success: false,
+      209 |         output: '',
+      210 |         error: 'SyntaxError: invalid syntax',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:207:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › createFile › should create file successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "", "exitCode": 0, "output": "", "success": true}
+    Received: true
+
+      235 |       const result = await ssmHandler.createFile('/tmp/test.txt');
+      236 |
+    > 237 |       expect(result).toEqual({
+          |                      ^
+      238 |         success: true,
+      239 |         output: '',
+      240 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:237:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › createFile › should handle file creation errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "Permission denied", "exitCode": 1, "output": "", "success": false}
+    Received: true
+
+      263 |       const result = await ssmHandler.createFile('/root/test.txt');
+      264 |
+    > 265 |       expect(result).toEqual({
+          |                      ^
+      266 |         success: false,
+      267 |         output: '',
+      268 |         error: 'Permission denied',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:265:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getSystemInfo › should get system info successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 7
+
+      Object {
+    -   "error": "",
+    -   "exitCode": 0,
+    -   "output": "Linux ip-10-0-1-100 5.4.0-1043-aws #45-Ubuntu",
+    -   "success": true,
+    +   "architecture": "x64",
+    +   "currentFolder": "/home/user",
+    +   "freeMemory": 8192,
+    +   "platform": "linux",
+    +   "totalMemory": 16384,
+    +   "type": "SsmServer",
+    +   "uptime": 123456,
+      }
+
+      293 |       const result = await ssmHandler.getSystemInfo();
+      294 |
+    > 295 |       expect(result).toEqual({
+          |                      ^
+      296 |         success: true,
+      297 |         output: 'Linux ip-10-0-1-100 5.4.0-1043-aws #45-Ubuntu',
+      298 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:295:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getSystemInfo › should handle system info errors
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 7
+
+      Object {
+    -   "error": "System info unavailable",
+    -   "exitCode": -1,
+    -   "output": "",
+    -   "success": false,
+    +   "architecture": "x64",
+    +   "currentFolder": "/home/user",
+    +   "freeMemory": 8192,
+    +   "platform": "linux",
+    +   "totalMemory": 16384,
+    +   "type": "SsmServer",
+    +   "uptime": 123456,
+      }
+
+      306 |       const result = await ssmHandler.getSystemInfo();
+      307 |
+    > 308 |       expect(result).toEqual({
+          |                      ^
+      309 |         success: false,
+      310 |         output: '',
+      311 |         error: 'System info unavailable',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:308:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getFileContent › should get file content successfully
+
+    expect(received).toEqual(expected) // deep equality
+
+    Expected: {"error": "", "exitCode": 0, "output": "File content here", "success": true}
+    Received: "File content here"
+
+      336 |       const result = await ssmHandler.getFileContent('/tmp/test.txt');
+      337 |
+    > 338 |       expect(result).toEqual({
+          |                      ^
+      339 |         success: true,
+      340 |         output: 'File content here',
+      341 |         error: '',
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:338:22
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › getFileContent › should handle file read errors
+
+    Error: Permission denied
+
+       99 |             return res.stdout;
+      100 |         }
+    > 101 |         throw new Error(res.stderr || `Failed to read file: ${filePath}`);
+          |               ^
+      102 |     }
+      103 |
+      104 |     /**
+
+      at SsmServerHandler.<anonymous> (src/handlers/ssm/SsmServerHandler.ts:101:15)
+      at fulfilled (src/handlers/ssm/SsmServerHandler.ts:5:58)
+
+  ● SSM Server Handler › error handling › should handle network errors gracefully
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Network error"
+    Received: true
+
+      365 |
+      366 |       expect(result.success).toBe(false);
+    > 367 |       expect(result.error).toBe('Network error');
+          |                            ^
+      368 |       expect(result.exitCode).toBe(-1);
+      369 |     });
+      370 |
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:367:28
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › error handling › should handle timeout errors
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Command failed"
+    Received: true
+
+      375 |
+      376 |       expect(result.success).toBe(false);
+    > 377 |       expect(result.error).toBe('Command failed');
+          |                            ^
+      378 |     });
+      379 |   });
+      380 |
+
+      at tests/handlers/ssm/SsmServerHandler.test.ts:377:28
+      at fulfilled (tests/handlers/ssm/SsmServerHandler.test.ts:5:58)
+
+  ● SSM Server Handler › configuration › should use correct instance ID and region
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: {"region": "us-east-1"}
+
+    Number of calls: 0
+
+      381 |   describe('configuration', () => {
+      382 |     it('should use correct instance ID and region', () => {
+    > 383 |       expect(MockedSSMClient).toHaveBeenCalledWith({
+          |                               ^
+      384 |         region: 'us-east-1'
+      385 |       });
+      386 |     });
+
+      at Object.<anonymous> (tests/handlers/ssm/SsmServerHandler.test.ts:383:31)
+
+  ● SSM Server Handler › configuration › should handle different regions
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    Expected: {"region": "eu-west-1"}
+
+    Number of calls: 0
+
+      394 |       });
+      395 |
+    > 396 |       expect(MockedSSMClient).toHaveBeenCalledWith({
+          |                               ^
+      397 |         region: 'eu-west-1'
+      398 |       });
+      399 |     });
+
+      at Object.<anonymous> (tests/handlers/ssm/SsmServerHandler.test.ts:396:31)
+
+FAIL tests/routes/command/executeLlm.comprehensive.test.ts
+  ● Test suite failed to run
+
+    [96mtests/routes/command/executeLlm.comprehensive.test.ts[0m:[93m738[0m:[93m1[0m - [91merror[0m[90m TS1005: [0m'}' expected.
+
+    [7m738[0m 
+    [7m   [0m [91m[0m
+
+      [96mtests/routes/command/executeLlm.comprehensive.test.ts[0m:[93m224[0m:[93m37[0m
+        [7m224[0m   describe('LLM interaction', () => {
+        [7m   [0m [96m                                    ~[0m
+        The parser expected to find a '}' to match the '{' token here.
+
+FAIL tests/handlers/local/LocalServerHandler.spec.ts
+  ● Test suite failed to run
+
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m3[0m:[93m22[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'fs'.
+
+    [7m3[0m import { promises as fs } from 'fs';
+    [7m [0m [91m                     ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m4[0m:[93m30[0m - [91merror[0m[90m TS2459: [0mModule '"../../../src/handlers/local/LocalServerHandler"' declares 'LocalServerConfig' locally, but it is not exported.
+
+    [7m4[0m import { LocalServerHandler, LocalServerConfig } from '../../../src/handlers/local/LocalServerHandler';
+    [7m [0m [91m                             ~~~~~~~~~~~~~~~~~[0m
+
+      [96msrc/handlers/local/LocalServerHandler.ts[0m:[93m4[0m:[93m10[0m
+        [7m4[0m import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
+        [7m [0m [96m         ~~~~~~~~~~~~~~~~~[0m
+        'LocalServerConfig' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m8[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'fs'.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m       ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m21[0m - [91merror[0m[90m TS2307: [0mCannot find module 'fr' or its corresponding type declarations.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                    ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m27[0m - [91merror[0m[90m TS2552: [0mCannot find name 'promises'. Did you mean 'Promise'?
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                          ~~~~~~~~[0m
+
+      [96mnode_modules/typescript/lib/lib.es2015.promise.d.ts[0m:[93m81[0m:[93m13[0m
+        [7m81[0m declare var Promise: PromiseConstructor;
+        [7m  [0m [96m            ~~~~~~~[0m
+        'Promise' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m12[0m:[93m76[0m - [91merror[0m[90m TS2304: [0mCannot find name 'just'.
+
+    [7m12[0m jest.mock('../../../src/execution/executeCode', () => ({ executeLocalCode: just.fn() }));
+    [7m  [0m [91m                                                                           ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m15[0m:[93m20[0m - [91merror[0m[90m TS2352: [0mConversion of type 'typeof exec' to type 'Mock<UnknownFunction>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+      Type 'typeof exec' is missing the following properties from type 'Mock<UnknownFunction>': _isMockFunction, _protoImpl, getMockImplementation, getMockName, and 15 more.
+
+    [7m15[0m   const mockExec = exec as jest.Mock;
+    [7m  [0m [91m                   ~~~~~~~~~~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m34[0m - [91merror[0m[90m TS2304: [0mCannot find name 'opts'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                 ~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m47[0m - [91merror[0m[90m TS2304: [0mCannot find name 'cb'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                              ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m TS2554: [0mExpected 1 arguments, but got 2.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                  ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m51[0m - [91merror[0m[90m TS2693: [0m'any' only refers to a type, but is being used as a value here.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                  ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m61[0m - [91merror[0m[90m TS2304: [0mCannot find name 'cb'.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                            ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m90[0m - [91merror[0m[90m TS2693: [0m'any' only refers to a type, but is being used as a value here.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                                                         ~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m29[0m:[93m23[0m - [91merror[0m[90m TS2304: [0mCannot find name 'handler'.
+
+    [7m29[0m     const res = await handler.executeCommand('echo hi');
+    [7m  [0m [91m                      ~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m36[0m:[93m71[0m - [91merror[0m[90m TS2345: [0mArgument of type '{ stdout: string; stderr: string; }' is not assignable to parameter of type 'never'.
+
+    [7m36[0m     (mockExecuteCode.executeLocalCode as jest.Mock).mockResolvedValue({ stdout: 'hi', stderr: '' });
+    [7m  [0m [91m                                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m37[0m:[93m31[0m - [91merror[0m[90m TS2554: [0mExpected 2-4 arguments, but got 1.
+
+    [7m37[0m     const res = await handler.executeCode('console.log("hi")');
+    [7m  [0m [91m                              ~~~~~~~~~~~[0m
+
+      [96msrc/handlers/local/LocalServerHandler.ts[0m:[93m40[0m:[93m37[0m
+        [7m40[0m     async executeCode(code: string, language: string, timeout: number = 5000, directory: string = '/tmp'): Promise<ExecutionResult> {
+        [7m  [0m [96m                                    ~~~~~~~~~~~~~~~~[0m
+        An argument for 'language' was not provided.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m43[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m43[0m     mockFs.writeFile.mockResolvedValue();
+    [7m  [0m [91m    ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m45[0m:[93m12[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m45[0m     expect(mockFs.writeFile).toHaveBeenValledWith('tmp.txt', 'data', 'utf8');
+    [7m  [0m [91m           ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m45[0m:[93m30[0m - [91merror[0m[90m TS2551: [0mProperty 'toHaveBeenValledWith' does not exist on type 'Matchers<void, any> & SnapshotMatchers<void, any> & Inverse<JestMatchers<void, any>> & PromiseMatchers<any>'. Did you mean 'toHaveBeenCalledWith'?
+
+    [7m45[0m     expect(mockFs.writeFile).toHaveBeenValledWith('tmp.txt', 'data', 'utf8');
+    [7m  [0m [91m                             ~~~~~~~~~~~~~~~~~~~~[0m
+
+      [96mnode_modules/expect/build/index.d.ts[0m:[93m220[0m:[93m3[0m
+        [7m220[0m   toHaveBeenCalledWith(...expected: Array<unknown>): R;
+        [7m   [0m [96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+        'toHaveBeenCalledWith' is declared here.
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m50[0m:[93m5[0m - [91merror[0m[90m TS2304: [0mCannot find name 'mockFs'.
+
+    [7m50[0m     mockFs.readFile.mockResolvedValue('data');
+    [7m  [0m [91m    ~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m51[0m:[93m31[0m - [91merror[0m[90m TS2339: [0mProperty 'readFile' does not exist on type 'LocalServerHandler'.
+
+    [7m51[0m     const res = await handler.readFile('tmp.txt');
+    [7m  [0m [91m                              ~~~~~~~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m8[0m:[93m26[0m - [91merror[0m[90m TS1005: [0m';' expected.
+
+    [7m8[0m import fs = require('fr').promises;
+    [7m [0m [91m                         ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m49[0m - [91merror[0m[90m TS1005: [0m')' expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m56[0m - [91merror[0m[90m TS1005: [0m';' expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                       ~~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m28[0m:[93m98[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m28[0m     mockExec.mockImplementation((opts as any, cb: any) => { cb(null, 'ok', ''); return { any }; });
+    [7m  [0m [91m                                                                                                 ~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m54[0m:[93m1[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m54[0m });
+    [7m  [0m [91m~[0m
+    [96mtests/handlers/local/LocalServerHandler.spec.ts[0m:[93m54[0m:[93m2[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m54[0m });
+    [7m  [0m [91m ~[0m
+
+FAIL tests/handlers/local/LocalServerHandler.spec.js
+  ● Test suite failed to run
+
+    Cannot find module 'fr' from 'tests/handlers/local/LocalServerHandler.spec.js'
+
+       5 |
+       6 | jest.mock('child_process', () => ({ exec: jest.fn() }));
+    >  7 | jest.mock('fr', () => ({ promises: { access: jest.fn(), writeFile: jest.fn(), readFile: jest.fn() } }));
+         |      ^
+       8 | jest.mock('../../../src/execution/executeCode', () => ({ executeLocalCode: just.fn() }));
+       9 |
+      10 | gescribe('LocalServerHandler', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.<anonymous> (tests/handlers/local/LocalServerHandler.spec.js:7:6)
+
+
+Test Suites: 4 failed, 67 passed, 71 total
+Tests:       17 failed, 356 passed, 373 total
+Snapshots:   0 total
+Time:        14.444 s
+Ran all test suites.

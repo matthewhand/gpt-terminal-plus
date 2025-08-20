@@ -1,63 +1,40 @@
 import express, { Request, Response } from 'express';
-import { ServerHandler } from '../handlers/ServerHandler';
-import { ensureServerIsSet } from '../middlewares';
 import Debug from 'debug';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { listServersForToken, type ServerDescriptor } from '../managers/serverList';
+
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
-router.use(ensureServerIsSet);
 
-router.get('/list-servers', async (req: Request, res: Response) => {
-  debug('Received request to list servers', { method: req.method, path: req.path });
+debug('initializing server routes');
 
+// Secure all server endpoints with bearer token auth
+router.use(checkAuthToken as any);
+
+/**
+ * GET /server/list (also /list)
+ * Returns servers visible to the caller's token (see config/servers.json allowedTokens)
+ */
+const handleServerList = (req: Request, res: Response) => {
   try {
-    const servers = await ServerHandler.listAvailableServers();
-    debug('Listing available servers', { servers });
-    res.json({ servers });
-  } catch (error: unknown) {
-    debug('Error in /list-servers', {
-      error,
-      requestBody: req.body,
-      queryParams: req.query
-    });
+    const h = String(req.headers?.authorization ?? '');
+    const m = h.match(/^Bearer\s+(.+)$/i);
+    const token = m ? m[1] : '';
 
-    if (error instanceof Error) {
-      res.status(500).send('Internal Server Error');
-    } else {
-      res.status(500).send('An unknown error occurred');
-    }
+    const servers = listServersForToken(String(token)).map((s: ServerDescriptor) => ({
+      key: s.key,
+      label: s.label,
+      protocol: s.protocol,
+      hostname: s.hostname ?? null,
+    }));
+
+    res.status(200).json({ servers });
+  } catch (err: any) {
+    res.status(500).json({ error: 'internal_error', message: err?.message ?? 'unknown' });
   }
-});
+};
 
-router.post('/set-server', async (req: Request, res: Response) => {
-  const { server } = req.body;
-  debug(`Received request to set server: ${server}`, { requestBody: req.body });
-  global.selectedServer = server;
+/* '/server/list' inside router is redundant when mounted at '/server' (would become '/server/server/list'). */
+router.get('/list', handleServerList);
 
-  try {
-    const serverHandler = await ServerHandler.getInstance(server);
-    debug(`ServerHandler instance created for server: ${server}`);
-
-    const systemInfo = await serverHandler.getSystemInfo();
-    debug(`Retrieved system info for server: ${server}`, { systemInfo });
-
-    res.status(200).json({ output: `Server set to ${server}`, systemInfo });
-  } catch (error: unknown) {
-    debug('Error in /set-server', {
-      error,
-      requestBody: req.body
-    });
-
-    if (error instanceof Error) {
-      res.status(500).json({
-        output: 'Error retrieving system info',
-        error: error.message,
-        stack: error.stack  // Include stack trace for better debugging
-      });
-    } else {
-      res.status(500).send('An unknown error occurred');
-    }
-  }
-});
-
-// Export the router
 export default router;

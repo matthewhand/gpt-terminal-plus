@@ -1,44 +1,33 @@
-# Makefile
-
-# Define variables for commands
-DOCKER_COMPOSE = docker-compose
-DOCKER_BUILD = $(DOCKER_COMPOSE) build
-DOCKER_UP = $(DOCKER_COMPOSE) up -d
+# Makefile for gpt-terminal-plus
 
 # Default target
-all: build up
+.PHONY: all
+all: lint test build
 
-# Build the Docker image
+# Defaults for smoke-hosting target
+BASES ?= $(HOST_BASES)
+ECHO_MSG ?= SMOKE_OK
+
+# Lint the code
+.PHONY: lint
+lint:
+	npm run lint
+
+# Test the code
+.PHONY: test
+test:
+	npm test
+
+# Build the code
+.PHONY: build
 build:
-	@echo "Building Docker image..."
-	@$(DOCKER_BUILD)
+	npm run build
 
-# Bring up the container
-up:
-	@echo "Starting Docker container..."
-	@$(DOCKER_UP)
-
-# Stop and remove containers, networks, images, and volumes
-down:
-	@echo "Stopping and removing Docker containers..."
-	@$(DOCKER_COMPOSE) down
-
-# Clean up
-clean:
-	@echo "Removing Docker images..."
-	@docker rmi $$(docker images -q)
-
-# Help
-help:
-	@echo "Makefile for managing the Docker container"
-	@echo ""
-	@echo "Usage:"
-	@echo "  make build  - Build the Docker image"
-	@echo "  make up     - Start the Docker container"
-	@echo "  make down   - Stop and remove the Docker container"
-	@echo "  make clean  - Remove Docker images"
-	@echo "  make help   - Display this help message"
-	@echo ""
-
-.PHONY: build up down clean help
-
+# Hosted smoke checks (Fly/Vercel/etc.)
+# Usage examples:
+#  make smoke-hosting BASES="https://gpt-terminal-plus.fly.dev https://gpt-terminal-plus.vercel.app" SKIP_PROTECTED=1
+#  make smoke-hosting BASES="https://gpt-terminal-plus.fly.dev" TOKEN=$$API_TOKEN ECHO_MSG=OK TIMEOUT=20
+.PHONY: smoke-hosting
+smoke-hosting:
+	@echo "Running hosted smoke with BASES=$(BASES) TOKEN=$(if $(TOKEN),***,unset) SKIP_PROTECTED=$(SKIP_PROTECTED)"
+	npm run -s smoke:hosting -- $(foreach b,$(BASES),--base $(b)) $(if $(TOKEN),--token $(TOKEN),$(if $(SKIP_PROTECTED),--skip-protected,)) $(if $(ECHO_MSG),--echo-msg $(ECHO_MSG),) $(if $(TIMEOUT),--timeout $(TIMEOUT),)

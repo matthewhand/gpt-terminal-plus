@@ -1,0 +1,20 @@
+services:
+  ssm-and-ssh-app:
+    image: mhand79/gpt-terminal-plus:latest
+    env_file:
+      - .env
+    ports:
+      - "5001:5005"
+    environment:
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - ENABLE_COMMAND_MANAGEMENT=true
+      - ENABLE_FILE_MANAGEMENT=false
+      - ENABLE_SERVER_MANAGEMENT=true
+      - NODE_ENV=production
+      - NODE_CONFIG_DIR=/app/dist/config # Used this folder for production.json
+    volumes:
+      - ~/.aws:/root/.aws:ro
+      - ~/.ssh:/root/.ssh:ro
+      - ../../config:/app/dist/config:rw
+      - ../../src/scripts:/app/dist/src/scripts:rw
+    restart: unless-stopped

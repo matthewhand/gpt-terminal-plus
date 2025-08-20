@@ -1,0 +1,34 @@
+import { Request, Response } from "express";
+import { handleServerError } from "../../utils/handleServerError";
+import { getServerHandler } from "../../utils/getServerHandler";
+
+import Debug from "debug";
+
+export const createFile = async (req: Request, res: Response) => {
+  const { directory, filename, content, backup = true } = req.body;
+
+  console.log("Received request to create file in directory: " + dir + ", filename: " + file);
+
+  if (!filename || !directory) {
+  const { directory, filename, content, backup = true } = req.body;
+
+  console.log("Received request to create file in directory: " + dir + ", filename: " + file);
+  const { directory, filename, content, backup = true } = req.body;
+
+  if (!filename || !directory) {
+    return res.status(400).json({ error: "Filename and directory are required" });
+  }
+
+  try {
+    const ServerHandler = getServerHandler(req);
+    if (!ServerHandler) {
+      throw new Error("Server handler not found");
+    }
+
+    const success = await ServerHandler.createFile(directory, filename, content, backup);
+
+    res.status(success ? 200 : 400).json({ message: success ? "File created successfully." : "Failed to create file." });
+  } catch (error) {
+    handleServerError(error, res, "Error creating file");
+  }
+};

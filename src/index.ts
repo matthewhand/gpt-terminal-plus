@@ -1,106 +1,201 @@
-import dotenv from 'dotenv';
+// import "module-alias/register";
+import dotenv from "dotenv";
 dotenv.config();
 
-import { Server } from 'http'; // Import Server type for TypeScript
-import express, { Request, Response, NextFunction } from 'express';
-import morgan from 'morgan';
-import cors from 'cors';
-import config from 'config';
-import { json } from 'body-parser';
-import { ServerHandler } from './handlers/ServerHandler';
+import fs from "fs";
+import path from "path";
+import http from "http";
+import https from "https";
+import express from "express";
+// import morgan from "morgan";
+// import cors from "cors";
+import config from "config";
+// import bodyParser from "body-parser";
+import { setupApiRouter } from "./routes/index";
+import { registerOpenApiRoutes } from "./openapi";
+import swaggerUi from "swagger-ui-express";
+import publicRouter from "./routes/publicRouter";
 
-import { ServerConfig } from './types';
+import { validateEnvironmentVariables } from './utils/envValidation';
+import setupMiddlewares from './middlewares/setupMiddlewares';
+import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
 
-import fileRoutes from './routes/fileRoutes';
-import commandRoutes from './routes/commandRoutes';
-import serverRoutes from './routes/serverRoutes';
-import staticFilesRouter from './routes/staticFilesRouter';
+import './modules/ngrok';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
-import { checkAuthToken, ensureServerIsSet } from './middlewares';
+export const app = express();
 
-// Import the PaginationHandler
-import { getPaginatedResponse } from './handlers/PaginationHandler';
+// Validate environment variables
+validateEnvironmentVariables();
 
-const app = express();
+// Setup middlewares
+setupMiddlewares(app);
 
-app.use(morgan('combined'));
+/**
+ * Static assets
+ * - Serve public/ at /
+ * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
+ */
+// Serve static assets from public/
+app.use(express.static(path.resolve(__dirname, '..', 'public')));
+// Serve documentation markdown as static files
+app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
-console.log(`Debug mode is "${process.env.DEBUG}".`);
+// Setup API Router
+setupApiRouter(app);
 
-app.use(cors({
-  origin: ['https://chat.openai.com', '*']
-}));
+// Public routes (e.g., /health)
+app.use(publicRouter);
 
-app.use(json());
 
-// Define all API-related routes under '/'
-const apiRouter = express.Router();
-apiRouter.use(checkAuthToken); 
-apiRouter.use(ensureServerIsSet);
-apiRouter.use(fileRoutes);
-apiRouter.use(commandRoutes);
-apiRouter.use(serverRoutes);
+  // Dynamic OpenAPI routes
+  registerOpenApiRoutes(app);
 
-// Endpoint to retrieve paginated response, now under '/response'
-apiRouter.get('/response/:id/:page', (req: Request, res: Response) => {
-  const responseId = req.params.id;
-  const page = parseInt(req.params.page, 10);
+  // Swagger UI at /docs, static-first pointing to /openapi.json
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
 
-  try {
-    const { stdout, stderr, totalPages } = getPaginatedResponse(responseId, page);
-    res.status(200).json({ responseId, page, stdout, stderr, totalPages });
-  } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : 'Unknown error' });
-  }
-});
+ if (process.env.USE_MCP === "true") {
+  const { registerMcpTools } = require("./modules/mcpTools");
+  const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
+  
+  // Register all MCP tools that wrap Express routes
+  registerMcpTools(mcpServer);
 
-app.use('/public/', staticFilesRouter); // Serve static files without token check
-app.use(apiRouter); // Mount the API router on '/api'
-
-global.selectedServer = 'localhost'; // Defaults to localhost
-let server: Server; // Explicitly declare server as type Server
-
-const main = () => {
-
-  // Check if API_TOKEN is set
-  if (!process.env.API_TOKEN) {
-    console.error('ERROR: API_TOKEN is not set. Please set the API_TOKEN environment variable.');
-    process.exit(1); // Exit the process with an error code
-  }
-    
-  const port: number = config.get('port') || 5004;
-
-  const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running on port ${port}`);
+  // Set up SSE endpoint for MCP communication
+  app.get("/mcp/messages", async (req, res) => {
+    const transport = new SSEServerTransport("/mcp/messages", res);
+    await mcpServer.connect(transport);
   });
 
-    // TODO option to use https
-    // const https = require('https');
-    // const selfSigned = require('openssl-self-signed-certificate');
+  console.log("MCP server initialized with SSE transport at /mcp/messages");
+}
 
-    // const options = {
-    //     key: selfSigned.key,
-    //     cert: selfSigned.cert
-    // };
+// Configuration directory and file path
+const configDir = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, "..", "config");
+const configFilePath = path.join(configDir, "production.json");
 
-    // server = https.createServer(options, app).listen(port);
-    // console.log(`HTTPS started on port ${port} (dev only).`);
+/**
+ * Main function to initialize the application.
+ */
+const main = async (): Promise<void> => {
+  // Ensure the configuration directory exists
+  console.debug("Checking if configuration directory exists at:", configDir);
+  if (!fs.existsSync(configDir)) {
+    console.debug("Configuration directory does not exist. Creating:", configDir);
+    fs.mkdirSync(configDir, { recursive: true });
+    console.log("Configuration directory created.");
+  } else {
+    console.debug("Configuration directory already exists at:", configDir);
+  }
 
-  const shutdown = (signal: 'SIGINT' | 'SIGTERM') => {
-    console.log(`Received ${signal}. Shutting down gracefully.`);
-    server.close(() => {
-      console.log('Server closed.');
-      process.exit(0);
-    });
+  // Check if configuration file is loaded, if not, generate and persist default config
+  if (!isConfigLoaded(configFilePath)) {
+    console.debug("Configuration file does not exist. Generating default configuration.");
+    const defaultConfig = generateDefaultConfig();
+    persistConfig(defaultConfig, configFilePath);
+    console.log("Default configuration generated and persisted to disk.");
+  } else {
+    console.debug("Configuration file already exists at:", configFilePath);
+  }
 
-    setTimeout(() => {
-      console.error('Could not close connections in time, forcefully shutting down');
+  // Load the configuration and start the application
+  // Prefer explicit env PORT if provided and valid; otherwise fall back to config or default
+  const rawEnvPort = process.env.PORT;
+  let port: number;
+  if (rawEnvPort && !Number.isNaN(Number(rawEnvPort))) {
+    port = Number(rawEnvPort);
+    console.debug(`Port selection: honoring process.env.PORT=${rawEnvPort}`);
+  } else {
+    port = config.has("port") ? config.get<number>("port") : 5005;
+    console.debug(
+      `Port selection: using config/default (${port})${
+        rawEnvPort ? " (ignored invalid PORT)" : ""
+      }`
+    );
+  }
+  console.debug("Application will start on port:", port);
+
+  /**
+   * Start the server.
+   */
+  const startServer = (): void => {
+    let server: http.Server | https.Server;
+
+    try {
+      if (process.env.HTTPS_ENABLED === "true") {
+        console.debug("HTTPS is enabled. Setting up HTTPS server.");
+        if (!process.env.HTTPS_KEY_PATH || !process.env.HTTPS_CERT_PATH) {
+          throw new Error("HTTPS_KEY_PATH and HTTPS_CERT_PATH must be set when HTTPS is enabled.");
+        }
+        const privateKey = fs.readFileSync(process.env.HTTPS_KEY_PATH, "utf8");
+        const certificate = fs.readFileSync(process.env.HTTPS_CERT_PATH, "utf8");
+        const credentials = { key: privateKey, cert: certificate };
+        server = https.createServer(credentials, app);
+      } else {
+        console.debug("HTTPS is not enabled. Setting up HTTP server.");
+        server = http.createServer(app);
+      }
+    } catch (error) {
+      console.error("Failed to setup server:", error);
       process.exit(1);
-    }, 10000); // 10 seconds timeout
+    }
+
+    server.listen(port, () => {
+      const protocol = process.env.HTTPS_ENABLED === "true" ? "https" : "http";
+      console.log(`Server running on ${protocol}://localhost:${port}`);
+      console.log(`OpenAPI (JSON): ${protocol}://localhost:${port}/openapi.json`);
+      console.log(`OpenAPI (YAML): ${protocol}://localhost:${port}/openapi.yaml`);
+      console.log(`OpenAPI YAML: ${protocol}://localhost:${port}/openapi.yaml`);
+      console.log(`Plugin manifest: ${protocol}://localhost:${port}/.well-known/ai-plugin.json`);
+      console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);});
+
+    // Graceful shutdown handling
+    process.on("SIGINT", () => shutdown(server));
+    process.on("SIGTERM", () => shutdown(server));
   };
 
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  /**
+   * Shutdown the server gracefully.
+   * @param server - The server instance to shutdown.
+   */
+  const shutdown = (server: http.Server | https.Server): void => {
+    console.log("Shutting down server...");
+    server.close(() => {
+      console.log("Server closed.");
+      process.exit(1);
+    });
+
+    // Force server shutdown after a timeout
+    setTimeout(() => {
+      console.error("Forcing server shutdown...");
+      process.exit(2);
+    }, 10001); // 10-second timeout
+  };
+
+  if (process.env.USE_SERVERLESS === "true") {
+    try {
+      const { default: serverless } = await import('serverless-http');
+      module.exports.handler = serverless(app);
+    } catch (err) {
+      console.error("Failed to load serverless-http:", err);
+      process.exit(1);
+    }
+  } else {
+    startServer();
+  }
 };
 
-main();
+// Export start to allow programmatic boot
+export const start = main;
+
+// Only auto-start when executed directly
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Fatal startup error:", err);
+    process.exit(1);
+  });
+}
+
+// Export the Express app for external usage (e.g., server.ts, tests)
+export default app;
