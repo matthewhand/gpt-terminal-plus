@@ -15,8 +15,11 @@ This guide provides specific coding and development guidance for AI agents worki
 
 - `/src/routes/` - API endpoints (command, file, server operations)
 - `/src/handlers/` - Server execution (local, SSH, SSM)
-- `/tests/` - Comprehensive test suite (375+ tests)
+- `/src/admin/` - AdminJS integration for WebUI (planned)
+- `/ui/` - React forms with Zod validation (planned)
+- `/tests/` - Comprehensive test suite (371+ passing, 402 total)
 - `/docs/` - Complete documentation package
+- `/scripts/` - Production deployment and testing scripts
 
 ## Coding Conventions for Agent Implementation
 
@@ -141,9 +144,31 @@ Do NOT ask for guidance on:
 - Following established patterns in the codebase
 ## File Operations Guidance
 
-Agents must support file operations endpoints (`/file/create`, `/file/read`, `/file/patch`).
-- Use `/file/list` for folder contents
-- Use `/file/read` for constrained single-file reads
-- Use `/file/create`, `/file/patch`, `/file/diff`, `/file/backup` for file updates
-- Ensure all file ops are reflected in OpenAPI docs and covered by tests
+Agents must support comprehensive file operations:
+- Use `/file/list` for folder contents with pagination
+- Use `/file/read` for constrained single-file reads with line ranges
+- Use `/file/create` for new files with backup options
+- Use `/file/patch` for search/replace and line-based modifications
+- Use `/file/diff` for git-based unified diff application
+- Ensure all file ops work across local/SSH/SSM servers
+- All operations reflected in OpenAPI docs and covered by tests
 - Respect convict/WebUI toggles for enabling/disabling files API
+
+## WebUI Development Guidance
+
+**AdminJS Integration**:
+- Mount at `/admin` with authentication
+- Expose Settings, Servers, Providers resources
+- Reuse existing Zod schemas for validation
+- Keep minimal - no custom theming initially
+
+**React Forms**:
+- Use `react-hook-form` with `zodResolver`
+- ChakraUI components for consistent styling
+- Fetch/submit via existing `/settings` API
+- Type-safe forms sharing backend schemas
+
+**API Documentation**:
+- Swagger UI at `/docs` for interactive testing
+- Optional Redoc static build at `/redoc`
+- Use existing auto-generated `openapi.json`

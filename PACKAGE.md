@@ -16,13 +16,14 @@ GPT Terminal Plus is a production-ready backend that enables ChatGPT to execute 
 ## Complete Solution Includes
 
 ### 🚀 Core System
-- **Shell execution**: Run commands locally or remotely (SSH/SSM)
-- **Code execution**: Python, Node.js, and other interpreters
-- **File operations**: Create, read, update, diff, and patch files
-- **AI delegation**: execute-llm routes tasks to specialized LLMs
-- **Session management**: Handle long-running processes
-- **Dynamic server registration**: Add/remove servers at runtime
-- **Security**: Bearer token authentication, CORS protection, input validation
+- **Shell execution**: Run commands locally or remotely (SSH/SSM) with literal/raw modes
+- **Code execution**: Python, Node.js, bash interpreters with error analysis
+- **File operations**: Create, read, update, diff, and patch files with git integration
+- **AI delegation**: execute-llm routes tasks to specialized LLMs with streaming
+- **Session management**: Handle long-running processes with polling and cleanup
+- **Dynamic server registration**: Add/remove servers at runtime with validation
+- **Security**: Bearer token authentication, CORS protection, comprehensive input validation
+- **WebUI**: AdminJS admin console + React forms + interactive API docs (planned)
 
 ### 📚 Documentation Package
 - **[README.md](README.md)** - Quick start and overview
@@ -33,12 +34,14 @@ GPT Terminal Plus is a production-ready backend that enables ChatGPT to execute 
 - **[SHELL_USAGE.md](SHELL_USAGE.md)** - Shell execution patterns and safety
 
 ### 🔧 Development Tools
-- **TypeScript codebase** with comprehensive type definitions
-- **375+ tests** with 85% coverage
-- **OpenAPI documentation** auto-generated from code
-- **Integration tests** for real SSH connectivity
+- **TypeScript codebase** with comprehensive type definitions and Zod schemas
+- **371+ tests passing** with 92% success rate (402 total tests)
+- **OpenAPI documentation** auto-generated with deterministic builds
+- **Integration tests** for real SSH connectivity (worker1/worker2)
+- **Comprehensive test suites** - unit, integration, SSH, diff/patch
+- **Production scripts** - smoke testing, endpoint validation, deployment
 - **Linting and formatting** with ESLint and Prettier
-- **CI/CD ready** with GitHub Actions
+- **CI/CD ready** with GitHub Actions and automated testing
 
 ### 🌐 Deployment Options
 - **Local development** - Run on your desktop
