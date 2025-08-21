@@ -6,8 +6,6 @@ import { ServerManager } from '../../managers/ServerManager';
 import { getServerHandler } from '../../utils/getServerHandler';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { evaluateCommandSafety } from '../../utils/safety';
-import { getExecuteTimeout } from '../../utils/timeout';
-import { spawn } from 'child_process';
 
 const debug = Debug('app:command:execute-llm');
 
@@ -25,93 +23,13 @@ function extractJsonArray(text: string): any {
   return undefined;
 }
 
-function extractCandidateCommands(text: string): string[] {
-  if (!text) return [];
-  const lines = String(text).split(/\r?\n/);
-  const cmdRegex = /^(?:\s*)(echo|ls|cat|grep|awk|sed|find|cp|mv|rm|mkdir|touch|chmod|chown|curl|wget|tar|zip|unzip|python3?|node|npm|yarn|pnpm|docker|kubectl|git|ssh|scp|systemctl|service|pm2|pip3?|bundle|rails|go|cargo|make|terraform|ansible|helm)\b.*$/i;
-  return lines.map(l => l.trim()).filter(l => cmdRegex.test(l));
-}
-
 export const executeLlm = async (req: Request, res: Response) => {
-  const { instructions, dryRun = false, model, stream = false, engine } = req.body || {};
+  const { instructions, dryRun = false, model, stream = false } = req.body || {};
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });
   }
 
   try {
-    // Runtime branch: interpreter CLI (local execution)
-    if (engine === 'llm:interpreter' || engine === 'interpreter') {
-      if (stream) {
-        return res.status(501).json({ error: 'Streaming not supported for interpreter engine' });
-      }
-      const selectedModel = model || 'gpt-4o';
-      const args = ['-m', selectedModel, '--auto_run', '--stdin', '--plain'];
-
-      const timeout = getExecuteTimeout('llm');
-      const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve, reject) => {
-        let stdout = '';
-        let stderr = '';
-        let settled = false;
-        const child = spawn('interpreter', args, { stdio: ['pipe', 'pipe', 'pipe'] });
-
-        const timer = setTimeout(() => {
-          try { child.kill('SIGKILL'); } catch {}
-          if (!settled) {
-            settled = true;
-            reject(new Error(`Interpreter timed out after ${timeout}ms`));
-          }
-        }, timeout);
-
-        child.stdout.on('data', (chunk) => { stdout += String(chunk); });
-        child.stderr.on('data', (chunk) => { stderr += String(chunk); });
-        child.on('error', (err) => {
-          clearTimeout(timer);
-          if (!settled) { settled = true; reject(err); }
-        });
-        child.on('close', (code) => {
-          clearTimeout(timer);
-          if (!settled) {
-            settled = true;
-            resolve({ stdout, stderr, exitCode: typeof code === 'number' ? code : 1 });
-          }
-        });
-
-        try {
-          child.stdin.write(instructions);
-          child.stdin.end();
-        } catch (e) {
-          // best-effort; process may have exited early
-        }
-      }).catch((e: any) => ({ stdout: '', stderr: String(e?.message || e), exitCode: 1 }));
-
-      // Safety checks on any shell-like suggestions in output
-      const candidates = extractCandidateCommands(result.stdout || '');
-      const safety = candidates.map(cmd => ({ cmd, decision: evaluateCommandSafety(cmd) }));
-
-      // AI error analysis on failure
-      let aiAnalysis;
-      if ((result.exitCode ?? 0) !== 0) {
-        aiAnalysis = await analyzeError({
-          kind: 'code',
-          input: instructions,
-          stdout: result.stdout,
-          stderr: result.stderr,
-          exitCode: result.exitCode,
-          language: 'llm:interpreter'
-        });
-      }
-
-      return res.status(200).json({
-        runtime: 'llm:interpreter',
-        engine: 'interpreter',
-        model: selectedModel,
-        result,
-        aiAnalysis,
-        plan: [],
-        safety
-      });
-    }
-
     // Resolve server and per-server LLM provider if present
     const hostname = getSelectedServer();
     const serverConfig = ServerManager.getServerConfig(hostname);
@@ -194,7 +112,7 @@ export const executeLlm = async (req: Request, res: Response) => {
         if (heartbeat) clearInterval(heartbeat);
         return res.end();
       }
-      return res.status(200).json({ runtime: 'llm:remote', engine: resp.provider || 'remote', model: selectedModel, plan, safety, results: [] });
+      return res.status(200).json({ plan, safety, results: [] });
     }
 
     const handler = getServerHandler(req);
@@ -240,13 +158,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       }
       let r;
       try {
-        const timeout = getExecuteTimeout('llm');
-        r = await Promise.race([
-          handler.executeCommand(step.cmd),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`LLM command timed out after ${timeout}ms`)), timeout)
-          )
-        ]) as any;
+        r = await handler.executeCommand(step.cmd);
       } catch (e) {
         if (stream) {
           res.write('event: error\n');
@@ -275,7 +187,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       return res.end();
     }
 
-    res.status(200).json({ runtime: 'llm:remote', engine: resp.provider || 'remote', model: selectedModel, plan, results });
+    res.status(200).json({ plan, results });
   } catch (err) {
     debug('execute-llm failed: ' + String(err));
     res.status(500).json({ error: 'execute-llm failed', message: (err as Error).message });

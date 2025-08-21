@@ -13,18 +13,15 @@ export interface ErrorContext {
   stderr?: string;
   exitCode?: number;
   cwd?: string;
-  shell?: string;
 }
 
 export interface ErrorAnalysis {
-  model?: string;
-  text?: string;
-  suggestions?: string[];
+  model: string;
+  text: string;
 }
 
 export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | undefined> {
   const auto = process.env.AUTO_ANALYZE_ERRORS !== 'false';
-  // Only attempt AI analysis when analysis is enabled via env flag
   if (!auto) return undefined;
 
   const supported = getSupportedModels();
@@ -57,7 +54,6 @@ export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | u
     return { model, text };
   } catch (err) {
     debug('Error during AI analysis: ' + String(err));
-    // Per tests: return undefined on chat errors to signal no analysis
     return undefined;
   }
 }
@@ -67,3 +63,4 @@ function trimTo(s: string | undefined, n: number): string | undefined {
   if (s.length <= n) return s;
   return s.substring(0, n) + '\n... (truncated)';
 }
+

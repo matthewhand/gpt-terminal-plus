@@ -5,7 +5,7 @@ import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import Debug from 'debug';
 import fs from 'fs';
-// Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
+import { Client } from 'ssh2';
 
 const sshServerDebug = Debug('app:SshServerHandler');
 
@@ -32,9 +32,7 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH command: ${command}`);
         return new Promise<ExecutionResult>((resolve) => {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const { Client: SSHClient } = require('ssh2');
-            const conn = new SSHClient();
+            const conn = new Client();
             const key = this.sshConfig.privateKeyPath ? fs.readFileSync(this.sshConfig.privateKeyPath, 'utf8') : undefined;
             const opts: any = {
                 host: this.sshConfig.hostname,
@@ -56,25 +54,24 @@ export class SshServerHandler extends AbstractServerHandler {
 
             conn.on('ready', () => {
                 const cmd = directory ? `cd ${directory} && ${command}` : command;
-                conn.exec(cmd, (err: Error | null, stream: any) => {
+                conn.exec(cmd, (err, stream) => {
                     if (err) {
                         sshServerDebug('SSH exec error: ' + err.message);
-                        return finalize({ stdout: '', stderr: err.message, error: true, exitCode: 1, success: false });
+                        return finalize({ stdout: '', stderr: err.message, error: true, exitCode: 1 });
                     }
                     stream.on('close', (code: number) => {
-                        const exit = code ?? 1;
-                        finalize({ stdout, stderr, error: exit !== 0, exitCode: exit, success: exit === 0 });
+                        finalize({ stdout, stderr, error: (code ?? 1) !== 0, exitCode: code ?? 1 });
                     });
                     stream.on('data', (data: Buffer) => { stdout += data.toString(); });
                     stream.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
                 });
-            }).on('error', (e: unknown) => {
+            }).on('error', (e) => {
                 sshServerDebug('SSH conn error: ' + String(e));
-                finalize({ stdout: '', stderr: String(e), error: true, exitCode: 1, success: false });
+                finalize({ stdout: '', stderr: String(e), error: true, exitCode: 1 });
             }).connect(opts);
 
             if (timeout && timeout > 0) {
-                setTimeout(() => finalize({ stdout, stderr: stderr || 'Timeout', error: true, exitCode: 124, success: false }), timeout);
+                setTimeout(() => finalize({ stdout, stderr: stderr || 'Timeout', error: true, exitCode: 124 }), timeout);
             }
         });
     }
@@ -82,23 +79,20 @@ export class SshServerHandler extends AbstractServerHandler {
     /**
      * Executes code in a specified language on the SSH server.
      */
-    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        // Placeholder implementation; align with abstract signature
-        sshServerDebug(`Executing SSH code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
+    async executeCode(code: string, language: string): Promise<ExecutionResult> {
+        // Placeholder implementation
+        sshServerDebug(`Executing SSH code: ${code} in language: ${language}`);
         return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**
      * Creates a file on the SSH server.
      */
-    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
-        const actualContent = content ?? '';
-        // Placeholder for SSH file creation; align with AbstractServerHandler signature
-        sshServerDebug(`Creating file on SSH server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
+    async createFile(filePath: string): Promise<boolean> {
+        // Placeholder for SSH file creation
+        sshServerDebug(`Creating file on SSH server: ${filePath}`);
         return true;
     }
-
-    
 
     /**
      * Retrieves system information for the SSH server.
@@ -129,20 +123,6 @@ export class SshServerHandler extends AbstractServerHandler {
             limit,
             offset,
         };
-    }
-
-    /**
-     * Retrieve a file's content over SSH.
-     */
-    async getFileContent(filePath: string): Promise<string> {
-        if (!filePath || typeof filePath !== 'string') {
-            throw new Error('filePath is required');
-        }
-        const quoted = `'${String(filePath).replace(/'/g, `'\\''`)}'`;
-        const res = await this.executeCommand(`cat ${quoted}`);
-        const ok = (res.exitCode ?? 1) === 0 && !res.error;
-        if (ok) return res.stdout;
-        throw new Error(res.stderr || `Failed to read file: ${filePath}`);
     }
 
     /**

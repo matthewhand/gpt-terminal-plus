@@ -20,13 +20,14 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     debug('Initializing server handler');
 
     // Retrieve the selected server from global state
-    let selectedServer = getSelectedServer();
+    const selectedServer = getSelectedServer();
+    debug('Selected server: ' + selectedServer);
+
+    // Guard clause: Ensure selectedServer is not undefined or null
     if (!selectedServer) {
-      // Default to local if none selected
-      selectedServer = 'localhost';
-      debug('No server selected; defaulting to: ' + selectedServer);
-    } else {
-      debug('Selected server: ' + selectedServer);
+      debug('No server selected. Cannot proceed with server initialization.');
+      res.status(400).json({ error: 'No server selected' });
+      return;  // Ensure the function exits here
     }
 
     // Initialize the ServerManager with the hostname

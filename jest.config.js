@@ -1,11 +1,8 @@
-const path = require('path');
 module.exports = {
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/tests/**/*.spec.[jt]s?(x)', '**/tests/**/*.test.[jt]s?(x)'],
   transform: {
-    '^.+\.tsx?$': 'ts-jest',
+    '^.+\\.tsx?$': 'ts-jest',
   },
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/$1',
@@ -19,4 +16,5 @@ module.exports = {
     '^@tests/(.*)$': '<rootDir>/tests/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 };

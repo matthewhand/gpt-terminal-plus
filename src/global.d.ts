@@ -1,6 +1,7 @@
 /**
  * Declares the selected server as a global constant.
  */
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 declare const selectedServer: string;
 
 declare global {

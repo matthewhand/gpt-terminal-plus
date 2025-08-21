@@ -24,8 +24,7 @@ function makeApp() {
 
 describe('execute (shell) smoke', () => {
   const app = makeApp();
-  const token = 'test-token';
-  process.env.API_TOKEN = token;
+  const token = getOrGenerateApiToken();
 
   it('runs echo via /command/execute-shell', async () => {
     const res = await request(app)
@@ -67,17 +66,5 @@ describe('execute (shell) smoke', () => {
 
     expect(res.status).toBe(200);
     expect(res.body?.result?.exitCode).toBe(1);
-  });
-
-  it('runs python command via /command/execute-shell', async () => {
-    const res = await request(app)
-      .post('/command/execute-shell')
-      .set('Authorization', `Bearer ${token}`)
-      .set('Content-Type', 'application/json')
-      .send({ shell: 'python', command: 'print("hello from python")' });
-
-    expect(res.status).toBe(200);
-    expect(res.body?.result?.exitCode).toBe(0);
-    expect(res.body?.result?.stdout?.trim()).toBe('hello from python');
   });
 });

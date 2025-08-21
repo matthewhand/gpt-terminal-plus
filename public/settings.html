@@ -179,14 +179,7 @@
           const tdR = document.createElement('td');
 
           tdK.innerHTML = '<code>' + groupName + '.' + key + '</code>';
-          
-          // Special handling for LLM Console feature
-          if (groupName === 'features' && key === 'llmConsole' && meta.value === true) {
-            tdV.innerHTML = humanValue(meta.value) + ' <a href="/llm/console" style="color: var(--accent); margin-left: 8px;">→ Open Console</a>';
-          } else {
-            tdV.textContent = humanValue(meta.value);
-          }
-          
+          tdV.textContent = humanValue(meta.value);
           tdR.innerHTML = meta.readOnly
             ? '<span class="badge ro" title="Provided by environment variable; not editable here.">read-only</span>'
             : '<span class="badge rw" title="Not provided by environment; editable in file-based config (future).">writable*</span>';

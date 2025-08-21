@@ -1,6 +1,5 @@
 import { exec as _exec } from 'child_process';
 import shellEscape from 'shell-escape';
-import { ExecutionResult } from '../../../types/ExecutionResult';
 
 type Lang =
   | 'javascript'
@@ -44,7 +43,7 @@ export async function executeLocalCode(
   language: Lang,
   timeoutMs: number = 30_000,
   directory?: string
-): Promise<ExecutionResult> {
+): Promise<{ stdout: string; stderr: string }> {
   if (!code || !code.trim()) {
     throw new Error('Code is required for execution.');
   }
@@ -55,11 +54,10 @@ export async function executeLocalCode(
   const cmd = withDirectory(buildLanguageCommand(language, code), directory);
   const execAny = _exec as unknown as (...args: any[]) => any;
 
-  const res = await new Promise<ExecutionResult>((resolve, reject) => {
+  const res = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
     const cb = (error: any, stdout: string, stderr: string) => {
-      const exitCode = error?.code ?? 0;
-      const success = exitCode === 0;
-      resolve({ stdout, stderr, exitCode, success, error: !success });
+      if (error) return reject(error);
+      resolve({ stdout, stderr });
     };
 
     // Try 3-arg form first; if the mock only supports (cmd, cb), fall back.
@@ -72,14 +70,9 @@ export async function executeLocalCode(
         reject(secondErr);
       }
     }
-  }).catch((err: any): ExecutionResult => {
-    return {
-      stdout: '',
-      stderr: err?.message || 'unknown error',
-      exitCode: err?.code ?? 1,
-      success: false,
-      error: true
-    };
+  }).catch((err: any) => {
+    const msg = err?.message || 'unknown error';
+    throw new Error(`Failed to execute code: ${msg}`);
   });
 
   return res;

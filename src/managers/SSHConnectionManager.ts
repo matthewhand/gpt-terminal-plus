@@ -1,22 +1,14 @@
+import { Client, ConnectConfig } from 'ssh2';
 import { SshHostConfig } from '../types/ServerConfig'; // Corrected import path
 import Debug from 'debug';
-
-type ConnectConfig = {
-  host: string;
-  port?: number;
-  username?: string;
-  privateKey?: Buffer | string | undefined;
-};
 
 const debug = Debug('app:ssh-connection-manager');
 
 export class SSHConnectionManager {
-  private client: any;
+  private client: Client;
 
   constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Client: SSHClient } = require('ssh2');
-    this.client = new SSHClient();
+    this.client = new Client();
   }
 
   /**
@@ -36,7 +28,7 @@ export class SSHConnectionManager {
       this.client.on('ready', () => {
         debug('SSH connection established');
         resolve();
-      }).on('error', (err: Error) => {
+      }).on('error', (err) => {
         debug('SSH connection error: ' + err.message);
         reject(err);
       }).connect(connectionConfig);
@@ -50,7 +42,7 @@ export class SSHConnectionManager {
    */
   executeCommand(command: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
-      this.client.exec(command, (err: Error | null, stream: any) => {
+      this.client.exec(command, (err, stream) => {
         if (err) {
           debug('Command execution error: ' + err.message);
           return reject(err);
@@ -59,17 +51,11 @@ export class SSHConnectionManager {
         let stdout = '';
         let stderr = '';
 
-        // Attach listeners separately to avoid chaining onto stderr,
-        // which prevented the 'close' handler from registering on the main stream.
         stream.on('data', (data: Buffer) => {
           stdout += data.toString();
-        });
-        if (stream.stderr && typeof stream.stderr.on === 'function') {
-          stream.stderr.on('data', (data: Buffer) => {
-            stderr += data.toString();
-          });
-        }
-        stream.on('close', (code: number) => {
+        }).stderr.on('data', (data: Buffer) => {
+          stderr += data.toString();
+        }).on('close', (code: number) => {
           if (code === 0) {
             resolve({ stdout, stderr });
           } else {

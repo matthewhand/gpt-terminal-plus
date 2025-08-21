@@ -2,44 +2,35 @@
   "name": "gpt-terminal-plus",
   "version": "latest",
   "description": "ChatGPT terminal action for Custom GPT",
-  "main": "dist/index.js",
-  "bin": {
-    "jit": "dist/index.js"
-  },
+  "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
     "lint": "npx eslint src/",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
-    "build": "node node_modules/typescript/bin/tsc",
+    "build": "tsc",
     "start": "node --max-old-space-size=256 dist/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",
     "pretest": "rm -rf dist",
-    "test": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --runInBand",
-    "test:coverage": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node node_modules/jest/bin/jest.js --coverage --runInBand",
-    "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
-    "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
+    "test": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --runInBand",
+    "test:coverage": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand",
+    "test:debug": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand",
+    "test:monitor": "npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* jest --verbose --runInBand --watch",
     "showcase": "bash scripts/capture_showcase.sh",
     "ncu": "ncu",
     "smoke": "bash scripts/smoke.sh",
-    "smoke:hosting": "bash scripts/hosted-smoke.sh",
     "openapi:generate": "node scripts/generate-openapi.cjs",
     "openapi:lint": "npx @redocly/cli@latest lint public/openapi.yaml",
     "postbuild": "npm run openapi:generate",
-    "pkg:win": "npm run build && npx pkg . --targets node18-win-x64,node18-win-arm64 --out-path release",
-    "pkg:osx": "npm run build && npx pkg . --targets node18-macos-x64 --output release/gpt-terminal-plus-macos-x64",
     "prestart": "npm run openapi:generate"
   },
   "keywords": [],
   "author": "matthewhand+dot+au+at+gmail+dot+com",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.4",
     "@eslint/eslintrc": "^3.1.0",
     "@types/body-parser": "^1.19.5",
-    "@types/chai": "^4.3.20",
     "@types/config": "^3.3.4",
     "@types/convict": "^6.1.6",
     "@types/cors": "^2.8.17",
@@ -49,15 +40,12 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.1.0",
     "@types/proper-lockfile": "^4.1.4",
-    "@types/sinon": "^17.0.3",
     "@types/ssh2": "^1.15.0",
     "@types/ssh2-sftp-client": "^9.0.3",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.7.0",
     "@typescript-eslint/parser": "^8.7.0",
-    "babel-jest": "^29.7.0",
-    "babel-polyfill": "^6.26.0",
     "cross-env": "^7.0.3",
     "eslint": "^9.11.1",
     "eslint-config-prettier": "^9.1.0",
@@ -66,12 +54,12 @@
     "globals": "^15.9.0",
     "jest": "^29.7.0",
     "natural-compare": "^1.4.0",
-    "sinon": "^19.0.2",
+    "nodemon": "^3.0.1",
+    "npm-run-all": "^4.1.5",
     "supertest": "^7.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "pkg": "^5.8.1"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.665.0",
@@ -80,7 +68,6 @@
     "@modelcontextprotocol/sdk": "^1.4.1",
     "@ngrok/ngrok": "^1.4.1",
     "@types/shell-escape": "^0.2.3",
-    "@types/swagger-ui-express": "^4.1.8",
     "axios": "^1.11.0",
     "body-parser": "^1.20.2",
     "config": "^3.3.12",
@@ -107,18 +94,6 @@
     "uuid": "^10.0.0",
     "yaml": "^2.8.1",
     "zod": "^3.24.1"
-  },
-  "pkg": {
-    "scripts": [
-      "dist/**/*.js"
-    ],
-    "assets": [
-      "README.md",
-      "TODO.md",
-      "public/**/*",
-      "docs/**/*",
-      "config/**/*"
-    ]
   },
   "_moduleAliases": {
     "@src": "src"

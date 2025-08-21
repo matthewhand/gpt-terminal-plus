@@ -26,7 +26,6 @@ function sseWrite(res: Response, event: string, data: any) {
 const handleExecute = (req: Request, res: Response) => {
   logReq('/command/execute-shell', req.body);
   const cmd: string = String(req.body?.command ?? '');
-  const shell: string = String(req.body?.shell ?? '');
 
   let exitCode = 0, stdout = '', stderr = '';
 
@@ -34,13 +33,6 @@ const handleExecute = (req: Request, res: Response) => {
     stdout = cmd.replace(/^\s*echo\s+/, '').trim();
   } else if (/^\s*exit\s+(\d+)/.test(cmd)) {
     exitCode = Number(cmd.match(/^\s*exit\s+(\d+)/)![1]);
-  } else if (shell === 'python') {
-    const m = cmd.match(/^\s*print\((['"])(.*)\1\)\s*$/);
-    if (m) {
-      stdout = m[2];
-    } else {
-      exitCode = 1; stderr = `mock python runtime error`;
-    }
   } else {
     exitCode = 1; stderr = 'unsupported command in test harness';
   }
@@ -68,17 +60,13 @@ const handleExecuteCode = (req: Request, res: Response) => {
     exitCode = Number(code.match(/^\s*exit\s+(\d+)/)![1]);
   } else if (language === 'bash' && /^\s*echo\s+/.test(code)) {
     stdout = code.replace(/^\s*echo\s+/, '').trim();
-  } else if (language === 'node' && /console\.log\(/.test(code)) {
-    stdout = 'node-ok';
-  } else if (language === 'typescript' && /console\.log\(/.test(code)) {
-    stdout = 'tsnode-ok';
   } else {
     exitCode = 1; stderr = `mock ${language} runtime error`;
   }
 
   const result = { stdout, stderr, exitCode, error: exitCode !== 0 };
   const aiAnalysis = exitCode !== 0 ? { text: 'Mock analysis: code failed.' } : undefined;
-  res.status(200).json({ result, aiAnalysis, language, interpreter: language === 'typescript' ? 'ts-node' : language });
+  res.status(200).json({ result, aiAnalysis });
 };
 
 
@@ -111,22 +99,6 @@ const handleExecuteLlm = (req: Request, res: Response) => {
     return;
   }
 
-  // Mock interpreter engine
-  const { engine = '', model = 'gpt-4o' } = req.body;
-  if (engine === 'llm:interpreter' || engine === 'interpreter') {
-    const result = { stdout: 'Hello from interpreter', stderr: '', exitCode: 0, error: false };
-    res.status(200).json({
-      runtime: 'llm:interpreter',
-      engine: 'interpreter',
-      model,
-      result,
-      aiAnalysis: undefined,
-      plan: [],
-      safety: []
-    });
-    return;
-  }
-
   // Mock SSM success for "echo ssm hello"
   const text = String(instructions);
   if (/\bssm\b/i.test(text) && /^\s*echo\s+/.test(text)) {
@@ -153,86 +125,6 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 router.post('/execute-shell', handleExecute);
 router.post('/execute-code', handleExecuteCode);
 router.post('/execute-llm', handleExecuteLlm);
-
-// Session-based execution for long-running processes
-// Import executeCode
-const { executeCode } = require('./command/executeCode');
-
-router.post('/execute-code', executeCode);
-
-// Diff and patch endpoints
-router.post('/diff', (req: Request, res: Response) => {
-  logReq('/command/diff', req.body);
-  const { filePath } = req.body;
-  
-  if (!filePath) {
-    return res.status(400).json({ error: 'filePath is required' });
-  }
-  
-  // Mock diff generation
-  const fs = require('fs');
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'File not found' });
-  }
-  
-  // Mock unified diff output
-  const diff = `--- a/${filePath}\n+++ b/${filePath}\n@@ -1,3 +1,3 @@\n line1\n-old content\n+new content\n line3`;
-  res.json({ diff });
-});
-
-router.post('/patch', (req: Request, res: Response) => {
-  logReq('/command/patch', req.body);
-  const { filePath, patch } = req.body;
-  
-  if (!filePath || !patch) {
-    return res.status(400).json({ error: 'filePath and patch are required' });
-  }
-  
-  const fs = require('fs');
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'File not found' });
-  }
-  
-  // Mock patch application - check for invalid patch format
-  if (patch.includes('invalid')) {
-    return res.json({ ok: false, error: 'Invalid patch format' });
-  }
-  
-  // Mock successful patch application
-  res.json({ ok: true });
-});
-
-router.post('/execute-session', (req: Request, res: Response) => {
-  const { command, sessionId, timeout = 5000 } = req.body;
-  
-  if (sessionId) {
-    // Mock session retrieval
-    return res.json({
-      sessionId,
-      output: 'Mock session output...',
-      completed: true,
-      totalLength: 100
-    });
-  }
-  
-  if (command && command.includes('sleep')) {
-    // Mock long-running process
-    const newSessionId = `session_${Date.now()}`;
-    return res.json({
-      sessionId: newSessionId,
-      message: 'Process is still running. Use sessionId to retrieve output.',
-      partialOutput: 'Starting long process...',
-      timeout
-    });
-  }
-  
-  // Mock quick completion
-  return res.json({
-    completed: true,
-    output: 'Command completed quickly',
-    executionTime: 100
-  });
-});
 
 export default router;
 

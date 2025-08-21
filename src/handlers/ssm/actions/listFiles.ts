@@ -1,9 +1,4 @@
-import { 
-  SSMClient, 
-  SendCommandCommand, 
-  SendCommandCommandOutput, 
-  GetCommandInvocationCommand 
-} from "@aws-sdk/client-ssm";
+import { SSMClient, SendCommandCommand, GetCommandInvocationCommand, SendCommandResult } from "@aws-sdk/client-ssm";
 import Debug from "debug";
 import { ListParams } from '../../../types/ListParams';
 
@@ -11,9 +6,9 @@ const debug = Debug("app:ssmUtils");
 
 /**
  * Lists files in a directory on an SSM instance.
- * @src/types/ListParams.ts {SSMClient} ssmClient - The SSM client.
- * @src/types/ListParams.ts {string} instanceId - The ID of the instance.
- * @src/types/ListParams.ts {ListParams} params - The parameters for listing files.
+ * @param {SSMClient} ssmClient - The SSM client.
+ * @param {string} instanceId - The ID of the instance.
+ * @param {ListParams} params - The parameters for listing files.
  * @returns {Promise<string[]>} - The list of files.
  */
 export const listFiles = async (
@@ -24,7 +19,7 @@ export const listFiles = async (
   const { directory, limit = 42, offset = 0, orderBy = "filename" } = params;
 
   // Command to list files with applied offset and limit
-  let command = `ls -l ${directory} | tail -n +2 | awk '{print $9, $5, $6, $7}' | sort `;
+  let command = "ls -l " + directory + " | tail -n +2 | awk '{print $9, $5, $6, $7}' | sort ";
 
   // Apply sorting order
   if (orderBy === "filename") {
@@ -38,7 +33,7 @@ export const listFiles = async (
 
   debug("Listing files with command: " + command);
 
-  const result: SendCommandCommandOutput = await ssmClient.send(new SendCommandCommand({
+  const result: SendCommandResult = await ssmClient.send(new SendCommandCommand({
     InstanceIds: [instanceId],
     DocumentName: "AWS-RunShellScript",
     Parameters: {
@@ -62,12 +57,9 @@ export const listFiles = async (
   const commandOutput = commandInvocationResult.StandardOutputContent || "";
 
   // Extract the command output from the result
-  const fileList = commandOutput
-    .trim()
-    .split('\n')
-    .filter((line: string) => line.length > 0);
+  const fileList = commandOutput.trim().split("\n").filter(line => line.length > 0);
 
-  debug('Files listed: ' + fileList.join(', '));
+  debug("Files listed: " + fileList.join(", "));
 
   return fileList;
 };

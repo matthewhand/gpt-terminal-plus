@@ -1,113 +1,45 @@
-import { Request, Response } from 'express';
-import { getServerHandler } from '../../utils/getServerHandler';
-import { handleServerError } from '../../utils/handleServerError';
-import { getExecuteTimeout } from '../../utils/timeout';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-import { promises as fsp } from 'fs';
-import shellEscape from 'shell-escape';
-import { analyzeError } from '../../llm/errorAdvisor';
-import { logSessionStep } from '../../utils/activityLogger';
+import { Request, Response } from "express";
+import Debug from "debug";
+import { handleServerError } from "../../utils/handleServerError";
+import { getServerHandler } from "../../utils/getServerHandler";
+import { analyzeError } from "../../llm/errorAdvisor";
+
+const debug = Debug("app:command:execute-code");
 
 /**
- * Execute code using interpreters
- * @route POST /command/execute-code
+ * Function to execute code on the server.
+ * @param {Request} req - The Express request object.
+ * @param {Response} res - The Express response object.
  */
 export const executeCode = async (req: Request, res: Response) => {
-  const sessionId = `session_${Date.now()}`;
-  const { code, language = 'python' } = req.body;
+  if (process.env.ENABLE_CODE_EXECUTION === 'false') {
+    return res.status(403).json({ error: "Code execution is disabled." });
+  }
 
-  await logSessionStep('executeCode-input', { code, language }, sessionId);
+  const { code, language } = req.body;
 
-  if (!code) {
-    return res.status(400).json({ error: 'Code is required' });
+  if (!code || !language) {
+    debug("Code and language are required but not provided.");
+    return res.status(400).json({ error: "Code and language are required." });
   }
 
   try {
     const server = getServerHandler(req);
-
-    // Map language to interpreter and extension
-    const map: Record<string, { cmd: string; ext: string }> = {
-      python: { cmd: 'python3', ext: '.py' },
-      python3: { cmd: 'python3', ext: '.py' },
-      node: { cmd: 'node', ext: '.js' },
-      nodejs: { cmd: 'node', ext: '.js' },
-      typescript: { cmd: 'ts-node', ext: '.ts' },
-      bash: { cmd: 'bash', ext: '.sh' },
-      sh: { cmd: 'sh', ext: '.sh' }
-    };
-
-    const mapping = map[(language || '').toLowerCase()];
-    let interpreter = mapping?.cmd;
-    if (!interpreter) {
-      const supportedLanguages = Object.keys(map).join(', ');
-      return res.status(400).json({ 
-        error: `Language '${language}' not supported`,
-        message: `executeCode is for interpreters only. Supported: ${supportedLanguages}`,
-        hint: `For shell commands like bash, use /command/execute-shell instead`
-      });
-    }
-
-    // Resolve interpreter path; use npx for ts-node to avoid PATH issues
-    let interpreterCmd = interpreter;
-    if (interpreter === 'ts-node') {
-      interpreterCmd = 'npx';
-    }
-
-    // Check for potential interpreter availability (skip which for npx)
-    const checkResult = interpreterCmd === 'npx'
-      ? { exitCode: 0 }
-      : await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
-    if (checkResult.exitCode !== 0) {
-      return res.status(400).json({
-        error: `Interpreter '${interpreter}' not available`,
-        message: `${language} interpreter (${interpreter}) is not installed or not in PATH`,
-        hint: `Install ${interpreter} or use a different language`
-      });
-    }
-
-    // Write to a temp file and execute via interpreter to support multi-line code safely
-    const tmpDir = os.tmpdir();
-    const ext = mapping.ext;
-    const codePath = path.join(tmpDir, `jit-code-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    await fsp.writeFile(codePath, String(code), { mode: 0o600 });
-
-    const escapedPath = shellEscape([codePath]);
-    const runCmd = interpreterCmd === 'npx'
-      ? `npx -y ts-node -T ${escapedPath}`
-      : `${shellEscape([interpreterCmd])} ${escapedPath}`;
-
-    const timeout = getExecuteTimeout('code');
-    let result: any;
-    try {
-      result = await Promise.race([
-        server.executeCommand(runCmd),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
-        )
-      ]) as any;
-    } finally {
-      try { await fsp.unlink(codePath); } catch {}
-    }
-
+    const result = await server.executeCode(code, language);
+    debug(`Code executed: ${code}, result: ${JSON.stringify(result)}`);
     let aiAnalysis;
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
-      aiAnalysis = await analyzeError({
-        kind: 'code',
-        input: String(code),
-        language: String(language),
-        stdout: result.stdout,
-        stderr: result.stderr,
-        exitCode: result.exitCode
-      });
+      aiAnalysis = await analyzeError({ kind: 'code', input: code, language, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
     }
-
-    await logSessionStep('executeCode-output', { result, aiAnalysis, language, interpreter }, sessionId);
-    res.json({ result, aiAnalysis, language, interpreter });
-
-  } catch (error) {
-    await logSessionStep('executeCode-error', { error: error instanceof Error ? error.message : String(error) }, sessionId);
-    handleServerError(error, res, 'Error executing code');
+    res.status(200).json({ result, aiAnalysis });
+  } catch (err) {
+    debug(`Error executing code: ${err instanceof Error ? err.message : String(err)}`);
+    try {
+      const msg = err instanceof Error ? err.message : String(err);
+      const aiAnalysis = await analyzeError({ kind: 'code', input: code, language, stderr: msg });
+      res.status(200).json({ result: { stdout: '', stderr: msg, error: true, exitCode: 1 }, aiAnalysis });
+    } catch {
+      handleServerError(err, res, "Error executing code");
+    }
   }
 };

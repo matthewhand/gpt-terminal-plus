@@ -6,7 +6,7 @@ jest.mock('@aws-sdk/client-ssm');
 
 const MockedSSMClient = SSMClient as jest.MockedClass<typeof SSMClient>;
 
-describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
+describe('SSM Server Handler', () => {
   let ssmHandler: SsmServerHandler;
   let mockClient: jest.Mocked<SSMClient>;
 
@@ -52,8 +52,8 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: true,
-        stdout: 'Hello World',
-        stderr: '',
+        output: 'Hello World',
+        error: '',
         exitCode: 0
       });
 
@@ -84,8 +84,8 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: false,
-        stdout: '',
-        stderr: 'Command not found',
+        output: '',
+        error: 'Command not found',
         exitCode: 1
       });
     });
@@ -115,9 +115,9 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: false,
-        stdout: '',
-        stderr: 'SSM command timeout',
-        exitCode: 124
+        output: '',
+        error: 'Command execution timed out',
+        exitCode: -1
       });
 
       // Restore setTimeout
@@ -131,9 +131,9 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: false,
-        stdout: '',
-        stderr: 'Error: AWS SDK Error',
-        exitCode: 1
+        output: '',
+        error: 'AWS SDK Error',
+        exitCode: -1
       });
     });
 
@@ -148,9 +148,9 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: false,
-        stdout: '',
-        stderr: 'TypeError: Cannot read properties of undefined (reading \'Status\')',
-        exitCode: 1
+        output: '',
+        error: 'Failed to get command ID from AWS response',
+        exitCode: -1
       });
     });
   });
@@ -178,8 +178,8 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       expect(result).toEqual({
         success: true,
-        stdout: 'SSM code executed',
-        stderr: '',
+        output: 'Hello from Python',
+        error: '',
         exitCode: 0
       });
     });
@@ -205,10 +205,10 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
       const result = await ssmHandler.executeCode('print(', 'python');
 
       expect(result).toEqual({
-        success: true,
-        stdout: 'SSM code executed',
-        stderr: '',
-        exitCode: 0
+        success: false,
+        output: '',
+        error: 'SyntaxError: invalid syntax',
+        exitCode: 1
       });
     });
   });
@@ -234,7 +234,12 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       const result = await ssmHandler.createFile('/tmp/test.txt');
 
-      expect(result).toEqual(true);
+      expect(result).toEqual({
+        success: true,
+        output: '',
+        error: '',
+        exitCode: 0
+      });
     });
 
     it('should handle file creation errors', async () => {
@@ -257,7 +262,12 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       const result = await ssmHandler.createFile('/root/test.txt');
 
-      expect(result).toEqual(true);
+      expect(result).toEqual({
+        success: false,
+        output: '',
+        error: 'Permission denied',
+        exitCode: 1
+      });
     });
   });
 
@@ -283,13 +293,10 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
       const result = await ssmHandler.getSystemInfo();
 
       expect(result).toEqual({
-        type: 'SsmServer',
-        platform: 'linux',
-        architecture: 'x64',
-        totalMemory: 16384,
-        freeMemory: 8192,
-        uptime: 123456,
-        currentFolder: '/home/user',
+        success: true,
+        output: 'Linux ip-10-0-1-100 5.4.0-1043-aws #45-Ubuntu',
+        error: '',
+        exitCode: 0
       });
     });
 
@@ -299,13 +306,10 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
       const result = await ssmHandler.getSystemInfo();
 
       expect(result).toEqual({
-        type: 'SsmServer',
-        platform: 'linux',
-        architecture: 'x64',
-        totalMemory: 16384,
-        freeMemory: 8192,
-        uptime: 123456,
-        currentFolder: '/home/user',
+        success: false,
+        output: '',
+        error: 'System info unavailable',
+        exitCode: -1
       });
     });
   });
@@ -331,15 +335,25 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
 
       const result = await ssmHandler.getFileContent('/tmp/test.txt');
 
-      expect(result).toEqual('File content here');
+      expect(result).toEqual({
+        success: true,
+        output: 'File content here',
+        error: '',
+        exitCode: 0
+      });
     });
 
     it('should handle file read errors', async () => {
-        mockClient.send.mockImplementation(() => {
-            throw new Error('Permission denied');
-        });
-    
-        await expect(ssmHandler.getFileContent('/root/secret.txt')).rejects.toThrow('Permission denied');
+      mockClient.send.mockRejectedValue(new Error('Permission denied') as any);
+
+      const result = await ssmHandler.getFileContent('/root/secret.txt');
+
+      expect(result).toEqual({
+        success: false,
+        output: '',
+        error: 'Permission denied',
+        exitCode: -1
+      });
     });
   });
 
@@ -350,8 +364,8 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
       const result = await ssmHandler.executeCommand('echo test');
 
       expect(result.success).toBe(false);
-      expect(result.stderr).toBe('Error: Network error');
-      expect(result.exitCode).toBe(1);
+      expect(result.error).toBe('Network error');
+      expect(result.exitCode).toBe(-1);
     });
 
     it('should handle timeout errors', async () => {
@@ -360,25 +374,19 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
       const result = await ssmHandler.executeCommand('failing-command');
 
       expect(result.success).toBe(false);
-      expect(result.stderr).toBe('Error: Command failed');
+      expect(result.error).toBe('Command failed');
     });
   });
 
   describe('configuration', () => {
     it('should use correct instance ID and region', () => {
-      new SsmServerHandler({
-        protocol: 'ssm',
-        hostname: 'test-instance',
-        instanceId: 'i-1234567890abcdef0',
-        region: 'us-east-1'
-      });
       expect(MockedSSMClient).toHaveBeenCalledWith({
         region: 'us-east-1'
       });
     });
 
     it('should handle different regions', () => {
-      new SsmServerHandler({
+      const handler = new SsmServerHandler({
         protocol: 'ssm',
         hostname: 'test-instance-2',
         instanceId: 'i-abcdef1234567890',
@@ -391,6 +399,3 @@ describe.skip('SSM Server Handler - INCOMPLETE IMPLEMENTATION', () => {
     });
   });
 });
-
-
-

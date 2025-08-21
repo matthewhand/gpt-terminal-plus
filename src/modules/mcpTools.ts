@@ -1,9 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
-import path from "path";
 import { changeDirectory } from "../routes/command/changeDirectory";
 import { executeCommand } from "../routes/command/executeCommand";
 import { executeCode } from "../routes/command/executeCode";
+import { executeFile } from "../routes/command/executeFile";
 import { createFile } from "../routes/file/createFile";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
 import { getSupportedModels, isSupportedModel } from "../common/models";
@@ -55,7 +55,18 @@ export const registerMcpTools = (server: McpServer) => {
     }
   );
 
-  // Deprecated: execute-file tool removed in favor of explicit shell or code execution.
+  // Execute File Tool
+  server.tool(
+    "command/execute-file",
+    {
+      filename: z.string(),
+      directory: z.string().optional()
+    },
+    async ({ filename, directory }: { filename: string, directory?: string }) => {
+      const result = await executeFile({ body: { filename, directory } } as any, {} as any);
+      return { content: [{ type: "text", text: JSON.stringify(result) }] };
+    }
+  );
 
   // File Tools
 
@@ -68,8 +79,7 @@ export const registerMcpTools = (server: McpServer) => {
       content: z.string()
     },
     async ({ directory, filename, content }: { directory: string; filename: string; content: string }) => {
-      const filePath = directory ? path.posix.join(directory, filename) : filename;
-      const result = await createFile({ body: { filePath, content, backup: true } } as any, {} as any);
+      const result = await createFile({ body: { directory, filename, content } } as any, {} as any);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     }
   );

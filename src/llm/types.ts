@@ -17,8 +17,8 @@ export interface ChatChoice {
 }
 
 export interface ChatResponse {
-  model?: string;
+  model: string;
   choices: ChatChoice[];
-  provider?: string;
+  provider: string;
 }
 

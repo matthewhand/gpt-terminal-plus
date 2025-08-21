@@ -37,7 +37,7 @@ describe("executeLocalCode", () => {
     );
 
     const result = await executeLocalCode(code, language);
-    expect(result).toEqual({ stdout: expectedStdout, stderr: expectedStderr, exitCode: 0, success: true, error: false });
+    expect(result).toEqual({ stdout: expectedStdout, stderr: expectedStderr });
     expect(execMock).toHaveBeenCalled();
   });
 
@@ -57,14 +57,13 @@ describe("executeLocalCode", () => {
     );
 
     const result = await executeLocalCode(code, language, undefined, directory);
-    expect(result).toEqual({ stdout: expectedStdout, stderr: expectedStderr, exitCode: 0, success: true, error: false });
+    expect(result).toEqual({ stdout: expectedStdout, stderr: expectedStderr });
   });
 
-  it("should return error result if exec returns an error", async () => {
+  it("should reject if exec returns an error", async () => {
     const code = "console.log('hello');";
     const language = "node";
     const error = new Error("exec error");
-    (error as any).code = 1;
 
     execMock.mockImplementation(
       (command: string, options: { timeout?: number }, callback: (error: Error | null, stdout: string, stderr: string) => void) => {
@@ -72,9 +71,8 @@ describe("executeLocalCode", () => {
       }
     );
 
-    const result = await executeLocalCode(code, language);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe(true);
-    expect(result.exitCode).toBe(1);
+    await expect(executeLocalCode(code, language)).rejects.toThrow(
+      "Failed to execute code: exec error"
+    );
   });
 });

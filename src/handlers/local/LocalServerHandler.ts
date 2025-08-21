@@ -6,8 +6,6 @@ import { SystemInfo } from '../../types/SystemInfo';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { readdir } from 'fs/promises';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { exec } from 'child_process';
 import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
@@ -40,12 +38,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     async executeCode(code: string, language: string, timeout: number = 5000, directory: string = '/tmp'): Promise<ExecutionResult> {
         if (!code || !language) throw new Error('Code and language are required for execution.');
         localServerDebug(`Executing code: ${code}, language: ${language}, timeout: ${timeout}, directory: ${directory}`);
-        try {
-            return await executeLocalCode(code, language, timeout, directory);
-        } catch (error) {
-            localServerDebug('Error executing code:', error);
-            return { stdout: '', stderr: (error as Error).message, exitCode: 1, success: false, error: true };
-        }
+        return executeLocalCode(code, language, timeout, directory);
     }
 
     /**
@@ -110,23 +103,11 @@ export class LocalServerHandler extends AbstractServerHandler {
     /**
      * Creates a file on the local server and runs post-command.
      */
-    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
-        const actualContent = content ?? '';
-        localServerDebug(`Creating file at path: ${filePath}, contentLength: ${actualContent.length}, backup: ${backup}`);
-        const result = await createLocalFile(filePath, actualContent, backup);
+    async createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+        localServerDebug(`Creating file at path: ${filePath}, content: ${content}, backup: ${backup}`);
+        const result = await createLocalFile(filePath, content, backup);
         await this.runPostCommand(filePath);
         return result;
-    }
-
-    /**
-     * Read and return the content of a local file.
-     */
-    async getFileContent(filePath: string): Promise<string> {
-        if (!filePath || typeof filePath !== 'string') {
-            throw new Error('filePath is required');
-        }
-        const absPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
-        return fs.readFile(absPath, 'utf8');
     }
 
     /**

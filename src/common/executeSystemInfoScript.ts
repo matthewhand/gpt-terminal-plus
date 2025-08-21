@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { SSMClient, SendCommandCommand, SendCommandCommandOutput, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
-import type { Client } from "ssh2";
+import { Client } from "ssh2";
 import { promisify } from "util";
 import Debug from "debug";
 
@@ -131,7 +131,7 @@ async function executeSSHSystemInfoScript(sshClient: Client, shell: string, scri
   debug(`Executing SSH system info script with shell: ${shell}, scriptPath: ${scriptPath}`);
   return new Promise((resolve, reject) => {
     let commandOutput = "";
-    (sshClient as any).exec(`${shell} ${scriptPath}`, (err: any, stream: any) => {
+    sshClient.exec(`${shell} ${scriptPath}`, (err, stream) => {
       if (err) {
         const errorMessage = `Error executing SSH command: ${err.message}`;
         debug(errorMessage);

@@ -23,9 +23,7 @@ export async function createFile(filePath: string, content: string, backup: bool
   debug('Resolved full path: %s', fullPath);
 
   try {
-    const existed = fs.existsSync(fullPath);
-    debug('File exists: %s', existed);
-    if (backup && existed) {
+    if (backup && fs.existsSync(fullPath)) {
       debug('Backing up existing file to %s.bak', fullPath);
       await fs.promises.copyFile(fullPath, fullPath + '.bak');
     }

@@ -58,12 +58,12 @@ After deploying the app, confirm the installation by checking the following:
     ```bash
     flyctl status -a gpt-terminal-plus
     ```
-    Example output (your hostname will differ; avoid publishing real FQDNs):
+    Example output:
     ```plaintext
     App
       Name     = gpt-terminal-plus
       Owner    = personal
-      Hostname = <your-app>.fly.dev  # e.g., ${FLY_DOMAIN}
+      Hostname = gpt-terminal-plus.fly.dev
 
     Machines
     PROCESS ID              VERSION REGION  STATE   CHECKS               LAST UPDATED

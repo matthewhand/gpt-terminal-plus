@@ -14,14 +14,10 @@ import config from "config";
 import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
-import publicRouter from "./routes/publicRouter";
-import shellRouter from "./routes/shell";
-import { mountSimpleAdmin } from "./admin/simple";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
-import { registerServersFromConfig } from './bootstrap/serverLoader';
 
 import './modules/ngrok';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -35,41 +31,18 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
-// Mount Simple Admin
-mountSimpleAdmin(app);
-
-/**
- * Static assets
- * - Serve public/ at /
- * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
- */
 // Serve static assets from public/
 app.use(express.static(path.resolve(__dirname, '..', 'public')));
-// Serve documentation markdown as static files
-app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router
 setupApiRouter(app);
-
-// Shell session routes
-app.use('/shell', shellRouter);
-
-// Public routes (e.g., /health)
-app.use(publicRouter);
 
 
   // Dynamic OpenAPI routes
   registerOpenApiRoutes(app);
 
-  // Enhanced Swagger UI at /docs
-  const swaggerOptions = {
-    swaggerUrl: '/openapi.json',
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'GPT Terminal Plus API',
-    customfavIcon: '/favicon.ico'
-  };
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
+  // Swagger UI at /docs, static-first pointing to /openapi.json
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
 
  if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");
@@ -95,8 +68,6 @@ const configFilePath = path.join(configDir, "production.json");
  * Main function to initialize the application.
  */
 const main = async (): Promise<void> => {
-  // Load servers from config into memory registry
-  registerServersFromConfig();
   // Ensure the configuration directory exists
   console.debug("Checking if configuration directory exists at:", configDir);
   if (!fs.existsSync(configDir)) {

@@ -52,53 +52,37 @@ export class SsmServerHandler extends AbstractServerHandler {
                     return {
                         stdout: inv.StandardOutputContent || '',
                         stderr: inv.StandardErrorContent || '',
-                        exitCode,
-                        success: exitCode === 0,
-                        error: exitCode !== 0
+                        error: exitCode !== 0,
+                        exitCode
                     };
                 }
                 if (Date.now() - start > maxMs) {
-                    return { stdout: '', stderr: 'SSM command timeout', exitCode: 124, success: false, error: true };
+                    return { stdout: '', stderr: 'SSM command timeout', error: true, exitCode: 124 };
                 }
                 await new Promise(r => setTimeout(r, 1500));
             }
         } catch (e) {
             ssmServerDebug('SSM execute error: ' + String(e));
-            return { stdout: '', stderr: String(e), exitCode: 1, success: false, error: true };
+            return { stdout: '', stderr: String(e), error: true, exitCode: 1 };
         }
     }
 
     /**
      * Executes code in a specified language on the SSM server.
      */
-    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        // Placeholder implementation; align with abstract signature
-        ssmServerDebug(`Executing SSM code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
-        return { stdout: 'SSM code executed', stderr: '', exitCode: 0, success: true, error: false };
+    async executeCode(code: string, language: string): Promise<ExecutionResult> {
+        // Placeholder implementation
+        ssmServerDebug(`Executing SSM code: ${code} in language: ${language}`);
+        return { stdout: 'SSM code executed', stderr: '', error: false, exitCode: 0 };
     }
 
     /**
      * Creates a file on the SSM server.
      */
-    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
-        const actualContent = content ?? '';
-        // Placeholder for SSM file creation; align with AbstractServerHandler signature
-        ssmServerDebug(`Creating file on SSM server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
+    async createFile(filePath: string): Promise<boolean> {
+        // Placeholder for SSM file creation
+        ssmServerDebug(`Creating file on SSM server: ${filePath}`);
         return true;
-    }
-
-    async getFileContent(filePath: string): Promise<string> {
-        if (!filePath || typeof filePath !== 'string') {
-            throw new Error('filePath is required');
-        }
-        // Basic shell-safe quoting for a single path argument
-        const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
-        const res = await this.executeCommand(`cat ${quoted}`);
-        const ok = (res.exitCode ?? 1) === 0 && !res.error;
-        if (ok) {
-            return res.stdout;
-        }
-        throw new Error(res.stderr || `Failed to read file: ${filePath}`);
     }
 
     /**

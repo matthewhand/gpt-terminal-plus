@@ -18,12 +18,11 @@ function main() {
 
   const options = {
     definition: {
-      openapi: '3.1.0',
+      openapi: '3.0.3',
       info: {
         title: 'gpt-terminal-plus API',
         version: '0.1.0',
         description: 'OpenAPI generated from JSDoc annotations.',
-        license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' },
       },
       servers: [{ url: baseUrl, description: 'Public base URL' }],
       security: [{ bearerAuth: [] }],
@@ -42,21 +41,6 @@ function main() {
   console.log('Generating OpenAPI from JSDoc...');
   const spec = swaggerJsdoc(options);
 
-  // Inject OpenAI vendor extension into every operation
-  (function addOpenAIConsequentialFlag(s) {
-    if (!s || !s.paths) return;
-    const methods = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-    for (const pathItem of Object.values(s.paths)) {
-      if (!pathItem || typeof pathItem !== 'object') continue;
-      for (const m of methods) {
-        const op = pathItem[m];
-        if (op && typeof op === 'object') {
-          op['x-openai-isConsequential'] = false;
-        }
-      }
-    }
-  })(spec);
-  
   const publicDir = path.resolve(process.cwd(), 'public');
   if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 

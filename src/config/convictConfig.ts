@@ -4,39 +4,7 @@ type RedactedValue = string | number | boolean | null | string[] | number[] | bo
 
 export const convictConfig = () => {
   // Schema with env mappings and defaults
-  const instance: any = convict({
-    execution: {
-      shell: {
-        enabled: {
-          doc: 'Enable shell command execution endpoints',
-          format: Boolean,
-          default: true,
-          env: 'SHELL_ENABLED'
-        },
-        allowed: {
-          doc: 'List of allowed shells/interpreters when a shell is explicitly requested',
-          format: Array,
-          default: [],
-          env: 'SHELL_ALLOWED'
-        }
-      },
-      code: {
-        enabled: {
-          doc: 'Enable code execution endpoints',
-          format: Boolean,
-          default: true,
-          env: 'CODE_ENABLED'
-        }
-      },
-      llm: {
-        enabled: {
-          doc: 'Enable LLM execution endpoints',
-          format: Boolean,
-          default: true,
-          env: 'LLM_ENABLED'
-        }
-      }
-    },
+  return convict({
     server: {
       port: {
         doc: 'Port the HTTP server listens on',
@@ -170,75 +138,47 @@ export const convictConfig = () => {
           doc: 'Compat LLM provider (used by llmConfig.ts)',
           format: String,
           default: '',
-          env: 'LLM_COMPAT_PROVIDER'
+          env: 'LLM_PROVIDER'
         },
         llmModel: {
           doc: 'Compat model (used by llmConfig.ts)',
           format: String,
           default: '',
-          env: 'LLM_COMPAT_MODEL'
+          env: 'LLM_MODEL'
         },
         ollamaHost: {
           doc: 'Compat Ollama host (used by llmConfig.ts)',
           format: String,
           default: '',
-          env: 'LLM_COMPAT_OLLAMA_HOST'
+          env: 'OLLAMA_HOST'
         },
         interpreterHost: {
           doc: 'Compat Open Interpreter host',
           format: String,
           default: '',
-          env: 'LLM_COMPAT_INTERPRETER_HOST'
+          env: 'INTERPRETER_SERVER_HOST'
         },
         interpreterPort: {
           doc: 'Compat Open Interpreter port',
           format: 'port',
           default: 0,
-          env: 'LLM_COMPAT_INTERPRETER_PORT'
+          env: 'INTERPRETER_SERVER_PORT'
         },
         interpreterOffline: {
           doc: 'Compat Open Interpreter offline flag',
           format: Boolean,
           default: false,
-          env: 'LLM_COMPAT_INTERPRETER_OFFLINE'
+          env: 'INTERPRETER_OFFLINE'
         },
         interpreterVerbose: {
           doc: 'Compat Open Interpreter verbose flag',
           format: Boolean,
           default: true,
-          env: 'LLM_COMPAT_INTERPRETER_VERBOSE'
+          env: 'INTERPRETER_VERBOSE'
         }
-      }
-    },
-    files: {
-      enabled: {
-        doc: 'Enable file operation routes (list, read, create, update, amend, setPostCommand)',
-        format: Boolean,
-        default: false,
-        env: 'FILES_ENABLED'
-      },
-      consequential: {
-        doc: 'Mark file operation endpoints as consequential in OpenAPI (x-openai-isConsequential)',
-        format: Boolean,
-        default: true,
-        env: 'FILES_CONSEQUENTIAL'
       }
     }
   });
-
-  // Normalize getSchema() to have `properties` for compatibility in tests/tools
-  const originalGetSchema = instance.getSchema?.bind(instance);
-  if (originalGetSchema) {
-    instance.getSchema = () => {
-      const schema = originalGetSchema();
-      if (schema && !('properties' in schema) && schema._cvtProperties) {
-        return { properties: schema._cvtProperties };
-      }
-      return schema;
-    };
-  }
-
-  return instance;
 };
 
 /**
@@ -254,6 +194,13 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
     'llm.openai.apiKey'
   ]);
 
+  // Helper to fetch env mapping for a given path
+  const envOf = (schemaNode: any): string | undefined => {
+    if (!schemaNode) return undefined;
+    return typeof schemaNode.env === 'string' ? schemaNode.env : undefined;
+  };
+
+  const schema = (cfg as any).getSchema();
   const result: Record<string, Record<string, { value: RedactedValue; readOnly: boolean }>> = {};
 
   const assign = (group: string, key: string, value: RedactedValue, envName?: string) => {
@@ -268,56 +215,39 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
     };
   };
 
-  // Manually assign all known configuration values with their environment variable names
   // server group
-  assign('server', 'port', cfg.get('server.port'), 'PORT');
-  assign('server', 'httpsEnabled', cfg.get('server.httpsEnabled'), 'HTTPS_ENABLED');
-  assign('server', 'httpsKeyPath', cfg.get('server.httpsKeyPath'), 'HTTPS_KEY_PATH');
-  assign('server', 'httpsCertPath', cfg.get('server.httpsCertPath'), 'HTTPS_CERT_PATH');
-  assign('server', 'corsOrigin', cfg.get('server.corsOrigin'), 'CORS_ORIGIN');
-  assign('server', 'disableHealthLog', cfg.get('server.disableHealthLog'), 'DISABLE_HEALTH_LOG');
-  assign('server', 'sseHeartbeatMs', cfg.get('server.sseHeartbeatMs'), 'SSE_HEARTBEAT_MS');
-  assign('server', 'useServerless', cfg.get('server.useServerless'), 'USE_SERVERLESS');
-  assign('server', 'useMcp', cfg.get('server.useMcp'), 'USE_MCP');
-  assign('server', 'publicBaseUrl', cfg.get('server.publicBaseUrl'), 'PUBLIC_BASE_URL');
-  assign('server', 'publicHost', cfg.get('server.publicHost'), 'PUBLIC_HOST');
+  assign('server', 'port', (cfg as any).get('server.port'), envOf(schema.properties.server.properties.port));
+  assign('server', 'httpsEnabled', (cfg as any).get('server.httpsEnabled'), envOf(schema.properties.server.properties.httpsEnabled));
+  assign('server', 'httpsKeyPath', (cfg as any).get('server.httpsKeyPath'), envOf(schema.properties.server.properties.httpsKeyPath));
+  assign('server', 'httpsCertPath', (cfg as any).get('server.httpsCertPath'), envOf(schema.properties.server.properties.httpsCertPath));
+  assign('server', 'corsOrigin', (cfg as any).get('server.corsOrigin'), envOf(schema.properties.server.properties.corsOrigin));
+  assign('server', 'disableHealthLog', (cfg as any).get('server.disableHealthLog'), envOf(schema.properties.server.properties.disableHealthLog));
+  assign('server', 'sseHeartbeatMs', (cfg as any).get('server.sseHeartbeatMs'), envOf(schema.properties.server.properties.sseHeartbeatMs));
+  assign('server', 'useServerless', (cfg as any).get('server.useServerless'), envOf(schema.properties.server.properties.useServerless));
+  assign('server', 'useMcp', (cfg as any).get('server.useMcp'), envOf(schema.properties.server.properties.useMcp));
+  assign('server', 'publicBaseUrl', (cfg as any).get('server.publicBaseUrl'), envOf(schema.properties.server.properties.publicBaseUrl));
+  assign('server', 'publicHost', (cfg as any).get('server.publicHost'), envOf(schema.properties.server.properties.publicHost));
 
   // security group
-  assign('security', 'apiToken', cfg.get('security.apiToken'), 'API_TOKEN');
-  assign('security', 'denyCommandRegex', cfg.get('security.denyCommandRegex'), 'DENY_COMMAND_REGEX');
-  assign('security', 'confirmCommandRegex', cfg.get('security.confirmCommandRegex'), 'CONFIRM_COMMAND_REGEX');
+  assign('security', 'apiToken', (cfg as any).get('security.apiToken'), envOf(schema.properties.security.properties.apiToken));
+  assign('security', 'denyCommandRegex', (cfg as any).get('security.denyCommandRegex'), envOf(schema.properties.security.properties.denyCommandRegex));
+  assign('security', 'confirmCommandRegex', (cfg as any).get('security.confirmCommandRegex'), envOf(schema.properties.security.properties.confirmCommandRegex));
 
   // llm group
-  assign('llm', 'provider', cfg.get('llm.provider'), 'AI_PROVIDER');
-  assign('llm', 'openai.baseUrl', cfg.get('llm.openai.baseUrl'), 'OPENAI_BASE_URL');
-  assign('llm', 'openai.apiKey', cfg.get('llm.openai.apiKey'), 'OPENAI_API_KEY');
-  assign('llm', 'ollama.baseUrl', cfg.get('llm.ollama.baseUrl'), 'OLLAMA_BASE_URL');
-  assign('llm', 'lmstudio.baseUrl', cfg.get('llm.lmstudio.baseUrl'), 'LMSTUDIO_BASE_URL');
+  assign('llm', 'provider', (cfg as any).get('llm.provider'), envOf(schema.properties.llm.properties.provider));
+  assign('llm', 'openai.baseUrl', (cfg as any).get('llm.openai.baseUrl'), envOf(schema.properties.llm.properties.openai.properties.baseUrl));
+  assign('llm', 'openai.apiKey', (cfg as any).get('llm.openai.apiKey'), envOf(schema.properties.llm.properties.openai.properties.apiKey));
+  assign('llm', 'ollama.baseUrl', (cfg as any).get('llm.ollama.baseUrl'), envOf(schema.properties.llm.properties.ollama.properties.baseUrl));
+  assign('llm', 'lmstudio.baseUrl', (cfg as any).get('llm.lmstudio.baseUrl'), envOf(schema.properties.llm.properties.lmstudio.properties.baseUrl));
 
-  // files group
-  assign('files', 'enabled', cfg.get('files.enabled'), 'FILES_ENABLED');
-  assign('files', 'consequential', cfg.get('files.consequential'), 'FILES_CONSEQUENTIAL');
-  
-  // execution group
-  assign('execution', 'shell.enabled', cfg.get('execution.shell.enabled'), 'SHELL_ENABLED');
-  assign('execution', 'shell.allowed', cfg.get('execution.shell.allowed'), 'SHELL_ALLOWED');
-  assign('execution', 'code.enabled', cfg.get('execution.code.enabled'), 'CODE_ENABLED');
-  assign('execution', 'llm.enabled', cfg.get('execution.llm.enabled'), 'LLM_ENABLED');
-  
   // compat group
-  assign('compat', 'llmProvider', cfg.get('llm.compat.llmProvider'), 'LLM_COMPAT_PROVIDER');
-  assign('compat', 'llmModel', cfg.get('llm.compat.llmModel'), 'LLM_COMPAT_MODEL');
-  assign('compat', 'ollamaHost', cfg.get('llm.compat.ollamaHost'), 'LLM_COMPAT_OLLAMA_HOST');
-  assign('compat', 'interpreterHost', cfg.get('llm.compat.interpreterHost'), 'LLM_COMPAT_INTERPRETER_HOST');
-  assign('compat', 'interpreterPort', cfg.get('llm.compat.interpreterPort'), 'LLM_COMPAT_INTERPRETER_PORT');
-  assign('compat', 'interpreterOffline', cfg.get('llm.compat.interpreterOffline'), 'LLM_COMPAT_INTERPRETER_OFFLINE');
-  assign('compat', 'interpreterVerbose', cfg.get('llm.compat.interpreterVerbose'), 'LLM_COMPAT_INTERPRETER_VERBOSE');
-  
+  assign('compat', 'llmProvider', (cfg as any).get('llm.compat.llmProvider'), envOf(schema.properties.llm.properties.compat.properties.llmProvider));
+  assign('compat', 'llmModel', (cfg as any).get('llm.compat.llmModel'), envOf(schema.properties.llm.properties.compat.properties.llmModel));
+  assign('compat', 'ollamaHost', (cfg as any).get('llm.compat.ollamaHost'), envOf(schema.properties.llm.properties.compat.properties.ollamaHost));
+  assign('compat', 'interpreterHost', (cfg as any).get('llm.compat.interpreterHost'), envOf(schema.properties.llm.properties.compat.properties.interpreterHost));
+  assign('compat', 'interpreterPort', (cfg as any).get('llm.compat.interpreterPort'), envOf(schema.properties.llm.properties.compat.properties.interpreterPort));
+  assign('compat', 'interpreterOffline', (cfg as any).get('llm.compat.interpreterOffline'), envOf(schema.properties.llm.properties.compat.properties.interpreterOffline));
+  assign('compat', 'interpreterVerbose', (cfg as any).get('llm.compat.interpreterVerbose'), envOf(schema.properties.llm.properties.compat.properties.interpreterVerbose));
+
   return result;
 }
-
-// Patch: normalize convict's getSchema() shape to expose `properties` for tests/tools
-// Some consumers expect a `properties` field rather than convict's internal `_cvtProperties`.
-// We wrap the returned instance to provide a backward/forward compatible getter.
-// Deprecated alias if any external code imported it previously
-export const convictConfigPatched = convictConfig;

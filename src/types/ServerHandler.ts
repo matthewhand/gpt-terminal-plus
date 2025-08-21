@@ -10,6 +10,7 @@ export interface ServerHandler {
   presentWorkingDirectory(): Promise<string>;
   executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
   executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
+  executeFile(filename: string, directory?: string, timeout?: number): Promise<ExecutionResult>;
   createFile(filePath: string, content: string, backup: boolean): Promise<boolean>;
   updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean): Promise<boolean>;
   amendFile(filePath: string, content: string, backup: boolean): Promise<boolean>;

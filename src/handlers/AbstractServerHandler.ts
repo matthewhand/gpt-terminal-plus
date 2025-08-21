@@ -12,9 +12,8 @@ export abstract class AbstractServerHandler {
 
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
   abstract executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
-  abstract createFile(filePath: string, content?: string, backup?: boolean): Promise<boolean | ExecutionResult>;
-  abstract getFileContent(filePath: string): Promise<string | ExecutionResult>;
-  abstract getSystemInfo(): Promise<SystemInfo | ExecutionResult>;
+  abstract createFile(filePath: string, content: string, backup?: boolean): Promise<boolean>;
+  abstract getSystemInfo(): Promise<SystemInfo>;
 
   // Modify listFiles to accept an object parameter
   abstract listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>>;
