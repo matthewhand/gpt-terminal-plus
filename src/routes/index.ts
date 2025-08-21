@@ -21,6 +21,7 @@ import llmConsoleRoutes from './llmConsoleRoutes';
 import shellSessionRoutes from './shell/session';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+import { logMode } from '../middleware/logMode';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -39,6 +40,7 @@ export function setupApiRouter(app: express.Application): void {
   const isTest = process.env.NODE_ENV === 'test';
   const alwaysEnable = isTest; // enable optional endpoints during tests
   const cfg = convictConfig();
+  app.use(logMode);
 
   // ----- Command endpoints -----
   if (isTest) {

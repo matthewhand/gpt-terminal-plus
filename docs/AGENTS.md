@@ -300,3 +300,18 @@ When AI agents update files, prefer **standard Unix diff/patch tools** to enviro
   ```
 
 This ensures compatibility across all environments and avoids failed patch attempts.
+
+## TODO Logging for Mode Detection
+
+To assist debugging, a middleware is registered that logs whenever a new request arrives,
+printing which mode is being invoked:
+
+```
+[TODO] Incoming request → mode=executeShell
+[TODO] Incoming request → mode=file:read
+[TODO] Incoming request → mode=executeLlm
+```
+
+This is implemented in `src/middleware/logMode.ts` and wired into `src/routes/index.ts`.
+Agents should leave the `[TODO]` marker intact — it signals areas where structured logging
+or observability can be extended later.
