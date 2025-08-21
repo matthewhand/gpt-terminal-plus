@@ -18,10 +18,18 @@ router.get('/console', (req: Request, res: Response) => {
     const cfg = convictConfig();
     const llmEnabled = cfg.get('execution.llm.enabled');
     
-    if (!llmEnabled) {
+    // Check if LLM Console feature is enabled in settings
+    let llmConsoleEnabled = false;
+    try {
+      llmConsoleEnabled = cfg.get('features.llmConsole');
+    } catch {
+      // Feature not configured, default to false
+    }
+    
+    if (!llmEnabled || !llmConsoleEnabled) {
       return res.status(404).json({
         status: 'error',
-        message: 'LLM Console is not available - LLM execution is disabled',
+        message: 'LLM Console is not available - LLM execution or LLM Console feature is disabled',
         data: null
       });
     }
