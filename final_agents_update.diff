@@ -1,9 +1,9 @@
-*** Begin Patch
-*** Update File: docs/AGENTS.md
-@@
- - `/docs/` - Complete documentation package
- - `/scripts/` - Production deployment and testing scripts
-+
+--- docs/AGENTS.md.safe	2025-08-21 02:38:06.690499322 +0000
++++ docs/AGENTS.md	2025-08-21 02:36:53.790695795 +0000
+@@ -173,6 +173,110 @@
+ - Optional Redoc static build at `/redoc`
+ - Use existing auto-generated `openapi.json`
+ 
 +## LLM Backends
 +
 +Agents call `execute_llm(prompt, options)` which abstracts over multiple backends:
@@ -107,4 +107,7 @@
 +- Functionality is consistent, but performance and depth vary with the model
 +
 +This ensures that open-swarm remains usable across both high-resource servers and constrained environments.
-*** End Patch
++
+ ## Lessons for File and Patch Operations
+ 
+ When AI agents update files, prefer **standard Unix diff/patch tools** to environment-specific helpers.
