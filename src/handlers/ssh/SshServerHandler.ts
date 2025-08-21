@@ -113,12 +113,15 @@ export class SshServerHandler extends AbstractServerHandler {
     /**
      * Lists files on the SSH server.
      */
-    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
+    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
         const { directory, limit = 10, offset = 0 } = params;
         sshServerDebug(`Listing files on SSH server in directory: ${directory}`);
         // Placeholder implementation
         return {
-            items: ['file1.txt', 'file2.txt'],
+            items: [
+                { name: 'file1.txt', isDirectory: false },
+                { name: 'file2.txt', isDirectory: false }
+            ],
             total: 2,
             limit,
             offset,
