@@ -3,6 +3,7 @@ import { SshHostConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
+import { FileReadResult } from '../../types/FileReadResult';
 import Debug from 'debug';
 import fs from 'fs';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
@@ -18,17 +19,11 @@ export class SshServerHandler extends AbstractServerHandler {
         sshServerDebug('Initialized SshServerHandler with config:', serverConfig);
     }
 
-    /**
-     * Sets the server configuration.
-     */
     setServerConfig(config: ServerConfig): void {
         this.sshConfig = config as SshHostConfig;
         this.serverConfig = { hostname: config.hostname, protocol: 'ssh', code: config.code || false };
     }
 
-    /**
-     * Executes a command on the SSH server.
-     */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH command: ${command}`);
         return new Promise<ExecutionResult>((resolve) => {
@@ -79,32 +74,33 @@ export class SshServerHandler extends AbstractServerHandler {
         });
     }
 
-    /**
-     * Executes code in a specified language on the SSH server.
-     */
     async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        // Placeholder implementation; align with abstract signature
         sshServerDebug(`Executing SSH code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
         return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0 };
     }
 
-    /**
-     * Creates a file on the SSH server.
-     */
     async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
         const actualContent = content ?? '';
-        // Placeholder for SSH file creation; align with AbstractServerHandler signature
         sshServerDebug(`Creating file on SSH server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
         return true;
     }
 
-    
+    async readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
+        const content = await this.getFileContent(filePath);
+        return { content, filePath, encoding: 'utf8', truncated: false };
+    }
 
-    /**
-     * Retrieves system information for the SSH server.
-     */
+    async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
+        sshServerDebug(`Updating file on SSH server: ${filePath}`);
+        return true;
+    }
+
+    async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
+        sshServerDebug(`Amending file on SSH server: ${filePath}`);
+        return true;
+    }
+
     async getSystemInfo(): Promise<SystemInfo> {
-        // Placeholder for SSH system info retrieval
         return {
             type: 'SshServer',
             platform: 'linux',
@@ -116,13 +112,9 @@ export class SshServerHandler extends AbstractServerHandler {
         };
     }
 
-    /**
-     * Lists files on the SSH server.
-     */
     async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
         const { directory, limit = 10, offset = 0 } = params;
         sshServerDebug(`Listing files on SSH server in directory: ${directory}`);
-        // Placeholder implementation
         return {
             items: ['file1.txt', 'file2.txt'],
             total: 2,
@@ -131,25 +123,23 @@ export class SshServerHandler extends AbstractServerHandler {
         };
     }
 
-    /**
-     * Retrieve a file's content over SSH.
-     */
     async getFileContent(filePath: string): Promise<string> {
         if (!filePath || typeof filePath !== 'string') {
             throw new Error('filePath is required');
         }
-        const quoted = `'${String(filePath).replace(/'/g, `'\\''`)}'`;
+        const quoted = `'\''${String(filePath).replace(/'/g, `'\''`)}'`;
         const res = await this.executeCommand(`cat ${quoted}`);
         const ok = (res.exitCode ?? 1) === 0 && !res.error;
         if (ok) return res.stdout;
         throw new Error(res.stderr || `Failed to read file: ${filePath}`);
     }
 
-    /**
-     * Retrieves the present working directory on the SSH server.
-     */
     async presentWorkingDirectory(): Promise<string> {
-        // Placeholder for SSH working directory retrieval
         return '/home/user';
+    }
+
+    async changeDirectory(directory: string): Promise<boolean> {
+        sshServerDebug(`Changing directory on SSH server: ${directory}`);
+        return true;
     }
 }

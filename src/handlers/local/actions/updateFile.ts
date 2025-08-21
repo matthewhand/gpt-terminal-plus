@@ -4,13 +4,6 @@ import Debug from 'debug';
 
 const debug = Debug('app:local:updateFile');
 
-/**
- * Update a file’s contents with a regex replacement in a hardened way.
- * - Validates inputs
- * - Resolves relative to provided directory or cwd
- * - Prevents traversal outside workspace
- * - Creates optional backup before modifying
- */
 export async function updateFile(
   filePath: string,
   pattern: string,
@@ -30,18 +23,15 @@ export async function updateFile(
     const baseDir = directory || process.cwd();
     const absPath = path.resolve(baseDir, filePath);
 
-    // Guard: prevent traversal
     if (!absPath.startsWith(baseDir)) {
       throw new Error(`Refusing to update outside workspace: ${absPath}`);
     }
 
-    // Ensure file exists
     const stat = await fs.stat(absPath).catch(() => null);
     if (!stat || !stat.isFile()) {
       throw new Error(`Target not found or not a file: ${absPath}`);
     }
 
-    // Backup
     if (backup) {
       const data = await fs.readFile(absPath);
       const backupPath = `${absPath}.bak-${Date.now()}`;
@@ -49,7 +39,6 @@ export async function updateFile(
       debug(`📦 Backup created: ${backupPath}`);
     }
 
-    // Perform replacement
     const regex = multiline ? new RegExp(pattern, 'gm') : new RegExp(pattern, 'g');
     const content = await fs.readFile(absPath, 'utf8');
     const updated = content.replace(regex, replacement);

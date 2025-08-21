@@ -4,12 +4,6 @@ import Debug from 'debug';
 
 const debug = Debug('app:local:amendFile');
 
-/**
- * Append content to a file safely.
- * - Resolves relative to provided directory or cwd
- * - Ensures parent directories exist
- * - Creates optional backup if file already exists
- */
 export async function amendFile(
   filePath: string,
   content: string,
@@ -28,7 +22,6 @@ export async function amendFile(
       throw new Error(`Refusing to amend outside workspace: ${absPath}`);
     }
 
-    // Backup if exists
     try {
       await fs.access(absPath);
       if (backup) {
@@ -41,7 +34,6 @@ export async function amendFile(
       // File doesn’t exist, continue
     }
 
-    // Ensure directory exists
     await fs.mkdir(path.dirname(absPath), { recursive: true });
 
     await fs.appendFile(absPath, content, 'utf8');
