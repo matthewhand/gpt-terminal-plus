@@ -11,7 +11,7 @@
     "lint": "npx eslint src/",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
-    "build": "npx tsc",
+    "build": "node node_modules/typescript/bin/tsc",
     "start": "node --max-old-space-size=256 dist/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",
@@ -28,6 +28,7 @@
     "openapi:lint": "npx @redocly/cli@latest lint public/openapi.yaml",
     "postbuild": "npm run openapi:generate",
     "pkg:win": "npm run build && npx pkg . --targets node18-win-x64,node18-win-arm64 --out-path release",
+    "pkg:osx": "npm run build && npx pkg . --targets node18-macos-x64 --output release/gpt-terminal-plus-macos-x64",
     "prestart": "npm run openapi:generate"
   },
   "keywords": [],

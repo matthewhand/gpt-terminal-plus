@@ -40,6 +40,15 @@ npm start
 - Follow setup guide: [docs/GPT_ACTION.md](docs/GPT_ACTION.md)
 - Auth header: `Authorization: Bearer YOUR_API_TOKEN`
 
+## Deployment Targets
+
+- [x] Windows binary (`pkg`, `jit-win-x64.exe`)
+- [x] macOS binary (`pkg`, `jit-darwin-x64`)
+- [ ] Pinokio (Node.js app manager)
+- [x] Vercel (Node.js, serverless)
+- [ ] Docker (with Compose support)
+- [x] Fly.io (Standard Docker container)
+
 ## Features
 
 ✅ **AdminJS Interface** - Complete settings and server management  

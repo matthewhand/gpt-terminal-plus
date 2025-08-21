@@ -9,6 +9,8 @@ import os from 'os';
 import path from 'path';
 import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
+import { logSessionStep } from '../../utils/activityLogger';
+import { convictConfig } from '../../config/convictConfig';
 
 const debug = Debug('app:command:execute-shell');
 
@@ -37,7 +39,10 @@ function wrapWithShell(shellName: string, rawCommand: string): string {
 }
 
 export const executeShell = async (req: Request, res: Response) => {
+  const sessionId = `session_${Date.now()}`;
   const { command, shell, args } = req.body;
+
+  await logSessionStep('executeShell-input', { command, shell, args }, sessionId);
 
   if (!command) {
     return res.status(400).json({ error: 'Command is required' });
@@ -47,8 +52,8 @@ export const executeShell = async (req: Request, res: Response) => {
   
   // Shell validation when shell is explicitly specified
   if (shell) {
-    const shellAllowed = process.env.SHELL_ALLOWED || 'bash,sh,powershell';
-    const allowedShells = shellAllowed.split(',').map(s => s.trim()).filter(Boolean);
+    const cfg = convictConfig();
+    const allowedShells = cfg.get('execution.shell.allowed');
     // If shell not in allowed list, reject
     if (!allowedShells.includes(shell)) {
       return res.status(403).json({ error: `Shell '${shell}' is not allowed. Allowed shells: ${allowedShells.join(', ')}` });
@@ -86,7 +91,7 @@ export const executeShell = async (req: Request, res: Response) => {
     const tmpDir = os.tmpdir();
     const ext = selectedShell.toLowerCase() === 'powershell' ? '.ps1' : '.sh';
     const scriptPath = path.join(tmpDir, `jit-shell-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    await fsp.writeFile(scriptPath, String(command), { mode: 0o600 });
+    await fsp.writeFile(scriptPath, String(previewCommand), { mode: 0o600 });
     
     // Build execution command; no need to chmod +x when invoking via the interpreter
     const escapedPath = shellEscape([scriptPath]);
@@ -133,9 +138,11 @@ export const executeShell = async (req: Request, res: Response) => {
       });
     }
     
+    await logSessionStep('executeShell-output', { result, aiAnalysis, shell: selectedShell }, sessionId);
     res.status(200).json({ result, aiAnalysis, shell: selectedShell });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    await logSessionStep('executeShell-error', { error: msg }, sessionId);
     try {
       const aiAnalysis = await analyzeError({ 
         kind: 'command', 

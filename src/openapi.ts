@@ -489,6 +489,291 @@ function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
+      '/activity/list': {
+        get: {
+          operationId: 'activityList',
+          summary: 'List recent activity sessions',
+          parameters: [
+            { name: 'date', in: 'query', required: false, schema: { type: 'string', format: 'YYYY-MM-DD' } },
+            { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 50 } },
+            { name: 'type', in: 'query', required: false, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Success response',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      sessions: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            date: { type: 'string' },
+                            id: { type: 'string' },
+                            steps: { type: 'integer' },
+                            startedAt: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/activity/session/{date}/{id}': {
+        get: {
+          operationId: 'activitySession',
+          summary: 'Fetch a full activity session',
+          parameters: [
+            { name: 'date', in: 'path', required: true, schema: { type: 'string', format: 'YYYY-MM-DD' } },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Success response',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      meta: { type: 'object', properties: { sessionId: { type: 'string' }, startedAt: { type: 'string' } } },
+                      steps: { type: 'array', items: { type: 'object' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/shell/session/start': {
+        post: {
+          operationId: 'startShellSession',
+          summary: 'Start a new persistent shell session',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    shell: { type: 'string' },
+                    env: { type: 'object' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Session started successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      startedAt: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/shell/session/{id}/exec': {
+        post: {
+          operationId: 'executeShellSessionCommand',
+          summary: 'Execute command inside existing session',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    command: { type: 'string' },
+                  },
+                  required: ['command'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Command executed successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      stdout: { type: 'string' },
+                      stderr: { type: 'string' },
+                      exitCode: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/shell/session/{id}/stop': {
+        post: {
+          operationId: 'stopShellSession',
+          summary: 'Stop a persistent shell session',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Session stopped successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/shell/session/list': {
+        get: {
+          operationId: 'listShellSessions',
+          summary: 'List active shell sessions',
+          responses: {
+            200: {
+              description: 'List of active sessions',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      sessions: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            shell: { type: 'string' },
+                            startedAt: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/shell/session/{id}/logs': {
+        get: {
+          operationId: 'getShellSessionLogs',
+          summary: 'Fetch logs from a shell session',
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+            { name: 'since', in: 'query', required: false, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Session logs',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      logs: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            timestamp: { type: 'string' },
+                            command: { type: 'string' },
+                            stdout: { type: 'string' },
+                            stderr: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/settings': {
+        get: {
+          operationId: 'getSettings',
+          summary: 'Get redacted configuration settings',
+          description: 'Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.',
+          security: [{ bearerAuth: [] as any[] }],
+          responses: {
+            200: {
+              description: 'Redacted settings grouped by category',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      server: {
+                        type: 'object',
+                        properties: {
+                          port: {
+                            type: 'object',
+                            properties: {
+                              value: { type: 'number' },
+                              readOnly: { type: 'boolean' }
+                            }
+                          }
+                        }
+                      },
+                      security: {
+                        type: 'object',
+                        properties: {
+                          apiToken: {
+                            type: 'object',
+                            properties: {
+                              value: { type: 'string' },
+                              readOnly: { type: 'boolean' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request' }
+          },
+          'x-openai-isConsequential': false
+        }
+      },
     },
   };
 }

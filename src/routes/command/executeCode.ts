@@ -8,13 +8,17 @@ import fs from 'fs';
 import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
+import { logSessionStep } from '../../utils/activityLogger';
 
 /**
  * Execute code using interpreters
  * @route POST /command/execute-code
  */
 export const executeCode = async (req: Request, res: Response) => {
+  const sessionId = `session_${Date.now()}`;
   const { code, language = 'python' } = req.body;
+
+  await logSessionStep('executeCode-input', { code, language }, sessionId);
 
   if (!code) {
     return res.status(400).json({ error: 'Code is required' });
@@ -99,9 +103,11 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
+    await logSessionStep('executeCode-output', { result, aiAnalysis, language, interpreter }, sessionId);
     res.json({ result, aiAnalysis, language, interpreter });
 
   } catch (error) {
+    await logSessionStep('executeCode-error', { error: error instanceof Error ? error.message : String(error) }, sessionId);
     handleServerError(error, res, 'Error executing code');
   }
 };

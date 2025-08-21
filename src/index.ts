@@ -15,11 +15,13 @@ import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
 import publicRouter from "./routes/publicRouter";
+import shellRouter from "./routes/shell";
 import { mountSimpleAdmin } from "./admin/simple";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
+import { registerServersFromConfig } from './bootstrap/serverLoader';
 
 import './modules/ngrok';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -48,6 +50,9 @@ app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router
 setupApiRouter(app);
+
+// Shell session routes
+app.use('/shell', shellRouter);
 
 // Public routes (e.g., /health)
 app.use(publicRouter);
@@ -90,6 +95,8 @@ const configFilePath = path.join(configDir, "production.json");
  * Main function to initialize the application.
  */
 const main = async (): Promise<void> => {
+  // Load servers from config into memory registry
+  registerServersFromConfig();
   // Ensure the configuration directory exists
   console.debug("Checking if configuration directory exists at:", configDir);
   if (!fs.existsSync(configDir)) {

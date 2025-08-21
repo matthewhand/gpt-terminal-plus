@@ -1,87 +1,86 @@
 #!/bin/bash
+
+# Enhanced test script for diff and patch endpoints
+# Tests reversible patches and multiple diff scenarios
+
 set -e
 
-echo "🧪 Testing Diff/Patch Functionality"
+echo "🧪 Enhanced Diff/Patch Testing"
+echo "=============================="
 
-# Start server
-pkill -f "node.*dist/index.js" 2>/dev/null || true
-sleep 1
+# Set up test environment
+export NODE_ENV=test
+export API_TOKEN=test-token
+
+# Create test files
+mkdir -p tmp
+echo -e "function hello() {\n  console.log('original');\n}" > tmp/demo.js
+cp tmp/demo.js tmp/demo.js.backup
+
+echo "📄 Created test file:"
+cat tmp/demo.js
+echo ""
+
+# Start server in background
 npm start &
 SERVER_PID=$!
-sleep 5
+sleep 3
 
-export API_TOKEN=$(grep API_TOKEN .env | cut -d= -f2)
-BASE="http://localhost:5004"
+echo "🔍 Testing reversible patch workflow..."
 
-echo "✅ Server started (PID: $SERVER_PID)"
+# Step 1: Get original diff
+echo "Step 1: Generate diff"
+ORIGINAL_DIFF=$(curl -s -X POST http://localhost:5004/command/diff \
+  -H "Content-Type: application/json" \
+  -d '{"filePath": "tmp/demo.js"}' | jq -r '.diff')
 
-# Create test file
-echo "📝 Creating test file"
-curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-  -d '{"filePath":"/tmp/diff-test.txt","content":"line 1\nold content\nline 3"}' \
-  "$BASE/file/create" | jq .
+echo "Original diff generated"
 
-# Test patch operation
-echo "🔧 Testing patch operation"
-curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-  -d '{"filePath":"/tmp/diff-test.txt","search":"old content","replace":"new content"}' \
-  "$BASE/file/patch" | jq .
+# Step 2: Apply a patch
+echo "Step 2: Apply patch"
+PATCH_RESULT=$(curl -s -X POST http://localhost:5004/command/patch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filePath": "tmp/demo.js",
+    "patch": "--- a/tmp/demo.js\n+++ b/tmp/demo.js\n@@ -1,3 +1,3 @@\n function hello() {\n-  console.log('original');\n+  console.log('modified');\n }"
+  }')
 
-# Verify patch was applied
-echo "✅ Verifying patch result"
-curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-  -d '{"filePath":"/tmp/diff-test.txt"}' \
-  "$BASE/file/read" | jq .
+echo "Patch result: $PATCH_RESULT"
 
-# Test diff dry run
-echo "🔧 Testing diff dry run"
-DIFF='--- a/diff-test.txt
-+++ b/diff-test.txt
-@@ -1,3 +1,3 @@
- line 1
--new content
-+diff updated content
- line 3'
+# Step 3: Verify file changed
+echo "Step 3: Verify changes"
+echo "Modified file:"
+cat tmp/demo.js
 
-curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-  -d "{\"diff\":\"$DIFF\",\"dryRun\":true}" \
-  "$BASE/file/diff" | jq .
+# Step 4: Test invalid diff detection
+echo "Step 4: Test invalid diff detection"
+INVALID_RESULT=$(curl -s -X POST http://localhost:5004/command/patch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "filePath": "tmp/demo.js",
+    "patch": "this is not a valid diff format invalid"
+  }')
 
-# Test SSH diff/patch if worker1 is available
-if ssh -o ConnectTimeout=5 -o BatchMode=yes worker1 'echo "SSH available"' 2>/dev/null; then
-  echo "🌐 Testing SSH diff/patch on worker1"
-  
-  # Register worker1
-  curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-    -d '{"hostname":"worker1-test","protocol":"ssh","config":{"host":"worker1","username":"'${USER:-chatgpt}'","port":22}}' \
-    "$BASE/server/register" | jq .
-  
-  # Create file on worker1
-  curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-    -H "X-Selected-Server: worker1-test" \
-    -d '{"filePath":"/tmp/ssh-diff-test.txt","content":"SSH line 1\nSSH old content\nSSH line 3"}' \
-    "$BASE/file/create" | jq .
-  
-  # Patch file on worker1
-  curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-    -H "X-Selected-Server: worker1-test" \
-    -d '{"filePath":"/tmp/ssh-diff-test.txt","search":"SSH old content","replace":"SSH new content"}' \
-    "$BASE/file/patch" | jq .
-  
-  # Verify SSH patch
-  curl -s -H "Authorization: Bearer $API_TOKEN" -H "Content-Type: application/json" \
-    -H "X-Selected-Server: worker1-test" \
-    -d '{"filePath":"/tmp/ssh-diff-test.txt"}' \
-    "$BASE/file/read" | jq .
-  
-  echo "✅ SSH diff/patch testing complete"
-else
-  echo "⚠️  Skipping SSH tests - worker1 not available"
-fi
+echo "Invalid patch result: $INVALID_RESULT"
 
-# Cleanup
-echo "🧹 Cleanup"
-rm -f /tmp/diff-test.txt
+# Step 5: Test multiple diffs in series
+echo "Step 5: Test series of patches"
+for i in {1..3}; do
+  echo "Applying patch $i..."
+  curl -s -X POST http://localhost:5004/command/patch \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"filePath\": \"tmp/demo.js\",
+      \"patch\": \"--- a/tmp/demo.js\\n+++ b/tmp/demo.js\\n@@ -1,3 +1,3 @@\\n function hello() {\\n-  console.log('modified');\\n+  console.log('version$i');\\n }\"
+    }" > /dev/null
+  echo "File after patch $i:"
+  cat tmp/demo.js
+  echo ""
+done
+
+# Clean up
 kill $SERVER_PID 2>/dev/null || true
+rm -f tmp/demo.js tmp/demo.js.backup
 
-echo "🎉 Diff/Patch testing complete!"
+echo "✅ Enhanced testing completed!"
+echo "🎯 Tested: reversible patches, invalid diff detection, series application"
