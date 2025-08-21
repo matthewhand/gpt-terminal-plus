@@ -18,6 +18,7 @@ import chatRoutes from './chatRoutes';
 import settingsRoutes from './settingsRoutes';
 import activityRoutes from './activityRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
+import shellSessionRoutes from './shell/session';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 
@@ -77,6 +78,8 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/activity', activityRoutes);
   // LLM console routes under /llm
   app.use('/llm', llmConsoleRoutes);
+  // shell session routes under /shell/session
+  app.use('/shell/session', shellSessionRoutes);
 }
 
 /** Default export kept for flexibility */

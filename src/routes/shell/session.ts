@@ -1,101 +1,86 @@
-import { Request, Response } from 'express';
-import { SessionManager } from '../../managers/SessionManager';
+import express, { Request, Response } from 'express';
+import { checkAuthToken } from '../../middlewares/checkAuthToken';
 
-// POST /shell/session/start
-export const startSession = async (req: Request, res: Response) => {
-  const { shell = 'bash' } = req.body;
-  
-  try {
-    const sessionId = SessionManager.createSession(shell);
-    res.json({
-      success: true,
-      sessionId,
-      shell,
-      status: 'created',
-      createdAt: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create session',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-};
+const router = express.Router();
 
-// POST /shell/session/:id/exec
-export const executeInSession = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { command } = req.body;
+// Secure all shell session endpoints
+router.use(checkAuthToken as any);
 
-  if (!command) {
-    return res.status(400).json({
-      success: false,
-      error: 'Command is required'
-    });
-  }
+/**
+ * POST /shell/session/start
+ * @summary Start a new persistent shell session
+ * @param {object} request.body - Session start options
+ * @param {string} [request.body.shell] - The shell to use (e.g., "bash", "powershell")
+ * @param {object} [request.body.env] - Environment variables for the session
+ * @return {object} 200 - Session started successfully
+ * @example response - 200 - Example success response
+ * { "id": "sess-abc123", "startedAt": "..." }
+ */
+router.post('/start', async (req: Request, res: Response) => {
+  // Implementation for starting a session
+  res.status(501).json({ message: 'Not Implemented' });
+});
 
-  try {
-    const result = SessionManager.executeCommand(id, command);
-    res.json({
-      success: result.success,
-      sessionId: id,
-      command,
-      output: result.output,
-      error: result.error,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to execute command',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-};
+/**
+ * POST /shell/session/{id}/exec
+ * @summary Execute command inside existing session
+ * @param {string} id.path - The ID of the session
+ * @param {object} request.body - Command to execute
+ * @param {string} request.body.command - The command string
+ * @return {object} 200 - Command executed successfully
+ * @example response - 200 - Example success response
+ * { "stdout": "...", "stderr": "...", "exitCode": 0 }
+ */
+router.post('/:id/exec', async (req: Request, res: Response) => {
+  // Implementation for executing command in session
+  res.status(501).json({ message: 'Not Implemented' });
+});
 
-// POST /shell/session/:id/stop
-export const stopSession = async (req: Request, res: Response) => {
-  const { id } = req.params;
+/**
+ * POST /shell/session/{id}/stop
+ * @summary Stop a persistent shell session
+ * @param {string} id.path - The ID of the session
+ * @return {object} 200 - Session stopped successfully
+ * @example response - 200 - Example success response
+ * { "success": true }
+ */
+router.post('/:id/stop', async (req: Request, res: Response) => {
+  // Implementation for stopping a session
+  res.status(501).json({ message: 'Not Implemented' });
+});
 
-  try {
-    const terminated = SessionManager.terminateSession(id);
-    if (terminated) {
-      res.json({
-        success: true,
-        sessionId: id,
-        status: 'terminated',
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: 'Session not found'
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to terminate session',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-};
+/**
+ * GET /shell/session/list
+ * @summary List active shell sessions
+ * @return {object} 200 - List of active sessions
+ * @example response - 200 - Example success response
+ * {
+ *   "sessions": [
+ *     { "id": "sess-abc123", "shell": "bash", "startedAt": "..." }
+ *   ]
+ * }
+ */
+router.get('/list', async (req: Request, res: Response) => {
+  // Implementation for listing sessions
+  res.status(501).json({ message: 'Not Implemented' });
+});
 
-// GET /shell/session/list
-export const listSessions = async (req: Request, res: Response) => {
-  try {
-    const sessions = SessionManager.listSessions();
-    res.json({
-      success: true,
-      sessions,
-      count: sessions.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to list sessions',
-      message: error instanceof Error ? error.message : String(error)
-    });
-  }
-};
+/**
+ * GET /shell/session/{id}/logs
+ * @summary Fetch logs from a shell session
+ * @param {string} id.path - The ID of the session
+ * @param {string} [since] - Cursor/timestamp to fetch logs from
+ * @return {object} 200 - Session logs
+ * @example response - 200 - Example success response
+ * { 
+ *   "logs": [
+ *     { "timestamp": "...", "command": "ls", "stdout": "bin\\n", "stderr": "" }
+ *   ]
+ * }
+ */
+router.get('/:id/logs', async (req: Request, res: Response) => {
+  // Implementation for fetching session logs
+  res.status(501).json({ message: 'Not Implemented' });
+});
+
+export default router;

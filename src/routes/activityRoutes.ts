@@ -10,7 +10,17 @@ router.use(checkAuthToken as any);
 
 /**
  * GET /activity/list
- * Lists session folders in data/activity/yyyy-mm-dd/
+ * @summary List recent activity sessions
+ * @param {string} [date] - Date in YYYY-MM-DD format (optional, defaults to today)
+ * @param {number} [limit=50] - Limit number of sessions (optional, default: 50)
+ * @param {string} [type] - Filter by execution type (optional)
+ * @return {object} 200 - Success response
+ * @example response - 200 - Example success response
+ * {
+ *   "sessions": [
+ *     { "date": "2025-08-21", "id": "session_001", "steps": 5, "startedAt": "..." }
+ *   ]
+ * }
  */
 router.get('/list', async (req: Request, res: Response) => {
   try {
@@ -83,8 +93,18 @@ router.get('/list', async (req: Request, res: Response) => {
 });
 
 /**
- * GET /activity/session/:date/:id
- * Returns all step files + meta.json for a session
+ * GET /activity/session/{date}/{id}
+ * @summary Fetch a full activity session
+ * @param {string} date - Date in YYYY-MM-DD format
+ * @param {string} id - Session ID
+ * @return {object} 200 - Success response
+ * @example response - 200 - Example success response
+ * {
+ *   "meta": { "sessionId": "session_001", "startedAt": "..." },
+ *   "steps": [
+ *     { "type": "executeShell", "command": "ls", "stdout": "...", "stderr": "" }
+ *   ]
+ * }
  */
 router.get('/session/:date/:id', async (req: Request, res: Response) => {
   try {
