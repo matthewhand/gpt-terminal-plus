@@ -11,7 +11,7 @@
     "lint": "npx eslint src/",
     "check-types": "tsc --noEmit",
     "version": "tsc -v",
-    "build": "node node_modules/typescript/bin/tsc",
+    "build": "./node_modules/.bin/tsc",
     "start": "node --max-old-space-size=256 dist/index.js",
     "start:dev": "nodemon --exec npx ts-node src/index.ts",
     "validate": "npm-run-all --parallel lint test",

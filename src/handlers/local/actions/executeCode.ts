@@ -1,6 +1,9 @@
 import { exec as _exec } from 'child_process';
 import shellEscape from 'shell-escape';
 import { ExecutionResult } from '../../../types/ExecutionResult';
+import Debug from 'debug';
+
+const debug = Debug('app:local:executeCode');
 
 type Lang =
   | 'javascript'
@@ -20,7 +23,6 @@ function buildLanguageCommand(language: Lang, code: string): string {
   switch ((language || '').toLowerCase()) {
     case 'javascript':
     case 'node':
-      // tests expect the -c form under double quotes
       return `node -c "${dq(code)}"`;
     case 'python':
     case 'python3':
@@ -35,7 +37,6 @@ function buildLanguageCommand(language: Lang, code: string): string {
 
 function withDirectory(cmd: string, directory?: string): string {
   if (!directory) return cmd;
-  // exact shape used in tests: cd /tmp && <cmd>
   return `cd ${shellEscape([directory])} && ${cmd}`;
 }
 
@@ -53,6 +54,8 @@ export async function executeLocalCode(
   }
 
   const cmd = withDirectory(buildLanguageCommand(language, code), directory);
+  debug(`👉 Executing local code: ${cmd}`);
+
   const execAny = _exec as unknown as (...args: any[]) => any;
 
   const res = await new Promise<ExecutionResult>((resolve, reject) => {
@@ -62,7 +65,6 @@ export async function executeLocalCode(
       resolve({ stdout, stderr, exitCode, success, error: !success });
     };
 
-    // Try 3-arg form first; if the mock only supports (cmd, cb), fall back.
     try {
       execAny(cmd, { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 }, cb);
     } catch {

@@ -1,149 +1,100 @@
-import { executeLocalCode } from './actions/executeCode';
-import { createFile as createLocalFile } from './actions/createFile';
-import { AbstractServerHandler } from '../AbstractServerHandler';
-import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
-import { SystemInfo } from '../../types/SystemInfo';
-import { ExecutionResult } from '../../types/ExecutionResult';
-import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { readdir } from 'fs/promises';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { exec } from 'child_process';
-import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
-import Debug from 'debug';
-
-const localServerDebug = Debug('app:LocalServerHandler');
+import { AbstractServerHandler } from "../AbstractServerHandler";
+import { ServerConfig } from "../../types/ServerConfig";
+import { ExecutionResult } from "../../types/ExecutionResult";
+import { PaginatedResponse } from "../../types/PaginatedResponse";
+import { SystemInfo } from "../../types/SystemInfo";
+import listFilesAction from "./actions/listFiles";
+import { createFile as createFileAction } from "./actions/createFile";
+import { getFileContent as getFileContentAction } from "./actions/getFileContent";
+import { updateFile as updateFileAction } from "./actions/updateFile";
+import { amendFile as amendFileAction } from "./actions/amendFile";
+import { getSystemInfo as getSystemInfoAction } from "./actions/getSystemInfo";
+import { presentWorkingDirectory as presentWorkingDirectoryAction } from "./actions/presentWorkingDirectory";
+import { executeCommand as executeCommandAction } from "./actions/executeCommand";
+import { executeCode as executeCodeAction } from "./actions/executeCode";
 
 export class LocalServerHandler extends AbstractServerHandler {
-    private localConfig: LocalServerConfig;
-    postCommand: string | undefined;
+  constructor(serverConfig: ServerConfig) {
+    super(serverConfig);
+  }
 
-    constructor(serverConfig: LocalServerConfig) {
-        super({ hostname: serverConfig.hostname || 'localhost', protocol: 'local', code: serverConfig.code || false });
-        this.localConfig = serverConfig;
-        this.postCommand = serverConfig['post-command'] as string | undefined;
-        localServerDebug('Initialized LocalServerHandler with config:', serverConfig);
-    }
+  /**
+   * Execute a raw shell command.
+   */
+  async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+    return await executeCommandAction(command, timeout, directory || this.serverConfig.directory || process.cwd());
+  }
 
-    /**
-     * Executes a command on the local server.
-     */
-    async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        localServerDebug(`Executing command: ${command}, timeout: ${timeout}, directory: ${directory}`);
-        const workingDirectory = directory || getPresentWorkingDirectory();
-        return executeLocalCode(command, 'bash', timeout, workingDirectory);
-    }
+  /**
+   * Execute a code snippet.
+   */
+  async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+    return await executeCodeAction(code, language, timeout, directory || this.serverConfig.directory || process.cwd());
+  }
 
-    /**
-     * Executes code in a specified language.
-     */
-    async executeCode(code: string, language: string, timeout: number = 5000, directory: string = '/tmp'): Promise<ExecutionResult> {
-        if (!code || !language) throw new Error('Code and language are required for execution.');
-        localServerDebug(`Executing code: ${code}, language: ${language}, timeout: ${timeout}, directory: ${directory}`);
-        try {
-            return await executeLocalCode(code, language, timeout, directory);
-        } catch (error) {
-            localServerDebug('Error executing code:', error);
-            return { stdout: '', stderr: (error as Error).message, exitCode: 1, success: false, error: true };
-        }
-    }
+  /**
+   * Create or overwrite a local file.
+   */
+  async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
+    return await createFileAction(filePath, content || '', backup, this.serverConfig.directory);
+  }
 
-    /**
-     * Retrieves system information for the local server.
-     */
-    async getSystemInfo(): Promise<SystemInfo> {
-        return {
-            type: 'LocalServer',
-            platform: process.platform,
-            architecture: process.arch,
-            totalMemory: 8192,
-            freeMemory: 4096,
-            uptime: process.uptime(),
-            currentFolder: process.cwd(),
-        };
-    }
+  /**
+   * Read and return the content of a local file.
+   */
+  async getFileContent(filePath: string): Promise<string> {
+    return await getFileContentAction(filePath, this.serverConfig.directory);
+  }
 
-    /**
-     * Lists files in a specified directory.
-     */
-    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
-        const { directory, limit = 10, offset = 0 } = params;
-        localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
-        try {
-            const files = await readdir(directory);
-            const sortedFiles = files.sort();
-            const paginatedFiles = sortedFiles.slice(offset, offset + limit);
-            return {
-                items: paginatedFiles,
-                total: files.length,
-                limit,
-                offset,
-            };
-        } catch (error) {
-            localServerDebug('Error listing files:', error);
-            throw new Error('Failed to list files: ' + (error as Error).message);
-        }
-    }
+  /**
+   * Update file content with regex replacement.
+   */
+  async updateFile(filePath: string, pattern: string, replacement: string, backup: boolean = true, multiline: boolean = false): Promise<boolean> {
+    return await updateFileAction(filePath, pattern, replacement, backup, multiline, this.serverConfig.directory);
+  }
 
-    /**
-     * Runs post-command if specified and returns its exit code.
-     */
-    private async runPostCommand(filePath: string): Promise<{ exitCode: number; advice?: string }> {
-        if (this.postCommand) {
-            const command = `${this.postCommand} ${filePath}`;
-            localServerDebug(`Running post-command: ${command}`);
-            return new Promise((resolve) => {
-                exec(command, (error, stdout) => {
-                    if (error) {
-                        localServerDebug(`Error running post-command: ${error.message}`);
-                        resolve({ exitCode: error.code || 1, advice: 'Post-command failed. Consider checking syntax or permissions.' });
-                        return;
-                    }
-                    localServerDebug(`Post-command stdout: ${stdout}`);
-                    resolve({ exitCode: 0, advice: 'Post-command executed successfully.' });
-                });
-            });
-        }
-        return { exitCode: 0 };
-    }
+  /**
+   * Append content to a local file.
+   */
+  async amendFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
+    return await amendFileAction(filePath, content, backup, this.serverConfig.directory);
+  }
 
-    /**
-     * Creates a file on the local server and runs post-command.
-     */
-    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
-        const actualContent = content ?? '';
-        localServerDebug(`Creating file at path: ${filePath}, contentLength: ${actualContent.length}, backup: ${backup}`);
-        const result = await createLocalFile(filePath, actualContent, backup);
-        await this.runPostCommand(filePath);
-        return result;
-    }
+  /**
+   * List files relative to the configured directory.
+   */
+  async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
+    const effectiveParams = {
+      ...params,
+      directory: params.directory || this.serverConfig.directory || process.cwd(),
+    };
+    const raw = await listFilesAction(effectiveParams as any);
+    return {
+      items: raw.files.map((f: any) => f.name),
+      total: raw.total,
+      limit: effectiveParams.limit ?? raw.files.length,
+      offset: effectiveParams.offset ?? 0,
+    };
+  }
 
-    /**
-     * Read and return the content of a local file.
-     */
-    async getFileContent(filePath: string): Promise<string> {
-        if (!filePath || typeof filePath !== 'string') {
-            throw new Error('filePath is required');
-        }
-        const absPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
-        return fs.readFile(absPath, 'utf8');
-    }
+  /**
+   * Retrieve system information.
+   */
+  async getSystemInfo(): Promise<SystemInfo> {
+    return await getSystemInfoAction();
+  }
 
-    /**
-     * Updates the server configuration.
-     */
-    setServerConfig(config: ServerConfig): void {
-        if ('post-command' in config) {
-            this.localConfig = config as LocalServerConfig;
-            this.serverConfig = { hostname: config.hostname || 'localhost', protocol: 'local', code: config.code || false };
-            this.postCommand = config['post-command'] as string | undefined;
-        }
-    }
+  /**
+   * Update the server’s configuration.
+   */
+  setServerConfig(config: ServerConfig): void {
+    this.serverConfig = config;
+  }
 
-    /**
-     * Retrieves the present working directory.
-     */
-    async presentWorkingDirectory(): Promise<string> {
-        return process.cwd();
-    }
+  /**
+   * Return the present working directory.
+   */
+  async presentWorkingDirectory(): Promise<string> {
+    return await presentWorkingDirectoryAction();
+  }
 }

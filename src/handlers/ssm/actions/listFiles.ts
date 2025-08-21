@@ -21,7 +21,7 @@ export const listFiles = async (
   instanceId: string,
   params: ListParams
 ): Promise<string[]> => {
-  const { directory, limit = 42, offset = 0, orderBy = "filename" } = params;
+  const { directory = ".", limit = 42, offset = 0, orderBy = "filename" } = params;
 
   // Command to list files with applied offset and limit
   let command = `ls -l ${directory} | tail -n +2 | awk '{print $9, $5, $6, $7}' | sort `;

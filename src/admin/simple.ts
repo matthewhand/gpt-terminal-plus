@@ -100,7 +100,7 @@ export function mountSimpleAdmin(app: Application): void {
         <form id="settingsForm">
             <div class="form-group">
                 <label>CORS Origins (comma-separated):</label>
-                <input type="text" id="corsOrigins" value="${settingsStore.getSettings().security.corsOrigins.join(', ')}" />
+                <input type="text" id="corsOrigins" value="${settingsStore.getSettings().app.corsOrigins.join(', ')}" />
             </div>
             
             <div class="form-group">
@@ -129,7 +129,7 @@ export function mountSimpleAdmin(app: Application): void {
             
             <div class="form-group">
                 <label>
-                    <input type="checkbox" id="sessionsEnabled" ${settingsStore.getSettings().features.sessions?.enabled || false ? 'checked' : ''} />
+                    <input type="checkbox" id="sessionsEnabled" disabled />
                     Enable Persistent Sessions
                 </label>
                 <small>Long-running shell and interpreter sessions</small>
@@ -186,14 +186,14 @@ export function mountSimpleAdmin(app: Application): void {
             }
             
             const settings = {
-                security: {
+                app: {
                     corsOrigins: document.getElementById('corsOrigins').value.split(',').map(s => s.trim())
                 },
                 features: {
                     executeShell: { enabled: shellEnabled },
                     executeCode: { enabled: document.getElementById('codeEnabled').checked },
                     executeLlm: { enabled: llmEnabled },
-                    sessions: { enabled: document.getElementById('sessionsEnabled').checked }
+
                 },
                 llm: {
                     provider: document.getElementById('llmProvider').value

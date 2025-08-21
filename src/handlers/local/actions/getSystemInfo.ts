@@ -1,103 +1,30 @@
-import { exec } from 'child_process';
-import { SystemInfo } from '../../../types/SystemInfo';
+import os from 'os';
 import Debug from 'debug';
-import util from 'util';
+import { SystemInfo } from '../../../types/SystemInfo';
 
-import fs from 'fs';
-import { getScriptPath } from '../../../utils/scriptUtils';
-
-const debug = Debug('app:getSystemInfo');
-const execPromise = util.promisify(exec);
+const debug = Debug('app:local:getSystemInfo');
 
 /**
- * Retrieves system information from the localhost using the specified shell and script.
- * @param {string} shell - The shell type (bash, python, powershell).
- * @returns {Promise<SystemInfo>} - The system information.
+ * Retrieve hardened system information for the local server.
  */
-export async function getSystemInfo(shell: string): Promise<SystemInfo> {
-  // Validate inputs
-  if (!shell || typeof shell !== 'string') {
-    const errorMessage = 'Shell must be provided and must be a string.';
-    debug(errorMessage);
-    throw new Error(errorMessage);
-  }
-
-  debug('Retrieving system information with shell: ' + shell);
-
-  const scriptContent = getScriptContent(shell);
-  debug('Script content: ' + scriptContent);
-
-  let command: string;
-  switch (shell) {
-    case 'powershell':
-      command = `powershell -Command "${scriptContent.replace(/"/g, '\"')}"`;
-      break;
-    case 'python':
-      command = `python -c "${scriptContent.replace(/"/g, '\"')}"`;
-      break;
-    case 'bash':
-    default:
-      command = `bash -c "${scriptContent.replace(/"/g, '\"')}"`;
-      break;
-  }
-
-  debug('Executing command: ' + command);
-
+export async function getSystemInfo(): Promise<SystemInfo> {
   try {
-    const { stdout } = await execPromise(command);
-    const rawSystemInfo = stdout;
-
-    const parsedInfo = rawSystemInfo.trim().split('\n').reduce((acc: { [key: string]: string }, line) => {
-      const parts = line.split(':');
-      const key = parts[0].trim();
-      const value = parts.slice(1).join(':').trim();
-      acc[key] = value;
-      return acc;
-    }, {});
-
-    // Map the parsed data to match the SystemInfo type
-    const systemInfoObj: SystemInfo = {
-      type: parsedInfo["type"] || '',
-      platform: parsedInfo["platform"] || '',
-      architecture: parsedInfo["architecture"] || '',
-      totalMemory: Number(parsedInfo["totalMemory"] || 0),
-      freeMemory: Number(parsedInfo["freeMemory"] || 0),
-      uptime: Number(parsedInfo["uptime"] || 0),
-      currentFolder: parsedInfo["currentFolder"] || '',
+    const info: SystemInfo = {
+      type: 'LocalServer',
+      platform: os.platform(),
+      architecture: os.arch(),
+      totalMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      uptime: os.uptime(),
+      currentFolder: process.cwd(),
     };
 
-    debug('Retrieved system information: ' + JSON.stringify(systemInfoObj));
-    return systemInfoObj;
-
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      debug('Error retrieving system information: ' + error.message);
-      throw new Error('Error retrieving system information: ' + error.message);
-    }
-    debug('Unknown error retrieving system information');
-    throw new Error('Unknown error retrieving system information');
+    debug(`✅ getSystemInfo succeeded: platform=${info.platform}, arch=${info.architecture}, cwd=${info.currentFolder}`);
+    return info;
+  } catch (err: any) {
+    debug(`❌ getSystemInfo failed: ${err.message}`);
+    throw err;
   }
 }
 
-/**
- * Retrieve the script content based on the shell type.
- * @param shell - The shell type.
- * @returns The content of the script.
- */
-function getScriptContent(shell: string): string {
-  let scriptFilePath: string;
-  switch (shell) {
-    case 'powershell':
-      scriptFilePath = getScriptPath('powershell');
-      break;
-    case 'python':
-      scriptFilePath = getScriptPath('python');
-      break;
-    case 'bash':
-    default:
-      scriptFilePath = getScriptPath('bash');
-      break;
-  }
-  debug(`Loading script content from: ${scriptFilePath}`);
-  return fs.readFileSync(scriptFilePath, 'utf8');
-}
+export default getSystemInfo;

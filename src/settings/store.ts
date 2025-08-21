@@ -76,7 +76,7 @@ export const SettingsStore = {
               : _settings.features.executeLlm,
           }
         : _settings.features,
-      security: partial.security ? { ..._settings.security, ...partial.security } : _settings.security,
+      auth: partial.auth ? { ..._settings.auth, ...partial.auth } : _settings.auth,
       llm: partial.llm ? { ..._settings.llm, ...partial.llm } : _settings.llm,
     });
     _settings = merged;

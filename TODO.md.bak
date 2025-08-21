@@ -268,31 +268,3 @@
   Error listing files: Failed to list files: The "path" argument must be of type string or an instance of Buffer or URL. Received undefined
   ```
   **Acceptance Criteria:** calling file listing with no arguments should behave as if `"."` was passed.
-
-- [ ] Implement pagination or chunked responses for large file listings (e.g., `ls -R`) to avoid `ResponseTooLargeError`. Ensure client can request subsequent pages or chunks seamlessly.
-
-- [ ] Refactor **LocalServerHandler** to consistently delegate to `actions/` modules:
-  - `executeCommand` → delegate + improve logging
-  - `executeCode` → delegate + improve logging
-  - `getFileContent` → move to `actions/getFileContent.ts`
-  - `getSystemInfo` → delegate to `actions/getSystemInfo.ts`
-  - `presentWorkingDirectory` → move to `actions/presentWorkingDirectory.ts`
-
-- [ ] Improve logging:
-  - `executeCode.ts`: log raw command ✅, exit code ✅, add truncated stdout/stderr ❌
-  - `LocalServerHandler.executeCommand`: log both raw command and wrapper script path
-
-- [ ] Fix TypeScript type alignment:
-  - Use shared `ListParams` type in `LocalServerHandler.listFiles()` instead of `{ directory?: string; ... }`
-  - Fix build error: `Type 'string' is not assignable to type '"datetime" | "filename" | undefined'`
-
-- [ ] Harden Local actions with better guards:
-  - Clamp `limit`/`offset`
-  - Validate `orderBy`
-  - Handle symlink/stat errors safely
-  - Normalize paths (`path.resolve`, reject traversal if needed)
-
-- [ ] Testing & Build:
-  - Run `npm test` (fix ResponseTooLargeError)
-  - Ensure `npm run lint` passes with 0 errors
-  - Ensure `npm run build` passes after type fixes

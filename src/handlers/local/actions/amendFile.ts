@@ -1,41 +1,57 @@
-import * as fs from "fs";
-import * as path from "path";
-import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper";
+import fs from 'fs/promises';
+import path from 'path';
 import Debug from 'debug';
 
-const debug = Debug('app:amendFile');
+const debug = Debug('app:local:amendFile');
 
 /**
- * Appends content to a file.
- * @param {string} filePath - The path of the file to amend.
- * @param {string} content - The content to append.
- * @returns {Promise<boolean>} - True if the file was amended successfully, false otherwise.
+ * Append content to a file safely.
+ * - Resolves relative to provided directory or cwd
+ * - Ensures parent directories exist
+ * - Creates optional backup if file already exists
  */
-export async function amendFile(filePath: string, content: string): Promise<boolean> {
-  debug("Received parameters:", { filePath, content });
-
-  // Validate inputs
-  if (!filePath || typeof filePath !== 'string') {
-    const errorMessage = 'File path must be provided and must be a string.';
-    debug(errorMessage);
-    throw new Error(errorMessage);
-  }
-  if (!content || typeof content !== 'string') {
-    const errorMessage = 'Content must be provided and must be a string.';
-    debug(errorMessage);
-    throw new Error(errorMessage);
-  }
-
-  // Correct the full path
-  const fullPath = path.isAbsolute(filePath) ? filePath : path.join(getPresentWorkingDirectory(), filePath);
-  debug('Amending file at ' + fullPath + ' with content: ' + content);
+export async function amendFile(
+  filePath: string,
+  content: string,
+  backup: boolean = true,
+  directory?: string
+): Promise<boolean> {
   try {
-    await fs.promises.appendFile(fullPath, content);
-    debug('File amended successfully at ' + fullPath);
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('filePath is required and must be a string.');
+    }
+
+    const baseDir = directory || process.cwd();
+    const absPath = path.resolve(baseDir, filePath);
+
+    if (!absPath.startsWith(baseDir)) {
+      throw new Error(`Refusing to amend outside workspace: ${absPath}`);
+    }
+
+    // Backup if exists
+    try {
+      await fs.access(absPath);
+      if (backup) {
+        const data = await fs.readFile(absPath);
+        const backupPath = `${absPath}.bak-${Date.now()}`;
+        await fs.writeFile(backupPath, data);
+        debug(`📦 Backup created: ${backupPath}`);
+      }
+    } catch {
+      // File doesn’t exist, continue
+    }
+
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(absPath), { recursive: true });
+
+    await fs.appendFile(absPath, content, 'utf8');
+
+    debug(`✅ amendFile succeeded: ${absPath}`);
     return true;
-  } catch (error) {
-    const errorMessage = 'Failed to amend file ' + fullPath + ': ' + (error instanceof Error ? error.message : 'Unknown error');
-    debug(errorMessage);
-    throw new Error(errorMessage);
+  } catch (err: any) {
+    debug(`❌ amendFile failed: ${err.message}`);
+    throw err;
   }
 }
+
+export default amendFile;
