@@ -173,6 +173,110 @@ Agents must support comprehensive file operations:
 - Optional Redoc static build at `/redoc`
 - Use existing auto-generated `openapi.json`
 
+## LLM Backends
+
+Agents call `execute_llm(prompt, options)` which abstracts over multiple backends:
+
+- **Ollama** (local models, e.g. `gpt-oss:20b`, `phi3.5-mini`)
+- **OpenAI** (API-based)
+- **Local runtimes** (tiny/micro models via binaries or libraries)
+
+The active backend is defined in `config.yaml`:
+
+```yaml
+llm_backend: ollama
+ollama:
+  host: http://localhost:11434
+  model: gpt-oss:20b
+```
+
+Agents themselves are backend-agnostic: they always use `execute_llm`.
+
+### Default Models
+
+- The installer defaults to **gpt-oss:20b**.
+- If the system does not have enough memory or disk, or if the model fails to load,
+  it will **fall back to a micro model** (e.g. `phi3.5-mini`).
+- The chosen model is written into `config.yaml`.
+
+Overrides:
+
+- **Env var**: `OPEN_SWARM_LLM_MODEL=phi3.5-mini`
+- **Config**: update `ollama.model` in `config.yaml`
+- **CLI**: `swarm-cli llm switch phi3.5-mini`
+- **API**: `POST /api/llm/switch { "model": "phi3.5-mini" }`
+
+### Model Management
+
+Manage models via CLI or HTTP API.
+
+#### CLI Commands
+- `swarm-cli llm list`      → show installed models
+- `swarm-cli llm switch <model>` → update config and restart
+- `swarm-cli llm auto`      → auto-select best model (large if possible, fallback small)
+- `swarm-cli llm clean`     → remove unused models
+
+#### HTTP API
+- `GET  /api/llm/list`
+  → returns list of installed models
+- `POST /api/llm/switch`
+  → body: `{ "model": "phi3.5-mini" }`
+- `POST /api/llm/auto`
+  → tries best model, falls back if needed, returns `{ "model": "selected-model" }`
+- `POST /api/llm/clean`
+  → prunes unused models, returns `{ "removed": [ ... ] }`
+
+**Example JSON Responses:**
+
+List models:
+```json
+{
+  "models": [
+    { "name": "gpt-oss:20b", "size_gb": 38, "status": "installed", "active": true },
+    { "name": "phi3.5-mini", "size_gb": 3, "status": "installed", "active": false }
+  ]
+}
+```
+
+Switch model:
+```json
+{
+  "status": "ok",
+  "message": "Switched to phi3.5-mini",
+  "active_model": "phi3.5-mini"
+}
+```
+
+Auto select:
+```json
+{
+  "status": "ok",
+  "message": "System resources too low, falling back to micro model",
+  "active_model": "phi3.5-mini"
+}
+```
+
+Clean unused:
+```json
+{
+  "status": "ok",
+  "removed": [ "gemma-2b", "mistral-nemo-2b" ],
+  "active_model": "phi3.5-mini"
+}
+```
+
+The WebUI uses these API endpoints directly.
+
+### Agent Behavior Across Models
+
+Agents are designed to run with both large and small models:
+
+- With `gpt-oss:20b` → strong reasoning, competition-grade
+- With micro models (e.g. `phi3.5-mini`) → efficient, lightweight reasoning
+- Functionality is consistent, but performance and depth vary with the model
+
+This ensures that open-swarm remains usable across both high-resource servers and constrained environments.
+
 ## Lessons for File and Patch Operations
 
 When AI agents update files, prefer **standard Unix diff/patch tools** to environment-specific helpers.
