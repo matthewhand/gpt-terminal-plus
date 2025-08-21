@@ -5,7 +5,8 @@ import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
 import { SystemInfo } from '../../types/SystemInfo';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { readdir } from 'fs/promises';
+import listFilesAction from './actions/listFiles';
+import { ListParams } from '../../types/ListParams';
 import { exec } from 'child_process';
 import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
@@ -59,16 +60,14 @@ export class LocalServerHandler extends AbstractServerHandler {
     /**
      * Lists files in a specified directory.
      */
-    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
-        const { directory, limit = 10, offset = 0 } = params;
+    async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+        const { directory = '.', limit = 50, offset = 0, orderBy } = params;
         localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
         try {
-            const files = await readdir(directory);
-            const sortedFiles = files.sort();
-            const paginatedFiles = sortedFiles.slice(offset, offset + limit);
+            const { files, total } = await listFilesAction({ directory, limit, offset, orderBy });
             return {
-                items: paginatedFiles,
-                total: files.length,
+                items: files,
+                total,
                 limit,
                 offset,
             };
