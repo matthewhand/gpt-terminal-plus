@@ -15,11 +15,14 @@
 
 ### Core System Implementation
 - [x] **Shell execution** - /command/execute-shell working with literal/raw modes
-- [x] **Code execution** - /command/execute-code (Python, Node.js, bash)
+- [x] **Code execution** - /command/execute-code (Python, Node.js) - bash moved to executeShell
 - [x] **File operations** - /file/create, /file/read, /file/list, /file/patch, /file/diff
 - [x] **Server registration** - POST /server/register, DELETE /server/{hostname}
-- [x] **Session management** - /command/execute-session with polling and cleanup
+- [x] **Session management** - /shell/session/* API with persistent shell processes
 - [x] **LLM delegation** - /command/execute-llm with dry-run and streaming
+- [x] **Execution boundaries** - Clear separation between shells and interpreters
+- [x] **Timeout protection** - 2-minute default timeout for all execute endpoints
+- [x] **Simple admin interface** - HTML-based settings management at /admin
 - [x] **Authentication** - Bearer token security on all protected endpoints
 - [x] **OpenAPI documentation** - Auto-generated specs with deterministic builds
 - [x] **Test coverage** - 371/402 tests passing (92% success rate)
@@ -39,6 +42,15 @@
 - [x] **Plugin manifest** - ChatGPT Custom GPT integration ready
 
 ## IMMEDIATE PRIORITIES
+
+### Shell Session Management (IN PROGRESS)
+- [x] **Session Lifecycle API** - POST /shell/session/start, exec, stop, list ✅
+- [ ] **Session Authentication** - Fix disabled auth middleware
+- [ ] **Session Output Buffering** - Improve 1-second timeout implementation
+- [ ] **Session Logging & Persistence** - Store outputs in data/activity/
+- [ ] **Session WebUI Console** - Interactive shell interface
+- [ ] **Session Tests** - Unit and integration test coverage
+- [ ] **Session Documentation** - SHELL_SESSIONS.md guide
 
 ### Test Stabilization
 - [ ] **Fix 14 failing tests** - Integration test edge cases and mocking issues
@@ -174,10 +186,54 @@
   - Each entry shows function name, timestamp, input, output, status color
   - User can refresh to see updates
 
+## SHELL SESSION MANAGEMENT (DETAILED ROADMAP)
+
+### ✅ Ticket 1: Session Lifecycle API (COMPLETED)
+- [x] POST /shell/session/start - Create persistent shell session
+- [x] POST /shell/session/:id/exec - Execute command in session  
+- [x] POST /shell/session/:id/stop - Terminate session
+- [x] GET /shell/session/list - List active sessions
+- [x] SessionManager with process management
+- [x] Basic activity logging to data/activity/
+
+### 🔹 Ticket 2: Session Logging & Persistence (NEXT)
+- [ ] Enhanced logging in `data/activity/yyyy-mm-dd/session_shell_xxx/`
+- [ ] JSON command+output format with timestamps
+- [ ] Log rotation to prevent unbounded growth
+- [ ] GET /shell/session/:id/logs?since=cursor API
+- [ ] Session state persistence across server restarts
+
+### 🔹 Ticket 3: WebUI Session Console
+- [ ] Sessions tab in admin interface
+- [ ] Interactive console with command input
+- [ ] Live output streaming (SSE or WebSocket)
+- [ ] Session management UI (start/stop/list)
+- [ ] Multiple console tabs support
+
+### 🔹 Ticket 4: Tests & Validation
+- [ ] Unit tests for SessionManager
+- [ ] Integration tests for session lifecycle
+- [ ] WebUI Cypress tests for console interaction
+- [ ] Stress testing (100 commands in session)
+- [ ] Session cleanup and timeout testing
+
+### 🔹 Ticket 5: Documentation & Polish
+- [ ] Update AGENTS.md with session examples
+- [ ] Create SHELL_SESSIONS.md comprehensive guide
+- [ ] WebUI screenshots and usage docs
+- [ ] API documentation in OpenAPI spec
+
+### 🚨 Critical Issues to Address
+- [ ] **Authentication middleware** - Currently disabled, needs implementation
+- [ ] **Session output buffering** - Replace 1-second timeout with proper streaming
+- [ ] **Process cleanup** - Handle server restart gracefully
+- [ ] **Error handling** - Better session error management and recovery
+
 ## CURRENT FOCUS
 
-**Priority 1**: Implement WebUI (AdminJS + React forms)
-**Priority 2**: Complete diff/patch testing (local + SSH)
-**Priority 3**: Fix remaining test failures and deploy
+**Priority 1**: Complete Shell Session Management (Tickets 2-5)
+**Priority 2**: Implement WebUI (AdminJS + React forms)
+**Priority 3**: Complete diff/patch testing (local + SSH)
+**Priority 4**: Fix remaining test failures and deploy
 
-**Status**: Core system production-ready (92% test coverage). Adding WebUI for complete admin experience.
+**Status**: Session foundation implemented. Need logging, WebUI, and comprehensive testing.
