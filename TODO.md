@@ -130,6 +130,29 @@
 - [ ] Optional: `/redoc` serves static documentation
 - [ ] Smoke test: setting changes affect execution
 
+### 🆕 WebUI Activity Pane
+- [ ] **Activity Tab** – new section in WebUI alongside Settings
+- [ ] **Display recent executions**:
+  - Which API was called (`executeShell`, `executeCode`, `executeLlm`, file ops, etc.)
+  - Timestamp of call
+  - Inputs (truncated if large)
+  - Outputs / results (with error/success status)
+- [ ] **UI Styling** – colored boxes/chips for status:
+  - ✅ Green = success
+  - ⚠️ Yellow = warning / partial failure
+  - ❌ Red = error
+- [ ] **Implementation**:
+  - Backend: extend audit logging → new `/activity/list` API (with pagination)
+  - Frontend: React tab with Chakra UI components (e.g. `Box`, `Tag`, `Accordion`)
+  - Live updates via polling or WebSockets
+- [ ] **Filters**:
+  - Filter by endpoint type (`/command/…`, `/file/…`, `/server/…`)
+  - Filter by success/error
+- [ ] **MVP Criteria**:
+  - Activity tab loads with last 50 operations
+  - Each entry shows function name, timestamp, input, output, status color
+  - User can refresh to see updates
+
 ## CURRENT FOCUS
 
 **Priority 1**: Implement WebUI (AdminJS + React forms)
