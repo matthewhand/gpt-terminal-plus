@@ -16,7 +16,7 @@ export abstract class AbstractServerHandler {
   abstract getSystemInfo(): Promise<SystemInfo>;
 
   // Modify listFiles to accept an object parameter
-  abstract listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>>;
+  abstract listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
 
   abstract setServerConfig(config: ServerConfig): void;
   abstract presentWorkingDirectory(): Promise<string>;
