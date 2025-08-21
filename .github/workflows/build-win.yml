@@ -1,0 +1,42 @@
+name: Build & Release Windows Executables
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Build .exe for Windows
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install pkg
+        run: npm install -g pkg
+
+      - name: Build Windows amd64 binary
+        run: pkg . --targets node18-win-x64 --output dist/app-win-x64.exe
+
+      # Optional: Build arm64 if supported by pkg
+      # - name: Build Windows arm64 binary
+      #   run: pkg . --targets node18-win-arm64 --output dist/app-win-arm64.exe
+
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/app-win-x64.exe
+            # dist/app-win-arm64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
