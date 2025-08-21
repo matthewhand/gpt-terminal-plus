@@ -16,6 +16,8 @@ import serverRoutes from './serverRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
 import settingsRoutes from './settingsRoutes';
+import activityRoutes from './activityRoutes';
+import llmConsoleRoutes from './llmConsoleRoutes';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 
@@ -71,6 +73,10 @@ export function setupApiRouter(app: express.Application): void {
   if (setupRoutes)  app.use('/setup', setupRoutes);
   // model routes under /model (/, /select, /selected)
   if (modelsRoutes) app.use('/model', modelsRoutes);
+  // activity routes under /activity
+  app.use('/activity', activityRoutes);
+  // LLM console routes under /llm
+  app.use('/llm', llmConsoleRoutes);
 }
 
 /** Default export kept for flexibility */

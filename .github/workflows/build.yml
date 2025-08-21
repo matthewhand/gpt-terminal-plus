@@ -1,0 +1,71 @@
+name: Build & Release Executables
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    name: Build .exe for Windows
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Windows binaries
+        run: npm run pkg:win
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-binaries
+          path: release/
+
+  build-macos:
+    runs-on: macos-latest
+    name: Build .app for macOS
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build macOS binary
+        run: npm run pkg:osx
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-binary
+          path: release/
+
+  upload-release:
+    runs-on: ubuntu-latest
+    name: Upload to GitHub Release
+    needs: [build-windows, build-macos]
+    steps:
+      - name: Download windows artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-binaries
+          path: release/windows
+      - name: Download macos artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: macos-binary
+          path: release/macos
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/windows/*
+            release/macos/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

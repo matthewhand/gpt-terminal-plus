@@ -17,16 +17,32 @@ export async function readFile(req: Request, res: Response): Promise<Response> {
     const { filePath, startLine, endLine, encoding = 'utf8', maxBytes = 1048576 } = req.body || {};
 
     if (typeof filePath !== 'string' || !filePath.trim()) {
-      return res.status(400).json({ message: 'filePath must be provided and must be a string.' });
+      return res.status(400).json({ 
+      status: 'error', 
+      message: 'filePath must be provided and must be a string', 
+      data: null 
+    });
     }
     if (startLine !== undefined && (!Number.isInteger(startLine) || startLine <= 0)) {
-      return res.status(400).json({ message: 'startLine must be a positive integer when provided.' });
+      return res.status(400).json({ 
+      status: 'error', 
+      message: 'startLine must be a positive integer when provided', 
+      data: null 
+    });
     }
     if (endLine !== undefined && (!Number.isInteger(endLine) || endLine <= 0)) {
-      return res.status(400).json({ message: 'endLine must be a positive integer when provided.' });
+      return res.status(400).json({ 
+      status: 'error', 
+      message: 'endLine must be a positive integer when provided', 
+      data: null 
+    });
     }
     if (startLine !== undefined && endLine !== undefined && endLine < startLine) {
-      return res.status(400).json({ message: 'endLine must be greater than or equal to startLine.' });
+      return res.status(400).json({ 
+      status: 'error', 
+      message: 'endLine must be greater than or equal to startLine', 
+      data: null 
+    });
     }
 
     const resolvedPath = path.resolve(filePath);
@@ -63,10 +79,18 @@ export async function readFile(req: Request, res: Response): Promise<Response> {
       }
     }
 
-    return res.status(200).json({ filePath: resolvedPath, encoding, startLine, endLine, truncated, content });
+    return res.status(200).json({ 
+      status: 'success', 
+      message: 'File read successfully', 
+      data: { filePath: resolvedPath, encoding, startLine, endLine, truncated, content } 
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ message: 'Failed to read file: ' + errorMessage });
+    return res.status(500).json({ 
+      status: 'error', 
+      message: 'Failed to read file: ' + errorMessage, 
+      data: null 
+    });
   }
 }
 

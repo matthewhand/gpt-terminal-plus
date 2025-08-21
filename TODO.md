@@ -1,3 +1,14 @@
+# GOALS & MILESTONES
+
+1. Fix Server Registration Architecture
+2. Improve WebUI (Admin + Activity)
+3. Build & Deploy Native Binaries
+4. Test Stability
+5. Harden Execution Layer
+6. LLM & Plugin Features
+7. File Operation UX
+8. Security, Monitoring, & Access
+
 # Project TODOs - UPDATED STATUS
 
 ## COMPLETED ✅
@@ -131,6 +142,16 @@
 - [ ] Smoke test: setting changes affect execution
 
 ### 🆕 WebUI Activity Pane
+
+### Activity Recording (Filesystem Logging)
+- [ ] Store execution inputs/outputs in `data/activity/yyyy-mm-dd/session_xxx/`
+- [ ] One file per step: `01-executeShell.json`, etc.
+- [ ] Include meta.json for session metadata
+- [ ] Add utility: `logSessionStep(type, payload, sessionId?)`
+- [ ] Auto-create folders based on date/session
+- [ ] Add rotation logic: delete or archive old days
+- [ ] Optional script: `scripts/query-activity.sh` for search
+- [ ] Optional API: `GET /activity/list` to paginate and filter sessions
 - [ ] **Activity Tab** – new section in WebUI alongside Settings
 - [ ] **Display recent executions**:
   - Which API was called (`executeShell`, `executeCode`, `executeLlm`, file ops, etc.)

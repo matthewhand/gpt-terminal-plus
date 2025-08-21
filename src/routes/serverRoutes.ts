@@ -13,21 +13,19 @@ debug('initializing server routes');
 // Secure all server endpoints with bearer token auth
 router.use(checkAuthToken as any);
 
+import { listRegisteredServers } from '../managers/serverRegistry';
+
 /**
  * GET /server/list (also /list)
- * Returns servers visible to the caller's token (see config/servers.json allowedTokens)
+ * Returns servers from in-memory registry (loaded from config at boot)
  */
 const handleServerList = (req: Request, res: Response) => {
   try {
-    const h = String(req.headers?.authorization ?? '');
-    const m = h.match(/^Bearer\s+(.+)$/i);
-    const token = m ? m[1] : '';
-
-    const servers = listServersForToken(String(token)).map((s: ServerDescriptor) => ({
-      key: s.key,
-      label: s.label,
+    const servers = listRegisteredServers().map(s => ({
+      hostname: s.hostname,
       protocol: s.protocol,
-      hostname: s.hostname ?? null,
+      modes: s.modes || [],
+      registeredAt: s.registeredAt
     }));
 
     res.status(200).json({ servers });
