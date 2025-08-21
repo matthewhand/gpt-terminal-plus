@@ -100,7 +100,7 @@ export function mountSimpleAdmin(app: Application): void {
         <form id="settingsForm">
             <div class="form-group">
                 <label>CORS Origins (comma-separated):</label>
-                <input type="text" id="corsOrigins" value="${settingsStore.getSettings().app.corsOrigins.join(', ')}" />
+                <input type="text" id="corsOrigins" value="${settingsStore.getSettings().security.corsOrigins.join(', ')}" />
             </div>
             
             <div class="form-group">
@@ -108,6 +108,7 @@ export function mountSimpleAdmin(app: Application): void {
                     <input type="checkbox" id="shellEnabled" ${settingsStore.getSettings().features.executeShell.enabled ? 'checked' : ''} />
                     Enable Shell Execution
                 </label>
+                <small>Required for system commands and file operations</small>
             </div>
             
             <div class="form-group">
@@ -115,6 +116,7 @@ export function mountSimpleAdmin(app: Application): void {
                     <input type="checkbox" id="codeEnabled" ${settingsStore.getSettings().features.executeCode.enabled ? 'checked' : ''} />
                     Enable Code Execution
                 </label>
+                <small>Python and Node.js interpreters</small>
             </div>
             
             <div class="form-group">
@@ -122,6 +124,15 @@ export function mountSimpleAdmin(app: Application): void {
                     <input type="checkbox" id="llmEnabled" ${settingsStore.getSettings().features.executeLlm.enabled ? 'checked' : ''} />
                     Enable LLM Delegation
                 </label>
+                <small>⚠️ Requires Shell Execution (uses shell commands internally)</small>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="sessionsEnabled" ${settingsStore.getSettings().features.sessions?.enabled || false ? 'checked' : ''} />
+                    Enable Persistent Sessions
+                </label>
+                <small>Long-running shell and interpreter sessions</small>
             </div>
             
             <div class="form-group">
@@ -161,18 +172,28 @@ export function mountSimpleAdmin(app: Application): void {
                 document.getElementById('healthStatus').textContent = '❌ Error';
             });
 
-        // Handle form submission
+        // Handle form submission with dependency validation
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const shellEnabled = document.getElementById('shellEnabled').checked;
+            const llmEnabled = document.getElementById('llmEnabled').checked;
+            
+            // Validate dependencies
+            if (llmEnabled && !shellEnabled) {
+                alert('❌ LLM Delegation requires Shell Execution to be enabled (LLM uses shell commands internally)');
+                return;
+            }
+            
             const settings = {
-                app: {
+                security: {
                     corsOrigins: document.getElementById('corsOrigins').value.split(',').map(s => s.trim())
                 },
                 features: {
-                    executeShell: { enabled: document.getElementById('shellEnabled').checked },
+                    executeShell: { enabled: shellEnabled },
                     executeCode: { enabled: document.getElementById('codeEnabled').checked },
-                    executeLlm: { enabled: document.getElementById('llmEnabled').checked }
+                    executeLlm: { enabled: llmEnabled },
+                    sessions: { enabled: document.getElementById('sessionsEnabled').checked }
                 },
                 llm: {
                     provider: document.getElementById('llmProvider').value

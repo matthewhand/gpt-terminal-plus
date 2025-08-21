@@ -76,7 +76,7 @@ export const SettingsStore = {
               : _settings.features.executeLlm,
           }
         : _settings.features,
-      app: partial.app ? { ..._settings.app, ...partial.app } : _settings.app,
+      security: partial.security ? { ..._settings.security, ...partial.security } : _settings.security,
       llm: partial.llm ? { ..._settings.llm, ...partial.llm } : _settings.llm,
     });
     _settings = merged;

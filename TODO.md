@@ -43,6 +43,13 @@
 
 ## IMMEDIATE PRIORITIES
 
+### 🔧 Settings & Environment Variable Audit (URGENT)
+- [ ] **Environment Variable Grouping** - Audit and reorganize all env vars
+- [ ] **Dependency Validation** - LLM requires shell execution (uses shell commands)
+- [ ] **Settings Schema Update** - Proper grouping with validation rules
+- [ ] **WebUI Dependency Logic** - React frontend reflects execution dependencies
+- [ ] **Configuration Documentation** - Update all env var docs
+
 ### Shell Session Management (IN PROGRESS)
 - [x] **Session Lifecycle API** - POST /shell/session/start, exec, stop, list ✅
 - [ ] **Session Authentication** - Fix disabled auth middleware
@@ -231,9 +238,28 @@
 
 ## CURRENT FOCUS
 
-**Priority 1**: Complete Shell Session Management (Tickets 2-5)
-**Priority 2**: Implement WebUI (AdminJS + React forms)
-**Priority 3**: Complete diff/patch testing (local + SSH)
+**Priority 1**: Settings & Environment Variable Audit (CRITICAL)
+**Priority 2**: Complete Shell Session Management (Tickets 2-5)
+**Priority 3**: WebUI with proper dependency validation
 **Priority 4**: Fix remaining test failures and deploy
 
-**Status**: Session foundation implemented. Need logging, WebUI, and comprehensive testing.
+**Status**: Settings audit required before next milestone. Session foundation ready for enhancement.
+
+## NEXT MILESTONE TARGET
+
+### 🎯 Milestone: Production-Ready Session Management
+**Target**: Complete Tickets 2-5 for shell session management
+**Dependencies**: Settings audit must be completed first
+**Deliverables**:
+- Enhanced session logging & persistence
+- Interactive WebUI session console
+- Comprehensive test coverage
+- Complete documentation
+
+**Success Criteria**:
+- [ ] Settings properly grouped with dependency validation
+- [ ] WebUI reflects execution dependencies (LLM requires shell)
+- [ ] Session logging stores in data/activity/ with rotation
+- [ ] Interactive console with live streaming
+- [ ] 95%+ test coverage for session management
+- [ ] Complete SHELL_SESSIONS.md documentation
