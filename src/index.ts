@@ -15,6 +15,7 @@ import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
 import publicRouter from "./routes/publicRouter";
+import shellRouter from "./routes/shell";
 import { mountSimpleAdmin } from "./admin/simple";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
@@ -49,6 +50,9 @@ app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router
 setupApiRouter(app);
+
+// Shell session routes
+app.use('/shell', shellRouter);
 
 // Public routes (e.g., /health)
 app.use(publicRouter);
