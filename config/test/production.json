@@ -1,0 +1,26 @@
+{
+   "port": 5005,
+   "local": {
+      "code": true
+   },
+   "ssh": {
+      "hosts": [
+         {
+            "name": "example-ssh-server",
+            "host": "ssh.example.com",
+            "port": 23,
+            "username": "user",
+            "privateKey": "/path/to/private/key"
+         }
+      ]
+   },
+   "ssm": {
+      "region": "us-east0",
+      "targets": [
+         {
+            "name": "example-ssm-instance",
+            "instanceId": "i-123456788abcdef0"
+         }
+      ]
+   }
+}
