@@ -19,6 +19,7 @@ import settingsRoutes from './settingsRoutes';
 import activityRoutes from './activityRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import shellSessionRoutes from './shell/session';
+import configRoutes from './configRoutes';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 import { logMode } from '../middleware/logMode';
@@ -71,6 +72,7 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/chat', chatRoutes);
   // settings (redacted view), protected by bearer token
   app.use('/settings', settingsRoutes);
+  app.use('/config', configRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);

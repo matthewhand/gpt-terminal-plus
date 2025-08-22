@@ -1,111 +1,95 @@
 # GPT Terminal Plus
 
-Static-first OpenAPI artifacts with deterministic generation, an Express server with Convict-based configuration and secure redacted settings endpoint, plus a minimal web UI.
+A modular terminal server with pluggable engines (shells, file ops, LLMs) and a WebUI for configuration.
 
-- OpenAPI (static artifacts):
-  - [public/openapi.json](public/openapi.json)
-  - [public/openapi.yaml](public/openapi.yaml)
-  - Swagger UI: GET [/docs](/docs)
-- Settings UI (redacted):
-  - [public/settings.html](public/settings.html)
-  - Protected by HTTP Bearer auth using `API_TOKEN`
-- Environment and configuration:
-  - [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
-- Plugin Manifest:
-  - GET [/.well-known/ai-plugin.json](/.well-known/ai-plugin.json)
+---
 
-## Quick Start
+## ✨ Features
 
-### 1. Install and Build
+- 🔧 Execution Engines: local shell, remote shell (SSH/SSM), file ops, LLM planning
+- 🤖 LLM Engines: Codex, Interpreter, Ollama
+- 🛡️ Automation: full-auto, ask-to-approve, YOLO toggle (dangerous)
+- 🌐 WebUI: `/settings.html` with engine panels + Advanced JSON overrides
+- 🧰 General settings: localhost toggle, file ops, SSH/SSM targets, allowed shells
+- 📜 Live OpenAPI preview on the settings page
+- ⚙️ Config: Convict-backed schema, `.env` overrides, future `/config/override`, `/config/schema`
+
+---
+
+## 🚀 Usage
+
+### Start Server
 ```bash
-npm ci
-npm run build
 npm start
 ```
 
-### 2. Access Interfaces
-- **Admin Panel**: http://localhost:5004/admin (credentials in console)
-- **API Docs**: http://localhost:5004/docs (Swagger UI)
-- **Health Check**: http://localhost:5004/health
+### Configure via WebUI
+Visit `http://localhost:PORT/settings.html`.
 
-### 3. Production Deployment
-```bash
-./scripts/deploy.sh fly     # Deploy to Fly.io
-./scripts/deploy.sh vercel  # Deploy to Vercel
-./scripts/deploy.sh docker  # Build Docker image
+- Choose LLM Engine: Codex, Interpreter, or Ollama
+- Fill engine panel fields; use Advanced Overrides for any key
+- Submit to send JSON to `/config/override` (if implemented)
+- Toggle General Settings and watch the OpenAPI preview update in real time
+
+### Example LLM Configs
+
+Codex
+```json
+{
+  "LLM_ENGINE": "codex",
+  "CODEX_MODEL": "gpt-5",
+  "CODEX_FULL_AUTO": true,
+  "CODEX_CONFIG": { "model_reasoning_effort": "high" }
+}
 ```
 
-### 4. ChatGPT Integration
-- Use OpenAPI spec: [/openapi.json](/openapi.json) or [/openapi.yaml](/openapi.yaml)
-- Follow setup guide: [docs/GPT_ACTION.md](docs/GPT_ACTION.md)
-- Auth header: `Authorization: Bearer YOUR_API_TOKEN`
-
-## Deployment Targets
-
-- [x] Windows binary (`pkg`, `jit-win-x64.exe`)
-- [x] macOS binary (`pkg`, `jit-darwin-x64`)
-- [ ] Pinokio (Node.js app manager)
-- [x] Vercel (Node.js, serverless)
-- [ ] Docker (with Compose support)
-- [x] Fly.io (Standard Docker container)
-
-## Features
-
-✅ **AdminJS Interface** - Complete settings and server management  
-✅ **Multi-Server Support** - Local, SSH, AWS SSM execution  
-✅ **File Operations** - Create, read, patch, diff with git integration  
-✅ **AI Delegation** - Route tasks to specialized LLMs  
-✅ **Secure Authentication** - Auto-generated admin credentials  
-✅ **Production Ready** - 361+ tests, comprehensive security  
-✅ **ChatGPT Integration** - Ready-to-use Custom GPT Actions  
-
-Deterministic OpenAPI generation
-- Generated from JSDoc via [scripts/generate-openapi.cjs](scripts/generate-openapi.cjs)
-- Artifacts are committed in [public/openapi.json](public/openapi.json) and [public/openapi.yaml](public/openapi.yaml)
-- Swagger UI at [/docs](/docs) is configured to load the static JSON to avoid runtime non-determinism
-
-Configuration
-- Validated with Convict; env vars override defaults; secrets are redacted in the settings endpoint
-- Full schema, environment mapping, and examples: [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)
-
-Development
-- Test: `npm test`
-- Lint: `npm run lint`
-- Build: `npm run build`
-- Showcase script: [scripts/capture_showcase.sh](scripts/capture_showcase.sh)
-
-CI (recommended)
-- OpenAPI lint: `npx @redocly/cli@latest lint public/openapi.yaml`
-- Add a CI job to run:
-  - `npm ci`
-  - `npm run lint`
-  - `npm test`
-  - `npm run openapi:lint` (see below)
-
-Package scripts of interest
-- Generate OpenAPI artifacts: `npm run openapi:generate` (runs on postbuild and prestart)
-
-Notes
-- When deploying behind a proxy, set `PUBLIC_BASE_URL` to ensure OpenAPI `servers[0].url` is correct
-- Do not log secrets; examples use placeholders like `${OPENAI_API_KEY}`
-- [x] executeShell (bash) works
-
-## Windows Binary
-
-You can run GPT Terminal Plus without Node.js by using prebuilt Windows binaries.
-
-- x64: `jit-win-x64.exe`
-- arm64: `jit-win-arm64.exe`
-
-Build locally:
-
-```bash
-npm run build
-npm run pkg:win
+Interpreter
+```json
+{
+  "LLM_ENGINE": "interpreter",
+  "INTERPRETER_MODEL": "gpt-4o",
+  "INTERPRETER_AUTO_RUN": true,
+  "INTERPRETER_TEMPERATURE": 0.7,
+  "INTERPRETER_CONTEXT_WINDOW": 8192,
+  "INTERPRETER_MAX_TOKENS": 2048,
+  "INTERPRETER_SAFE_MODE": "auto"
+}
 ```
 
-Artifacts will be placed in `release/`.
+Ollama
+```json
+{
+  "LLM_ENGINE": "ollama",
+  "OLLAMA_MODEL": "llama2",
+  "OLLAMA_HOST": "http://localhost:11434",
+  "OLLAMA_FORMAT": "text",
+  "OLLAMA_NOWORDWRAP": false,
+  "OLLAMA_VERBOSE": false
+}
+```
 
-## Additional Documentation
+---
 
-More details are available in the [docs/](./docs) folder.
+## 🔒 Authentication
+- API uses bearer token (see `.env` or generated on start)
+- `/healthz` is public; most routes require token
+
+---
+
+## 📚 Related Docs
+- [AGENTS.md](./AGENTS.md) — engine details, session behavior, config examples
+- [PACKAGE.md](./PACKAGE.md) — release notes and packaging
+
+---
+
+## 🧯 Circuit Breakers for Full Auto Mode
+
+To prevent runaway cost or output floods in Full Auto / YOLO modes, runtime limits are enforced:
+
+- MAX_INPUT_CHARS: rejects long inputs or truncates if allowed.
+- MAX_OUTPUT_CHARS: cuts off combined stdout+stderr and terminates the process with partial output.
+- MAX_SESSION_DURATION / MAX_SESSION_IDLE: shell sessions terminated on breach.
+- MAX_LLM_COST_USD: if set, subsequent LLM requests are rejected once budget is exceeded.
+
+All terminations return partial output with flags:
+`{ stdout, stderr, exitCode?, truncated?: true, terminated?: true, error?: string }`.

@@ -8,13 +8,21 @@ import { analyzeError } from '../../llm/errorAdvisor';
 import { evaluateCommandSafety } from '../../utils/safety';
 import { getExecuteTimeout } from '../../utils/timeout';
 import { spawn } from 'child_process';
+import { enforceInputLimit, clipOutput, getLimitConfig } from '../../utils/limits';
 
 const debug = Debug('app:command:execute-llm');
+let __llmBudgetSpentUsd = 0; // simple in-memory day/session budget tracker
 
 interface LlmPlanCommand { cmd: string; explain?: string }
 
 function extractJsonArray(text: string): any {
   try {
+    // Circuit breaker: input size for instructions
+    const inputCheck = enforceInputLimit('executeLlm', String(instructions));
+    if (!('ok' in inputCheck) || inputCheck.ok === false) {
+      return res.status(413).json({ ...inputCheck.payload });
+    }
+    const effectiveInstructions = (inputCheck as any).truncated ? (inputCheck as any).value : String(instructions);
     return JSON.parse(text);
   } catch {
     const match = text.match(/\{[\s\S]*\}/);
@@ -33,12 +41,20 @@ function extractCandidateCommands(text: string): string[] {
 }
 
 export const executeLlm = async (req: Request, res: Response) => {
-  const { instructions, dryRun = false, model, stream = false, engine } = req.body || {};
+  const { instructions, dryRun = false, model, stream = false, engine, costUsd } = req.body || {};
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });
   }
 
   try {
+    // Budget check (simple)
+    const { maxLlmCostUsd } = getLimitConfig();
+    const incomingCost = Number(costUsd || 0) || 0;
+    if (maxLlmCostUsd !== null && (__llmBudgetSpentUsd + incomingCost) > maxLlmCostUsd) {
+      return res.status(402).json({ error: 'Budget exceeded' });
+    }
+    __llmBudgetSpentUsd += incomingCost;
+
     // Runtime branch: interpreter CLI (local execution)
     if (engine === 'llm:interpreter' || engine === 'interpreter') {
       if (stream) {
@@ -77,7 +93,7 @@ export const executeLlm = async (req: Request, res: Response) => {
         });
 
         try {
-          child.stdin.write(instructions);
+          child.stdin.write(effectiveInstructions);
           child.stdin.end();
         } catch (e) {
           // best-effort; process may have exited early
@@ -136,7 +152,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       ' Prefer POSIX sh/bash. Avoid destructive commands unless explicitly requested. No commentary outside JSON.';
 
     const user = JSON.stringify({
-      instructions,
+      instructions: effectiveInstructions,
       os: process.platform,
       cwd: (await getServerHandler(req).presentWorkingDirectory?.()) || process.cwd(),
     });
@@ -232,6 +248,8 @@ export const executeLlm = async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
     }
 
+    const { maxOutputChars } = getLimitConfig();
+    let totalOut = 0;
     for (let i = 0; i < commands.length; i++) {
       const step = commands[i];
       if (stream) {
@@ -259,7 +277,17 @@ export const executeLlm = async (req: Request, res: Response) => {
       if ((r?.exitCode !== undefined && r.exitCode !== 0) || r?.error) {
         aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
       }
-      const payload = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, ...r, aiAnalysis };
+      // Output clipping & circuit breaker
+      const clipped = clipOutput(String(r?.stdout || ''), String(r?.stderr || ''));
+      const payload = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, stdout: clipped.stdout, stderr: clipped.stderr, exitCode: r?.exitCode, truncated: !!r?.truncated || clipped.truncated, terminated: !!r?.terminated, aiAnalysis } as any;
+      totalOut += (payload.stdout?.length || 0) + (payload.stderr?.length || 0);
+      if (totalOut > maxOutputChars) {
+        if (stream) {
+          res.write('event: error\n');
+          res.write(`data: ${JSON.stringify({ message: `Output exceeded ${maxOutputChars} chars and was terminated`, truncated: true, terminated: true })}\n\n`);
+          break;
+        }
+      }
       results.push(payload);
       if (stream) {
         res.write(`event: step\n`);

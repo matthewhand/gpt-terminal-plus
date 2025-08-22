@@ -44,7 +44,7 @@ function readPublicFileIfExists(filename: 'openapi.json' | 'openapi.yaml'): stri
 }
 
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
-function buildSpec(req?: Request) {
+export function buildSpec(req?: Request) {
   const baseUrl = getPublicBaseUrl(req);
   const cfg = convictConfig();
   const filesConsequential = cfg.get('files.consequential');

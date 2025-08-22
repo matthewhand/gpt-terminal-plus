@@ -9,6 +9,7 @@ import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { logSessionStep } from '../../utils/activityLogger';
+import { enforceInputLimit, clipOutput } from '../../utils/limits';
 
 /**
  * Execute code using interpreters
@@ -23,6 +24,14 @@ export const executeCode = async (req: Request, res: Response) => {
   if (!code) {
     return res.status(400).json({ error: 'Code is required' });
   }
+
+  // Circuit breaker: input length
+  const inputCheck = enforceInputLimit('executeCode', String(code));
+  if (!('ok' in inputCheck) || inputCheck.ok === false) {
+    await logSessionStep('termination', { reason: 'inputLimitExceeded', chars: String(code).length }, sessionId);
+    return res.status(413).json({ ...inputCheck.payload });
+  }
+  const effectiveCode = (inputCheck as any).truncated ? (inputCheck as any).value : String(code);
 
   try {
     const server = getServerHandler(req);
@@ -71,7 +80,7 @@ export const executeCode = async (req: Request, res: Response) => {
     const tmpDir = os.tmpdir();
     const ext = mapping.ext;
     const codePath = path.join(tmpDir, `jit-code-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    await fsp.writeFile(codePath, String(code), { mode: 0o600 });
+    await fsp.writeFile(codePath, effectiveCode, { mode: 0o600 });
 
     const escapedPath = shellEscape([codePath]);
     const runCmd = interpreterCmd === 'npx'
@@ -95,7 +104,7 @@ export const executeCode = async (req: Request, res: Response) => {
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
       aiAnalysis = await analyzeError({
         kind: 'code',
-        input: String(code),
+        input: effectiveCode,
         language: String(language),
         stdout: result.stdout,
         stderr: result.stderr,
@@ -103,8 +112,11 @@ export const executeCode = async (req: Request, res: Response) => {
       });
     }
 
-    await logSessionStep('executeCode-output', { result, aiAnalysis, language, interpreter }, sessionId);
-    res.json({ result, aiAnalysis, language, interpreter });
+    const clipped = clipOutput(String(result.stdout || ''), String(result.stderr || ''));
+    const final = { ...result, stdout: clipped.stdout, stderr: clipped.stderr, truncated: !!(result as any).truncated || clipped.truncated, terminated: (result as any).terminated || false };
+
+    await logSessionStep('executeCode-output', { result: final, aiAnalysis, language, interpreter }, sessionId);
+    res.json({ result: final, aiAnalysis, language, interpreter });
 
   } catch (error) {
     await logSessionStep('executeCode-error', { error: error instanceof Error ? error.message : String(error) }, sessionId);

@@ -1,6 +1,7 @@
 import { exec as _exec } from 'child_process';
 import shellEscape from 'shell-escape';
 import { ExecutionResult } from '../../../types/ExecutionResult';
+import { convictConfig } from '../../../config/convictConfig';
 import Debug from 'debug';
 
 const debug = Debug('app:local:executeCode');
@@ -57,6 +58,7 @@ export async function executeLocalCode(
   debug(`👉 Executing local code: ${cmd}`);
 
   const execAny = _exec as unknown as (...args: any[]) => any;
+  const maxOutput = (() => { try { return convictConfig().get('limits.maxOutputChars') as number; } catch { return 200000; } })();
 
   const res = await new Promise<ExecutionResult>((resolve, reject) => {
     const cb = (error: any, stdout: string, stderr: string) => {
@@ -66,7 +68,14 @@ export async function executeLocalCode(
     };
 
     try {
-      execAny(cmd, { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 }, cb);
+      execAny(cmd, { timeout: timeoutMs, maxBuffer: Math.max(1024 * 64, Number(maxOutput)) }, (error: any, stdout: string, stderr: string) => {
+        if (error && /maxBuffer/i.test(String(error?.message || ''))) {
+          const exitCode = typeof error?.code === 'number' ? error.code : 1;
+          resolve({ stdout, stderr, exitCode, success: false, error: true, truncated: true, terminated: true });
+        } else {
+          cb(error, stdout, stderr);
+        }
+      });
     } catch {
       try {
         execAny(cmd, cb);

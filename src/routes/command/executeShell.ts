@@ -7,6 +7,7 @@ import { getExecuteTimeout } from '../../utils/timeout';
 import { validateFileOperations } from '../../utils/fileOperations';
 import { logSessionStep } from '../../utils/activityLogger';
 import { convictConfig } from '../../config/convictConfig';
+import { enforceInputLimit, clipOutput } from '../../utils/limits';
 
 const debug = Debug('app:command:execute-shell');
 
@@ -45,6 +46,14 @@ export const executeShell = async (req: Request, res: Response) => {
   const previewCommand: string = Array.isArray(args) && args.length > 0
     ? [command, ...args].join(' ')
     : String(command);
+
+  // Circuit breaker: input size
+  const inputCheck = enforceInputLimit('executeShell', previewCommand);
+  if (!('ok' in inputCheck) || inputCheck.ok === false) {
+    await logSessionStep('termination', { reason: 'inputLimitExceeded', chars: previewCommand?.length || 0 }, sessionId);
+    return res.status(413).json({ ...inputCheck.payload });
+  }
+  const effectiveCommand = (inputCheck as any).truncated ? (inputCheck as any).value : previewCommand;
 
   try {
     // Validate file operations, if any, against policy
@@ -87,7 +96,7 @@ export const executeShell = async (req: Request, res: Response) => {
     await logSessionStep('executeShell-input', { resolvedShell: selectedShell, commandPreview: previewCommand }, sessionId);
 
     // Direct execution; handler applies backend-specific timeouts and shell
-    const execCmd = [command, ...(Array.isArray(args) ? args : [])].join(' ');
+    const execCmd = effectiveCommand;
     const timeout = getExecuteTimeout('shell');
     const result: any = await (server as any).executeCommand(execCmd, timeout, cwd, selectedShell);
 
@@ -95,7 +104,7 @@ export const executeShell = async (req: Request, res: Response) => {
     if ((result?.exitCode !== undefined && result.exitCode !== 0) || result?.error) {
       aiAnalysis = await analyzeError({
         kind: 'command',
-        input: previewCommand,
+        input: effectiveCommand,
         shell: selectedShell,
         stdout: result.stdout,
         stderr: result.stderr,
@@ -103,8 +112,12 @@ export const executeShell = async (req: Request, res: Response) => {
       });
     }
 
-    await logSessionStep('executeShell-output', { result, aiAnalysis, shell: selectedShell }, sessionId);
-    return res.status(200).json({ result, aiAnalysis, shell: selectedShell });
+    // Output circuit breaker (post-clip if needed)
+    const clipped = clipOutput(String(result.stdout || ''), String(result.stderr || ''));
+    const final = { ...result, stdout: clipped.stdout, stderr: clipped.stderr, truncated: !!(result as any).truncated || clipped.truncated, terminated: (result as any).terminated || false };
+
+    await logSessionStep('executeShell-output', { result: final, aiAnalysis, shell: selectedShell }, sessionId);
+    return res.status(200).json({ result: final, aiAnalysis, shell: selectedShell });
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

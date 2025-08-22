@@ -34,6 +34,12 @@ export const convictConfig = () => {
           format: Boolean,
           default: true,
           env: 'LLM_ENABLED'
+        },
+        timeoutMs: {
+          doc: 'Timeout for LLM command execution (ms)',
+          format: 'nat',
+          default: 120000,
+          env: 'EXECUTE_LLM_TIMEOUT_MS'
         }
       }
     },
@@ -210,6 +216,110 @@ export const convictConfig = () => {
         }
       }
     },
+    // Engine-specific conveniences exposed to WebUI
+    engines: {
+      codex: {
+        model: {
+          doc: 'Codex model identifier',
+          format: String,
+          default: 'gpt-5',
+          env: 'CODEX_MODEL'
+        },
+        fullAuto: {
+          doc: 'Codex full-auto execution',
+          format: Boolean,
+          default: true,
+          env: 'CODEX_FULL_AUTO'
+        },
+        config: {
+          doc: 'Codex JSON configuration blob',
+          format: Object,
+          default: {}
+        }
+      },
+      interpreter: {
+        model: {
+          doc: 'Interpreter model identifier',
+          format: String,
+          default: 'gpt-4o',
+          env: 'INTERPRETER_MODEL'
+        },
+        temperature: {
+          doc: 'Interpreter temperature',
+          format: Number,
+          default: 0.7,
+          env: 'INTERPRETER_TEMPERATURE'
+        },
+        autoRun: {
+          doc: 'Run automatically without prompting',
+          format: Boolean,
+          default: true,
+          env: 'INTERPRETER_AUTO_RUN'
+        },
+        loop: {
+          doc: 'Loop until completion',
+          format: Boolean,
+          default: false,
+          env: 'INTERPRETER_LOOP'
+        },
+        contextWindow: {
+          doc: 'Interpreter context window size',
+          format: 'nat',
+          default: 8192,
+          env: 'INTERPRETER_CONTEXT_WINDOW'
+        },
+        maxTokens: {
+          doc: 'Interpreter max tokens',
+          format: 'nat',
+          default: 2048,
+          env: 'INTERPRETER_MAX_TOKENS'
+        },
+        debug: {
+          doc: 'Interpreter debug mode',
+          format: Boolean,
+          default: false,
+          env: 'INTERPRETER_DEBUG'
+        },
+        safeMode: {
+          doc: 'Interpreter safe mode',
+          format: ['auto', 'ask', 'off', ''],
+          default: 'auto',
+          env: 'INTERPRETER_SAFE_MODE'
+        }
+      },
+      ollama: {
+        model: {
+          doc: 'Ollama model name',
+          format: String,
+          default: 'llama2',
+          env: 'OLLAMA_MODEL'
+        },
+        host: {
+          doc: 'Ollama base URL',
+          format: String,
+          default: 'http://localhost:11434',
+          env: 'OLLAMA_HOST'
+        },
+        format: {
+          doc: 'Ollama response format',
+          format: String,
+          default: 'text',
+          env: 'OLLAMA_FORMAT'
+        },
+        noWordWrap: {
+          doc: 'Disable word wrapping in output',
+          format: Boolean,
+          default: false,
+          env: 'OLLAMA_NOWORDWRAP'
+        },
+        verbose: {
+          doc: 'Verbose output',
+          format: Boolean,
+          default: false,
+          env: 'OLLAMA_VERBOSE'
+        }
+      }
+    },
     files: {
       enabled: {
         doc: 'Enable file operation routes (list, read, create, update, amend, setPostCommand)',
@@ -222,6 +332,46 @@ export const convictConfig = () => {
         format: Boolean,
         default: true,
         env: 'FILES_CONSEQUENTIAL'
+      }
+    }
+    ,
+    // Safety/circuit breakers
+    limits: {
+      maxInputChars: {
+        doc: 'Maximum input characters per request',
+        format: 'nat',
+        default: 200000,
+        env: 'MAX_INPUT_CHARS'
+      },
+      maxOutputChars: {
+        doc: 'Maximum output characters returned from any tool/LLM',
+        format: 'nat',
+        default: 200000,
+        env: 'MAX_OUTPUT_CHARS'
+      },
+      maxSessionDurationSec: {
+        doc: 'Maximum seconds for a session',
+        format: 'nat',
+        default: 7200,
+        env: 'MAX_SESSION_DURATION'
+      },
+      maxSessionIdleSec: {
+        doc: 'Maximum idle seconds before session termination',
+        format: 'nat',
+        default: 600,
+        env: 'MAX_SESSION_IDLE'
+      },
+      maxLlmCostUsd: {
+        doc: 'Optional max budget in USD (null for unlimited)',
+        format: (val: any) => (val === null || typeof val === 'number'),
+        default: null,
+        env: 'MAX_LLM_COST_USD'
+      },
+      allowTruncation: {
+        doc: 'If true, inputs larger than limit may be truncated',
+        format: Boolean,
+        default: false,
+        env: 'ALLOW_TRUNCATION'
       }
     }
   });
@@ -303,6 +453,7 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
   assign('execution', 'shell.allowed', cfg.get('execution.shell.allowed'), 'SHELL_ALLOWED');
   assign('execution', 'code.enabled', cfg.get('execution.code.enabled'), 'CODE_ENABLED');
   assign('execution', 'llm.enabled', cfg.get('execution.llm.enabled'), 'LLM_ENABLED');
+  assign('execution', 'llm.timeoutMs', cfg.get('execution.llm.timeoutMs'), 'EXECUTE_LLM_TIMEOUT_MS');
   
   // compat group
   assign('compat', 'llmProvider', cfg.get('llm.compat.llmProvider'), 'LLM_COMPAT_PROVIDER');
@@ -312,6 +463,31 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
   assign('compat', 'interpreterPort', cfg.get('llm.compat.interpreterPort'), 'LLM_COMPAT_INTERPRETER_PORT');
   assign('compat', 'interpreterOffline', cfg.get('llm.compat.interpreterOffline'), 'LLM_COMPAT_INTERPRETER_OFFLINE');
   assign('compat', 'interpreterVerbose', cfg.get('llm.compat.interpreterVerbose'), 'LLM_COMPAT_INTERPRETER_VERBOSE');
+  
+  // engines group (for WebUI convenience)
+  assign('engines', 'codex.model', cfg.get('engines.codex.model'), 'CODEX_MODEL');
+  assign('engines', 'codex.fullAuto', cfg.get('engines.codex.fullAuto'), 'CODEX_FULL_AUTO');
+  assign('engines', 'interpreter.model', cfg.get('engines.interpreter.model'), 'INTERPRETER_MODEL');
+  assign('engines', 'interpreter.temperature', cfg.get('engines.interpreter.temperature'), 'INTERPRETER_TEMPERATURE');
+  assign('engines', 'interpreter.autoRun', cfg.get('engines.interpreter.autoRun'), 'INTERPRETER_AUTO_RUN');
+  assign('engines', 'interpreter.loop', cfg.get('engines.interpreter.loop'), 'INTERPRETER_LOOP');
+  assign('engines', 'interpreter.contextWindow', cfg.get('engines.interpreter.contextWindow'), 'INTERPRETER_CONTEXT_WINDOW');
+  assign('engines', 'interpreter.maxTokens', cfg.get('engines.interpreter.maxTokens'), 'INTERPRETER_MAX_TOKENS');
+  assign('engines', 'interpreter.debug', cfg.get('engines.interpreter.debug'), 'INTERPRETER_DEBUG');
+  assign('engines', 'interpreter.safeMode', cfg.get('engines.interpreter.safeMode'), 'INTERPRETER_SAFE_MODE');
+  assign('engines', 'ollama.model', cfg.get('engines.ollama.model'), 'OLLAMA_MODEL');
+  assign('engines', 'ollama.host', cfg.get('engines.ollama.host'), 'OLLAMA_HOST');
+  assign('engines', 'ollama.format', cfg.get('engines.ollama.format'), 'OLLAMA_FORMAT');
+  assign('engines', 'ollama.noWordWrap', cfg.get('engines.ollama.noWordWrap'), 'OLLAMA_NOWORDWRAP');
+  assign('engines', 'ollama.verbose', cfg.get('engines.ollama.verbose'), 'OLLAMA_VERBOSE');
+
+  // limits
+  assign('limits', 'maxInputChars', cfg.get('limits.maxInputChars'), 'MAX_INPUT_CHARS');
+  assign('limits', 'maxOutputChars', cfg.get('limits.maxOutputChars'), 'MAX_OUTPUT_CHARS');
+  assign('limits', 'maxSessionDurationSec', cfg.get('limits.maxSessionDurationSec'), 'MAX_SESSION_DURATION');
+  assign('limits', 'maxSessionIdleSec', cfg.get('limits.maxSessionIdleSec'), 'MAX_SESSION_IDLE');
+  assign('limits', 'maxLlmCostUsd', cfg.get('limits.maxLlmCostUsd'), 'MAX_LLM_COST_USD');
+  assign('limits', 'allowTruncation', cfg.get('limits.allowTruncation'), 'ALLOW_TRUNCATION');
   
   return result;
 }

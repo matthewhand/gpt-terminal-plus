@@ -17,6 +17,7 @@ interface ShellSession {
   startedAt: string;
   status: 'running' | 'exited';
   exitCode?: number;
+  lastActivity: string;
 }
 
 const sessions = new Map<string, ShellSession>();
@@ -69,6 +70,7 @@ router.post('/start', async (req: Request, res: Response) => {
     logs: [],
     startedAt,
     status: 'running',
+    lastActivity: startedAt,
   };
 
   child.on('exit', (code) => {
@@ -144,10 +146,14 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
   child.stdout.on('data', (data) => {
     const chunk = data.toString();
     tempLogs.push({ ts: new Date().toISOString(), chunk, stream: 'stdout' });
+    const s = sessions.get(id || '') || null;
+    if (s) s.lastActivity = new Date().toISOString();
   });
   child.stderr.on('data', (data) => {
     const chunk = data.toString();
     tempLogs.push({ ts: new Date().toISOString(), chunk, stream: 'stderr' });
+    const s = sessions.get(id || '') || null;
+    if (s) s.lastActivity = new Date().toISOString();
   });
 
   let responded = false;
@@ -282,3 +288,29 @@ router.get('/:id/logs', async (req: Request, res: Response) => {
 });
 
 export default router;
+
+// Watchdog for session limits
+import { convictConfig } from '../../config/convictConfig';
+(function initWatchdog() {
+  const cfg = convictConfig();
+  const getLimit = (key: string, def: number) => { try { return Number(cfg.get(key)) || def; } catch { return def; } };
+  const maxDuration = getLimit('limits.maxSessionDurationSec', 7200) * 1000;
+  const maxIdle = getLimit('limits.maxSessionIdleSec', 600) * 1000;
+  setInterval(() => {
+    const now = Date.now();
+    sessions.forEach((s, id) => {
+      if (!s.process || s.status !== 'running') return;
+      const started = Date.parse(s.startedAt);
+      const last = Date.parse(s.lastActivity || s.startedAt);
+      if ((now - started) > maxDuration) {
+        try { s.process.kill(); } catch {}
+        s.status = 'exited';
+        logSessionStep('termination', { reason: 'sessionDurationExceeded', sessionId: id, limitMs: maxDuration });
+      } else if ((now - last) > maxIdle) {
+        try { s.process.kill(); } catch {}
+        s.status = 'exited';
+        logSessionStep('termination', { reason: 'idleTimeout', sessionId: id, idleMs: (now - last), limitMs: maxIdle });
+      }
+    });
+  }, 5000);
+})();

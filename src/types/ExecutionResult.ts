@@ -7,4 +7,6 @@ export interface ExecutionResult {
   success?: boolean;
   error?: boolean;
   exitCode?: number;
+  truncated?: boolean;
+  terminated?: boolean;
 }
