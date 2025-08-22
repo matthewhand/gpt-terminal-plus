@@ -1,4 +1,4 @@
-import { createFile } from '../../../../src/handlers/local/actions/createFile';
+import { createFile } from '../../../../src/handlers/local/actions/createFile.local';
 import * as GlobalStateHelper from '../../../../src/utils/GlobalStateHelper';
 import fs from 'fs';
 import path from 'path';
@@ -376,12 +376,18 @@ describe('createFile Action', () => {
     });
 
     it('should handle path resolution errors', async () => {
-      // Mock path.join to throw an error
+      // Mock path.join to throw an error in a more controlled way
       const originalJoin = path.join;
-      path.join = jest.fn().mockImplementation(() => {
-        throw new Error('Path resolution failed');
+      const mockJoin = jest.fn().mockImplementation((...args) => {
+        // Only throw for our specific test case
+        if (args.includes('relative/path.txt')) {
+          throw new Error('Path resolution failed');
+        }
+        // Use original implementation for other calls
+        return originalJoin.apply(path, args);
       });
-
+      
+      path.join = mockJoin;
       mockFs.existsSync.mockReturnValue(false);
 
       await expect(createFile('relative/path.txt', 'content'))

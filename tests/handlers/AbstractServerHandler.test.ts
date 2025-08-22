@@ -2,6 +2,7 @@ import { AbstractServerHandler } from '../../src/handlers/AbstractServerHandler'
 import { SystemInfo } from '../../src/types/SystemInfo';
 import { PaginatedResponse } from '../../src/types/PaginatedResponse';
 import { ServerConfig } from '../../src/types/ServerConfig';
+import { FileReadResult } from '../../src/types/FileReadResult';
 
 class DummyHandler extends AbstractServerHandler {
   constructor(config: any) {
@@ -80,6 +81,25 @@ class DummyHandler extends AbstractServerHandler {
 
     presentWorkingDirectory(): Promise<string> {
         return Promise.resolve('.');
+    }
+
+    readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
+        return Promise.resolve({
+            filePath,
+            content: 'file content',
+            encoding: 'utf8',
+            startLine: 1,
+            endLine: 1,
+            truncated: false
+        });
+    }
+
+    amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
+        return Promise.resolve(true);
+    }
+
+    changeDirectory(directory: string): Promise<boolean> {
+        return Promise.resolve(true);
     }
 }
 
