@@ -4,7 +4,7 @@ import path from "path";
 import { changeDirectory } from "../routes/command/changeDirectory";
 import { executeCommand } from "../routes/command/executeCommand";
 import { executeCode } from "../routes/command/executeCode";
-import { createFile } from "../routes/file/createFile";
+import { createFile } from "../routes/file/createFile.route";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
 import { getSupportedModels, isSupportedModel } from "../common/models";
 import { getSelectedModel, setSelectedModel } from "../utils/GlobalStateHelper";

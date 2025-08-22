@@ -3,11 +3,11 @@ import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 
 // File route handlers
-import { createFile } from './file/createFile';
-import { listFiles } from './file/listFiles';
-import { readFile } from './file/readFile';
-import { updateFile } from './file/updateFile';
-import { amendFile } from './file/amendFile';
+import { createFile } from './file/createFile.route';
+import { listFiles } from './file/listFiles.route';
+import { readFile } from './file/readFile.route';
+import { updateFile } from './file/updateFile.route';
+import { amendFile } from './file/amendFile.route';
 import { setPostCommand } from './file/setPostCommand';
 import { applyDiff } from './file/diff';
 import { applyPatch } from './file/patch';
