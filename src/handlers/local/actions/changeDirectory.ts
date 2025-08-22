@@ -11,7 +11,9 @@ export async function changeDirectory(directory: string, baseDir?: string): Prom
       throw new Error('directory is required and must be a string.');
     }
 
-    const base = baseDir || process.cwd();
+    // Use project root instead of process.cwd() for consistent path resolution
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const base = baseDir ? path.resolve(projectRoot, baseDir) : projectRoot;
     const resolvedPath = path.resolve(base, directory);
 
     if (!resolvedPath.startsWith(base)) {

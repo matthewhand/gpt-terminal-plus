@@ -19,8 +19,9 @@ const listFiles = async ({
   orderBy = 'filename'
 }: ListParams): Promise<{ files: { name: string, isDirectory: boolean }[], total: number }> => {
   try {
-    // Sanitize & normalize directory
-    const absDir = path.resolve(directory);
+    // Sanitize & normalize directory - use project root instead of process.cwd()
+    const baseDir = path.resolve(__dirname, '../../../../'); // Go up to project root
+    const absDir = path.resolve(baseDir, directory);
 
     debug(`📂 Listing files in: ${absDir}, limit=${limit}, offset=${offset}, orderBy=${orderBy}`);
 

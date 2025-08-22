@@ -20,7 +20,9 @@ export async function updateFile(
       throw new Error('pattern must be a string');
     }
 
-    const baseDir = directory || process.cwd();
+    // Use project root instead of process.cwd() for consistent path resolution
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
     const absPath = path.resolve(baseDir, filePath);
 
     if (!absPath.startsWith(baseDir)) {
@@ -34,7 +36,8 @@ export async function updateFile(
 
     if (backup) {
       const data = await fs.readFile(absPath);
-      const backupPath = `${absPath}.bak-${Date.now()}`;
+      const timestamp = Date.now();
+      const backupPath = `${absPath}.${timestamp}.bak`;
       await fs.writeFile(backupPath, data);
       debug(`📦 Backup created: ${backupPath}`);
     }

@@ -23,7 +23,9 @@ export async function createFile(
       throw new Error('filePath is required and must be a string.');
     }
 
-    const baseDir = directory || process.cwd();
+    // Use project root instead of process.cwd() for consistent path resolution
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
 
     // Always resolve relative to baseDir
     const absPath = path.resolve(baseDir, filePath);
@@ -43,7 +45,7 @@ export async function createFile(
       await fs.access(absPath);
       if (backup) {
         const data = await fs.readFile(absPath);
-        const backupPath = `${absPath}.bak-${Date.now()}`;
+        const backupPath = `${absPath}.${Date.now()}.bak`;
         await fs.writeFile(backupPath, data);
         debug(`📦 Backup created: ${backupPath}`);
       }

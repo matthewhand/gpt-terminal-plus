@@ -23,7 +23,9 @@ export async function readFile(filePath: string, directory?: string, options?: {
       throw new Error('endLine must be greater than or equal to startLine');
     }
 
-    const baseDir = directory || process.cwd();
+    // Use project root instead of process.cwd() for consistent path resolution
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
     const resolvedPath = path.resolve(baseDir, filePath);
 
     if (!resolvedPath.startsWith(baseDir)) {
