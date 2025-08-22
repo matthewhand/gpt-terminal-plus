@@ -36,7 +36,8 @@ export class SsmServerHandler extends AbstractServerHandler {
             }));
             const commandId = send.Command?.CommandId as string;
             const start = Date.now();
-            const maxMs = timeout && timeout > 0 ? timeout : 300000; // default 5m
+            const defaultSsmTimeout = parseInt(process.env.SSM_TIMEOUT || '300000', 10); // default 5m
+            const maxMs = (timeout && timeout > 0) ? timeout : defaultSsmTimeout;
             while (true) {
                 const inv = await client.send(new GetCommandInvocationCommand({
                     CommandId: commandId,

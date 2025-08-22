@@ -69,7 +69,13 @@ export class SshServerHandler extends AbstractServerHandler {
             }).connect(opts);
 
             if (timeout && timeout > 0) {
+                // explicit timeout wins, legacy behavior
                 setTimeout(() => finalize({ stdout, stderr: stderr || 'Timeout', error: true, exitCode: 124, success: false }), timeout);
+            } else {
+                const envTimeout = parseInt(process.env.SSH_TIMEOUT || '0', 10);
+                if (envTimeout > 0) {
+                    setTimeout(() => finalize({ stdout, stderr: stderr || 'Timeout', error: true, exitCode: 124, success: false }), envTimeout);
+                }
             }
         });
     }
