@@ -4,7 +4,7 @@ import debug from 'debug';
 const executeCommandDebug = debug('app:executeCommand');
 
 // Configuration loaded from environment variables
-const DEFAULT_TIMEOUT = parseInt(process.env.DEFAULT_TIMEOUT || '0', 10);
+const LOCAL_TIMEOUT = parseInt(process.env.LOCAL_TIMEOUT ?? process.env.DEFAULT_TIMEOUT ?? '0', 10);
 const DEFAULT_SHELL = process.env.DEFAULT_SHELL || '/bin/bash';
 const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
 
@@ -21,7 +21,7 @@ const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
  */
 export async function executeCommand(
     command: string,
-    timeout: number = DEFAULT_TIMEOUT,
+    timeout: number = LOCAL_TIMEOUT,
     directory: string = '.',
     shell: string = DEFAULT_SHELL
 ): Promise<{ stdout: string; stderr: string; getPresentWorkingDirectory: string }> {
@@ -62,10 +62,13 @@ export async function executeCommand(
         executeCommandDebug(`Prepared command for exec: ${commandToExecute}`);
     }
 
+    // Resolve timeout with per-backend default if undefined or invalid
+    const resolvedTimeout = (typeof timeout === 'number' && timeout >= 0) ? timeout : LOCAL_TIMEOUT;
+
     // Execution options setup
     const execOptions = {
         cwd: directory,
-        timeout: timeout || 0, // Default to no timeout if not specified
+        timeout: resolvedTimeout || 0, // Default to no timeout if not specified
         shell: shell,
         env: { ...process.env }, // Pass current environment variables
     };
