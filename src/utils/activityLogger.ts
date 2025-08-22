@@ -1,31 +1,34 @@
-import fs from "fs";
-import path from "path";
+type LogPayload = Record<string, any>;
 
-/**
- * Log a step in a session's activity timeline.
- * Each call creates a JSON file under data/activity/<date>/<sessionId>/.
- */
-export async function logSessionStep(
-  type: string,
-  payload: any,
-  sessionId?: string
-) {
-  const date = new Date().toISOString().slice(0, 10);
-  const dir = path.join(
-    "data",
-    "activity",
-    date,
-    sessionId || `session_${Date.now()}`
-  );
-
-  fs.mkdirSync(dir, { recursive: true });
-
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".json"));
-  const stepNum = String(files.length + 1).padStart(2, "0");
-  const filename = `${stepNum}-${type}.json`;
-
-  const filePath = path.join(dir, filename);
-  fs.writeFileSync(filePath, JSON.stringify(payload, null, 2));
-
-  return filePath;
+export function logActivity(step: LogPayload): void {
+  try {
+    const mode = process.env.LOG_MODE || 'json';
+    if (mode === 'pretty') {
+      const ts = new Date().toISOString();
+      const statusIcon = step.error ? '✖' : '✔';
+      // eslint-disable-next-line no-console
+      console.log(`[${ts}] ${step.type || 'activity'}`);
+      if (step.command) console.log(`  cmd: ${step.command}`);
+      if (step.stdout) console.log(`  ${statusIcon} stdout: ${String(step.stdout).trim()}`);
+      if (step.stderr) console.log(`  ${statusIcon} stderr: ${String(step.stderr).trim()}`);
+      if (step.error) console.log(`  ✖ error: ${step.error}`);
+      console.log('');
+    } else {
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(step));
+    }
+  } catch {
+    // ignore logging errors
+  }
 }
+
+export async function logSessionStep(event: string, payload: LogPayload, sessionId?: string): Promise<void> {
+  const entry = {
+    ts: new Date().toISOString(),
+    type: event,
+    sessionId: sessionId || '',
+    ...payload
+  };
+  logActivity(entry);
+}
+

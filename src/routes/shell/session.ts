@@ -77,7 +77,7 @@ router.post('/start', async (req: Request, res: Response) => {
   });
 
   sessions.set(id, session);
-
+  try { await logSessionStep('session-start', { id, shell, startedAt }, id); } catch {}
   res.json({ id, shell, startedAt });
 });
 
@@ -135,6 +135,7 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
     shell = session.shell;
   }
 
+  try { await logSessionStep('exec-start', { id: id || 'adhoc', shell, command }, id || undefined); } catch {}
   const child = spawn(shell, ['-c', command]);
 
   const startedAt = new Date().toISOString();

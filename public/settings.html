@@ -2,278 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Server Settings (Redacted)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings Panel</title>
   <style>
-    :root {
-      --bg: #0f1216;
-      --fg: #e6edf3;
-      --muted: #9aa4af;
-      --card: #151a21;
-      --accent: #2f81f7;
-      --danger: #f85149;
-      --border: #2d333b;
-      --ok: #3fb950;
-      --ro: #ffa657;
-      --code: #1b2129;
-    }
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      background: var(--bg); color: var(--fg);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-    }
-    header {
-      padding: 16px 20px; border-bottom: 1px solid var(--border); background: #0c0f13;
-    }
-    header h1 {
-      margin: 0; font-size: 18px; letter-spacing: 0.3px;
-    }
-    main {
-      padding: 20px; max-width: 1100px; margin: 0 auto;
-    }
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    label { display: inline-flex; align-items: center; gap: 8px; }
-    input[type="password"], input[type="text"] {
-      background: #0c0f13; color: var(--fg);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 8px 10px; min-width: 320px;
-      font-family: inherit;
-    }
-    input[type="checkbox"] { transform: translateY(1px); }
-    button {
-      background: var(--accent); color: white;
-      border: 0; border-radius: 6px; padding: 8px 12px; margin-left: 8px;
-      cursor: pointer; font-weight: 600;
-    }
-    button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
-    .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
-    .error { color: var(--danger); }
-    .ok { color: var(--ok); }
-    details.group { margin-top: 14px; }
-    details.group summary {
-      cursor: pointer; font-weight: 600;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 10px;
-      font-size: 14px;
-    }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      text-align: left; padding: 8px 6px; vertical-align: top;
-    }
-    th { color: var(--muted); font-weight: 600; }
-    code {
-      background: var(--code); color: var(--fg);
-      padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-    }
-    .badge {
-      display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border);
-    }
-    .badge.ro { color: var(--ro); border-color: var(--ro); }
-    .badge.rw { color: var(--ok); border-color: var(--ok); }
-    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .spacer { flex: 1 1 auto; }
-    .muted { color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
-    .note { font-size: 13px; color: var(--muted); margin-top: 8px; }
-    pre.raw {
-      background: var(--code); border: 1px solid var(--border); border-radius: 6px;
-      padding: 12px; overflow: auto; max-height: 420px;
-    }
+    body { font-family: sans-serif; padding: 2em; max-width: 600px; }
+    label { display: block; margin-top: 1em; }
+    input, select { width: 100%; padding: 0.5em; margin-top: 0.25em; }
+    .advanced { margin-top: 2em; border-top: 1px solid #ccc; padding-top: 1em; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Server Settings (Redacted)</h1>
-  </header>
-  <main>
-    <section class="panel">
-      <div class="controls">
-        <label>API Token:
-          <input type="password" id="token" placeholder="Paste API_TOKEN" autocomplete="off" />
-        </label>
-        <label><input type="checkbox" id="remember" /> Remember token</label>
-        <button id="loadBtn">Load settings</button>
-        <button id="clearBtn" class="secondary">Clear</button>
-        <span class="spacer"></span>
-        <button id="rawToggle" class="secondary">Show raw JSON</button>
-      </div>
-      <div class="note">
-        This page calls <code>/settings</code> with a Bearer token and displays a redacted view.
-        Secrets (e.g., OpenAI API keys) are masked, and values provided by environment variables are marked <span class="badge ro">read-only</span>.
-      </div>
-      <div id="status" class="status"></div>
-    </section>
 
-    <section id="content" class="panel" hidden>
-      <h3 style="margin-top: 0;">Settings</h3>
-      <div id="groups"></div>
-      <details id="raw" class="raw" style="margin-top:12px;" hidden>
-        <summary>Raw JSON</summary>
-        <pre class="raw" id="rawJson"></pre>
-      </details>
-    </section>
-  </main>
+<h1>Server Settings</h1>
 
-  <script>
-    (function() {
-      const $ = (id) => document.getElementById(id);
-      const tokenInput = $('token');
-      const remember = $('remember');
-      const loadBtn = $('loadBtn');
-      const clearBtn = $('clearBtn');
-      const rawToggle = $('rawToggle');
-      const statusEl = $('status');
-      const content = $('content');
-      const groupsEl = $('groups');
-      const rawDetails = $('raw');
-      const rawJson = $('rawJson');
+<form id="settings-form">
+  <label>
+    AI Feedback Mode
+    <select name="WEBUI_LLM_ANALYSIS_MODE">
+      <option value="off">Off</option>
+      <option value="onError">On Error</option>
+      <option value="always">Always</option>
+    </select>
+  </label>
 
-      // Helpers
-      function setStatus(msg, cls) {
-        statusEl.textContent = msg || '';
-        statusEl.className = 'status' + (cls ? ' ' + cls : '');
-      }
-      function readUrlToken() {
-        try {
-          const usp = new URLSearchParams(location.search);
-          if (usp.has('token')) return usp.get('token');
-          if (location.hash && location.hash.startsWith('#token=')) {
-            return decodeURIComponent(location.hash.slice('#token='.length));
-          }
-        } catch {}
-        return null;
-      }
-      function saveTokenMaybe() {
-        if (remember.checked) localStorage.setItem('settings_api_token', tokenInput.value || '');
-        else localStorage.removeItem('settings_api_token');
-      }
-      function loadSavedToken() {
-        const saved = localStorage.getItem('settings_api_token');
-        if (saved) { tokenInput.value = saved; remember.checked = true; }
-      }
-      function humanValue(val) {
-        if (val === null) return 'null';
-        if (typeof val === 'object') return JSON.stringify(val);
-        if (val === '') return '(empty)';
-        return String(val);
-      }
-      function renderTable(groupName, entries) {
-        const table = document.createElement('table');
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th style="width:38%;">Key</th><th style="width:42%;">Value</th><th style="width:20%;">Access</th></tr>';
-        table.appendChild(thead);
+  <label>
+    LLM Engine
+    <select name="LLM_ENGINE">
+      <option value="interpreter">Interpreter</option>
+      <option value="codex">Codex</option>
+    </select>
+  </label>
 
-        const tbody = document.createElement('tbody');
-        Object.entries(entries).forEach(([key, meta]) => {
-          const tr = document.createElement('tr');
-          const tdK = document.createElement('td');
-          const tdV = document.createElement('td');
-          const tdR = document.createElement('td');
+  <label>
+    Local Timeout (ms)
+    <input type="number" name="LOCAL_TIMEOUT" value="5000" />
+  </label>
 
-          tdK.innerHTML = '<code>' + groupName + '.' + key + '</code>';
-          
-          // Special handling for LLM Console feature
-          if (groupName === 'features' && key === 'llmConsole' && meta.value === true) {
-            tdV.innerHTML = humanValue(meta.value) + ' <a href="/llm/console" style="color: var(--accent); margin-left: 8px;">→ Open Console</a>';
-          } else {
-            tdV.textContent = humanValue(meta.value);
-          }
-          
-          tdR.innerHTML = meta.readOnly
-            ? '<span class="badge ro" title="Provided by environment variable; not editable here.">read-only</span>'
-            : '<span class="badge rw" title="Not provided by environment; editable in file-based config (future).">writable*</span>';
+  <label>
+    Allowed Shells (comma-separated)
+    <input type="text" name="EXECUTION_ALLOWED_SHELLS" value="bash,sh" />
+  </label>
 
-          tr.appendChild(tdK);
-          tr.appendChild(tdV);
-          tr.appendChild(tdR);
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        return table;
-      }
-      function renderGroups(payload) {
-        groupsEl.innerHTML = '';
-        Object.entries(payload).forEach(([groupName, entries]) => {
-          const details = document.createElement('details');
-          details.className = 'group';
-          details.open = true;
-          const summary = document.createElement('summary');
-          summary.textContent = groupName;
-          details.appendChild(summary);
-          details.appendChild(renderTable(groupName, entries));
-          groupsEl.appendChild(details);
-        });
-      }
+  <div class="advanced">
+    <h2>Advanced Overrides</h2>
+    <label>
+      Custom Config (JSON)
+      <textarea name="customConfig" rows="8" placeholder='{"SSH_TIMEOUT":60000,"SSM_TIMEOUT":90000}'></textarea>
+    </label>
+  </div>
 
-      async function loadSettings() {
-        setStatus('Loading...', '');
-        content.hidden = true;
-        rawDetails.hidden = true;
-        rawJson.textContent = '';
+  <button type="submit">Apply Settings</button>
+</form>
 
-        const token = tokenInput.value.trim();
-        if (!token) {
-          setStatus('API token is required.', 'error');
-          return;
-        }
+<script>
+  document.getElementById('settings-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const customOverrides = JSON.parse(data.customConfig || '{}');
+    delete data.customConfig;
+    const payload = { ...data, ...customOverrides };
+    fetch('/config/override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(res => alert('Settings applied'));
+  });
+</script>
 
-        try {
-          const res = await fetch('/settings', {
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token }
-          });
-          if (!res.ok) {
-            const text = await res.text();
-            setStatus('Request failed: ' + res.status + ' ' + text, 'error');
-            return;
-          }
-          const payload = await res.json();
-          renderGroups(payload);
-          rawJson.textContent = JSON.stringify(payload, null, 2);
-          setStatus('Loaded.', 'ok');
-          content.hidden = false;
-          saveTokenMaybe();
-        } catch (err) {
-          setStatus('Network error: ' + (err && err.message ? err.message : err), 'error');
-        }
-      }
-
-      // Wire events
-      loadBtn.addEventListener('click', loadSettings);
-      clearBtn.addEventListener('click', () => {
-        tokenInput.value = '';
-        setStatus('');
-        content.hidden = true;
-        rawDetails.hidden = true;
-        rawJson.textContent = '';
-        saveTokenMaybe();
-      });
-      rawToggle.addEventListener('click', () => {
-        rawDetails.hidden = !rawDetails.hidden;
-        rawToggle.textContent = rawDetails.hidden ? 'Show raw JSON' : 'Hide raw JSON';
-      });
-      remember.addEventListener('change', saveTokenMaybe);
-      tokenInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') loadSettings();
-      });
-
-      // Bootstrap: prefill from URL hash/query or localStorage
-      const urlToken = readUrlToken();
-      if (urlToken) tokenInput.value = urlToken;
-      loadSavedToken();
-      if (tokenInput.value) {
-        // Auto-load once if token present
-        loadSettings();
-      }
-    })();
-  </script>
 </body>
 </html>
