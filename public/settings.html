@@ -53,6 +53,12 @@
     </div>
     
     <div class="panel">
+        <h3>API Token</h3>
+        <input id="apiToken" type="text" placeholder="[REDACTED]" />
+        <button type="button" onclick="generateKey()">Generate Random Key</button>
+    </div>
+    
+    <div class="panel">
         <h3>General Settings</h3>
         <label><input type="checkbox" id="localhost" /> Localhost Only</label>
         <input id="maxInputChars" type="number" placeholder="Max Input Chars" />
@@ -82,12 +88,21 @@
           apply(saved);
           document.getElementById('themeToggle')?.addEventListener('change', (e)=>apply(e.target.checked?'dark':'light'));
         })();
-        const token = localStorage.getItem('authToken') || prompt('Enter auth token:');
+        let token = localStorage.getItem('authToken') || prompt('Enter auth token:');
         
         document.getElementById('llmEngine').onchange = function() {
             document.querySelectorAll('[id$="Panel"]').forEach(p => p.style.display = 'none');
             document.getElementById(this.value + 'Panel').style.display = 'block';
         };
+        
+        function generateKey() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            let key = "";
+            for (let i = 0; i < 32; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('apiToken').value = key;
+        }
         
         async function saveConfig() {
             const config = {
@@ -104,6 +119,11 @@
                 MAX_LLM_COST_USD: parseFloat(document.getElementById('maxCost').value) || 0,
             };
             
+            const apiToken = document.getElementById('apiToken').value.trim();
+            if (apiToken && apiToken !== '[REDACTED]') {
+                config.API_TOKEN = apiToken;
+            }
+            
             const override = document.getElementById('jsonOverride').value;
             if (override) Object.assign(config, JSON.parse(override));
             
@@ -113,26 +133,21 @@
                 body: JSON.stringify(config)
             });
             
+            if (res.ok && apiToken && apiToken !== '[REDACTED]') {
+                localStorage.setItem('authToken', apiToken);
+                token = apiToken;
+            }
+            
             alert(res.ok ? 'Saved!' : 'Error saving config');
         }
         
         async function loadConfig() {
-            const res = await fetch('/config/override', {
+            const res = await fetch('/config/settings', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const config = await res.json();
-            
-            document.getElementById('llmEngine').value = config.LLM_ENGINE || 'codex';
-            document.getElementById('codexModel').value = config.CODEX_MODEL || '';
-            document.getElementById('codexFullAuto').checked = config.CODEX_FULL_AUTO || false;
-            document.getElementById('interpreterModel').value = config.INTERPRETER_MODEL || '';
-            document.getElementById('interpreterAutoRun').checked = config.INTERPRETER_AUTO_RUN || false;
-            document.getElementById('interpreterTemp').value = config.INTERPRETER_TEMPERATURE || 0.7;
-            document.getElementById('ollamaModel').value = config.OLLAMA_MODEL || '';
-            document.getElementById('ollamaHost').value = config.OLLAMA_HOST || '';
-            document.getElementById('maxInputChars').value = config.MAX_INPUT_CHARS || 10000;
-            document.getElementById('maxOutputChars').value = config.MAX_OUTPUT_CHARS || 100000;
-            document.getElementById('maxCost').value = config.MAX_LLM_COST_USD || 0;
+            const settings = await res.json();
+            // Show [REDACTED] if API token exists
+            document.getElementById('apiToken').placeholder = settings.API_TOKEN ? '[REDACTED]' : 'Enter API token';
             
             document.getElementById('llmEngine').onchange();
         }

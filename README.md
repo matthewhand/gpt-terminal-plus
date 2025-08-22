@@ -72,6 +72,10 @@ Ollama
 
 ## 🔒 Authentication
 - API uses bearer token (see `.env` or generated on start)
+- WebUI management: set custom API key via `/settings.html`
+  - Type custom key or click “Generate” (32 chars, alphanumeric)
+  - Overrides temporary token, updates in-memory config immediately
+  - Token is always redacted in settings responses as `[REDACTED]`
 - `/healthz` is public; most routes require token
 
 ---

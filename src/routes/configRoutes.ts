@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { stringify as yamlStringify } from 'yaml';
 import { convictConfig } from '../config/convictConfig';
 import { buildSpec } from '../openapi';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 const router = express.Router();
 
@@ -50,3 +51,21 @@ router.get('/openapi', (req: Request, res: Response) => {
 });
 
 export default router;
+
+// Secure overrides and settings endpoints
+router.post('/override', checkAuthToken as any, (req: Request, res: Response) => {
+  const body = (req.body || {}) as any;
+  const updates: Record<string, any> = {};
+  if (typeof body.API_TOKEN === 'string' && body.API_TOKEN.trim().length > 0) {
+    try { process.env.API_TOKEN = String(body.API_TOKEN).trim(); } catch {}
+    updates.API_TOKEN = '[UPDATED]';
+  }
+  // Extendable: handle additional keys as needed in the future
+  return res.status(200).json({ ok: true, updates });
+});
+
+router.get('/settings', checkAuthToken as any, (_req: Request, res: Response) => {
+  let hasToken = false;
+  try { hasToken = !!(process.env.API_TOKEN || convictConfig().get('security.apiToken')); } catch {}
+  return res.status(200).json({ API_TOKEN: hasToken ? '[REDACTED]' : '' });
+});

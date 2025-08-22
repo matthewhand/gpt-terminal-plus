@@ -156,3 +156,9 @@ All engines respect configured circuit breakers:
 - Budget: when `MAX_LLM_COST_USD` is set, new LLM requests are rejected once exceeded.
 
 Terminated operations return partial outputs and flags: `truncated: true`, `terminated: true`.
+
+### Authentication
+
+- API key is required for most routes (Bearer token).
+- Set/rotate your key from the WebUI (Settings → API Token) or via env `API_TOKEN`.
+- Keys are always redacted in settings responses (`[REDACTED]`).

@@ -19,6 +19,7 @@ This document tracks notable updates and packaging details.
   - SSH and SSM targets management tables
   - Live OpenAPI YAML preview (`GET /config/openapi`) that filters paths based on toggles
 - feat(circuit): enforce input/output/session/budget limits with graceful termination and partial outputs
+- feat(config): allow secure API key override via WebUI with generator; redacted in settings
 - Documentation sync:
   - New `AGENTS.md` explaining engines, routing, and demo commands
   - Cleaned `README.md` with features and examples

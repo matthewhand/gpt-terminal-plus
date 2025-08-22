@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
 import { checkAuthToken } from '../../middlewares/checkAuthToken';
+import { validateCommand } from '../../middlewares/commandValidator';
 import { spawn } from 'child_process';
 import { logSessionStep } from '../../utils/activityLogger';
+import { saveSessions, loadSessions } from '../../utils/sessionPersistence';
 
 interface ShellLogEntry {
   ts: string;
@@ -26,6 +28,7 @@ const router = express.Router();
 
 // Secure all shell session endpoints
 router.use(checkAuthToken as any);
+router.use(validateCommand);
 
 /**
  * @swagger
@@ -79,7 +82,10 @@ router.post('/start', async (req: Request, res: Response) => {
   });
 
   sessions.set(id, session);
-  try { await logSessionStep('session-start', { id, shell, startedAt }, id); } catch {}
+  try { 
+    await logSessionStep('session-start', { id, shell, startedAt }, id);
+    await saveSessions(sessions);
+  } catch {}
   res.json({ id, shell, startedAt });
 });
 
@@ -126,6 +132,17 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'command required' });
   }
 
+  // Circuit breaker: MAX_INPUT_CHARS
+  const cfg = convictConfig();
+  const maxInputChars = Number(cfg.get('limits.maxInputChars') || 10000);
+  if (command.length > maxInputChars) {
+    return res.status(400).json({ 
+      message: 'Input too long', 
+      truncated: true, 
+      maxChars: maxInputChars 
+    });
+  }
+
   let shell = reqShell || 'bash';
 
   if (id) {
@@ -142,15 +159,32 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
 
   const startedAt = new Date().toISOString();
   const tempLogs: ShellLogEntry[] = [];
+  const maxOutputChars = Number(cfg.get('limits.maxOutputChars') || 100000);
+  let totalOutputChars = 0;
+  let outputTruncated = false;
 
   child.stdout.on('data', (data) => {
     const chunk = data.toString();
+    totalOutputChars += chunk.length;
+    if (totalOutputChars > maxOutputChars && !outputTruncated) {
+      outputTruncated = true;
+      child.kill();
+      tempLogs.push({ ts: new Date().toISOString(), chunk: '\n[OUTPUT TRUNCATED - LIMIT EXCEEDED]', stream: 'stderr' });
+      return;
+    }
     tempLogs.push({ ts: new Date().toISOString(), chunk, stream: 'stdout' });
     const s = sessions.get(id || '') || null;
     if (s) s.lastActivity = new Date().toISOString();
   });
   child.stderr.on('data', (data) => {
     const chunk = data.toString();
+    totalOutputChars += chunk.length;
+    if (totalOutputChars > maxOutputChars && !outputTruncated) {
+      outputTruncated = true;
+      child.kill();
+      tempLogs.push({ ts: new Date().toISOString(), chunk: '\n[OUTPUT TRUNCATED - LIMIT EXCEEDED]', stream: 'stderr' });
+      return;
+    }
     tempLogs.push({ ts: new Date().toISOString(), chunk, stream: 'stderr' });
     const s = sessions.get(id || '') || null;
     if (s) s.lastActivity = new Date().toISOString();
@@ -169,6 +203,7 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
         logs: tempLogs,
         startedAt,
         status: 'running',
+        lastActivity: new Date().toISOString(),
       };
       child.on('exit', (code) => {
         session.status = 'exited';
@@ -179,9 +214,13 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
       logSessionStep('executeCommand', { command, status: 'timeout' }, sessId);
 
       responded = true;
-      res.json({ stdout: tempLogs.filter(l => l.stream==='stdout').map(l=>l.chunk).join(''),
-                 stderr: tempLogs.filter(l => l.stream==='stderr').map(l=>l.chunk).join(''),
-                 sessionId: sessId });
+      res.json({ 
+        stdout: tempLogs.filter(l => l.stream==='stdout').map(l=>l.chunk).join(''),
+        stderr: tempLogs.filter(l => l.stream==='stderr').map(l=>l.chunk).join(''),
+        sessionId: sessId,
+        truncated: outputTruncated,
+        terminated: true
+      });
     }
   }, 5000);
 
@@ -194,7 +233,13 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
 
     logSessionStep('executeCommand', { command, stdout, stderr, exitCode: code ?? -1, status: 'success' });
 
-    res.json({ stdout, stderr, exitCode: code ?? -1 });
+    res.json({ 
+      stdout, 
+      stderr, 
+      exitCode: code ?? -1,
+      truncated: outputTruncated,
+      terminated: outputTruncated
+    });
   });
 });
 
@@ -230,6 +275,7 @@ router.post('/:id/stop', async (req: Request, res: Response) => {
     session.process?.kill();
     session.status = 'exited';
     sessions.delete(id);
+    await saveSessions(sessions);
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ message: `Failed to stop session: ${err.message}` });
@@ -289,6 +335,16 @@ router.get('/:id/logs', async (req: Request, res: Response) => {
 
 export default router;
 
+// Session recovery on startup
+(async function recoverSessions() {
+  try {
+    const persisted = await loadSessions();
+    console.log(`Recovered ${persisted.length} sessions from disk`);
+  } catch (err) {
+    console.error('Failed to recover sessions:', err);
+  }
+})();
+
 // Watchdog for session limits
 import { convictConfig } from '../../config/convictConfig';
 (function initWatchdog() {
@@ -305,12 +361,16 @@ import { convictConfig } from '../../config/convictConfig';
       if ((now - started) > maxDuration) {
         try { s.process.kill(); } catch {}
         s.status = 'exited';
+        sessions.delete(id);
         logSessionStep('termination', { reason: 'sessionDurationExceeded', sessionId: id, limitMs: maxDuration });
       } else if ((now - last) > maxIdle) {
         try { s.process.kill(); } catch {}
         s.status = 'exited';
+        sessions.delete(id);
         logSessionStep('termination', { reason: 'idleTimeout', sessionId: id, idleMs: (now - last), limitMs: maxIdle });
       }
     });
+    // Periodic persistence save
+    try { await saveSessions(sessions); } catch {}
   }, 5000);
 })();

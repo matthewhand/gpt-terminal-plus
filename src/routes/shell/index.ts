@@ -1,11 +1,10 @@
 import { Router } from 'express';
-// Temporarily disable shell routes to fix build
+import sessionRoutes from './session';
+import llmIntegrationRoutes from './llmIntegration';
+
 const router = Router();
 
-// TODO: Re-enable shell session routes after fixing imports
-// router.post('/session/start', startSession);
-// router.post('/session/:id/exec', executeInSession);
-// router.post('/session/:id/stop', stopSession);
-// router.get('/session/list', listSessions);
+router.use('/session', sessionRoutes);
+router.use('/llm', llmIntegrationRoutes);
 
 export default router;
