@@ -4,16 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>GPT Terminal Plus</title>
+  <script src="/theme.js"></script>
   <style>
     :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #22d3ee;
-      --link: #60a5fa;
-      --ok: #34d399;
-      --warn: #f59e0b;
+      --bg: #0f172a; --panel: #111827; --text: #e5e7eb; --muted: #9ca3af; --accent: #22d3ee; --link: #60a5fa; --ok: #34d399; --warn: #f59e0b;
+    }
+    [data-theme="light"] {
+      --bg: #ffffff; --panel: #f8fafc; --text: #0f172a; --muted: #475569; --accent: #2563eb; --link: #2563eb; --ok: #16a34a; --warn: #d97706;
     }
     * { box-sizing: border-box; }
     body {
@@ -97,6 +94,9 @@
 <body>
   <header>
     <h1>GPT Terminal Plus</h1>
+    <label style="display:inline-flex;align-items:center;gap:.5rem;margin-top:.5rem;font-size:.9rem;color:var(--muted);">
+      <input type="checkbox" id="themeToggle" /> Dark Mode
+    </label>
     <p>Static-first OpenAPI with dynamic fallback, Convict-configured server, and secure settings viewer.</p>
   </header>
 
