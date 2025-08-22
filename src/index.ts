@@ -62,10 +62,12 @@ app.use(publicRouter);
   registerOpenApiRoutes(app);
 
   // Enhanced Swagger UI at /docs
-  const swaggerOptions = {
+  const swaggerOptions: any = {
     swaggerUrl: '/openapi.json',
     explorer: true,
     customCss: '.swagger-ui .topbar { display: none }',
+    customCssUrl: '/swagger-theme.css',
+    customJs: '/theme.js',
     customSiteTitle: 'GPT Terminal Plus API',
     customfavIcon: '/favicon.ico'
   };
