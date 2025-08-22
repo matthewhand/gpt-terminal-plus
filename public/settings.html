@@ -1,426 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Settings Panel</title>
-  <style>
-    body { font-family: sans-serif; padding: 2em; max-width: 720px; }
-    label { display: block; margin-top: 1em; }
-    input, select, textarea { width: 100%; padding: 0.5em; margin-top: 0.25em; box-sizing: border-box; }
-    fieldset { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-top: 1.5rem; }
-    legend { font-weight: 600; padding: 0 .5rem; }
-    .desc { color: #555; font-size: .9em; margin-top: .25rem; }
-    .advanced { margin-top: 2em; }
-    details { border: 1px dashed #ccc; border-radius: 6px; padding: .5rem .75rem; }
-    details[open] { border-style: solid; }
-    button[type="submit"] { margin-top: 1.5rem; padding: .6rem 1rem; }
-    code.k { background: #f6f6f6; padding: 0 .25rem; border-radius: 3px; }
-    .engine-panel { display: none; }
-    .engine-panel.active { display: block; }
-    table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
-    th, td { border: 1px solid #e5e5e5; padding: .4rem; font-weight: normal; }
-    th { background: #fafafa; text-align: left; }
-    .row-actions { white-space: nowrap; }
-    .controls { display: flex; gap: .5rem; margin-top: .5rem; }
-    .muted { color: #666; font-size: .85em; }
-    pre { background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 6px; overflow: auto; max-height: 360px; }
-    code.yaml .key { color: #93c5fd; }
-    code.yaml .num { color: #fca5a5; }
-    code.yaml .str { color: #86efac; }
-  </style>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>GPT Terminal Plus - Settings</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .panel { border: 1px solid #ccc; margin: 10px 0; padding: 15px; }
+        .panel h3 { margin-top: 0; }
+        input, select, textarea { width: 100%; padding: 5px; margin: 5px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+        #preview { background: #f5f5f5; padding: 10px; white-space: pre-wrap; }
+    </style>
+    <style>
+      :root { --bg:#0b1220; --fg:#e5e7eb; --muted:#94a3b8; --card:#0f172a; --border:#213047; --accent:#6366f1; --accent-fg:#fff; }
+      [data-theme="light"] { --bg:#ffffff; --fg:#0f172a; --muted:#475569; --card:#f8fafc; --border:#e5e7eb; --accent:#6366f1; --accent-fg:#fff; }
+      body { background: var(--bg); color: var(--fg); }
+      .panel { background: var(--card); border-color: var(--border); }
+      h1, h3 { color: var(--fg); }
+      input, select, textarea { background: var(--card); color: var(--fg); border:1px solid var(--border); }
+      button { background: var(--accent); color: var(--accent-fg); border: none; }
+      #preview { background: #0a1020; color: var(--fg); border: 1px solid var(--border); }
+    </style>
 </head>
 <body>
-
-<h1>Server Settings</h1>
-
-  <form id="settings-form">
-  <fieldset>
-    <legend>General Settings</legend>
-    <label>
-      <input type="checkbox" name="LOCALHOST_ENABLED" checked />
-      Enable Localhost Handler
+    <h1>GPT Terminal Plus Settings</h1>
+    <label style="display:inline-flex;align-items:center;gap:.5rem;">
+      <input type="checkbox" id="themeToggle" checked /> Dark Mode
     </label>
-
-    <label>
-      <input type="checkbox" name="FILE_OPS_ENABLED" />
-      Enable File Operations
-    </label>
-
-    <label>
-      Execution Allowed Shells
-      <select name="EXECUTION_ALLOWED_SHELLS" id="allowedShells" multiple size="4">
-        <option value="bash" selected>bash</option>
-        <option value="sh" selected>sh</option>
-        <option value="zsh">zsh</option>
-        <option value="powershell">powershell</option>
-      </select>
-      <div class="desc">Hold Ctrl/Cmd to select multiple.</div>
-    </label>
-
-    <div>
-      <strong>SSH Targets</strong>
-      <table id="sshTable">
-        <thead>
-          <tr><th>Host</th><th>User</th><th>Port</th><th>Identity File</th><th></th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="controls">
-        <button type="button" id="addSshRow">+ Add SSH Target</button>
-      </div>
-      <div class="muted">Stored as SSH_TARGETS array in payload.</div>
+    
+    <div class="panel">
+        <h3>LLM Engine</h3>
+        <select id="llmEngine">
+            <option value="codex">Codex</option>
+            <option value="interpreter">Interpreter</option>
+            <option value="ollama">Ollama</option>
+        </select>
+        
+        <div id="codexPanel" style="display:none;">
+            <input id="codexModel" placeholder="Model (e.g., gpt-4)" />
+            <label><input type="checkbox" id="codexFullAuto" /> Full Auto</label>
+        </div>
+        
+        <div id="interpreterPanel" style="display:none;">
+            <input id="interpreterModel" placeholder="Model (e.g., gpt-4o)" />
+            <label><input type="checkbox" id="interpreterAutoRun" /> Auto Run</label>
+            <input id="interpreterTemp" type="number" step="0.1" placeholder="Temperature" />
+        </div>
+        
+        <div id="ollamaPanel" style="display:none;">
+            <input id="ollamaModel" placeholder="Model (e.g., llama2)" />
+            <input id="ollamaHost" placeholder="Host (e.g., http://localhost:11434)" />
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h3>General Settings</h3>
+        <label><input type="checkbox" id="localhost" /> Localhost Only</label>
+        <input id="maxInputChars" type="number" placeholder="Max Input Chars" />
+        <input id="maxOutputChars" type="number" placeholder="Max Output Chars" />
+        <input id="maxCost" type="number" step="0.01" placeholder="Max LLM Cost USD" />
+    </div>
+    
+    <div class="panel">
+        <h3>Advanced JSON Override</h3>
+        <textarea id="jsonOverride" rows="10" placeholder="Enter JSON configuration..."></textarea>
+    </div>
+    
+    <button onclick="saveConfig()">Save Configuration</button>
+    <button onclick="loadConfig()">Load Current</button>
+    
+    <div class="panel">
+        <h3>Live OpenAPI Preview</h3>
+        <div id="preview">Loading...</div>
     </div>
 
-    <div>
-      <strong>SSM Targets</strong>
-      <table id="ssmTable">
-        <thead>
-          <tr><th>Instance ID</th><th>Region</th><th>Profile (optional)</th><th></th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="controls">
-        <button type="button" id="addSsmRow">+ Add SSM Target</button>
-      </div>
-      <div class="muted">Stored as SSM_TARGETS array in payload.</div>
-    </div>
-  </fieldset>
-  <label>
-    AI Feedback Mode
-    <select name="WEBUI_LLM_ANALYSIS_MODE">
-      <option value="off">Off</option>
-      <option value="onError">On Error</option>
-      <option value="always">Always</option>
-    </select>
-  </label>
-
-  <label>
-    LLM Engine
-    <select name="LLM_ENGINE" id="llmEngineSelect">
-      <option value="codex" selected>Codex</option>
-      <option value="interpreter">Interpreter</option>
-      <option value="ollama">Ollama</option>
-    </select>
-  </label>
-
-  <fieldset id="panel-codex" class="engine-panel active">
-    <legend>Codex Configuration</legend>
-    <label>
-      CODEX Model
-      <input type="text" name="CODEX_MODEL" value="gpt-5" />
-      <div class="desc">Default Codex model used for runs.</div>
-    </label>
-    <label>
-      Full Auto Mode
-      <input type="checkbox" name="CODEX_FULL_AUTO" checked />
-      <div class="desc">If enabled, Codex runs with <code class="k">--full-auto</code>.</div>
-    </label>
-    <label>
-      Codex Config (JSON)
-      <textarea name="CODEX_CONFIG" rows="5" wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off">{
-  "model_reasoning_effort": "high"
-}</textarea>
-      <div class="desc">Advanced Codex options as JSON (e.g., reasoning mode).</div>
-    </label>
-    <label>
-      <input type="checkbox" name="YOLO_MODE" />
-      YOLO Mode (bypass sandbox + approval) — ⚠️ Dangerous!
-    </label>
-  </fieldset>
-
-  <fieldset id="panel-interpreter" class="engine-panel">
-    <legend>Interpreter Configuration</legend>
-    <label>Model
-      <input name="INTERPRETER_MODEL" value="gpt-4o" />
-    </label>
-    <label>Temperature
-      <input name="INTERPRETER_TEMPERATURE" type="number" step="0.1" value="0.7" />
-    </label>
-    <label>
-      <input type="checkbox" name="INTERPRETER_AUTO_RUN" checked />
-      Auto Run
-    </label>
-    <label>
-      <input type="checkbox" name="INTERPRETER_LOOP" />
-      Loop Until Complete
-    </label>
-    <label>Context Window
-      <input name="INTERPRETER_CONTEXT_WINDOW" type="number" value="8192" />
-    </label>
-    <label>Max Tokens
-      <input name="INTERPRETER_MAX_TOKENS" type="number" value="2048" />
-    </label>
-    <label>
-      <input type="checkbox" name="INTERPRETER_DEBUG" />
-      Debug Mode
-    </label>
-    <label>
-      Safe Mode
-      <select name="INTERPRETER_SAFE_MODE">
-        <option value="auto" selected>auto</option>
-        <option value="ask">ask</option>
-        <option value="off">off</option>
-      </select>
-    </label>
-  </fieldset>
-
-  <fieldset id="panel-ollama" class="engine-panel">
-    <legend>Ollama Configuration</legend>
-    <label>Model
-      <input name="OLLAMA_MODEL" value="llama2" />
-    </label>
-    <label>Host
-      <input name="OLLAMA_HOST" value="http://localhost:11434" />
-    </label>
-    <label>Format
-      <input name="OLLAMA_FORMAT" value="text" />
-      <div class="desc">Typical values: text, json</div>
-    </label>
-    <label>
-      <input type="checkbox" name="OLLAMA_NOWORDWRAP" />
-      No Word Wrap
-    </label>
-    <label>
-      <input type="checkbox" name="OLLAMA_VERBOSE" />
-      Verbose
-    </label>
-  </fieldset>
-
-  <label>
-    Local Timeout (ms)
-    <input type="number" name="LOCAL_TIMEOUT" value="5000" />
-  </label>
-
-  <details open>
-    <summary>OpenAPI Preview</summary>
-    <pre><code id="openapiPreview" class="yaml"></code></pre>
-  </details>
-
-  <div class="advanced">
-    <details>
-      <summary><strong>Advanced Overrides</strong></summary>
-      <div class="desc">Provide any config keys as JSON; these override fields above.</div>
-      <fieldset>
-        <legend>Circuit Breakers</legend>
-        <label title="Maximum input characters per request">
-          MAX_INPUT_CHARS
-          <input type="number" name="MAX_INPUT_CHARS" value="200000" />
-        </label>
-        <label title="Maximum output characters returned from any tool/LLM">
-          MAX_OUTPUT_CHARS
-          <input type="number" name="MAX_OUTPUT_CHARS" value="200000" />
-        </label>
-        <label title="Maximum session wall time in seconds">
-          MAX_SESSION_DURATION (sec)
-          <input type="number" name="MAX_SESSION_DURATION" value="7200" />
-        </label>
-        <label title="Maximum idle time before termination in seconds">
-          MAX_SESSION_IDLE (sec)
-          <input type="number" name="MAX_SESSION_IDLE" value="600" />
-        </label>
-        <label title="Optional max LLM budget in USD; leave blank for unlimited">
-          MAX_LLM_COST_USD
-          <input type="number" name="MAX_LLM_COST_USD" step="0.01" placeholder="" />
-        </label>
-      </fieldset>
-      <label>
-        Custom Config (JSON)
-        <textarea name="customConfig" rows="8" placeholder='{"SSH_TIMEOUT":60000,"SSM_TIMEOUT":90000}' wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
-      </label>
-    </details>
-  </div>
-
-  <button type="submit">Apply Settings</button>
-</form>
-
-<script>
-  // Helpers
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-  // Toggle engine panels
-  const engineSelect = document.getElementById('llmEngineSelect');
-  function updateEnginePanel() {
-    const selected = engineSelect.value;
-    document.querySelectorAll('.engine-panel').forEach(el => el.classList.remove('active'));
-    const panel = document.getElementById('panel-' + selected);
-    if (panel) panel.classList.add('active');
-  }
-  engineSelect.addEventListener('change', updateEnginePanel);
-  updateEnginePanel();
-
-  // SSH/SSM dynamic tables
-  function addSshRow(val = { host: '', user: '', port: 22, identityFile: '' }) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" value="${val.host || ''}" placeholder="example.com" /></td>
-      <td><input type="text" value="${val.user || ''}" placeholder="ubuntu" /></td>
-      <td><input type="number" value="${val.port ?? 22}" /></td>
-      <td><input type="text" value="${val.identityFile || ''}" placeholder="~/.ssh/id_rsa" /></td>
-      <td class="row-actions"><button type="button" class="rm">✕</button></td>
-    `;
-    tr.querySelector('.rm')?.addEventListener('click', () => { tr.remove(); updatePreview(); });
-    document.querySelector('#sshTable tbody')?.appendChild(tr);
-  }
-  function addSsmRow(val = { instanceId: '', region: '', profile: '' }) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="text" value="${val.instanceId || ''}" placeholder="i-123456..." /></td>
-      <td><input type="text" value="${val.region || ''}" placeholder="us-west-2" /></td>
-      <td><input type="text" value="${val.profile || ''}" placeholder="default" /></td>
-      <td class="row-actions"><button type="button" class="rm">✕</button></td>
-    `;
-    tr.querySelector('.rm')?.addEventListener('click', () => { tr.remove(); updatePreview(); });
-    document.querySelector('#ssmTable tbody')?.appendChild(tr);
-  }
-  document.getElementById('addSshRow')?.addEventListener('click', () => { addSshRow(); updatePreview(); });
-  document.getElementById('addSsmRow')?.addEventListener('click', () => { addSsmRow(); updatePreview(); });
-  // Seed one row for usability
-  addSshRow();
-  addSsmRow();
-
-  // YAML highlighter (very lightweight)
-  function highlightYaml(yaml) {
-    const esc = (s) => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-    return esc(yaml)
-      .replace(/^(\s*)([A-Za-z0-9_\-]+):/gm, '$1<span class="key">$2</span>:')
-      .replace(/(?::\s)(\d+)(?=$|\n)/gm, ': <span class="num">$1</span>')
-      .replace(/(?::\s)"([^"]*)"(?=$|\n)/gm, ': <span class="str">"$1"</span>');
-  }
-
-  async function updatePreview() {
-    try {
-      const q = new URLSearchParams();
-      q.set('withOverrides', 'true');
-      q.set('LOCALHOST_ENABLED', String(document.querySelector('[name="LOCALHOST_ENABLED"]').checked));
-      q.set('FILE_OPS_ENABLED', String(document.querySelector('[name="FILE_OPS_ENABLED"]').checked));
-      const resp = await fetch(`/config/openapi?${q.toString()}`, { headers: { 'Accept': 'application/yaml' } });
-      const yaml = await resp.text();
-      const el = document.getElementById('openapiPreview');
-      el.innerHTML = highlightYaml(yaml);
-    } catch (e) {
-      // best-effort preview
-    }
-  }
-  const previewDebounced = (() => {
-    let t; return () => { clearTimeout(t); t = setTimeout(updatePreview, 150); };
-  })();
-  document.getElementById('settings-form').addEventListener('input', previewDebounced);
-  document.getElementById('settings-form').addEventListener('change', previewDebounced);
-  updatePreview();
-
-  document.getElementById('settings-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const form = e.target;
-    const fd = new FormData(form);
-    const entries = Object.fromEntries(fd.entries());
-
-    // Parse JSON fields with validation
-    let codexConfig = {};
-    try {
-      codexConfig = entries.CODEX_CONFIG ? JSON.parse(entries.CODEX_CONFIG) : {};
-    } catch (err) {
-      alert('Invalid JSON in Codex Config. Please fix and try again.');
-      return;
-    }
-
-    let customOverrides = {};
-    try {
-      customOverrides = entries.customConfig ? JSON.parse(entries.customConfig) : {};
-    } catch (err) {
-      alert('Invalid JSON in Advanced Overrides. Please fix and try again.');
-      return;
-    }
-
-    // YOLO injection for Codex
-    const yolo = form.querySelector('[name="YOLO_MODE"]').checked;
-    if (yolo) {
-      codexConfig = {
-        ...codexConfig,
-        sandbox_permissions: ["disk-full-read-access"],
-        approval_policy: "never",
-      };
-    }
-
-    // Build payload with proper types
-    const payloadBase = {
-      // general
-      WEBUI_LLM_ANALYSIS_MODE: entries.WEBUI_LLM_ANALYSIS_MODE,
-      LLM_ENGINE: entries.LLM_ENGINE,
-      LOCAL_TIMEOUT: entries.LOCAL_TIMEOUT ? parseInt(entries.LOCAL_TIMEOUT, 10) : undefined,
-      EXECUTION_ALLOWED_SHELLS: fd.getAll('EXECUTION_ALLOWED_SHELLS'),
-      LOCALHOST_ENABLED: document.querySelector('[name="LOCALHOST_ENABLED"]').checked,
-      FILE_OPS_ENABLED: document.querySelector('[name="FILE_OPS_ENABLED"]').checked,
-
-      // codex
-      CODEX_MODEL: entries.CODEX_MODEL,
-      CODEX_FULL_AUTO: form.querySelector('[name="CODEX_FULL_AUTO"]').checked,
-      CODEX_CONFIG: codexConfig,
-
-      // interpreter
-      INTERPRETER_MODEL: entries.INTERPRETER_MODEL,
-      INTERPRETER_TEMPERATURE: entries.INTERPRETER_TEMPERATURE !== undefined && entries.INTERPRETER_TEMPERATURE !== ''
-        ? parseFloat(entries.INTERPRETER_TEMPERATURE) : undefined,
-      INTERPRETER_AUTO_RUN: form.querySelector('[name="INTERPRETER_AUTO_RUN"]').checked,
-      INTERPRETER_LOOP: form.querySelector('[name="INTERPRETER_LOOP"]').checked,
-      INTERPRETER_CONTEXT_WINDOW: entries.INTERPRETER_CONTEXT_WINDOW !== undefined && entries.INTERPRETER_CONTEXT_WINDOW !== ''
-        ? parseInt(entries.INTERPRETER_CONTEXT_WINDOW, 10) : undefined,
-      INTERPRETER_MAX_TOKENS: entries.INTERPRETER_MAX_TOKENS !== undefined && entries.INTERPRETER_MAX_TOKENS !== ''
-        ? parseInt(entries.INTERPRETER_MAX_TOKENS, 10) : undefined,
-      INTERPRETER_DEBUG: form.querySelector('[name="INTERPRETER_DEBUG"]').checked,
-      INTERPRETER_SAFE_MODE: entries.INTERPRETER_SAFE_MODE,
-      
-      // ollama
-      OLLAMA_MODEL: entries.OLLAMA_MODEL,
-      OLLAMA_HOST: entries.OLLAMA_HOST,
-      OLLAMA_FORMAT: entries.OLLAMA_FORMAT,
-      OLLAMA_NOWORDWRAP: form.querySelector('[name=\"OLLAMA_NOWORDWRAP\"]').checked,
-      OLLAMA_VERBOSE: form.querySelector('[name=\"OLLAMA_VERBOSE\"]').checked,
-      
-      // circuit breakers (numbers; budget optional)
-      MAX_INPUT_CHARS: entries.MAX_INPUT_CHARS ? parseInt(entries.MAX_INPUT_CHARS, 10) : undefined,
-      MAX_OUTPUT_CHARS: entries.MAX_OUTPUT_CHARS ? parseInt(entries.MAX_OUTPUT_CHARS, 10) : undefined,
-      MAX_SESSION_DURATION: entries.MAX_SESSION_DURATION ? parseInt(entries.MAX_SESSION_DURATION, 10) : undefined,
-      MAX_SESSION_IDLE: entries.MAX_SESSION_IDLE ? parseInt(entries.MAX_SESSION_IDLE, 10) : undefined,
-      MAX_LLM_COST_USD: entries.MAX_LLM_COST_USD ? parseFloat(entries.MAX_LLM_COST_USD) : null,
-      
-      // servers
-      SSH_TARGETS: Array.from(document.querySelectorAll('#sshTable tbody tr')).map(tr => {
-        const [hostEl, userEl, portEl, idEl] = tr.querySelectorAll('input');
-        const host = hostEl?.value?.trim();
-        if (!host) return null;
-        return {
-          host,
-          user: (userEl?.value || '').trim() || undefined,
-          port: portEl?.value ? parseInt(portEl.value, 10) : 22,
-          identityFile: (idEl?.value || '').trim() || undefined,
+    <script>
+        // Theme (dark by default)
+        (function(){
+          const key='gpt_theme';
+          const saved = localStorage.getItem(key) || 'dark';
+          const apply = (t) => { document.documentElement.setAttribute('data-theme', t==='light' ? 'light':'dark'); localStorage.setItem(key,t); const tg=document.getElementById('themeToggle'); if (tg) tg.checked = (t!=='light'); };
+          apply(saved);
+          document.getElementById('themeToggle')?.addEventListener('change', (e)=>apply(e.target.checked?'dark':'light'));
+        })();
+        const token = localStorage.getItem('authToken') || prompt('Enter auth token:');
+        
+        document.getElementById('llmEngine').onchange = function() {
+            document.querySelectorAll('[id$="Panel"]').forEach(p => p.style.display = 'none');
+            document.getElementById(this.value + 'Panel').style.display = 'block';
         };
-      }).filter(Boolean),
-      SSM_TARGETS: Array.from(document.querySelectorAll('#ssmTable tbody tr')).map(tr => {
-        const [idEl, regionEl, profileEl] = tr.querySelectorAll('input');
-        const instanceId = idEl?.value?.trim();
-        const region = regionEl?.value?.trim();
-        if (!instanceId || !region) return null;
-        return {
-          instanceId,
-          region,
-          profile: (profileEl?.value || '').trim() || undefined,
-        };
-      }).filter(Boolean),
-    };
-
-    // Merge overrides last to allow advanced users to override any key
-    const payload = { ...payloadBase, ...customOverrides };
-
-    fetch('/config/override', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then(() => alert('Settings applied'));
-  });
-</script>
-
+        
+        async function saveConfig() {
+            const config = {
+                LLM_ENGINE: document.getElementById('llmEngine').value,
+                CODEX_MODEL: document.getElementById('codexModel').value,
+                CODEX_FULL_AUTO: document.getElementById('codexFullAuto').checked,
+                INTERPRETER_MODEL: document.getElementById('interpreterModel').value,
+                INTERPRETER_AUTO_RUN: document.getElementById('interpreterAutoRun').checked,
+                INTERPRETER_TEMPERATURE: parseFloat(document.getElementById('interpreterTemp').value) || 0.7,
+                OLLAMA_MODEL: document.getElementById('ollamaModel').value,
+                OLLAMA_HOST: document.getElementById('ollamaHost').value,
+                MAX_INPUT_CHARS: parseInt(document.getElementById('maxInputChars').value) || 10000,
+                MAX_OUTPUT_CHARS: parseInt(document.getElementById('maxOutputChars').value) || 100000,
+                MAX_LLM_COST_USD: parseFloat(document.getElementById('maxCost').value) || 0,
+            };
+            
+            const override = document.getElementById('jsonOverride').value;
+            if (override) Object.assign(config, JSON.parse(override));
+            
+            const res = await fetch('/config/override', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            
+            alert(res.ok ? 'Saved!' : 'Error saving config');
+        }
+        
+        async function loadConfig() {
+            const res = await fetch('/config/override', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const config = await res.json();
+            
+            document.getElementById('llmEngine').value = config.LLM_ENGINE || 'codex';
+            document.getElementById('codexModel').value = config.CODEX_MODEL || '';
+            document.getElementById('codexFullAuto').checked = config.CODEX_FULL_AUTO || false;
+            document.getElementById('interpreterModel').value = config.INTERPRETER_MODEL || '';
+            document.getElementById('interpreterAutoRun').checked = config.INTERPRETER_AUTO_RUN || false;
+            document.getElementById('interpreterTemp').value = config.INTERPRETER_TEMPERATURE || 0.7;
+            document.getElementById('ollamaModel').value = config.OLLAMA_MODEL || '';
+            document.getElementById('ollamaHost').value = config.OLLAMA_HOST || '';
+            document.getElementById('maxInputChars').value = config.MAX_INPUT_CHARS || 10000;
+            document.getElementById('maxOutputChars').value = config.MAX_OUTPUT_CHARS || 100000;
+            document.getElementById('maxCost').value = config.MAX_LLM_COST_USD || 0;
+            
+            document.getElementById('llmEngine').onchange();
+        }
+        
+        async function updatePreview() {
+            try {
+                const res = await fetch('/config/schema', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const schema = await res.json();
+                document.getElementById('preview').textContent = JSON.stringify(schema, null, 2);
+            } catch (err) {
+                document.getElementById('preview').textContent = 'Error loading schema';
+            }
+        }
+        
+        loadConfig();
+        updatePreview();
+        setInterval(updatePreview, 5000);
+    </script>
 </body>
 </html>
