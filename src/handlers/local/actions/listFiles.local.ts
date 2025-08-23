@@ -32,9 +32,9 @@ const listFiles = async ({
       throw new Error(`Directory does not exist: ${absDir}`);
     }
 
-    // Guard: clamp pagination values
-    const safeLimit = Math.min(Math.max(limit, 1), 5000); // between 1 and 5000
-    const safeOffset = Math.max(offset, 0);
+    // Note: Parameter clamping is now handled by AbstractServerHandler.listFilesWithDefaults()
+    const safeLimit = limit;
+    const safeOffset = offset;
 
     // Guard: allowed orderBy values
     const safeOrderBy = ['filename', 'datetime'].includes(orderBy)

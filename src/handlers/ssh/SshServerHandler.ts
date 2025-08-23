@@ -51,7 +51,8 @@ export class SshServerHandler extends AbstractServerHandler {
             };
 
             conn.on('ready', () => {
-                const cmd = directory ? `cd ${directory} && ${command}` : command;
+                const effectiveDirectory = directory || this.serverConfig.directory || '.';
+                const cmd = `cd ${effectiveDirectory} && ${command}`;
                 conn.exec(cmd, (err: Error | null, stream: any) => {
                     if (err) {
                         sshServerDebug('SSH exec error: ' + err.message);

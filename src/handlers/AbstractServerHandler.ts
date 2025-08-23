@@ -30,15 +30,17 @@ export abstract class AbstractServerHandler {
   abstract listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
 
   /**
-   * List files with standardized default directory handling.
+   * List files with standardized default directory handling and parameter validation.
    * This method ensures consistent behavior across all handler implementations.
    */
   async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const normalizedParams = {
       ...params,
       directory: params.directory || '.',
-      limit: params.limit || 100,
-      offset: params.offset || 0,
+      // Clamp limit between 1 and 5000 (same as local implementation)
+      limit: Math.min(Math.max(params.limit || 100, 1), 5000),
+      // Clamp offset to non-negative values
+      offset: Math.max(params.offset || 0, 0),
       orderBy: params.orderBy || 'filename'
     };
     return this.listFiles(normalizedParams);
