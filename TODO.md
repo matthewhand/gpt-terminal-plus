@@ -33,7 +33,7 @@
 ## 🛠 Priority 3 — Logging & Guards
 - [ ] Add truncated stdout/stderr logging in `executeCode`
 - [ ] Ensure raw + wrapper logs in `executeCommand`
-- [ ] Clamp `limit`/`offset` in file listing
+- [x] Clamp `limit`/`offset` in file listing
 - [ ] Validate `orderBy` and reject invalid values
 - [ ] Handle symlink/stat errors safely
 - [ ] Normalize paths with `path.resolve`, prevent traversal
