@@ -25,7 +25,7 @@
 ---
 
 ## 🔧 Priority 2 — File Listing Fixes
-- [ ] Default path → `.` if none provided
+- [x] Default path → `.` if none provided
 - [ ] Implement pagination for large responses
 
 ---

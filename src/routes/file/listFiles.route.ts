@@ -12,8 +12,7 @@ export const listFiles = async (req: Request, res: Response) => {
       throw new Error("Server handler not found");
     }
 
-    const targetDirectory = directory || await ServerHandler.presentWorkingDirectory();
-    const files = await ServerHandler.listFiles({ directory: targetDirectory, limit, offset, orderBy, recursive, typeFilter });
+    const files = await ServerHandler.listFiles({ directory: directory || '.', limit, offset, orderBy, recursive, typeFilter });
 
     res.status(200).json({ files });
   } catch (error) {

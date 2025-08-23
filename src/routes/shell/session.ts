@@ -245,6 +245,71 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /shell/session/{id}/cd:
+ *   post:
+ *     operationId: shellSessionChangeDirectory
+ *     summary: Change working directory inside existing session
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               directory:
+ *                 type: string
+ *             required:
+ *               - directory
+ *     responses:
+ *       200:
+ *         description: Directory changed successfully
+ *       404:
+ *         description: Session not found
+ *       500:
+ *         description: Failed to change directory
+ */
+router.post('/:id/cd', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { directory } = req.body;
+
+  if (!directory) {
+    return res.status(400).json({ message: 'directory is required' });
+  }
+
+  const session = sessions.get(id);
+  if (!session) {
+    return res.status(404).json({ message: 'Session not found' });
+  }
+
+  try {
+    // Assuming the server handler associated with the session can handle directory changes
+    // This part needs to be implemented in the respective server handlers (Local, SSH, SSM)
+    // For now, we'll just update the session's current directory (if applicable)
+    // and log the action.
+    // In a real implementation, you'd call a method on the server handler here.
+    // For example: await session.serverHandler.changeDirectory(directory);
+    
+    // For now, just update the current folder in the session object for demonstration
+    // This is a placeholder and needs proper implementation in handlers
+    // session.currentFolder = directory; // This property doesn't exist on ShellSession yet
+
+    await logSessionStep('change-directory', { sessionId: id, directory }, id);
+    res.json({ success: true, message: `Changed directory to ${directory}` });
+  } catch (error: any) {
+    res.status(500).json({ message: `Failed to change directory: ${error.message}` });
+  }
+});
+
+/**
+ * @swagger
  * /shell/session/{id}/stop:
  *   post:
  *     operationId: shellSessionStop

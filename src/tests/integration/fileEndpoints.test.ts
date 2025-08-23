@@ -21,7 +21,7 @@ describe('File Endpoints Integration', () => {
     expect(listRes.body.files.items.length).toBeGreaterThan(0);
 
     // 2. Find a file to read (e.g., package.json)
-            const fileToRead = listRes.body.files.items.find((file: any) => file.name === 'package.json');
+    const fileToRead = listRes.body.files.items.find((file: any) => file.name === 'package.json');
     expect(fileToRead).toBeDefined();
 
     // 3. Read the file
