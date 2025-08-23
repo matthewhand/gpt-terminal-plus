@@ -32,22 +32,7 @@ router.post('/create', createFile);
  */
 router.post('/list', listFiles);
 
-/**
- * Optional GET shim for list — maps query to body for compatibility.
- * GET /file/list?directory=...  -> same as POST /file/list
- */
-router.get('/list', (req, res) => {
-  const { directory, limit, offset, orderBy, recursive, typeFilter } = req.query as Record<string, string>;
-  const body: any = { ...(req.body || {}) };
-  if (directory) body.directory = directory;
-  if (limit) body.limit = Number(limit);
-  if (offset) body.offset = Number(offset);
-  if (orderBy) body.orderBy = orderBy;
-  if (typeof recursive !== 'undefined') body.recursive = ['1', 'true', 'yes'].includes(String(recursive).toLowerCase());
-  if (typeFilter) body.typeFilter = typeFilter;
-  req.body = body;
-  return listFiles(req as any, res);
-});
+
 
 /**
  * POST /file/read

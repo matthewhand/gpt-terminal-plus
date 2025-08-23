@@ -22,15 +22,6 @@ export function validateCommand(req: Request, res: Response, next: NextFunction)
   const denyRegex = safeGet('policy.denyRegex', safeGet('security.denyCommandRegex', ''));
   const confirmRegex = safeGet('policy.confirmRegex', safeGet('security.confirmCommandRegex', ''));
   
-  // Check deny patterns
-  if (denyRegex && new RegExp(denyRegex, 'i').test(command)) {
-    return res.status(403).json({ 
-      message: 'Command blocked by policy',
-      command,
-      reason: 'matches deny pattern'
-    });
-  }
-  
   // Check dangerous commands
   const isDangerous = DANGEROUS_COMMANDS.some(dangerous => 
     command.toLowerCase().includes(dangerous.toLowerCase())
@@ -41,6 +32,15 @@ export function validateCommand(req: Request, res: Response, next: NextFunction)
       message: 'Dangerous command blocked',
       command,
       reason: 'potentially destructive'
+    });
+  }
+
+  // Then check deny patterns (lower precedence than explicit dangerous set)
+  if (denyRegex && new RegExp(denyRegex, 'i').test(command)) {
+    return res.status(403).json({ 
+      message: 'Command blocked by policy',
+      command,
+      reason: 'matches deny pattern'
     });
   }
   

@@ -9,8 +9,9 @@ export interface LLMResponse {
 }
 
 export async function planCommand(userInput: string): Promise<LLMResponse> {
-  const cfg = convictConfig();
-  const engine = cfg.get('llm.engine') || 'codex';
+  let cfg: any;
+  try { cfg = convictConfig(); } catch {}
+  const engine = safeGet(cfg, 'llm.engine', 'codex');
   
   // Check budget first
   const budget = costTracker.checkBudget();
@@ -31,9 +32,9 @@ export async function planCommand(userInput: string): Promise<LLMResponse> {
 }
 
 async function handleCodex(input: string): Promise<LLMResponse> {
-  const cfg = convictConfig();
-  const model = cfg.get('codex.model') || 'gpt-4';
-  const fullAuto = cfg.get('codex.fullAuto') || false;
+  let cfg: any; try { cfg = convictConfig(); } catch {}
+  const model = safeGet(cfg, 'codex.model', 'gpt-4');
+  const fullAuto = !!safeGet(cfg, 'codex.fullAuto', false);
   
   // Simplified implementation - would integrate with actual OpenAI API
   const estimatedCost = 0.01; // Mock cost
@@ -48,8 +49,8 @@ async function handleCodex(input: string): Promise<LLMResponse> {
 }
 
 async function handleInterpreter(input: string): Promise<LLMResponse> {
-  const cfg = convictConfig();
-  const autoRun = cfg.get('interpreter.autoRun') || false;
+  let cfg: any; try { cfg = convictConfig(); } catch {}
+  const autoRun = !!safeGet(cfg, 'interpreter.autoRun', false);
   
   const estimatedCost = 0.02;
   costTracker.addCost(estimatedCost);
@@ -63,8 +64,8 @@ async function handleInterpreter(input: string): Promise<LLMResponse> {
 }
 
 async function handleOllama(input: string): Promise<LLMResponse> {
-  const cfg = convictConfig();
-  const host = cfg.get('ollama.host') || 'http://localhost:11434';
+  let cfg: any; try { cfg = convictConfig(); } catch {}
+  const host = String(safeGet(cfg, 'ollama.host', 'http://localhost:11434'));
   
   // Ollama is typically free/local
   return {
@@ -73,4 +74,8 @@ async function handleOllama(input: string): Promise<LLMResponse> {
     needsApproval: false,
     cost: 0,
   };
+}
+
+function safeGet(cfg: any, path: string, def: any) {
+  try { return cfg?.get?.(path) ?? def; } catch { return def; }
 }

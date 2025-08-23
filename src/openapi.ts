@@ -289,7 +289,7 @@ export function buildSpec(req?: Request) {
       },
       '/file/list': {
         post: {
-          operationId: 'fileListPost',
+          operationId: 'fileList',
           summary: 'List files in a directory',
           requestBody: {
             required: false,
@@ -327,35 +327,7 @@ export function buildSpec(req?: Request) {
           },
           security: [{ bearerAuth: [] as any[] }],
         },
-        get: {
-          operationId: 'fileListGet',
-          summary: 'List files in a directory (query)',
-          parameters: [
-            { name: 'directory', in: 'query', required: false, schema: { type: 'string' } },
-            { name: 'limit', in: 'query', required: false, schema: { type: 'number' } },
-            { name: 'offset', in: 'query', required: false, schema: { type: 'number' } },
-            { name: 'orderBy', in: 'query', required: false, schema: { type: 'string', enum: ['datetime', 'filename'] } },
-            { name: 'recursive', in: 'query', required: false, schema: { type: 'boolean' } },
-            { name: 'typeFilter', in: 'query', required: false, schema: { type: 'string', enum: ['files', 'folders'] } },
-          ],
-          responses: {
-            200: {
-              description: 'OK',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      files: { type: 'array', items: { type: 'object' } },
-                    },
-                    required: ['files'],
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+        
       },
       '/file/update': {
         post: {
