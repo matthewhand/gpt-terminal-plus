@@ -6,6 +6,7 @@ import { PaginatedResponse } from "../../types/PaginatedResponse";
 import { SystemInfo } from "../../types/SystemInfo";
 import { FileReadResult } from "../../types/FileReadResult";
 import listFilesAction from "./actions/listFiles.local";
+import { ListParams } from "../../types/ListParams";
 import { createFile as createFileAction } from "./actions/createFile.local";
 import { readFile as readFileAction } from "./actions/readFile.local";
 import { updateFile as updateFileAction } from "./actions/updateFile.local";
@@ -45,14 +46,14 @@ export class LocalServerHandler extends AbstractServerHandler {
     return await amendFileAction(filePath, content, options?.backup, this.serverConfig.directory);
   }
 
-  async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<string>> {
+  async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const effectiveParams = {
       ...params,
       directory: params.directory || '.',
     };
     const raw = await listFilesAction(effectiveParams as any);
     return {
-      items: raw.files.map((f: any) => f.name),
+      items: raw.files,
       total: raw.total,
       limit: effectiveParams.limit ?? raw.files.length,
       offset: effectiveParams.offset ?? 0,

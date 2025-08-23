@@ -4,6 +4,7 @@ import { ExecutionResult } from '../types/ExecutionResult';
 import { PaginatedResponse } from '../types/PaginatedResponse';
 import { SystemInfo } from '../types/SystemInfo';
 import { FileReadResult } from '../types/FileReadResult';
+import { ListParams } from '../types/ListParams';
 
 export abstract class AbstractServerHandler {
   protected serverConfig: ServerConfig;
@@ -26,7 +27,7 @@ export abstract class AbstractServerHandler {
 
   abstract getSystemInfo(): Promise<SystemInfo | ExecutionResult>;
 
-  abstract listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<string>>;
+  abstract listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
 
   abstract setServerConfig(config: ServerConfig): void;
 

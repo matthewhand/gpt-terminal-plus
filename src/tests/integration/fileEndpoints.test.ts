@@ -21,8 +21,7 @@ describe('File Endpoints Integration', () => {
     expect(listRes.body.files.items.length).toBeGreaterThan(0);
 
     // 2. Find a file to read (e.g., package.json)
-        console.log(listRes.body.files.items);
-    const fileToRead = listRes.body.files.items.find((file: any) => file.name === 'package.json');
+            const fileToRead = listRes.body.files.items.find((file: any) => file.name === 'package.json');
     expect(fileToRead).toBeDefined();
 
     // 3. Read the file
@@ -31,8 +30,8 @@ describe('File Endpoints Integration', () => {
       .send({ filePath: fileToRead.name });
 
     expect(readRes.status).toBe(200);
-    expect(readRes.body.content).toBeDefined();
-    const packageJson = JSON.parse(readRes.body.content);
+    expect(readRes.body.data.content).toBeDefined();
+    const packageJson = JSON.parse(readRes.body.data.content);
     expect(packageJson.name).toBe('gpt-terminal-plus');
   });
 });

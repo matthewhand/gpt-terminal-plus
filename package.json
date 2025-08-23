@@ -22,7 +22,7 @@
     "test:ci": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test node ./node_modules/jest/bin/jest.js --coverage --ci --runInBand --reporters=default --reporters=jest-junit",
     "test:debug": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* node ./node_modules/jest/bin/jest.js --verbose --runInBand",
     "test:monitor": "NODE_CONFIG_DIR=config/test/ NODE_ENV=test DEBUG=* node ./node_modules/jest/bin/jest.js --verbose --runInBand --watch",
-    "test:detached": "bash -c 'nohup npm test > test-results.log 2>&1 & echo $! > .jest.pid; echo \\\"Started Jest in background (PID $(cat .jest.pid))\\\"'",
+    "test:detached": "bash -c 'nohup npm test > test-results.log 2>&1 & echo $! > .jest.pid; echo \"Started Jest in background (PID $(cat .jest.pid))\"'",
     "test:stop": "bash -c 'test -f .jest.pid && kill $(cat .jest.pid) 2>/dev/null || true; rm -f .jest.pid'",
     "showcase": "bash scripts/capture_showcase.sh",
     "ncu": "ncu",

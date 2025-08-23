@@ -53,3 +53,14 @@
 - [ ] Abstract common actions (`getSystemInfo`, `presentWorkingDirectory`) to shared layer
 - [ ] Ensure consistency across Local, SSH, and SSM handlers
 - [ ] Fix test runner environment: npm test fails due to missing bash. Ensure jest can run (install bash or adapt scripts).
+
+---
+
+## 🚀 MCP Integration
+- [ ] **MCP Configuration**
+  - Add support for MCP tool configurations in profiles (e.g., `mcp-npx-fetch`).
+- [ ] **Runtime Tool Discovery**
+  - Interrogate the MCP instance at runtime to discover available tools.
+- [ ] **OpenAPI Endpoint Publication**
+  - Dynamically publish discovered MCP tools as OpenAPI endpoints.
+  - Ensure this is on a per-profile basis.

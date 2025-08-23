@@ -23,7 +23,7 @@ const listFiles = async ({
   try {
     // Sanitize & normalize directory - use project root instead of process.cwd()
     const baseDir = path.resolve(__dirname, '../../../../'); // Go up to project root
-    const absDir = path.resolve(baseDir, directory);
+        const absDir = path.resolve(baseDir, directory.startsWith('/') ? directory.substring(1) : directory);
 
     debug(`📂 Listing files in: ${absDir}, limit=${limit}, offset=${offset}, orderBy=${orderBy}, recursive=${recursive}, typeFilter=${typeFilter ?? 'both'}`);
 
