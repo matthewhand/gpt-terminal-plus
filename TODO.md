@@ -71,3 +71,10 @@
 - [ ] **OpenAPI Endpoint Publication**
   - Dynamically publish discovered MCP tools as OpenAPI endpoints.
   - Ensure this is on a per-profile basis.
+
+---
+
+## ✨ LLM Features
+- [ ] **Output Grammar for OpenAPI Spec Generation**
+  - Investigate if `gpt-oss:20b` can reliably generate OpenAPI specs based on a restricted output grammar.
+  - Goal: Automate OpenAPI spec generation from tool discovery.
