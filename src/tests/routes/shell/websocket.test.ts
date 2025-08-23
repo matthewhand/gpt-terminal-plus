@@ -41,7 +41,7 @@ describe('WebSocket Handler', () => {
     handleShellWebSocket(mockWs);
     
     const stdoutCallback = mockChild.stdout.on.mock.calls.find(
-      call => call[0] === 'data'
+            (call: any) => call[0] === 'data'
     )[1];
     
     stdoutCallback(Buffer.from('test output'));
@@ -54,7 +54,7 @@ describe('WebSocket Handler', () => {
     handleShellWebSocket(mockWs);
     
     const exitCallback = mockChild.on.mock.calls.find(
-      call => call[0] === 'exit'
+            (call: any) => call[0] === 'exit'
     )[1];
     
     exitCallback(0);

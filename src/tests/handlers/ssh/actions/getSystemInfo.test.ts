@@ -5,10 +5,10 @@
 
 import { Client } from 'ssh2';
 import { getSystemInfo } from '@src/handlers/ssh/actions/getSystemInfo';
-import { escapeSpecialChars } from '@common/escapeSpecialChars';
+import { escapeSpecialChars } from '@src/common/escapeSpecialChars';
 
 jest.mock('ssh2');
-jest.mock('@common/escapeSpecialChars');
+jest.mock('@src/common/escapeSpecialChars');
 
 describe('getSystemInfo', () => {
     let sshClient: Client;
