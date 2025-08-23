@@ -25,7 +25,7 @@
 ---
 
 ## 🔧 Priority 2 — File Listing Fixes
-- [x] Default path → `.` if none provided
+- [ ] Default path → `.` if none provided
 - [ ] Implement pagination for large responses
 
 ---
@@ -53,6 +53,13 @@
 - [ ] Abstract common actions (`getSystemInfo`, `presentWorkingDirectory`) to shared layer
 - [ ] Ensure consistency across Local, SSH, and SSM handlers
 - [ ] Fix test runner environment: npm test fails due to missing bash. Ensure jest can run (install bash or adapt scripts).
+
+---
+
+## ✅ Completed Changes
+- [x] **Fixed hanging tests:** Identified and removed a corrupted file (`/home/chatgpt/gpt-terminal-plus/[D@dn@8`), and resolved TypeScript errors in `src/tests/handlers/ssh/actions/getSystemInfo.test.ts` and `src/tests/routes/shell/websocket.test.ts`.
+- [x] **Fixed OpenAPI spec:** Removed redundant `GET` method for `/file/list` and updated `operationId` to `fileList`.
+- [x] **Added change working directory endpoint:** Implemented `changeDirectory` action for local, SSH, and SSM handlers, and integrated it into the session route (`POST /shell/session/{id}/cd`).
 
 ---
 

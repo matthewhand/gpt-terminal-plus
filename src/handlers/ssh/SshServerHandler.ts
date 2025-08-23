@@ -4,6 +4,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
 import Debug from 'debug';
 import fs from 'fs';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
@@ -119,7 +120,8 @@ export class SshServerHandler extends AbstractServerHandler {
     }
 
     async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-        const { directory = '.', limit = 10, offset = 0 } = params;
+        // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
+        const { directory, limit, offset } = params;
         sshServerDebug(`Listing files on SSH server in directory: ${directory}`);
         return {
             items: [
@@ -127,8 +129,8 @@ export class SshServerHandler extends AbstractServerHandler {
                 { name: 'file2.txt', isDirectory: false },
             ],
             total: 2,
-            limit,
-            offset,
+            limit: limit || 10,
+            offset: offset || 0,
         };
     }
 
@@ -136,7 +138,9 @@ export class SshServerHandler extends AbstractServerHandler {
         if (!filePath || typeof filePath !== 'string') {
             throw new Error('filePath is required');
         }
-        const quoted = `'\''${String(filePath).replace(/'/g, `'\''`)}'`;
+        const effectiveDirectory = this.serverConfig.directory || '.';
+        const fullPath = `${effectiveDirectory}/${filePath}`;
+        const quoted = `'\'${String(fullPath).replace(/'/g, `'\''`)}'`;
         const res = await this.executeCommand(`cat ${quoted}`);
         const ok = (res.exitCode ?? 1) === 0 && !res.error;
         if (ok) return res.stdout;

@@ -47,16 +47,13 @@ export class LocalServerHandler extends AbstractServerHandler {
   }
 
   async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-    const effectiveParams = {
-      ...params,
-      directory: params.directory || '.',
-    };
-    const raw = await listFilesAction(effectiveParams as any);
+    // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
+    const raw = await listFilesAction(params as any);
     return {
       items: raw.files,
       total: raw.total,
-      limit: effectiveParams.limit ?? raw.files.length,
-      offset: effectiveParams.offset ?? 0,
+      limit: params.limit ?? raw.files.length,
+      offset: params.offset ?? 0,
     };
   }
 
@@ -73,6 +70,10 @@ export class LocalServerHandler extends AbstractServerHandler {
   }
 
   async changeDirectory(directory: string): Promise<boolean> {
-    return await changeDirectoryAction(directory, this.serverConfig.directory);
+    const success = await changeDirectoryAction(directory, this.serverConfig.directory);
+    if (success) {
+      this.serverConfig.directory = directory;
+    }
+    return success;
   }
 }

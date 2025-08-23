@@ -5,6 +5,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
 
@@ -95,7 +96,9 @@ export class SsmServerHandler extends AbstractServerHandler {
         if (!filePath || typeof filePath !== 'string') {
             throw new Error('filePath is required');
         }
-        const quoted = `'\''${String(filePath).replace(/'/g, `'\''`)}'`;
+        const effectiveDirectory = this.serverConfig.directory || '.';
+        const fullPath = `${effectiveDirectory}/${filePath}`;
+        const quoted = `'\'${String(fullPath).replace(/'/g, `'\''`)}'`;
         const res = await this.executeCommand(`cat ${quoted}`);
         const ok = (res.exitCode ?? 1) === 0 && !res.error;
         if (ok) {
@@ -117,7 +120,8 @@ export class SsmServerHandler extends AbstractServerHandler {
     }
 
     async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-        const { directory = '.', limit = 10, offset = 0 } = params;
+        // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
+        const { directory, limit, offset } = params;
         ssmServerDebug(`Listing files on SSM server in directory: ${directory}`);
         return {
             items: [
@@ -125,8 +129,8 @@ export class SsmServerHandler extends AbstractServerHandler {
                 { name: 'file2.txt', isDirectory: false },
             ],
             total: 2,
-            limit,
-            offset,
+            limit: limit || 10,
+            offset: offset || 0,
         };
     }
 
@@ -135,7 +139,10 @@ export class SsmServerHandler extends AbstractServerHandler {
     }
 
     async changeDirectory(directory: string): Promise<boolean> {
-        ssmServerDebug(`Changing directory on SSM server: ${directory}`);
-        return true;
+        const success = await changeDirectoryAction(directory);
+        if (success) {
+            this.serverConfig.directory = directory;
+        }
+        return success;
     }
 }
