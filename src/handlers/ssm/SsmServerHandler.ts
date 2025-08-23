@@ -119,7 +119,7 @@ export class SsmServerHandler extends AbstractServerHandler {
         };
     }
 
-    async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+    async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: 'datetime' | 'filename'; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
         // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
         const { directory, limit, offset } = params;
         ssmServerDebug(`Listing files on SSM server in directory: ${directory}`);

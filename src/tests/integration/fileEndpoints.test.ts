@@ -34,4 +34,41 @@ describe('File Endpoints Integration', () => {
     const packageJson = JSON.parse(readRes.body.data.content);
     expect(packageJson.name).toBe('gpt-terminal-plus');
   });
+
+  it('should list files with pagination', async () => {
+    // List all files to get a baseline
+    const allFilesRes = await request(app)
+      .post('/file/list')
+      .send({ directory: '/', recursive: true });
+    expect(allFilesRes.status).toBe(200);
+    expect(allFilesRes.body.files.items).toBeDefined();
+    const allFilesCount = allFilesRes.body.files.total;
+
+    // Request first 5 files
+    const firstPageRes = await request(app)
+      .post('/file/list')
+      .send({ directory: '/', limit: 5, offset: 0, orderBy: 'filename' });
+    expect(firstPageRes.status).toBe(200);
+    expect(firstPageRes.body.files.items.length).toBe(5);
+    expect(firstPageRes.body.files.total).toBe(allFilesCount);
+    expect(firstPageRes.body.files.limit).toBe(5);
+    expect(firstPageRes.body.files.offset).toBe(0);
+
+    // Request next 5 files
+    const secondPageRes = await request(app)
+      .post('/file/list')
+      .send({ directory: '/', limit: 5, offset: 5, orderBy: 'filename' });
+    expect(secondPageRes.status).toBe(200);
+    expect(secondPageRes.body.files.items.length).toBe(5);
+    expect(secondPageRes.body.files.total).toBe(allFilesCount);
+    expect(secondPageRes.body.files.limit).toBe(5);
+    expect(secondPageRes.body.files.offset).toBe(5);
+
+    // Verify that the items are different and in order
+    const firstPageNames = firstPageRes.body.files.items.map((f: any) => f.name);
+    const secondPageNames = secondPageRes.body.files.items.map((f: any) => f.name);
+    expect(firstPageNames[0]).not.toBe(secondPageNames[0]);
+    expect(firstPageNames[0] < firstPageNames[1]).toBe(true);
+    expect(secondPageNames[0] < secondPageNames[1]).toBe(true);
+  });
 });

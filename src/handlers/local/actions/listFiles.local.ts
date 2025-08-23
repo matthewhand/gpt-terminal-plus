@@ -32,14 +32,10 @@ const listFiles = async ({
       throw new Error(`Directory does not exist: ${absDir}`);
     }
 
-    // Note: Parameter clamping is now handled by AbstractServerHandler.listFilesWithDefaults()
+    // Note: Parameter validation and clamping is now handled by AbstractServerHandler.listFilesWithDefaults()
     const safeLimit = limit;
     const safeOffset = offset;
-
-    // Guard: allowed orderBy values
-    const safeOrderBy = ['filename', 'datetime'].includes(orderBy)
-      ? orderBy
-      : 'filename';
+    const safeOrderBy = orderBy;
 
     type Item = { name: string; isDirectory: boolean; mtime: Date };
 

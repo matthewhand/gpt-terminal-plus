@@ -34,14 +34,29 @@ export abstract class AbstractServerHandler {
    * This method ensures consistent behavior across all handler implementations.
    */
   async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+    // Validate orderBy parameter
+    const validOrderByValues = ['filename', 'datetime'] as const;
+    const orderBy = params.orderBy || 'filename';
+    if (!validOrderByValues.includes(orderBy as any)) {
+      throw new Error(`Invalid orderBy value: ${orderBy}. Must be one of: ${validOrderByValues.join(', ')}`);
+    }
+
+    // Validate typeFilter parameter
+    const validTypeFilterValues = ['files', 'folders'] as const;
+    const typeFilter = params.typeFilter;
+    if (typeFilter && !validTypeFilterValues.includes(typeFilter as any)) {
+      throw new Error(`Invalid typeFilter value: ${typeFilter}. Must be one of: ${validTypeFilterValues.join(', ')}`);
+    }
+
     const normalizedParams = {
       ...params,
       directory: params.directory || '.',
-      // Clamp limit between 1 and 5000 (same as local implementation)
+      // Clamp limit between 1 and 5000
       limit: Math.min(Math.max(params.limit || 100, 1), 5000),
       // Clamp offset to non-negative values
       offset: Math.max(params.offset || 0, 0),
-      orderBy: params.orderBy || 'filename'
+      orderBy: orderBy as 'filename' | 'datetime',
+      typeFilter: typeFilter as 'files' | 'folders' | undefined
     };
     return this.listFiles(normalizedParams);
   }

@@ -831,6 +831,37 @@ paths:
         "404":
           description: Session not found
       x-openai-isConsequential: false
+  /shell/session/{id}/cd:
+    post:
+      operationId: shellSessionChangeDirectory
+      summary: Change working directory inside existing session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory:
+                  type: string
+              required:
+                - directory
+      responses:
+        "200":
+          description: Directory changed successfully
+        "404":
+          description: Session not found
+        "500":
+          description: Failed to change directory
+      x-openai-isConsequential: false
   /shell/session/{id}/stop:
     post:
       operationId: shellSessionStop

@@ -34,7 +34,7 @@
 - [ ] Add truncated stdout/stderr logging in `executeCode`
 - [ ] Ensure raw + wrapper logs in `executeCommand`
 - [x] Clamp `limit`/`offset` in file listing
-- [ ] Validate `orderBy` and reject invalid values
+- [x] Validate `orderBy` and reject invalid values (+ comprehensive parameter validation)
 - [ ] Handle symlink/stat errors safely
 - [ ] Normalize paths with `path.resolve`, prevent traversal
 
