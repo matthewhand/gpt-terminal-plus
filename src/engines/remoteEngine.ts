@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import { convictConfig } from '../config/convictConfig';
 
 export interface RemoteSession {
   id: string;

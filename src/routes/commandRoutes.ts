@@ -1,6 +1,5 @@
 import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
-import fs from 'fs';
 
 const router = Router();
 

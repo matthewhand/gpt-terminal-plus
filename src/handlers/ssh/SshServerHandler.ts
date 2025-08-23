@@ -5,7 +5,6 @@ import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
 import { ListParams } from '../../types/ListParams';
-import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
 import Debug from 'debug';
 import fs from 'fs';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
@@ -29,7 +28,7 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH command: ${command}`);
         return new Promise<ExecutionResult>((resolve) => {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
+             
             const { Client: SSHClient } = require('ssh2');
             const conn = new SSHClient();
             const key = this.sshConfig.privateKeyPath ? fs.readFileSync(this.sshConfig.privateKeyPath, 'utf8') : undefined;

@@ -1,5 +1,4 @@
 import { handleShellWebSocket } from '../../../routes/shell/websocket';
-import { WebSocket } from 'ws';
 import { spawn } from 'child_process';
 
 jest.mock('child_process');

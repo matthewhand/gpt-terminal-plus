@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { listServersForToken, type ServerDescriptor } from '../managers/serverList';
 import { registerServer } from './server/registerServer';
 import { removeServer } from './server/removeServer';
 

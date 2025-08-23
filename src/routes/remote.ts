@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { createSSHSession, createSSMSession, getRemoteSession, listRemoteSessions } from '../engines/remoteEngine';
+import { createSSHSession, createSSMSession, listRemoteSessions } from '../engines/remoteEngine';
 
 const router = express.Router();
 router.use(checkAuthToken as any);

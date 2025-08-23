@@ -6,7 +6,7 @@ export function logActivity(step: LogPayload): void {
     if (mode === 'pretty') {
       const ts = new Date().toISOString();
       const statusIcon = step.error ? '✖' : '✔';
-      // eslint-disable-next-line no-console
+       
       console.log(`[${ts}] ${step.type || 'activity'}`);
       if (step.command) console.log(`  cmd: ${step.command}`);
       if (step.stdout) console.log(`  ${statusIcon} stdout: ${String(step.stdout).trim()}`);
@@ -14,7 +14,7 @@ export function logActivity(step: LogPayload): void {
       if (step.error) console.log(`  ✖ error: ${step.error}`);
       console.log('');
     } else {
-      // eslint-disable-next-line no-console
+       
       console.log(JSON.stringify(step));
     }
   } catch {

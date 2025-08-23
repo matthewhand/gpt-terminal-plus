@@ -4,7 +4,6 @@ import { handleServerError } from '../../utils/handleServerError';
 import { getExecuteTimeout } from '../../utils/timeout';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
 import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
