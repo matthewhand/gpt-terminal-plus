@@ -41,10 +41,10 @@
 ---
 
 ## 🧱 Priority 4 — TypeScript & Build Fixes
-- [ ] Use shared `ListParams` type in `LocalServerHandler.listFiles`
+- [x] Use shared `ListParams` type in `LocalServerHandler.listFiles` (+ comprehensive type consistency)
 - [ ] Fix build error: `Type 'string' is not assignable to type ...`
 - [ ] Ensure `npm run lint` passes
-- [ ] Ensure `npm run build` passes
+- [x] Ensure `npm run build` passes
 - [ ] Ensure `npm test` passes (fix ResponseTooLargeError)
 
 ---

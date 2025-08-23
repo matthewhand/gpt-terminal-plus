@@ -5,6 +5,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
+import { ListParams } from '../../types/ListParams';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
@@ -119,7 +120,7 @@ export class SsmServerHandler extends AbstractServerHandler {
         };
     }
 
-    async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: 'datetime' | 'filename'; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+    async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
         // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
         const { directory, limit, offset } = params;
         ssmServerDebug(`Listing files on SSM server in directory: ${directory}`);

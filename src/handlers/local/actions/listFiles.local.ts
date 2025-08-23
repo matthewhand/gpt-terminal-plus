@@ -63,9 +63,9 @@ const listFiles = async ({
       return results;
     };
 
-    let validStats: Item[] = [];
+    let allFiles: Item[] = [];
     if (recursive) {
-      validStats = await walk(absDir);
+      allFiles = await walk(absDir);
     } else {
       const entries = await fs.promises.readdir(absDir, { withFileTypes: true });
       const fileStats = await Promise.all(
@@ -85,25 +85,27 @@ const listFiles = async ({
           }
         })
       );
-      validStats = fileStats.filter(Boolean) as Item[];
+      allFiles = fileStats.filter(Boolean) as Item[];
     }
 
     // Apply sorting
     if (safeOrderBy === 'datetime') {
-      validStats.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
+      allFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
     } else {
-      validStats.sort((a, b) => a.name.localeCompare(b.name));
+      allFiles.sort((a, b) => a.name.localeCompare(b.name));
     }
 
+    const totalFiles = allFiles.length;
+
     // Apply pagination
-    const paginated = validStats.slice(safeOffset, safeOffset + safeLimit).map(({ name, isDirectory }) => ({
+    const paginated = allFiles.slice(safeOffset, safeOffset + safeLimit).map(({ name, isDirectory }) => ({
       name,
       isDirectory
     }));
 
-    debug(`✅ Found ${validStats.length} files, returning ${paginated.length}`);
+    debug(`✅ Found ${totalFiles} files, returning ${paginated.length}`);
 
-    return { files: paginated, total: validStats.length };
+    return { files: paginated, total: totalFiles };
   } catch (err: any) {
     debug(`❌ Error listing files: ${err.message}`);
     throw err;

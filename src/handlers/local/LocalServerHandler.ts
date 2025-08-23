@@ -48,7 +48,7 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
-    const raw = await listFilesAction(params as any);
+    const raw = await listFilesAction(params);
     return {
       items: raw.files,
       total: raw.total,
