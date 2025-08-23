@@ -81,11 +81,13 @@ export const registerMcpTools = (server: McpServer) => {
       directory: z.string(),
       limit: z.number().optional(),
       offset: z.number().optional(),
-      orderBy: z.enum(["datetime", "filename"]).optional()
+      orderBy: z.enum(["datetime", "filename"]).optional(),
+      recursive: z.boolean().optional(),
+      typeFilter: z.enum(["files", "folders"]).optional()
     },
-    async ({ directory, limit, offset, orderBy }: { directory: string; limit?: number; offset?: number; orderBy?: "datetime" | "filename" }) => {
+    async ({ directory, limit, offset, orderBy, recursive, typeFilter }: { directory: string; limit?: number; offset?: number; orderBy?: "datetime" | "filename"; recursive?: boolean; typeFilter?: 'files' | 'folders' }) => {
       const localHandler = new LocalServerHandler({ protocol: "local", hostname: "localhost", code: false });
-      const params = { directory, limit, offset, orderBy };
+      const params = { directory, limit, offset, orderBy, recursive, typeFilter };
       const result = await localHandler.listFiles(params);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
     }

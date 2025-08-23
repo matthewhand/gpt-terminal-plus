@@ -11,7 +11,9 @@ export interface LimitConfig {
 
 export function getLimitConfig(): LimitConfig {
   const cfg = convictConfig();
-  return {
+
+  // Base limits from global config (convict)
+  const base: LimitConfig = {
     maxInputChars: safeNat(cfg.get('limits.maxInputChars'), 200000),
     maxOutputChars: safeNat(cfg.get('limits.maxOutputChars'), 200000),
     maxSessionDurationSec: safeNat(cfg.get('limits.maxSessionDurationSec'), 7200),
@@ -19,6 +21,37 @@ export function getLimitConfig(): LimitConfig {
     maxLlmCostUsd: safeNumOrNull(cfg.get('limits.maxLlmCostUsd')),
     allowTruncation: !!cfg.get('limits.allowTruncation'),
   };
+
+  // Merge active profile session overrides, if any
+  try {
+    const profiles = cfg.get('profiles') as any[] | undefined;
+    const activeName = cfg.get('activeProfile') as string | undefined;
+    const active =
+      Array.isArray(profiles)
+        ? (profiles.find((p: any) => p?.name === activeName) || profiles[0])
+        : null;
+
+    const session = (active as any)?.session;
+    if (session && typeof session === 'object') {
+      if (session.maxInputChars !== undefined) {
+        base.maxInputChars = safeNat(session.maxInputChars, base.maxInputChars);
+      }
+      if (session.maxOutputChars !== undefined) {
+        base.maxOutputChars = safeNat(session.maxOutputChars, base.maxOutputChars);
+      }
+      if (session.maxDuration !== undefined) {
+        base.maxSessionDurationSec = safeNat(session.maxDuration, base.maxSessionDurationSec);
+      }
+      if (session.maxIdle !== undefined) {
+        base.maxSessionIdleSec = safeNat(session.maxIdle, base.maxSessionIdleSec);
+      }
+      // Note: budget/allowTruncation remain global for now
+    }
+  } catch {
+    // Non-fatal: ignore profile overlay errors
+  }
+
+  return base;
 }
 
 function safeNat(v: any, def: number): number { const n = Number(v); return isFinite(n) && n >= 0 ? n : def; }

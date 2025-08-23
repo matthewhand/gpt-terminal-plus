@@ -68,14 +68,14 @@ router.post('/override', (req: Request, res: Response) => {
       cfg.set('security.apiToken', req.body.API_TOKEN);
     }
     
+    // Load provided overrides (may include unknown keys from Advanced Overrides)
     cfg.load(req.body);
-    cfg.validate({ allowed: 'strict' });
+    // Be permissive: warn on unknown keys instead of failing
+    cfg.validate({ allowed: 'warn' });
     
     // Return redacted config
     const props = cfg.getProperties();
-    if (props.security?.apiToken) {
-      props.security.apiToken = '[REDACTED]';
-    }
+    if (props.security?.apiToken) { props.security.apiToken = '[REDACTED]'; }
     
     res.json({ success: true, config: props });
   } catch (err: any) {

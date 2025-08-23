@@ -45,7 +45,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     return await amendFileAction(filePath, content, options?.backup, this.serverConfig.directory);
   }
 
-  async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
+  async listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<string>> {
     const effectiveParams = {
       ...params,
       directory: params.directory || '.',

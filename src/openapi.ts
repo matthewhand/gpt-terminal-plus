@@ -299,6 +299,11 @@ export function buildSpec(req?: Request) {
                   type: 'object',
                   properties: {
                     directory: { type: 'string' },
+                    limit: { type: 'number' },
+                    offset: { type: 'number' },
+                    orderBy: { type: 'string', enum: ['datetime', 'filename'] },
+                    recursive: { type: 'boolean' },
+                    typeFilter: { type: 'string', enum: ['files', 'folders'] },
                   },
                 },
               },
@@ -327,6 +332,11 @@ export function buildSpec(req?: Request) {
           summary: 'List files in a directory (query)',
           parameters: [
             { name: 'directory', in: 'query', required: false, schema: { type: 'string' } },
+            { name: 'limit', in: 'query', required: false, schema: { type: 'number' } },
+            { name: 'offset', in: 'query', required: false, schema: { type: 'number' } },
+            { name: 'orderBy', in: 'query', required: false, schema: { type: 'string', enum: ['datetime', 'filename'] } },
+            { name: 'recursive', in: 'query', required: false, schema: { type: 'boolean' } },
+            { name: 'typeFilter', in: 'query', required: false, schema: { type: 'string', enum: ['files', 'folders'] } },
           ],
           responses: {
             200: {
@@ -405,32 +415,7 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
-      '/file/set-post-command': {
-        post: {
-          operationId: 'fileSetPostCommand',
-          summary: 'Set a post-execution command on the active server handler',
-          'x-openai-isConsequential': filesConsequential,
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    command: { type: 'string' },
-                  },
-                  required: ['command'],
-                },
-              },
-            },
-          },
-          responses: {
-            200: { description: 'Post command set successfully' },
-            400: { description: 'Invalid input' },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
+      
       '/file/diff': {
         post: {
           operationId: 'fileApplyDiff',

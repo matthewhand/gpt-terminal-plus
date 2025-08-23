@@ -4,7 +4,7 @@ import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
 
 export const listFiles = async (req: Request, res: Response) => {
-  const { directory } = req.body;
+  const { directory, limit, offset, orderBy, recursive, typeFilter } = req.body;
 
   try {
     const ServerHandler = getServerHandler(req);
@@ -13,7 +13,7 @@ export const listFiles = async (req: Request, res: Response) => {
     }
 
     const targetDirectory = directory || await ServerHandler.presentWorkingDirectory();
-    const files = await ServerHandler.listFiles(targetDirectory);
+    const files = await ServerHandler.listFiles({ directory: targetDirectory, limit, offset, orderBy, recursive, typeFilter });
 
     res.status(200).json({ files });
   } catch (error) {

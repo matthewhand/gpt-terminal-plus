@@ -26,7 +26,7 @@ export abstract class AbstractServerHandler {
 
   abstract getSystemInfo(): Promise<SystemInfo | ExecutionResult>;
 
-  abstract listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>>;
+  abstract listFiles(params: { directory?: string; limit?: number; offset?: number; orderBy?: string; recursive?: boolean; typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<string>>;
 
   abstract setServerConfig(config: ServerConfig): void;
 

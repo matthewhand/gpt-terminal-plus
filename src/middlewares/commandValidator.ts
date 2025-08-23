@@ -15,8 +15,12 @@ export function validateCommand(req: Request, res: Response, next: NextFunction)
   }
   
   const cfg = convictConfig();
-  const denyRegex = cfg.get('policy.denyRegex') || '';
-  const confirmRegex = cfg.get('policy.confirmRegex') || '';
+  const safeGet = (key: string, def: string = ''): string => {
+    try { return String(cfg.get(key) ?? def); } catch { return def; }
+  };
+  // Support both new 'security.*' keys and legacy 'policy.*' used in tests/config
+  const denyRegex = safeGet('policy.denyRegex', safeGet('security.denyCommandRegex', ''));
+  const confirmRegex = safeGet('policy.confirmRegex', safeGet('security.confirmCommandRegex', ''));
   
   // Check deny patterns
   if (denyRegex && new RegExp(denyRegex, 'i').test(command)) {

@@ -1,4 +1,5 @@
 import convict from 'convict';
+import { loadProfilesConfig, getActiveProfileName } from './profiles';
 
 type RedactedValue = string | number | boolean | null | string[] | number[] | boolean[] | Record<string, unknown>;
 
@@ -340,7 +341,7 @@ export const convictConfig = () => {
       maxInputChars: {
         doc: 'Maximum input characters per request',
         format: 'nat',
-        default: 200000,
+        default: 10000,
         env: 'MAX_INPUT_CHARS'
       },
       maxOutputChars: {
@@ -373,8 +374,31 @@ export const convictConfig = () => {
         default: false,
         env: 'ALLOW_TRUNCATION'
       }
+    },
+    // Profiles (loaded from YAML; not env-mapped except activeProfile)
+    profiles: {
+      doc: 'Normalized profiles loaded from config/profiles.yaml (or fallbacks)',
+      format: Array,
+      default: []
+    },
+    activeProfile: {
+      doc: 'Active profile name (overrides via env ACTIVE_PROFILE)',
+      format: String,
+      default: '',
+      env: 'ACTIVE_PROFILE'
     }
   });
+  
+  // Load profiles from YAML and set active profile
+  try {
+    const profilesCfg = loadProfilesConfig();
+    instance.set('profiles', Array.isArray(profilesCfg?.profiles) ? profilesCfg.profiles : []);
+    const preferred = instance.get('activeProfile') as string;
+    const active = getActiveProfileName(preferred);
+    instance.set('activeProfile', active);
+  } catch (err) {
+    // Non-fatal: leave defaults if profiles cannot be loaded
+  }
 
   // Normalize getSchema() to have `properties` for compatibility in tests/tools
   const originalGetSchema = instance.getSchema?.bind(instance);
@@ -480,6 +504,15 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
   assign('engines', 'ollama.format', cfg.get('engines.ollama.format'), 'OLLAMA_FORMAT');
   assign('engines', 'ollama.noWordWrap', cfg.get('engines.ollama.noWordWrap'), 'OLLAMA_NOWORDWRAP');
   assign('engines', 'ollama.verbose', cfg.get('engines.ollama.verbose'), 'OLLAMA_VERBOSE');
+ 
+  // profiles summary
+  assign('profiles', 'activeProfile', cfg.get('activeProfile'), 'ACTIVE_PROFILE');
+  try {
+    const names = ((cfg.get('profiles') as any[]) || []).map((p: any) => p?.name).filter(Boolean);
+    assign('profiles', 'names', names);
+  } catch {
+    assign('profiles', 'names', []);
+  }
 
   // limits
   assign('limits', 'maxInputChars', cfg.get('limits.maxInputChars'), 'MAX_INPUT_CHARS');

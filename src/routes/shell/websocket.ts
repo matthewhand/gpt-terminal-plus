@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import { WebSocket, RawData } from 'ws';
 import { spawn } from 'child_process';
 import { convictConfig } from '../../config/convictConfig';
 
@@ -48,7 +48,7 @@ export function handleShellWebSocket(ws: WebSocket, sessionId?: string): void {
       wsSessions.delete(id);
     });
     
-    ws.on('message', (message) => {
+    ws.on('message', (message: RawData) => {
       try {
         const data = JSON.parse(message.toString());
         if (data.type === 'input' && child.stdin) {

@@ -3,6 +3,7 @@ import { stringify as yamlStringify } from 'yaml';
 import { convictConfig } from '../config/convictConfig';
 import { buildSpec } from '../openapi';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { loadProfilesConfig, upsertProfile, deleteProfile, exportProfilesYaml, importProfilesYaml } from '../config/profiles';
 
 const router = express.Router();
 
@@ -68,4 +69,68 @@ router.get('/settings', checkAuthToken as any, (_req: Request, res: Response) =>
   let hasToken = false;
   try { hasToken = !!(process.env.API_TOKEN || convictConfig().get('security.apiToken')); } catch {}
   return res.status(200).json({ API_TOKEN: hasToken ? '[REDACTED]' : '' });
+});
+
+// Profiles API
+router.get('/profiles', checkAuthToken as any, (_req: Request, res: Response) => {
+  try {
+    const cfg = convictConfig();
+    let activeProfile = '';
+    try { activeProfile = cfg.get('activeProfile') as string; } catch {}
+    let names: string[] = [];
+    try { names = ((cfg.get('profiles') as any[]) || []).map((p: any) => p?.name).filter(Boolean); } catch {}
+    const profilesFile = loadProfilesConfig();
+    return res.status(200).json({ activeProfile, names, profiles: profilesFile.profiles });
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e?.message || e) });
+  }
+});
+
+router.post('/profiles', checkAuthToken as any, (req: Request, res: Response) => {
+  try {
+    const payload = req.body || {};
+    const updated = upsertProfile(payload as any);
+    return res.status(200).json(updated);
+  } catch (e: any) {
+    return res.status(400).json({ error: String(e?.message || e) });
+  }
+});
+
+router.delete('/profiles/:name', checkAuthToken as any, (req: Request, res: Response) => {
+  const { name } = req.params || {};
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Profile name is required' });
+  }
+  try {
+    const updated = deleteProfile(name);
+    return res.status(200).json(updated);
+  } catch (e: any) {
+    return res.status(400).json({ error: String(e?.message || e) });
+  }
+});
+
+router.get('/profiles/yaml', checkAuthToken as any, (_req: Request, res: Response) => {
+  try {
+    const yaml = exportProfilesYaml();
+    return res.type('application/yaml').send(yaml);
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e?.message || e) });
+  }
+});
+
+router.post('/profiles/yaml', checkAuthToken as any, (req: Request, res: Response) => {
+  try {
+    let yamlBody = '';
+    if (typeof req.body === 'string') {
+      yamlBody = req.body;
+    } else if (req.body && typeof (req.body as any).yaml === 'string') {
+      yamlBody = (req.body as any).yaml;
+    } else {
+      return res.status(400).json({ error: 'Expected text body or JSON { "yaml": "..." }' });
+    }
+    const updated = importProfilesYaml(yamlBody);
+    return res.status(200).json(updated);
+  } catch (e: any) {
+    return res.status(400).json({ error: String(e?.message || e) });
+  }
 });

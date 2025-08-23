@@ -17,12 +17,6 @@ interface LlmPlanCommand { cmd: string; explain?: string }
 
 function extractJsonArray(text: string): any {
   try {
-    // Circuit breaker: input size for instructions
-    const inputCheck = enforceInputLimit('executeLlm', String(instructions));
-    if (!('ok' in inputCheck) || inputCheck.ok === false) {
-      return res.status(413).json({ ...inputCheck.payload });
-    }
-    const effectiveInstructions = (inputCheck as any).truncated ? (inputCheck as any).value : String(instructions);
     return JSON.parse(text);
   } catch {
     const match = text.match(/\{[\s\S]*\}/);
@@ -45,6 +39,13 @@ export const executeLlm = async (req: Request, res: Response) => {
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });
   }
+
+  // Circuit breaker: input size for instructions
+  const inputCheck = enforceInputLimit('executeLlm', String(instructions));
+  if (!('ok' in inputCheck) || (inputCheck as any).ok === false) {
+    return res.status(413).json({ ...(inputCheck as any).payload });
+  }
+  const effectiveInstructions: string = (inputCheck as any).truncated ? (inputCheck as any).value : String(instructions);
 
   try {
     // Budget check (simple)

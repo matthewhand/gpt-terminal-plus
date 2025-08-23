@@ -8,7 +8,7 @@ import { listFiles } from './file/listFiles.route';
 import { readFile } from './file/readFile.route';
 import { updateFile } from './file/updateFile.route';
 import { amendFile } from './file/amendFile.route';
-import { setPostCommand } from './file/setPostCommand';
+
 import { applyDiff } from './file/diff';
 import { applyPatch } from './file/patch';
 
@@ -37,8 +37,15 @@ router.post('/list', listFiles);
  * GET /file/list?directory=...  -> same as POST /file/list
  */
 router.get('/list', (req, res) => {
-  const { directory } = req.query as { directory?: string };
-  req.body = { ...(req.body || {}), ...(directory ? { directory } : {}) };
+  const { directory, limit, offset, orderBy, recursive, typeFilter } = req.query as Record<string, string>;
+  const body: any = { ...(req.body || {}) };
+  if (directory) body.directory = directory;
+  if (limit) body.limit = Number(limit);
+  if (offset) body.offset = Number(offset);
+  if (orderBy) body.orderBy = orderBy;
+  if (typeof recursive !== 'undefined') body.recursive = ['1', 'true', 'yes'].includes(String(recursive).toLowerCase());
+  if (typeFilter) body.typeFilter = typeFilter;
+  req.body = body;
   return listFiles(req as any, res);
 });
 
@@ -77,11 +84,7 @@ router.post('/update', updateFile);
  */
 router.post('/amend', amendFile);
 
-/**
- * POST /file/set-post-command
- * Configure a post-execution command on the selected server handler. Body: { command }
- */
-router.post('/set-post-command', setPostCommand);
+
 
 /**
  * POST /file/diff

@@ -16,5 +16,5 @@ export interface ServerHandler {
   readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult>;
   updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean>;
   amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean>;
-  listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
+  listFiles(params: { directory?: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename', recursive?: boolean, typeFilter?: 'files' | 'folders' }): Promise<PaginatedResponse<string>>;
 }

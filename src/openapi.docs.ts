@@ -446,27 +446,7 @@
  *       '400': { description: Validation failed }
  */
 
-/**
- * @openapi
- * /file/set-post-command:
- *   post:
- *     operationId: fileSetPostCommand
- *     summary: Configure a post-execution command for the active server handler
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               command: { type: string }
- *             required: [ command ]
- *     responses:
- *       '200': { description: Updated }
- *       '400': { description: Bad request }
- */
+
 /**
  * @openapi
  * /settings:

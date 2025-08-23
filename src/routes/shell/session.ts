@@ -335,42 +335,47 @@ router.get('/:id/logs', async (req: Request, res: Response) => {
 
 export default router;
 
-// Session recovery on startup
-(async function recoverSessions() {
-  try {
-    const persisted = await loadSessions();
-    console.log(`Recovered ${persisted.length} sessions from disk`);
-  } catch (err) {
-    console.error('Failed to recover sessions:', err);
-  }
-})();
+// Session recovery on startup (disabled during tests to avoid open handles)
+if (process.env.NODE_ENV !== 'test') {
+  (async function recoverSessions() {
+    try {
+      const persisted = await loadSessions();
+      console.log(`Recovered ${persisted.length} sessions from disk`);
+    } catch (err) {
+      console.error('Failed to recover sessions:', err);
+    }
+  })();
+}
 
 // Watchdog for session limits
 import { convictConfig } from '../../config/convictConfig';
-(function initWatchdog() {
-  const cfg = convictConfig();
-  const getLimit = (key: string, def: number) => { try { return Number(cfg.get(key)) || def; } catch { return def; } };
-  const maxDuration = getLimit('limits.maxSessionDurationSec', 7200) * 1000;
-  const maxIdle = getLimit('limits.maxSessionIdleSec', 600) * 1000;
-  setInterval(() => {
-    const now = Date.now();
-    sessions.forEach((s, id) => {
-      if (!s.process || s.status !== 'running') return;
-      const started = Date.parse(s.startedAt);
-      const last = Date.parse(s.lastActivity || s.startedAt);
-      if ((now - started) > maxDuration) {
-        try { s.process.kill(); } catch {}
-        s.status = 'exited';
-        sessions.delete(id);
-        logSessionStep('termination', { reason: 'sessionDurationExceeded', sessionId: id, limitMs: maxDuration });
-      } else if ((now - last) > maxIdle) {
-        try { s.process.kill(); } catch {}
-        s.status = 'exited';
-        sessions.delete(id);
-        logSessionStep('termination', { reason: 'idleTimeout', sessionId: id, idleMs: (now - last), limitMs: maxIdle });
-      }
-    });
-    // Periodic persistence save
-    try { await saveSessions(sessions); } catch {}
-  }, 5000);
-})();
+// Watchdog for session limits (disabled during tests to avoid open handles)
+if (process.env.NODE_ENV !== 'test') {
+  (function initWatchdog() {
+    const cfg = convictConfig();
+    const getLimit = (key: string, def: number) => { try { return Number(cfg.get(key)) || def; } catch { return def; } };
+    const maxDuration = getLimit('limits.maxSessionDurationSec', 7200) * 1000;
+    const maxIdle = getLimit('limits.maxSessionIdleSec', 600) * 1000;
+    setInterval(async () => {
+      const now = Date.now();
+      sessions.forEach((s, id) => {
+        if (!s.process || s.status !== 'running') return;
+        const started = Date.parse(s.startedAt);
+        const last = Date.parse(s.lastActivity || s.startedAt);
+        if ((now - started) > maxDuration) {
+          try { s.process.kill(); } catch {}
+          s.status = 'exited';
+          sessions.delete(id);
+          logSessionStep('termination', { reason: 'sessionDurationExceeded', sessionId: id, limitMs: maxDuration });
+        } else if ((now - last) > maxIdle) {
+          try { s.process.kill(); } catch {}
+          s.status = 'exited';
+          sessions.delete(id);
+          logSessionStep('termination', { reason: 'idleTimeout', sessionId: id, idleMs: (now - last), limitMs: maxIdle });
+        }
+      });
+      // Periodic persistence save
+      try { await saveSessions(sessions); } catch {}
+    }, 5000);
+  })();
+}

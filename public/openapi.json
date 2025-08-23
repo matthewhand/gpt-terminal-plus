@@ -773,44 +773,6 @@
         }
       }
     },
-    "/file/set-post-command": {
-      "post": {
-        "operationId": "fileSetPostCommand",
-        "summary": "Configure a post-execution command for the active server handler",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "command": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "command"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated"
-          },
-          "400": {
-            "description": "Bad request"
-          }
-        },
-        "x-openai-isConsequential": false
-      }
-    },
     "/settings": {
       "get": {
         "operationId": "getSettings",
@@ -954,6 +916,318 @@
           },
           "400": {
             "description": "Bad request"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/config/schema": {
+      "get": {
+        "operationId": "getConfigSchema",
+        "summary": "Get configuration schema",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Configuration schema"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/config/override": {
+      "get": {
+        "operationId": "getConfigOverride",
+        "summary": "Get current configuration",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current configuration"
+          }
+        },
+        "x-openai-isConsequential": false
+      },
+      "post": {
+        "operationId": "setConfigOverride",
+        "summary": "Update configuration",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Configuration updated"
+          },
+          "400": {
+            "description": "Invalid configuration"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/config/settings": {
+      "get": {
+        "operationId": "getConfigSettings",
+        "summary": "Get redacted configuration settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Redacted configuration settings"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/files/op": {
+      "post": {
+        "operationId": "fileOperation",
+        "summary": "Execute file operation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "read",
+                      "write",
+                      "delete",
+                      "list",
+                      "mkdir"
+                    ]
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "recursive": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type",
+                  "path"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operation completed"
+          },
+          "400": {
+            "description": "Invalid operation"
+          },
+          "403": {
+            "description": "Path not allowed"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/llm/plan": {
+      "post": {
+        "operationId": "llmPlan",
+        "summary": "Plan command using LLM",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Command planned"
+          },
+          "400": {
+            "description": "Input required"
+          },
+          "429": {
+            "description": "Budget exceeded"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/remote/ssh": {
+      "post": {
+        "operationId": "createSSH",
+        "summary": "Create SSH session",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "host": {
+                    "type": "string"
+                  },
+                  "user": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "host"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSH session created"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/remote/ssm": {
+      "post": {
+        "operationId": "createSSM",
+        "summary": "Create SSM session",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "instanceId": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "instanceId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSM session created"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/remote/list": {
+      "get": {
+        "operationId": "listRemote",
+        "summary": "List remote sessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Remote sessions"
+          }
+        },
+        "x-openai-isConsequential": false
+      }
+    },
+    "/shell/llm/plan-exec": {
+      "post": {
+        "operationId": "shellLlmPlanExec",
+        "summary": "Plan and optionally execute command via LLM",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  },
+                  "autoExecute": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "input"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Command planned/executed"
+          },
+          "400": {
+            "description": "Input required"
+          },
+          "429": {
+            "description": "Budget exceeded"
           }
         },
         "x-openai-isConsequential": false
