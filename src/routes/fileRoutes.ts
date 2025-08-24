@@ -1,56 +1,65 @@
 import express from 'express';
-import { createFile } from './file/createFile';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 
-import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import fs from 'fs';
+// File route handlers
+import { createFile } from './file/createFile.route';
+import { listFiles } from './file/listFiles.route';
+import { readFile } from './file/readFile.route';
+import { updateFile } from './file/updateFile.route';
+import { amendFile } from './file/amendFile.route';
+
+import { applyDiff } from './file/diff';
+import { applyPatch } from './file/patch';
 
 const router = express.Router();
-const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
+
+// Middleware for all file routes
+router.use(checkAuthToken);
+router.use(initializeServerHandler);
 
 /**
  * Route to create or replace a file.
  * @route POST /file/create
  */
-router.post('/create', (req, res) => {
-  const { directory } = req.body;
-
-  try {
-    if (!fs.existsSync(directory)) {
-      fs.mkdirSync(directory, { recursive: true });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: 'Failed to create directory.', error: (error as Error).message });
-  }
-
-  createFile(req, res);
-});
+router.post('/create', createFile);
 
 /**
  * Route to list files in a directory.
- * @route GET /file/list
+ * @route POST /file/list
  */
-router.get('/list', async (req, res) => {
-  const { directory, limit, offset, orderBy } = req.query;
+router.post('/list', listFiles);
 
-  if (!directory || typeof directory !== 'string') {
-    return res.status(400).json({ message: 'Invalid or missing "directory" parameter.' });
-  }
+/**
+ * Route to read a file.
+ * @route POST /file/read
+ */
+router.post('/read', readFile);
 
-  try {
-    const params = {
-      directory: directory.toString(),
-      limit: limit ? parseInt(limit as string, 10) : undefined,
-      offset: offset ? parseInt(offset as string, 10) : undefined,
-      orderBy: orderBy === 'datetime' ? 'datetime' : 'filename',
-    };
+/**
+ * POST /file/update
+ * Regex replace within a file. Body: { filePath, pattern, replacement, backup?, multiline? }
+ */
+router.post('/update', updateFile);
 
-    const paginatedResponse = await localHandler.listFiles(params);
-    res.status(200).json(paginatedResponse);
-  } catch (error) {
-    res.status(500).json({ message: (error as Error).message });
-  }
-});
+/**
+ * POST /file/amend
+ * Append content to a file. Body: { filePath, content, backup? }
+ */
+router.post('/amend', amendFile);
 
-// Preserve additional routes and logic here if any...
+/**
+ * POST /file/diff
+ * Apply a unified diff using git apply with validation.
+ * Body: { diff: string, dryRun?: boolean }
+ */
+router.post('/diff', applyDiff);
+
+/**
+ * POST /file/patch
+ * Apply a structured patch by generating a minimal unified diff and using git apply.
+ * Body: { filePath: string, search?: string, oldText?: string, replace: string, all?: boolean, startLine?: number, endLine?: number, dryRun?: boolean }
+ */
+router.post('/patch', applyPatch);
 
 export default router;

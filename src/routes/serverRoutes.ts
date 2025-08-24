@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { listServersForToken, type ServerDescriptor } from '../managers/serverList';
+import { listRegisteredServers } from '../managers/serverRegistry';
+import { registerServer } from './server/registerServer'; // New import
+import { removeServer } from './server/removeServer'; // New import
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -13,19 +15,15 @@ router.use(checkAuthToken as any);
 
 /**
  * GET /server/list (also /list)
- * Returns servers visible to the caller's token (see config/servers.json allowedTokens)
+ * Returns servers from in-memory registry (loaded from config at boot)
  */
 const handleServerList = (req: Request, res: Response) => {
   try {
-    const h = String(req.headers?.authorization ?? '');
-    const m = h.match(/^Bearer\s+(.+)$/i);
-    const token = m ? m[1] : '';
-
-    const servers = listServersForToken(String(token)).map((s: ServerDescriptor) => ({
-      key: s.key,
-      label: s.label,
+    const servers = listRegisteredServers().map(s => ({
+      hostname: s.hostname,
       protocol: s.protocol,
-      hostname: s.hostname ?? null,
+      modes: s.modes || [],
+      registeredAt: s.registeredAt
     }));
 
     res.status(200).json({ servers });
@@ -36,5 +34,9 @@ const handleServerList = (req: Request, res: Response) => {
 
 /* '/server/list' inside router is redundant when mounted at '/server' (would become '/server/server/list'). */
 router.get('/list', handleServerList);
+
+// New routes from feat/circuit-breakers
+router.post('/register', registerServer);
+router.post('/remove', removeServer);
 
 export default router;

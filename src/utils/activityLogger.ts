@@ -1,39 +1,34 @@
-import fs from 'fs/promises';
-import path from 'path';
+type LogPayload = Record<string, any>;
 
-export async function logSessionStep(type: string, payload: any, sessionId?: string) {
-  const now = new Date();
-  const dateDir = path.join('data', 'activity', now.toISOString().slice(0, 10));
-  await fs.mkdir(dateDir, { recursive: true });
-
-  const session = sessionId || `session_${Date.now()}`;
-  const sessionDir = path.join(dateDir, session);
-  await fs.mkdir(sessionDir, { recursive: true });
-
-  // Create meta.json if it doesn't exist
-  const metaPath = path.join(sessionDir, 'meta.json');
+export function logActivity(step: LogPayload): void {
   try {
-    await fs.access(metaPath);
+    const mode = process.env.LOG_MODE || 'json';
+    if (mode === 'pretty') {
+      const ts = new Date().toISOString();
+      const statusIcon = step.error ? '✖' : '✔';
+       
+      console.log(`[${ts}] ${step.type || 'activity'}`);
+      if (step.command) console.log(`  cmd: ${step.command}`);
+      if (step.stdout) console.log(`  ${statusIcon} stdout: ${String(step.stdout).trim()}`);
+      if (step.stderr) console.log(`  ${statusIcon} stderr: ${String(step.stderr).trim()}`);
+      if (step.error) console.log(`  ✖ error: ${step.error}`);
+      console.log('');
+    } else {
+       
+      console.log(JSON.stringify(step));
+    }
   } catch {
-    const meta = {
-      sessionId: session,
-      startedAt: now.toISOString(),
-      user: 'gpt-bot', // This can be customized later
-      label: 'Session', // This can be customized later
-      source: 'N/A' // This can be customized later
-    };
-    await fs.writeFile(metaPath, JSON.stringify(meta, null, 2));
+    // ignore logging errors
   }
+}
 
-  const stepFiles = await fs.readdir(sessionDir);
-  const nextStepNum = stepFiles.filter(f => f.match(/^\d+-/)).length + 1;
-  const stepFilename = path.join(sessionDir, `${String(nextStepNum).padStart(2, '0')}-${type}.json`);
-  
-  const logEntry = {
-    timestamp: now.toISOString(),
-    type: type,
+export async function logSessionStep(event: string, payload: LogPayload, sessionId?: string): Promise<void> {
+  const entry = {
+    ts: new Date().toISOString(),
+    type: event,
+    sessionId: sessionId || '',
     ...payload
   };
-
-  await fs.writeFile(stepFilename, JSON.stringify(logEntry, null, 2));
+  logActivity(entry);
 }
+

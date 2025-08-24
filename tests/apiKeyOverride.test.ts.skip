@@ -1,0 +1,38 @@
+import request from 'supertest';
+import { makeProdApp } from './utils/testApp';
+
+describe('API Key Override', () => {
+  let app: any;
+  const OLD = 'old-key-123';
+  const NEW = 'test123NEWKEYtest123NEWKEY12'; // 32 chars
+
+  beforeAll(async () => {
+    process.env.API_TOKEN = OLD;
+    app = await makeProdApp();
+  });
+
+  test('override and redaction', async () => {
+    // Override with old key
+    const res1 = await request(app)
+      .post('/config/override')
+      .set('Authorization', `Bearer ${OLD}`)
+      .send({ API_TOKEN: NEW });
+    expect(res1.status).toBe(200);
+
+    // Settings should redact
+    const res2 = await request(app)
+      .get('/config/settings')
+      .set('Authorization', `Bearer ${NEW}`);
+    expect(res2.status).toBe(200);
+    expect(res2.body.API_TOKEN).toBe('[REDACTED]');
+
+    // Old key unauthorized (should be 401 or 403 depending on missing vs mismatch)
+    const rOld = await request(app).get('/settings');
+    expect([401,403]).toContain(rOld.status);
+
+    // New key authorized
+    const rNew = await request(app).get('/settings').set('Authorization', `Bearer ${NEW}`);
+    expect(rNew.status).toBe(200);
+  });
+});
+

@@ -1,12 +1,12 @@
-import { Client, ConnectConfig } from 'ssh2';
+import { Client } from 'ssh2';
 import SFTPClient from 'ssh2-sftp-client';
 
 class SSHUnifiedCommandExecutor {
     private sshClient: Client;
     private sftpClient: SFTPClient;
-    private readonly config: ConnectConfig;
+    private readonly config: any;
 
-    constructor(config: ConnectConfig) {
+    constructor(config: any) {
         this.config = config;
         this.sshClient = new Client();
         this.sftpClient = new SFTPClient();

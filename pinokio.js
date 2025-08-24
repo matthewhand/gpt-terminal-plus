@@ -27,7 +27,7 @@ module.exports = {
           {
             icon: "fa-solid fa-plug",
             text: "Update",
-            href: "install.js"
+            href: "scripts/install.js"
           }
         ];
       }

@@ -3,21 +3,39 @@ import { registerServerInMemory } from '../managers/serverRegistry';
 import { ServerConfig } from '../types/ServerConfig';
 
 export function registerServersFromConfig(): void {
+  let hasLocalhost = false;
+  
   try {
     // Load local server
     const localConfig = config.get<ServerConfig>('local');
     if (localConfig) {
+      const hostname = localConfig.hostname || 'localhost';
       registerServerInMemory({
         ...localConfig,
         protocol: 'local',
-        hostname: localConfig.hostname || 'localhost',
+        hostname,
         registeredAt: new Date().toISOString(),
-        modes: ['shell', 'code']
+        modes: ['shell', 'code'],
+        directory: '.'
       });
-      console.log(`✅ Registered server from config: ${localConfig.hostname || 'localhost'}`);
+      console.log(`✅ Registered server from config: ${hostname}`);
+      if (hostname === 'localhost') hasLocalhost = true;
     }
   } catch (err) {
     console.warn('No local server config found');
+  }
+  
+  // Always ensure we have a default localhost server with working directory '.'
+  if (!hasLocalhost) {
+    registerServerInMemory({
+      protocol: 'local',
+      hostname: 'localhost',
+      registeredAt: new Date().toISOString(),
+      modes: ['shell', 'code'],
+      directory: '.',
+      code: false
+    });
+    console.log(`✅ Registered default localhost server with working directory '.'`);
   }
 
   try {

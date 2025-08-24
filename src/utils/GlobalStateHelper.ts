@@ -13,8 +13,57 @@ export function getGlobalState(): GlobalState {
       presentWorkingDirectory: process.cwd(),
       selectedModel: process.env.DEFAULT_MODEL || 'auto',
     };
+    
+    // Auto-select default localhost server if none selected
+    if (!state.selectedServer) {
+      initializeDefaultServer();
+    }
   }
   return state;
+}
+
+function initializeDefaultServer(): void {
+  try {
+    // Try to get registered servers first
+    const { listRegisteredServers } = require('../managers/serverRegistry');
+    const registeredServers = listRegisteredServers();
+    
+    // Look for localhost server with current working directory
+    let defaultServer = registeredServers.find((s: any) => 
+      s.hostname === 'localhost' && 
+      s.protocol === 'local' &&
+      (s.directory === '.' || s.directory === process.cwd())
+    );
+    
+    // If not found, look for any localhost server
+    if (!defaultServer) {
+      defaultServer = registeredServers.find((s: any) => 
+        s.hostname === 'localhost' && s.protocol === 'local'
+      );
+    }
+    
+    // If still not found, create a default localhost server
+    if (!defaultServer) {
+      const { ServerManager } = require('../managers/ServerManager');
+      defaultServer = ServerManager.getDefaultLocalServerConfig();
+      
+      // Register it in memory
+      const { registerServerInMemory } = require('../managers/serverRegistry');
+      registerServerInMemory({
+        ...defaultServer,
+        registeredAt: new Date().toISOString(),
+        modes: ['shell', 'code'],
+        directory: '.'
+      });
+    }
+    
+    if (defaultServer && state) {
+      state.selectedServer = defaultServer.hostname;
+      console.log(`🚀 Auto-selected default server: ${defaultServer.hostname}`);
+    }
+  } catch (error) {
+    console.warn('Failed to initialize default server:', error);
+  }
 }
 
 export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {

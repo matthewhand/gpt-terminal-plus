@@ -3,7 +3,7 @@
  */
 
 import { expect } from 'chai';
-import { createFile } from '@src/handlers/ssh/actions/createFile';
+import { createFile } from '@src/handlers/ssh/actions/createFile.ssh';
 import sinon from 'sinon';
 import fs from 'fs';
 

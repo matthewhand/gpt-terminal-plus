@@ -20,14 +20,34 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     debug('Initializing server handler');
 
     // Retrieve the selected server from global state
-    const selectedServer = getSelectedServer();
+    let selectedServer = getSelectedServer();
     debug('Selected server: ' + selectedServer);
 
     // Guard clause: Ensure selectedServer is not undefined or null
     if (!selectedServer) {
-      debug('No server selected. Cannot proceed with server initialization.');
-      res.status(400).json({ error: 'No server selected' });
-      return;  // Ensure the function exits here
+      debug('No server selected. Attempting to auto-select localhost...');
+      
+      // Try to auto-select localhost as fallback
+      try {
+        const { listRegisteredServers } = require('../managers/serverRegistry');
+        const servers = listRegisteredServers();
+        const localhostServer = servers.find((s: any) => s.hostname === 'localhost' && s.protocol === 'local');
+        
+        if (localhostServer) {
+          const { setSelectedServer } = require('../utils/GlobalStateHelper');
+          setSelectedServer(localhostServer.hostname);
+          selectedServer = localhostServer.hostname;
+          debug('Auto-selected localhost server: ' + selectedServer);
+        } else {
+          debug('No localhost server found in registry');
+          res.status(400).json({ error: 'No server selected and no localhost server available' });
+          return;
+        }
+      } catch (autoSelectError) {
+        debug('Failed to auto-select server:', autoSelectError);
+        res.status(400).json({ error: 'No server selected' });
+        return;
+      }
     }
 
     // Initialize the ServerManager with the hostname

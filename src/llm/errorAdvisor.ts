@@ -9,6 +9,7 @@ export interface ErrorContext {
   kind: 'command' | 'code' | 'file';
   input: string; // command string, code snippet, or filename
   language?: string; // for code
+  shell?: string; // for shell commands
   stdout?: string;
   stderr?: string;
   exitCode?: number;

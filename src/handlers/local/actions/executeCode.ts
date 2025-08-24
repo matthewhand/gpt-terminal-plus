@@ -1,5 +1,10 @@
 import { exec as _exec } from 'child_process';
 import shellEscape from 'shell-escape';
+import { ExecutionResult } from '../../../types/ExecutionResult';
+import { convictConfig } from '../../../config/convictConfig';
+import Debug from 'debug';
+
+const debug = Debug('app:local:executeCode');
 
 type Lang =
   | 'javascript'
@@ -12,14 +17,13 @@ type Lang =
 
 /** Escape for double-quoted shell strings; keep single quotes intact. */
 function dq(s: string): string {
-  return s.replace(/(["\\$`])/g, '\\$1').replace(/\n/g, '\\n');
+  return s.replace(/(["\\`$])/g, '\\$1').replace(/\n/g, '\\n');
 }
 
 function buildLanguageCommand(language: Lang, code: string): string {
   switch ((language || '').toLowerCase()) {
     case 'javascript':
     case 'node':
-      // tests expect the -c form under double quotes
       return `node -c "${dq(code)}"`;
     case 'python':
     case 'python3':
@@ -34,7 +38,6 @@ function buildLanguageCommand(language: Lang, code: string): string {
 
 function withDirectory(cmd: string, directory?: string): string {
   if (!directory) return cmd;
-  // exact shape used in tests: cd /tmp && <cmd>
   return `cd ${shellEscape([directory])} && ${cmd}`;
 }
 
@@ -43,7 +46,7 @@ export async function executeLocalCode(
   language: Lang,
   timeoutMs: number = 30_000,
   directory?: string
-): Promise<{ stdout: string; stderr: string }> {
+): Promise<ExecutionResult> { // Changed return type to ExecutionResult
   if (!code || !code.trim()) {
     throw new Error('Code is required for execution.');
   }
@@ -52,27 +55,34 @@ export async function executeLocalCode(
   }
 
   const cmd = withDirectory(buildLanguageCommand(language, code), directory);
-  const execAny = _exec as unknown as (...args: any[]) => any;
+  debug(`👉 Executing local code: ${cmd}`);
 
-  const res = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+  const execAny = _exec as unknown as (...args: any[]) => any;
+  const maxOutput = (() => { try { return convictConfig().get('limits.maxOutputChars') as number; } catch { return 200000; } })();
+
+  const res = await new Promise<ExecutionResult>((resolve, reject) => { // Changed Promise type to ExecutionResult
     const cb = (error: any, stdout: string, stderr: string) => {
-      if (error) return reject(error);
-      resolve({ stdout, stderr });
+      if (error) {
+        // Handle maxBuffer exceeded specifically
+        if (/maxBuffer/i.test(String(error?.message || ''))) {
+          const exitCode = typeof error?.code === 'number' ? error.code : 1;
+          resolve({ stdout, stderr, exitCode, success: false, error: true, truncated: true, terminated: true });
+        } else {
+          reject(error);
+        }
+      } else {
+        resolve({ stdout, stderr, exitCode: 0, success: true, error: false }); // Added exitCode, success, error
+      }
     };
 
-    // Try 3-arg form first; if the mock only supports (cmd, cb), fall back.
     try {
-      execAny(cmd, { timeout: timeoutMs, maxBuffer: 10 * 1024 * 1024 }, cb);
-    } catch {
-      try {
-        execAny(cmd, cb);
-      } catch (secondErr) {
-        reject(secondErr);
-      }
+      execAny(cmd, { timeout: timeoutMs, maxBuffer: Math.max(1024 * 64, Number(maxOutput)) }, cb);
+    } catch (secondErr) {
+      reject(secondErr);
     }
   }).catch((err: any) => {
     const msg = err?.message || 'unknown error';
-    throw new Error(`Failed to execute code: ${msg}`);
+    return { stdout: '', stderr: msg, exitCode: 1, success: false, error: true }; // Changed to return ExecutionResult
   });
 
   return res;

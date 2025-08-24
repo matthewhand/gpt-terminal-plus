@@ -33,30 +33,42 @@ export const ExecuteLlmSchema = z.object({
 });
 
 export const SettingsSchema = z.object({
+  server: z.object({
+    port: z.number().default(5004),
+    host: z.string().default('0.0.0.0'),
+    publicBaseUrl: z.string().optional(),
+  }),
+  auth: z.object({
+    apiToken: z.string().default('gtp-token-' + Math.random().toString(36).substring(2)),
+    adminUsername: z.string().default('admin'),
+    adminPassword: z.string().default('admin-' + Math.random().toString(36).substring(2)),
+  }),
   app: z.object({
-    corsOrigins: z.array(z.string()).default([
-      'https://chat.openai.com',
-      'https://chatgpt.com',
-    ]),
-  }).default({}),
+    corsOrigins: z.array(z.string()).default(['*']),
+  }),
+  execution: z.object({
+    shell: ExecuteShellSchema, // Integrated
+    code: ExecuteCodeSchema,   // Integrated
+    llm: ExecuteLlmSchema,     // Integrated
+  }),
+  files: z.object({
+    enabled: z.boolean().default(true),
+  }),
   features: z.object({
-    executeShell: ExecuteShellSchema.default({}),
-    executeCode: ExecuteCodeSchema.default({}),
-    executeLlm: ExecuteLlmSchema.default({}),
-  }).default({}),
-  llm: z
-    .object({
+    llmConsole: z.boolean().default(false),
+    executeShell: z.object({
       enabled: z.boolean().default(false),
-      provider: z
-        .enum(['none', 'openai', 'ollama', 'lmstudio', 'litellm'])
-        .default('none'),
-      defaultModel: z.string().default(''),
-      baseURL: z.string().default(''),
-      apiKey: z.string().default(''),
-      ollamaURL: z.string().default('http://localhost:11434'),
-      lmstudioURL: z.string().default('http://localhost:1234/v1'),
-    })
-    .default({}),
+    }),
+    executeCode: z.object({
+      enabled: z.boolean().default(false),
+    }),
+    executeLlm: z.object({
+      enabled: z.boolean().default(false),
+    }),
+  }),
+  llm: z.object({
+    provider: z.string().default('none'),
+  }),
 });
 
 export type Settings = z.infer<typeof SettingsSchema>;

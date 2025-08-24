@@ -1,4 +1,4 @@
-import { Client, ConnectConfig } from 'ssh2';
+import { Client } from 'ssh2';
 import { SshHostConfig } from '../types/ServerConfig'; // Corrected import path
 import Debug from 'debug';
 
@@ -8,7 +8,9 @@ export class SSHConnectionManager {
   private client: Client;
 
   constructor() {
-    this.client = new Client();
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Client: SSHClient } = require('ssh2');
+    this.client = new SSHClient();
   }
 
   /**
@@ -18,7 +20,7 @@ export class SSHConnectionManager {
    */
   connect(config: SshHostConfig): Promise<void> {
     return new Promise((resolve, reject) => {
-      const connectionConfig: ConnectConfig = {
+      const connectionConfig: any = {
         host: config.hostname,
         port: config.port ?? 22,  // Default to 22 if port is not provided
         username: config.username,
