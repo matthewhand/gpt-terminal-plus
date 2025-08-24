@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
       - name: Install dependencies
         run: npm ci
       - name: Build Windows binaries
@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
       - name: Install dependencies
         run: npm ci
       - name: Build macOS binary
@@ -55,7 +55,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '20'
       - name: Install dependencies
         run: npm ci
       - name: Build Linux binaries
