@@ -4,6 +4,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
+import { ListParams } from '../../types/ListParams';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
 import Debug from 'debug';
 import fs from 'fs';

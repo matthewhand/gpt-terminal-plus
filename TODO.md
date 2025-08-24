@@ -64,7 +64,9 @@
 ---
 
 ## 🧱 Priority 4 — TypeScript & Build
-- [ ] Fix type error: `Type 'string' is not assignable to type ...`
+- [x] Fix ExecutionResult type: added missing `success` property
+- [x] Fix ListParams import in SSH handler
+- [ ] Fix remaining type errors (SSH2, AWS SDK, etc.)
 - [ ] Ensure `npm run lint` passes
 - [ ] Ensure `npm test` passes (fix ResponseTooLargeError)
 
