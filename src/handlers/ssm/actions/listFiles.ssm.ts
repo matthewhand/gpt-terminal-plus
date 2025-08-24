@@ -1,4 +1,4 @@
-import { SSMClient, SendCommandCommand, GetCommandInvocationCommand, SendCommandResult } from "@aws-sdk/client-ssm";
+import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
 import Debug from "debug";
 import { ListParams } from '../../../types/ListParams';
 
@@ -33,7 +33,7 @@ export const listFiles = async (
 
   debug("Listing files with command: " + command);
 
-  const result: SendCommandResult = await ssmClient.send(new SendCommandCommand({
+  const result = await ssmClient.send(new SendCommandCommand({
     InstanceIds: [instanceId],
     DocumentName: "AWS-RunShellScript",
     Parameters: {
@@ -57,7 +57,7 @@ export const listFiles = async (
   const commandOutput = commandInvocationResult.StandardOutputContent || "";
 
   // Extract the command output from the result
-  const fileList = commandOutput.trim().split("\n").filter(line => line.length > 0);
+  const fileList = commandOutput.trim().split("\n").filter((line: string) => line.length > 0);
 
   debug("Files listed: " + fileList.join(", "));
 

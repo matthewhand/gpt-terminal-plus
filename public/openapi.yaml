@@ -1,11 +1,8 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: gpt-terminal-plus API
   version: 0.1.0
   description: OpenAPI generated from JSDoc annotations.
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 servers:
   - url: http://localhost:3100
     description: Public base URL
@@ -55,64 +52,6 @@ paths:
                       type: object
                 required:
                   - servers
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
-  /file/read:
-    post:
-      operationId: fileRead
-      summary: Read a single file with optional line range
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filePath:
-                  type: string
-                startLine:
-                  type: integer
-                  description: 1-based inclusive start line
-                endLine:
-                  type: integer
-                  description: 1-based inclusive end line
-                encoding:
-                  type: string
-                  default: utf8
-                maxBytes:
-                  type: integer
-                  default: 1048576
-              required:
-                - filePath
-      responses:
-        "200":
-          description: File content
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  filePath:
-                    type: string
-                  encoding:
-                    type: string
-                  startLine:
-                    type: integer
-                  endLine:
-                    type: integer
-                  truncated:
-                    type: boolean
-                  content:
-                    type: string
-                required:
-                  - filePath
-                  - content
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
   /command/execute:
     post:
       operationId: executeCommand
@@ -144,9 +83,6 @@ paths:
                     type: object
                 required:
                   - result
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
   /command/execute-code:
     post:
       operationId: executeCode
@@ -183,16 +119,11 @@ paths:
                     type: object
                 required:
                   - result
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
-  /command/execute-shell:
+  /command/execute-file:
     post:
-      operationId: executeShell
-      summary: Execute a command (literal by default)
-      description: Default runs the binary with args via spawn (no shell expansion).
-        If `shell` is provided (e.g., bash, powershell), the command runs under
-        that shell.
+      operationId: executeFile
+      summary: Execute a file present on the server/target (deprecated)
+      deprecated: true
       security:
         - bearerAuth: []
       requestBody:
@@ -202,18 +133,14 @@ paths:
             schema:
               type: object
               properties:
-                command:
+                filename:
                   type: string
-                args:
-                  type: array
-                  items:
-                    type: string
-                shell:
+                directory:
                   type: string
-                  description: Optional shell to run under (bash, powershell, etc). If omitted,
-                    defaults to safe literal mode with no shell expansion.
+                timeoutMs:
+                  type: integer
               required:
-                - command
+                - filename
       responses:
         "200":
           description: Execution complete
@@ -228,9 +155,6 @@ paths:
                     type: object
                 required:
                   - result
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
   /command/execute-llm:
     post:
       operationId: executeLlm
@@ -268,7 +192,6 @@ paths:
                       type: object
         "400":
           description: Bad request
-      x-openai-isConsequential: false
   /file/create:
     post:
       operationId: fileCreate
@@ -296,7 +219,6 @@ paths:
           description: File created
         "400":
           description: Bad request
-      x-openai-isConsequential: false
   /file/list:
     post:
       operationId: fileList
@@ -335,7 +257,6 @@ paths:
                         type: integer
                 required:
                   - files
-      x-openai-isConsequential: false
     get:
       operationId: fileListGet
       summary: List files (GET shim)
@@ -349,7 +270,6 @@ paths:
       responses:
         "200":
           description: OK
-      x-openai-isConsequential: false
   /file/update:
     post:
       operationId: fileUpdate
@@ -384,7 +304,6 @@ paths:
           description: Updated
         "400":
           description: Bad request
-      x-openai-isConsequential: false
   /file/amend:
     post:
       operationId: fileAmend
@@ -413,7 +332,6 @@ paths:
           description: Amended
         "400":
           description: Bad request
-      x-openai-isConsequential: false
   /file/diff:
     post:
       operationId: fileApplyDiff
@@ -422,7 +340,7 @@ paths:
         Currently supported only for the local server handler.
       security:
         - bearerAuth: []
-      x-openai-isConsequential: false
+      x-openai-isConsequential: true
       requestBody:
         required: true
         content:
@@ -453,7 +371,7 @@ paths:
         with git apply. Currently supported only for the local server handler.
       security:
         - bearerAuth: []
-      x-openai-isConsequential: false
+      x-openai-isConsequential: true
       requestBody:
         required: true
         content:
@@ -505,58 +423,25 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  server:
+                additionalProperties:
+                  type: object
+                  description: A settings group (e.g., server, security, llm, compat)
+                  additionalProperties:
                     type: object
                     properties:
-                      port:
-                        type: object
-                        properties:
-                          value:
-                            type: number
-                          readOnly:
-                            type: boolean
-                      httpsEnabled:
-                        type: object
-                        properties:
-                          value:
-                            type: boolean
-                          readOnly:
-                            type: boolean
-                  security:
-                    type: object
-                    properties:
-                      apiToken:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                          readOnly:
-                            type: boolean
-                  llm:
-                    type: object
-                    properties:
-                      provider:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                          readOnly:
-                            type: boolean
-                      openai.baseUrl:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                          readOnly:
-                            type: boolean
-                      openai.apiKey:
-                        type: object
-                        properties:
-                          value:
-                            type: string
-                          readOnly:
-                            type: boolean
+                      value:
+                        oneOf:
+                          - type: string
+                          - type: number
+                          - type: boolean
+                          - type: object
+                          - type: array
+                          - type: "null"
+                      readOnly:
+                        type: boolean
+                    required:
+                      - value
+                      - readOnly
               examples:
                 sample:
                   summary: Example response
@@ -582,9 +467,6 @@ paths:
                       openai.apiKey:
                         value: "*****"
                         readOnly: true
-        "400":
-          description: Bad request
-      x-openai-isConsequential: false
   /config/schema:
     get:
       operationId: getConfigSchema
@@ -594,7 +476,6 @@ paths:
       responses:
         "200":
           description: Configuration schema
-      x-openai-isConsequential: false
   /config/override:
     get:
       operationId: getConfigOverride
@@ -604,7 +485,6 @@ paths:
       responses:
         "200":
           description: Current configuration
-      x-openai-isConsequential: false
     post:
       operationId: setConfigOverride
       summary: Update configuration
@@ -621,7 +501,6 @@ paths:
           description: Configuration updated
         "400":
           description: Invalid configuration
-      x-openai-isConsequential: false
   /config/settings:
     get:
       operationId: getConfigSettings
@@ -631,7 +510,6 @@ paths:
       responses:
         "200":
           description: Redacted configuration settings
-      x-openai-isConsequential: false
   /files/op:
     post:
       operationId: fileOperation
@@ -669,7 +547,6 @@ paths:
           description: Invalid operation
         "403":
           description: Path not allowed
-      x-openai-isConsequential: false
   /llm/plan:
     post:
       operationId: llmPlan
@@ -694,7 +571,6 @@ paths:
           description: Input required
         "429":
           description: Budget exceeded
-      x-openai-isConsequential: false
   /remote/ssh:
     post:
       operationId: createSSH
@@ -717,7 +593,6 @@ paths:
       responses:
         "200":
           description: SSH session created
-      x-openai-isConsequential: false
   /remote/ssm:
     post:
       operationId: createSSM
@@ -738,7 +613,6 @@ paths:
       responses:
         "200":
           description: SSM session created
-      x-openai-isConsequential: false
   /remote/list:
     get:
       operationId: listRemote
@@ -748,7 +622,6 @@ paths:
       responses:
         "200":
           description: Remote sessions
-      x-openai-isConsequential: false
   /shell/llm/plan-exec:
     post:
       operationId: shellLlmPlanExec
@@ -775,7 +648,6 @@ paths:
           description: Input required
         "429":
           description: Budget exceeded
-      x-openai-isConsequential: false
   /shell/session/start:
     post:
       operationId: shellSessionStart
@@ -797,7 +669,6 @@ paths:
           description: Session started
         "500":
           description: Failed to start session
-      x-openai-isConsequential: false
   /shell/session/{id}/exec:
     post:
       operationId: shellSessionExec
@@ -830,7 +701,6 @@ paths:
           description: Command required
         "404":
           description: Session not found
-      x-openai-isConsequential: false
   /shell/session/{id}/cd:
     post:
       operationId: shellSessionChangeDirectory
@@ -861,7 +731,6 @@ paths:
           description: Session not found
         "500":
           description: Failed to change directory
-      x-openai-isConsequential: false
   /shell/session/{id}/stop:
     post:
       operationId: shellSessionStop
@@ -881,7 +750,6 @@ paths:
           description: Session not found
         "500":
           description: Failed to stop session
-      x-openai-isConsequential: false
   /shell/session/list:
     get:
       operationId: shellSessionList
@@ -891,7 +759,6 @@ paths:
       responses:
         "200":
           description: List of sessions
-      x-openai-isConsequential: false
   /shell/session/{id}/logs:
     get:
       operationId: shellSessionLogs
@@ -909,5 +776,4 @@ paths:
           description: Session logs
         "404":
           description: Session not found
-      x-openai-isConsequential: false
 tags: []

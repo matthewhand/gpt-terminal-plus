@@ -1,13 +1,9 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "gpt-terminal-plus API",
     "version": "0.1.0",
-    "description": "OpenAPI generated from JSDoc annotations.",
-    "license": {
-      "name": "MIT",
-      "url": "https://opensource.org/licenses/MIT"
-    }
+    "description": "OpenAPI generated from JSDoc annotations."
   },
   "servers": [
     {
@@ -85,97 +81,8 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
-      }
-    },
-    "/file/read": {
-      "post": {
-        "operationId": "fileRead",
-        "summary": "Read a single file with optional line range",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "filePath": {
-                    "type": "string"
-                  },
-                  "startLine": {
-                    "type": "integer",
-                    "description": "1-based inclusive start line"
-                  },
-                  "endLine": {
-                    "type": "integer",
-                    "description": "1-based inclusive end line"
-                  },
-                  "encoding": {
-                    "type": "string",
-                    "default": "utf8"
-                  },
-                  "maxBytes": {
-                    "type": "integer",
-                    "default": 1048576
-                  }
-                },
-                "required": [
-                  "filePath"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "File content",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "filePath": {
-                      "type": "string"
-                    },
-                    "encoding": {
-                      "type": "string"
-                    },
-                    "startLine": {
-                      "type": "integer"
-                    },
-                    "endLine": {
-                      "type": "integer"
-                    },
-                    "truncated": {
-                      "type": "boolean"
-                    },
-                    "content": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "filePath",
-                    "content"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request"
-          }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/command/execute": {
@@ -226,12 +133,8 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/command/execute-code": {
@@ -289,19 +192,15 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
-    "/command/execute-shell": {
+    "/command/execute-file": {
       "post": {
-        "operationId": "executeShell",
-        "summary": "Execute a command (literal by default)",
-        "description": "Default runs the binary with args via spawn (no shell expansion). If `shell` is provided (e.g., bash, powershell), the command runs under that shell.",
+        "operationId": "executeFile",
+        "summary": "Execute a file present on the server/target (deprecated)",
+        "deprecated": true,
         "security": [
           {
             "bearerAuth": []
@@ -314,22 +213,18 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "command": {
+                  "filename": {
                     "type": "string"
                   },
-                  "args": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
+                  "directory": {
+                    "type": "string"
                   },
-                  "shell": {
-                    "type": "string",
-                    "description": "Optional shell to run under (bash, powershell, etc). If omitted, defaults to safe literal mode with no shell expansion."
+                  "timeoutMs": {
+                    "type": "integer"
                   }
                 },
                 "required": [
-                  "command"
+                  "filename"
                 ]
               }
             }
@@ -356,12 +251,8 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/command/execute-llm": {
@@ -422,8 +313,7 @@
           "400": {
             "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/file/create": {
@@ -467,8 +357,7 @@
           "400": {
             "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/file/list": {
@@ -531,8 +420,7 @@
               }
             }
           }
-        },
-        "x-openai-isConsequential": false
+        }
       },
       "get": {
         "operationId": "fileListGet",
@@ -555,8 +443,7 @@
           "200": {
             "description": "OK"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/file/update": {
@@ -609,8 +496,7 @@
           "400": {
             "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/file/amend": {
@@ -655,8 +541,7 @@
           "400": {
             "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/file/diff": {
@@ -669,7 +554,7 @@
             "bearerAuth": []
           }
         ],
-        "x-openai-isConsequential": false,
+        "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -716,7 +601,7 @@
             "bearerAuth": []
           }
         ],
-        "x-openai-isConsequential": false,
+        "x-openai-isConsequential": true,
         "requestBody": {
           "required": true,
           "content": {
@@ -790,87 +675,42 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": {
-                    "server": {
+                  "additionalProperties": {
+                    "type": "object",
+                    "description": "A settings group (e.g., server, security, llm, compat)",
+                    "additionalProperties": {
                       "type": "object",
                       "properties": {
-                        "port": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
+                        "value": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
                               "type": "number"
                             },
-                            "readOnly": {
+                            {
                               "type": "boolean"
+                            },
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "array"
+                            },
+                            {
+                              "type": "null"
                             }
-                          }
+                          ]
                         },
-                        "httpsEnabled": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
-                              "type": "boolean"
-                            },
-                            "readOnly": {
-                              "type": "boolean"
-                            }
-                          }
+                        "readOnly": {
+                          "type": "boolean"
                         }
-                      }
-                    },
-                    "security": {
-                      "type": "object",
-                      "properties": {
-                        "apiToken": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
-                              "type": "string"
-                            },
-                            "readOnly": {
-                              "type": "boolean"
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "llm": {
-                      "type": "object",
-                      "properties": {
-                        "provider": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
-                              "type": "string"
-                            },
-                            "readOnly": {
-                              "type": "boolean"
-                            }
-                          }
-                        },
-                        "openai.baseUrl": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
-                              "type": "string"
-                            },
-                            "readOnly": {
-                              "type": "boolean"
-                            }
-                          }
-                        },
-                        "openai.apiKey": {
-                          "type": "object",
-                          "properties": {
-                            "value": {
-                              "type": "string"
-                            },
-                            "readOnly": {
-                              "type": "boolean"
-                            }
-                          }
-                        }
-                      }
+                      },
+                      "required": [
+                        "value",
+                        "readOnly"
+                      ]
                     }
                   }
                 },
@@ -913,12 +753,8 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Bad request"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/config/schema": {
@@ -934,8 +770,7 @@
           "200": {
             "description": "Configuration schema"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/config/override": {
@@ -951,8 +786,7 @@
           "200": {
             "description": "Current configuration"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       },
       "post": {
         "operationId": "setConfigOverride",
@@ -979,8 +813,7 @@
           "400": {
             "description": "Invalid configuration"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/config/settings": {
@@ -996,8 +829,7 @@
           "200": {
             "description": "Redacted configuration settings"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/files/op": {
@@ -1054,8 +886,7 @@
           "403": {
             "description": "Path not allowed"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/llm/plan": {
@@ -1095,8 +926,7 @@
           "429": {
             "description": "Budget exceeded"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/remote/ssh": {
@@ -1133,8 +963,7 @@
           "200": {
             "description": "SSH session created"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/remote/ssm": {
@@ -1168,8 +997,7 @@
           "200": {
             "description": "SSM session created"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/remote/list": {
@@ -1185,8 +1013,7 @@
           "200": {
             "description": "Remote sessions"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/llm/plan-exec": {
@@ -1229,8 +1056,7 @@
           "429": {
             "description": "Budget exceeded"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/start": {
@@ -1265,8 +1091,7 @@
           "500": {
             "description": "Failed to start session"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/{id}/exec": {
@@ -1319,8 +1144,7 @@
           "404": {
             "description": "Session not found"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/{id}/cd": {
@@ -1370,8 +1194,7 @@
           "500": {
             "description": "Failed to change directory"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/{id}/stop": {
@@ -1403,8 +1226,7 @@
           "500": {
             "description": "Failed to stop session"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/list": {
@@ -1420,8 +1242,7 @@
           "200": {
             "description": "List of sessions"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     },
     "/shell/session/{id}/logs": {
@@ -1450,8 +1271,7 @@
           "404": {
             "description": "Session not found"
           }
-        },
-        "x-openai-isConsequential": false
+        }
       }
     }
   },

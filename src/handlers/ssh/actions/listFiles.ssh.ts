@@ -40,13 +40,13 @@ export async function listFiles(client: Client, config: ServerConfig, params: Li
                 return reject(new Error(`SFTP error: ${err.message}`));
             }
 
-            sftp.readdir(directory, (err, list) => {
+            (sftp as any).readdir(directory, (err: any, list: any) => {
                 if (err) {
                     debug(`Error listing files: ${err.message}`);
                     return reject(new Error(`Error listing files: ${err.message}`));
                 }
 
-                const filenames = list.map(item => item.filename);
+                const filenames = list.map((item: any) => item.filename);
                 debug(`Files in directory ${directory}: ${filenames.join(', ')}`);
                 resolve(filenames);
             });

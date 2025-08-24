@@ -10,11 +10,6 @@ export function getLlmConfig(): LlmConfig {
     enabled: process.env.LLM_ENABLED
       ? process.env.LLM_ENABLED === 'true'
       : s.enabled,
-    provider:
-      (process.env.LLM_PROVIDER as LlmConfig['provider'] | undefined) ??
-      s.provider,
-    model: process.env.LLM_DEFAULT_MODEL ?? s.model,
-    apiKey: process.env.OPENAI_API_KEY ?? s.apiKey,
   };
 }
 

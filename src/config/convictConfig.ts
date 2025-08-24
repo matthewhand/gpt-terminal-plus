@@ -413,3 +413,21 @@ export const convictConfig = () => {
 
   return instance;
 };
+
+export function getRedactedSettings() {
+  const config = convictConfig();
+  const settings = config.getProperties();
+  
+  // Redact sensitive information
+  const redacted = JSON.parse(JSON.stringify(settings));
+  
+  // Redact API keys and passwords
+  if (redacted.auth?.adminPassword) {
+    redacted.auth.adminPassword = '[REDACTED]';
+  }
+  if (redacted.auth?.apiToken) {
+    redacted.auth.apiToken = '[REDACTED]';
+  }
+  
+  return redacted;
+}
