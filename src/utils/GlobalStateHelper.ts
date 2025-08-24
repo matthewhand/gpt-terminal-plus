@@ -1,29 +1,29 @@
 export interface GlobalState {
-  selectedServer: any;
+  selectedServer: string;
   presentWorkingDirectory: string;
   selectedModel: string;
 }
 
-let state: GlobalState | null = null;
+// Maintain a stable singleton reference
+const state: GlobalState = {
+  selectedServer: '',
+  presentWorkingDirectory: '',
+  selectedModel: '',
+};
 
 export function getGlobalState(): GlobalState {
-  if (!state) {
-    state = {
-      selectedServer: null,
-      presentWorkingDirectory: process.cwd(),
-      selectedModel: process.env.DEFAULT_MODEL || 'auto',
-    };
-  }
   return state;
 }
 
 export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {
-  state = {
-    selectedServer: null,
-    presentWorkingDirectory: process.cwd(),
-    selectedModel: 'auto',
-    ...init,
-  };
+  state.selectedServer = '';
+  state.presentWorkingDirectory = '';
+  state.selectedModel = '';
+  if (init) {
+    if (init.selectedServer !== undefined) state.selectedServer = init.selectedServer as string;
+    if (init.presentWorkingDirectory !== undefined) state.presentWorkingDirectory = init.presentWorkingDirectory as string;
+    if (init.selectedModel !== undefined) state.selectedModel = init.selectedModel as string;
+  }
 }
 
 /** Legacy-style accessors used throughout the code/tests */
@@ -57,7 +57,9 @@ export function getCurrentServerHandler() {
 }
 
 export function clearGlobalState() {
-  state = null;
+  state.selectedServer = '';
+  state.presentWorkingDirectory = '';
+  state.selectedModel = '';
 }
 
 export default {

@@ -6,7 +6,9 @@ export async function logSessionStep(type: string, payload: any, sessionId?: str
   const dateDir = path.join('data', 'activity', now.toISOString().slice(0, 10));
   await fs.mkdir(dateDir, { recursive: true });
 
-  const session = sessionId || `session_${Date.now()}`;
+  // Prefer Date.now when available (tests may mock it); fall back to ISO-based token
+  const ts = typeof Date.now === 'function' ? Date.now() : Number(now.toISOString().replace(/\D/g, '').slice(0, 14));
+  const session = sessionId || `session_${ts}`;
   const sessionDir = path.join(dateDir, session);
   await fs.mkdir(sessionDir, { recursive: true });
 
