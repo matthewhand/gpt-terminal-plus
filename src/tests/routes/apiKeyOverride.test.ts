@@ -4,6 +4,19 @@ import configRoutes from '../../routes/config';
 import { checkAuthToken } from '../../middlewares/checkAuthToken';
 
 jest.mock('../../middlewares/checkAuthToken');
+jest.mock('../../config/convictConfig', () => ({
+  convictConfig: () => ({
+    set: jest.fn(),
+    load: jest.fn(),
+    validate: jest.fn(),
+    getProperties: () => ({ security: { apiToken: '[REDACTED]' } })
+  }),
+  getRedactedSettings: () => ({
+    security: {
+      apiToken: { value: '*****', readOnly: false }
+    }
+  })
+}));
 
 const app = express();
 app.use(express.json());

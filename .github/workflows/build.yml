@@ -46,10 +46,30 @@ jobs:
           name: macos-binary
           path: release/
 
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build binaries for Linux
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Linux binaries
+        run: npm run pkg:linux
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-binaries
+          path: release/
+
   upload-release:
     runs-on: ubuntu-latest
     name: Upload to GitHub Release
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
     steps:
       - name: Download windows artifacts
         uses: actions/download-artifact@v3
@@ -61,11 +81,17 @@ jobs:
         with:
           name: macos-binary
           path: release/macos
+      - name: Download linux artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-binaries
+          path: release/linux
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             release/windows/*
             release/macos/*
+            release/linux/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
