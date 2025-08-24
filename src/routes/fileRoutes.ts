@@ -1,10 +1,14 @@
 import express from 'express';
 import { createFile } from './file/createFile';
+import { applyFuzzyPatch } from './file/fuzzyPatch';
 
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import fs from 'fs';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 const router = express.Router();
+// Protect file routes with API token
+router.use(checkAuthToken as any);
 const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
 
 /**
@@ -32,16 +36,13 @@ router.post('/create', (req, res) => {
 router.get('/list', async (req, res) => {
   const { directory, limit, offset, orderBy } = req.query;
 
-  if (!directory || typeof directory !== 'string') {
-    return res.status(400).json({ message: 'Invalid or missing "directory" parameter.' });
-  }
-
   try {
+    const dir = (typeof directory === 'string' && directory.trim() !== '') ? directory.toString() : '.';
     const params = {
-      directory: directory.toString(),
-      limit: limit ? parseInt(limit as string, 10) : undefined,
-      offset: offset ? parseInt(offset as string, 10) : undefined,
-      orderBy: orderBy === 'datetime' ? 'datetime' : 'filename',
+      directory: dir,
+      limit: typeof limit === 'string' ? parseInt(limit, 10) : undefined,
+      offset: typeof offset === 'string' ? parseInt(offset, 10) : undefined,
+      orderBy: orderBy === 'datetime' ? 'datetime' as const : 'filename' as const,
     };
 
     const paginatedResponse = await localHandler.listFiles(params);
@@ -50,6 +51,12 @@ router.get('/list', async (req, res) => {
     res.status(500).json({ message: (error as Error).message });
   }
 });
+
+/**
+ * Route to apply fuzzy patch to a file using diff-match-patch.
+ * @route POST /file/fuzzy-patch
+ */
+router.post('/fuzzy-patch', applyFuzzyPatch);
 
 // Preserve additional routes and logic here if any...
 
