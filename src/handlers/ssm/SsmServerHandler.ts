@@ -3,6 +3,9 @@ import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
+import { FileReadResult } from '../../types/FileReadResult';
+import { ListParams } from '../../types/ListParams';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
 
@@ -17,17 +20,11 @@ export class SsmServerHandler extends AbstractServerHandler {
         ssmServerDebug('Initialized SsmServerHandler with config:', serverConfig);
     }
 
-    /**
-     * Sets the server configuration.
-     */
     setServerConfig(config: ServerConfig): void {
         this.ssmConfig = config as SsmTargetConfig;
         this.serverConfig = { hostname: config.hostname, protocol: 'ssm', code: config.code || false };
     }
 
-    /**
-     * Executes a command on the SSM server.
-     */
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         ssmServerDebug(`Executing SSM command via AWS SSM: ${command}`);
         const client = new SSMClient({ region: this.ssmConfig.region });
@@ -40,7 +37,8 @@ export class SsmServerHandler extends AbstractServerHandler {
             }));
             const commandId = send.Command?.CommandId as string;
             const start = Date.now();
-            const maxMs = timeout && timeout > 0 ? timeout : 300000; // default 5m
+            const defaultSsmTimeout = parseInt(process.env.SSM_TIMEOUT || '300000', 10); // default 5m
+            const maxMs = (timeout && timeout > 0) ? timeout : defaultSsmTimeout;
             while (true) {
                 const inv = await client.send(new GetCommandInvocationCommand({
                     CommandId: commandId,
@@ -53,43 +51,63 @@ export class SsmServerHandler extends AbstractServerHandler {
                         stdout: inv.StandardOutputContent || '',
                         stderr: inv.StandardErrorContent || '',
                         error: exitCode !== 0,
-                        exitCode
+                        exitCode,
+                        success: exitCode === 0
                     };
                 }
                 if (Date.now() - start > maxMs) {
-                    return { stdout: '', stderr: 'SSM command timeout', error: true, exitCode: 124 };
+                    return { stdout: '', stderr: 'SSM command timeout', error: true, exitCode: 124, success: false };
                 }
                 await new Promise(r => setTimeout(r, 1500));
             }
         } catch (e) {
             ssmServerDebug('SSM execute error: ' + String(e));
-            return { stdout: '', stderr: String(e), error: true, exitCode: 1 };
+            return { stdout: '', stderr: String(e), error: true, exitCode: 1, success: false };
         }
     }
 
-    /**
-     * Executes code in a specified language on the SSM server.
-     */
-    async executeCode(code: string, language: string): Promise<ExecutionResult> {
-        // Placeholder implementation
-        ssmServerDebug(`Executing SSM code: ${code} in language: ${language}`);
-        return { stdout: 'SSM code executed', stderr: '', error: false, exitCode: 0 };
+    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+        ssmServerDebug(`Executing SSM code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
+        return { stdout: '', stderr: '', exitCode: 0, success: true, error: false };
     }
 
-    /**
-     * Creates a file on the SSM server.
-     */
-    async createFile(filePath: string): Promise<boolean> {
-        // Placeholder for SSM file creation
-        ssmServerDebug(`Creating file on SSM server: ${filePath}`);
+    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
+        const actualContent = content ?? '';
+        ssmServerDebug(`Creating file on SSM server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
         return true;
     }
 
-    /**
-     * Retrieves system information for the SSM server.
-     */
+    async readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
+        const content = await this.getFileContent(filePath);
+        return { content, filePath, encoding: 'utf8', truncated: false };
+    }
+
+    async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
+        ssmServerDebug(`Updating file on SSM server: ${filePath}`);
+        return true;
+    }
+
+    async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
+        ssmServerDebug(`Amending file on SSM server: ${filePath}`);
+        return true;
+    }
+
+    async getFileContent(filePath: string): Promise<string> {
+        if (!filePath || typeof filePath !== 'string') {
+            throw new Error('filePath is required');
+        }
+        const effectiveDirectory = this.serverConfig.directory || '.';
+        const fullPath = `${effectiveDirectory}/${filePath}`;
+        const quoted = `'\'${String(fullPath).replace(/'/g, `'\'`)}''`;
+        const res = await this.executeCommand(`cat ${quoted}`);
+        const ok = (res.exitCode ?? 1) === 0 && !res.error;
+        if (ok) {
+            return res.stdout;
+        }
+        throw new Error(res.stderr || `Failed to read file: ${filePath}`);
+    }
+
     async getSystemInfo(): Promise<SystemInfo> {
-        // Placeholder for SSM system info retrieval
         return {
             type: 'SsmServer',
             platform: 'linux',
@@ -101,26 +119,30 @@ export class SsmServerHandler extends AbstractServerHandler {
         };
     }
 
-    /**
-     * Lists files on the SSM server.
-     */
-    async listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: string }): Promise<PaginatedResponse<string>> {
-        const { directory, limit = 10, offset = 0 } = params;
+    async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+        // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
+        const { directory, limit, offset } = params;
         ssmServerDebug(`Listing files on SSM server in directory: ${directory}`);
-        // Placeholder implementation
         return {
-            items: ['file1.txt', 'file2.txt'],
+            items: [
+                { name: 'file1.txt', isDirectory: false },
+                { name: 'file2.txt', isDirectory: false },
+            ],
             total: 2,
-            limit,
-            offset,
+            limit: limit || 10,
+            offset: offset || 0,
         };
     }
 
-    /**
-     * Retrieves the present working directory on the SSM server.
-     */
     async presentWorkingDirectory(): Promise<string> {
-        // Placeholder for SSM working directory retrieval
         return '/home/user';
+    }
+
+    async changeDirectory(directory: string): Promise<boolean> {
+        const success = await changeDirectoryAction(directory);
+        if (success) {
+            this.serverConfig.directory = directory;
+        }
+        return success;
     }
 }

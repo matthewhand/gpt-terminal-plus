@@ -1,4 +1,5 @@
 export interface ServerConfig {
+  directory?: string;
     hostname: string;
     protocol: 'local' | 'ssh' | 'ssm';
     code?: boolean;

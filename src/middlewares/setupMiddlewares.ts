@@ -34,6 +34,8 @@ const setupMiddlewares = (app: express.Application): void => {
   app.use(cors({ origin: corsOrigin }));
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
+  // Support raw text/yaml bodies for profiles import endpoint
+  app.use(bodyParser.text({ type: ['text/*', 'application/yaml', 'application/x-yaml'], limit: '5mb' }));
 
   // Error handling middleware (must be last)
   app.use(errorHandler);

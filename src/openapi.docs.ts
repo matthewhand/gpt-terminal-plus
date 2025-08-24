@@ -201,7 +201,189 @@
  *                   type: array
  *                   items:
  *                     type: object
+ *       '400':
+ *         description: Bad request
  */
+
+/**
+ * @openapi
+ * /file/create:
+ *   post:
+ *     operationId: fileCreate
+ *     summary: Create or replace a file on the active server
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               content: { type: string }
+ *               backup: { type: boolean, default: true }
+ *             required: [ filePath ]
+ *     responses:
+ *       '200': { description: File created }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/list:
+ *   post:
+ *     operationId: fileList
+ *     summary: List files in a directory on the active server
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               directory: { type: string }
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 files:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items: { type: string }
+ *                     total: { type: integer }
+ *                     limit: { type: integer }
+ *                     offset: { type: integer }
+ *               required: [ files ]
+ *   get:
+ *     operationId: fileListGet
+ *     summary: List files (GET shim)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: directory
+ *         schema: { type: string }
+ *     responses:
+ *       '200': { description: OK }
+ */
+
+/**
+ * @openapi
+ * /file/update:
+ *   post:
+ *     operationId: fileUpdate
+ *     summary: Regex replace within a file
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               pattern: { type: string }
+ *               replacement: { type: string }
+ *               backup: { type: boolean, default: true }
+ *               multiline: { type: boolean, default: false }
+ *             required: [ filePath, pattern, replacement ]
+ *     responses:
+ *       '200': { description: Updated }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/amend:
+ *   post:
+ *     operationId: fileAmend
+ *     summary: Append content to a file
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               content: { type: string }
+ *               backup: { type: boolean, default: true }
+ *             required: [ filePath, content ]
+ *     responses:
+ *       '200': { description: Amended }
+ *       '400': { description: Bad request }
+ */
+
+/**
+ * @openapi
+ * /file/diff:
+ *   post:
+ *     operationId: fileApplyDiff
+ *     summary: Apply a unified diff using git apply
+ *     description: Validates with `git apply --check`, then applies with `git apply`. Currently supported only for the local server handler.
+ *     security:
+ *       - bearerAuth: []
+ *     x-openai-isConsequential: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               diff: { type: string }
+ *               dryRun: { type: boolean, default: false }
+ *               whitespaceNowarn: { type: boolean, default: true }
+ *             required: [ diff ]
+ *     responses:
+ *       '200': { description: Applied }
+ *       '400': { description: Validation failed }
+ */
+
+/**
+ * @openapi
+ * /file/patch:
+ *   post:
+ *     operationId: fileApplyPatch
+ *     summary: Apply a structured patch via git apply
+ *     description: Generates a minimal unified diff for the target file and applies it with git apply. Currently supported only for the local server handler.
+ *     security:
+ *       - bearerAuth: []
+ *     x-openai-isConsequential: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               filePath: { type: string }
+ *               search: { type: string }
+ *               oldText: { type: string }
+ *               replace: { type: string }
+ *               all: { type: boolean, default: false }
+ *               startLine: { type: integer }
+ *               endLine: { type: integer }
+ *               dryRun: { type: boolean, default: false }
+ *               whitespaceNowarn: { type: boolean, default: true }
+ *             required: [ filePath, replace ]
+ *     responses: 
+ *       '200': { description: Applied }
+ *       '400': { description: Validation failed }
+ */
+
 /**
  * @openapi
  * /settings:

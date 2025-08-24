@@ -3,4 +3,6 @@ export interface ExecutionResult {
   stderr: string;
   error?: boolean;
   exitCode?: number;
+  truncated?: boolean;
+  terminated?: boolean;
 }

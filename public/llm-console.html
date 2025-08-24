@@ -4,50 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LLM Console - GPT Terminal Plus</title>
+    <script src="/theme.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a1a; color: #e0e0e0; height: 100vh; display: flex;
-        }
+        :root { --bg:#0f172a; --fg:#e5e7eb; --muted:#9ca3af; --card:#111827; --border:#374151; --accent:#4CAF50; --link:#60a5fa; }
+        [data-theme="light"] { --bg:#ffffff; --fg:#0f172a; --muted:#475569; --card:#f8fafc; --border:#e5e7eb; --accent:#16a34a; --link:#2563eb; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--fg); height: 100vh; display: flex; }
         .sidebar {
-            width: 300px; background: #2d2d2d; border-right: 1px solid #444;
+            width: 300px; background: var(--card); border-right: 1px solid var(--border);
             overflow-y: auto; padding: 1rem;
         }
         .main-content {
             flex: 1; display: flex; flex-direction: column; overflow: hidden;
         }
         .header {
-            padding: 1rem; border-bottom: 1px solid #444; background: #2d2d2d;
+            padding: 1rem; border-bottom: 1px solid var(--border); background: var(--card);
         }
         .session-detail {
             flex: 1; padding: 1rem; overflow-y: auto;
         }
         .session-item {
-            padding: 0.75rem; margin-bottom: 0.5rem; background: #3d3d3d;
+            padding: 0.75rem; margin-bottom: 0.5rem; background: #1f2937;
             border-radius: 6px; cursor: pointer; transition: background 0.2s;
         }
-        .session-item:hover { background: #4d4d4d; }
-        .session-item.active { background: #0066cc; }
+        .session-item:hover { background: #374151; }
+        .session-item.active { background: var(--link); }
         .session-id { font-weight: bold; font-size: 0.9rem; }
-        .session-meta { font-size: 0.8rem; color: #aaa; margin-top: 0.25rem; }
+        .session-meta { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
         .step-item {
-            background: #2d2d2d; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;
+            background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin-bottom: 1rem;
             border-left: 4px solid #666;
         }
         .step-item.input { border-left-color: #4CAF50; }
         .step-item.output { border-left-color: #2196F3; }
         .step-item.error { border-left-color: #f44336; }
         .step-header { display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem; }
-        .step-type { font-weight: bold; color: #4CAF50; }
-        .step-timestamp { font-size: 0.8rem; color: #aaa; }
-        .step-content { background: #1a1a1a; padding: 0.75rem; border-radius: 4px; }
+        .step-type { font-weight: bold; color: var(--accent); }
+        .step-timestamp { font-size: 0.8rem; color: var(--muted); }
+        .step-content { background: #0b1220; padding: 0.75rem; border-radius: 4px; border: 1px solid var(--border); }
         .step-content pre { white-space: pre-wrap; word-break: break-word; }
-        .loading { text-align: center; padding: 2rem; color: #aaa; }
+        .loading { text-align: center; padding: 2rem; color: var(--muted); }
         .error { color: #f44336; padding: 1rem; }
         .empty-state { text-align: center; padding: 2rem; color: #aaa; }
         .type-badge {
-            display: inline-block; background: #444; color: #fff; padding: 0.2rem 0.5rem;
+            display: inline-block; background: #374151; color: #fff; padding: 0.2rem 0.5rem;
             border-radius: 12px; font-size: 0.7rem; margin-right: 0.25rem;
         }
     </style>
@@ -76,7 +76,12 @@
     <div class="main-content">
         <div class="header">
             <h1>LLM Console</h1>
-            <p style="color: #aaa; margin-top: 0.5rem;">Execution log viewer</p>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <p style="color: var(--muted); margin-top: 0.5rem;">Execution log viewer</p>
+              <label style="display:inline-flex;align-items:center;gap:.35rem;">
+                <input type="checkbox" id="themeToggle" /> Dark Mode
+              </label>
+            </div>
         </div>
         
         <div class="session-detail">

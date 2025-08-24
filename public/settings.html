@@ -1,272 +1,172 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Server Settings (Redacted)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #0f1216;
-      --fg: #e6edf3;
-      --muted: #9aa4af;
-      --card: #151a21;
-      --accent: #2f81f7;
-      --danger: #f85149;
-      --border: #2d333b;
-      --ok: #3fb950;
-      --ro: #ffa657;
-      --code: #1b2129;
-    }
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      background: var(--bg); color: var(--fg);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-    }
-    header {
-      padding: 16px 20px; border-bottom: 1px solid var(--border); background: #0c0f13;
-    }
-    header h1 {
-      margin: 0; font-size: 18px; letter-spacing: 0.3px;
-    }
-    main {
-      padding: 20px; max-width: 1100px; margin: 0 auto;
-    }
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    label { display: inline-flex; align-items: center; gap: 8px; }
-    input[type="password"], input[type="text"] {
-      background: #0c0f13; color: var(--fg);
-      border: 1px solid var(--border); border-radius: 6px;
-      padding: 8px 10px; min-width: 320px;
-      font-family: inherit;
-    }
-    input[type="checkbox"] { transform: translateY(1px); }
-    button {
-      background: var(--accent); color: white;
-      border: 0; border-radius: 6px; padding: 8px 12px; margin-left: 8px;
-      cursor: pointer; font-weight: 600;
-    }
-    button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
-    .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
-    .error { color: var(--danger); }
-    .ok { color: var(--ok); }
-    details.group { margin-top: 14px; }
-    details.group summary {
-      cursor: pointer; font-weight: 600;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 10px;
-      font-size: 14px;
-    }
-    th, td {
-      border-bottom: 1px solid var(--border);
-      text-align: left; padding: 8px 6px; vertical-align: top;
-    }
-    th { color: var(--muted); font-weight: 600; }
-    code {
-      background: var(--code); color: var(--fg);
-      padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-    }
-    .badge {
-      display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border);
-    }
-    .badge.ro { color: var(--ro); border-color: var(--ro); }
-    .badge.rw { color: var(--ok); border-color: var(--ok); }
-    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .spacer { flex: 1 1 auto; }
-    .muted { color: var(--muted); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
-    .note { font-size: 13px; color: var(--muted); margin-top: 8px; }
-    pre.raw {
-      background: var(--code); border: 1px solid var(--border); border-radius: 6px;
-      padding: 12px; overflow: auto; max-height: 420px;
-    }
-  </style>
+    <title>GPT Terminal Plus - Settings</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .panel { border: 1px solid #ccc; margin: 10px 0; padding: 15px; }
+        .panel h3 { margin-top: 0; }
+        input, select, textarea { width: 100%; padding: 5px; margin: 5px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+        #preview { background: #f5f5f5; padding: 10px; white-space: pre-wrap; }
+    </style>
+    <style>
+      :root { --bg:#0b1220; --fg:#e5e7eb; --muted:#94a3b8; --card:#0f172a; --border:#213047; --accent:#6366f1; --accent-fg:#fff; }
+      [data-theme="light"] { --bg:#ffffff; --fg:#0f172a; --muted:#475569; --card:#f8fafc; --border:#e5e7eb; --accent:#6366f1; --accent-fg:#fff; }
+      body { background: var(--bg); color: var(--fg); }
+      .panel { background: var(--card); border-color: var(--border); }
+      h1, h3 { color: var(--fg); }
+      input, select, textarea { background: var(--card); color: var(--fg); border:1px solid var(--border); }
+      button { background: var(--accent); color: var(--accent-fg); border: none; }
+      #preview { background: #0a1020; color: var(--fg); border: 1px solid var(--border); }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Server Settings (Redacted)</h1>
-  </header>
-  <main>
-    <section class="panel">
-      <div class="controls">
-        <label>API Token:
-          <input type="password" id="token" placeholder="Paste API_TOKEN" autocomplete="off" />
-        </label>
-        <label><input type="checkbox" id="remember" /> Remember token</label>
-        <button id="loadBtn">Load settings</button>
-        <button id="clearBtn" class="secondary">Clear</button>
-        <span class="spacer"></span>
-        <button id="rawToggle" class="secondary">Show raw JSON</button>
-      </div>
-      <div class="note">
-        This page calls <code>/settings</code> with a Bearer token and displays a redacted view.
-        Secrets (e.g., OpenAI API keys) are masked, and values provided by environment variables are marked <span class="badge ro">read-only</span>.
-      </div>
-      <div id="status" class="status"></div>
-    </section>
+    <h1>GPT Terminal Plus Settings</h1>
+    <label style="display:inline-flex;align-items:center;gap:.5rem;">
+      <input type="checkbox" id="themeToggle" checked /> Dark Mode
+    </label>
+    
+    <div class="panel">
+        <h3>LLM Engine</h3>
+        <select id="llmEngine">
+            <option value="codex">Codex</option>
+            <option value="interpreter">Interpreter</option>
+            <option value="ollama">Ollama</option>
+        </select>
+        
+        <div id="codexPanel" style="display:none;">
+            <input id="codexModel" placeholder="Model (e.g., gpt-4)" />
+            <label><input type="checkbox" id="codexFullAuto" /> Full Auto</label>
+        </div>
+        
+        <div id="interpreterPanel" style="display:none;">
+            <input id="interpreterModel" placeholder="Model (e.g., gpt-4o)" />
+            <label><input type="checkbox" id="interpreterAutoRun" /> Auto Run</label>
+            <input id="interpreterTemp" type="number" step="0.1" placeholder="Temperature" />
+        </div>
+        
+        <div id="ollamaPanel" style="display:none;">
+            <input id="ollamaModel" placeholder="Model (e.g., llama2)" />
+            <input id="ollamaHost" placeholder="Host (e.g., http://localhost:11434)" />
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h3>API Token</h3>
+        <input id="apiToken" type="text" placeholder="[REDACTED]" />
+        <button type="button" onclick="generateKey()">Generate Random Key</button>
+    </div>
+    
+    <div class="panel">
+        <h3>General Settings</h3>
+        <label><input type="checkbox" id="localhost" /> Localhost Only</label>
+        <input id="maxInputChars" type="number" placeholder="Max Input Chars" />
+        <input id="maxOutputChars" type="number" placeholder="Max Output Chars" />
+        <input id="maxCost" type="number" step="0.01" placeholder="Max LLM Cost USD" />
+    </div>
+    
+    <div class="panel">
+        <h3>Advanced JSON Override</h3>
+        <textarea id="jsonOverride" rows="10" placeholder="Enter JSON configuration..."></textarea>
+    </div>
+    
+    <button onclick="saveConfig()">Save Configuration</button>
+    <button onclick="loadConfig()">Load Current</button>
+    
+    <div class="panel">
+        <h3>Live OpenAPI Preview</h3>
+        <div id="preview">Loading...</div>
+    </div>
 
-    <section id="content" class="panel" hidden>
-      <h3 style="margin-top: 0;">Settings</h3>
-      <div id="groups"></div>
-      <details id="raw" class="raw" style="margin-top:12px;" hidden>
-        <summary>Raw JSON</summary>
-        <pre class="raw" id="rawJson"></pre>
-      </details>
-    </section>
-  </main>
-
-  <script>
-    (function() {
-      const $ = (id) => document.getElementById(id);
-      const tokenInput = $('token');
-      const remember = $('remember');
-      const loadBtn = $('loadBtn');
-      const clearBtn = $('clearBtn');
-      const rawToggle = $('rawToggle');
-      const statusEl = $('status');
-      const content = $('content');
-      const groupsEl = $('groups');
-      const rawDetails = $('raw');
-      const rawJson = $('rawJson');
-
-      // Helpers
-      function setStatus(msg, cls) {
-        statusEl.textContent = msg || '';
-        statusEl.className = 'status' + (cls ? ' ' + cls : '');
-      }
-      function readUrlToken() {
-        try {
-          const usp = new URLSearchParams(location.search);
-          if (usp.has('token')) return usp.get('token');
-          if (location.hash && location.hash.startsWith('#token=')) {
-            return decodeURIComponent(location.hash.slice('#token='.length));
-          }
-        } catch {}
-        return null;
-      }
-      function saveTokenMaybe() {
-        if (remember.checked) localStorage.setItem('settings_api_token', tokenInput.value || '');
-        else localStorage.removeItem('settings_api_token');
-      }
-      function loadSavedToken() {
-        const saved = localStorage.getItem('settings_api_token');
-        if (saved) { tokenInput.value = saved; remember.checked = true; }
-      }
-      function humanValue(val) {
-        if (val === null) return 'null';
-        if (typeof val === 'object') return JSON.stringify(val);
-        if (val === '') return '(empty)';
-        return String(val);
-      }
-      function renderTable(groupName, entries) {
-        const table = document.createElement('table');
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th style="width:38%;">Key</th><th style="width:42%;">Value</th><th style="width:20%;">Access</th></tr>';
-        table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        Object.entries(entries).forEach(([key, meta]) => {
-          const tr = document.createElement('tr');
-          const tdK = document.createElement('td');
-          const tdV = document.createElement('td');
-          const tdR = document.createElement('td');
-
-          tdK.innerHTML = '<code>' + groupName + '.' + key + '</code>';
-          tdV.textContent = humanValue(meta.value);
-          tdR.innerHTML = meta.readOnly
-            ? '<span class="badge ro" title="Provided by environment variable; not editable here.">read-only</span>'
-            : '<span class="badge rw" title="Not provided by environment; editable in file-based config (future).">writable*</span>';
-
-          tr.appendChild(tdK);
-          tr.appendChild(tdV);
-          tr.appendChild(tdR);
-          tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-        return table;
-      }
-      function renderGroups(payload) {
-        groupsEl.innerHTML = '';
-        Object.entries(payload).forEach(([groupName, entries]) => {
-          const details = document.createElement('details');
-          details.className = 'group';
-          details.open = true;
-          const summary = document.createElement('summary');
-          summary.textContent = groupName;
-          details.appendChild(summary);
-          details.appendChild(renderTable(groupName, entries));
-          groupsEl.appendChild(details);
-        });
-      }
-
-      async function loadSettings() {
-        setStatus('Loading...', '');
-        content.hidden = true;
-        rawDetails.hidden = true;
-        rawJson.textContent = '';
-
-        const token = tokenInput.value.trim();
-        if (!token) {
-          setStatus('API token is required.', 'error');
-          return;
+    <script>
+        // Theme (dark by default)
+        (function(){
+          const key='gpt_theme';
+          const saved = localStorage.getItem(key) || 'dark';
+          const apply = (t) => { document.documentElement.setAttribute('data-theme', t==='light' ? 'light':'dark'); localStorage.setItem(key,t); const tg=document.getElementById('themeToggle'); if (tg) tg.checked = (t!=='light'); };
+          apply(saved);
+          document.getElementById('themeToggle')?.addEventListener('change', (e)=>apply(e.target.checked?'dark':'light'));
+        })();
+        let token = localStorage.getItem('authToken') || prompt('Enter auth token:');
+        
+        document.getElementById('llmEngine').onchange = function() {
+            document.querySelectorAll('[id$="Panel"]').forEach(p => p.style.display = 'none');
+            document.getElementById(this.value + 'Panel').style.display = 'block';
+        };
+        
+        function generateKey() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            let key = "";
+            for (let i = 0; i < 32; i++) {
+                key += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('apiToken').value = key;
         }
-
-        try {
-          const res = await fetch('/settings', {
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token }
-          });
-          if (!res.ok) {
-            const text = await res.text();
-            setStatus('Request failed: ' + res.status + ' ' + text, 'error');
-            return;
-          }
-          const payload = await res.json();
-          renderGroups(payload);
-          rawJson.textContent = JSON.stringify(payload, null, 2);
-          setStatus('Loaded.', 'ok');
-          content.hidden = false;
-          saveTokenMaybe();
-        } catch (err) {
-          setStatus('Network error: ' + (err && err.message ? err.message : err), 'error');
+        
+        async function saveConfig() {
+            const config = {
+                LLM_ENGINE: document.getElementById('llmEngine').value,
+                CODEX_MODEL: document.getElementById('codexModel').value,
+                CODEX_FULL_AUTO: document.getElementById('codexFullAuto').checked,
+                INTERPRETER_MODEL: document.getElementById('interpreterModel').value,
+                INTERPRETER_AUTO_RUN: document.getElementById('interpreterAutoRun').checked,
+                INTERPRETER_TEMPERATURE: parseFloat(document.getElementById('interpreterTemp').value) || 0.7,
+                OLLAMA_MODEL: document.getElementById('ollamaModel').value,
+                OLLAMA_HOST: document.getElementById('ollamaHost').value,
+                MAX_INPUT_CHARS: parseInt(document.getElementById('maxInputChars').value) || 10000,
+                MAX_OUTPUT_CHARS: parseInt(document.getElementById('maxOutputChars').value) || 100000,
+                MAX_LLM_COST_USD: parseFloat(document.getElementById('maxCost').value) || 0,
+            };
+            
+            const apiToken = document.getElementById('apiToken').value.trim();
+            if (apiToken && apiToken !== '[REDACTED]') {
+                config.API_TOKEN = apiToken;
+            }
+            
+            const override = document.getElementById('jsonOverride').value;
+            if (override) Object.assign(config, JSON.parse(override));
+            
+            const res = await fetch('/config/override', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+            
+            if (res.ok && apiToken && apiToken !== '[REDACTED]') {
+                localStorage.setItem('authToken', apiToken);
+                token = apiToken;
+            }
+            
+            alert(res.ok ? 'Saved!' : 'Error saving config');
         }
-      }
-
-      // Wire events
-      loadBtn.addEventListener('click', loadSettings);
-      clearBtn.addEventListener('click', () => {
-        tokenInput.value = '';
-        setStatus('');
-        content.hidden = true;
-        rawDetails.hidden = true;
-        rawJson.textContent = '';
-        saveTokenMaybe();
-      });
-      rawToggle.addEventListener('click', () => {
-        rawDetails.hidden = !rawDetails.hidden;
-        rawToggle.textContent = rawDetails.hidden ? 'Show raw JSON' : 'Hide raw JSON';
-      });
-      remember.addEventListener('change', saveTokenMaybe);
-      tokenInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') loadSettings();
-      });
-
-      // Bootstrap: prefill from URL hash/query or localStorage
-      const urlToken = readUrlToken();
-      if (urlToken) tokenInput.value = urlToken;
-      loadSavedToken();
-      if (tokenInput.value) {
-        // Auto-load once if token present
-        loadSettings();
-      }
-    })();
-  </script>
+        
+        async function loadConfig() {
+            const res = await fetch('/config/settings', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const settings = await res.json();
+            // Show [REDACTED] if API token exists
+            document.getElementById('apiToken').placeholder = settings.API_TOKEN ? '[REDACTED]' : 'Enter API token';
+            
+            document.getElementById('llmEngine').onchange();
+        }
+        
+        async function updatePreview() {
+            try {
+                const res = await fetch('/config/schema', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const schema = await res.json();
+                document.getElementById('preview').textContent = JSON.stringify(schema, null, 2);
+            } catch (err) {
+                document.getElementById('preview').textContent = 'Error loading schema';
+            }
+        }
+        
+        loadConfig();
+        updatePreview();
+        setInterval(updatePreview, 5000);
+    </script>
 </body>
 </html>

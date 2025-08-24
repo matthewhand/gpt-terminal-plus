@@ -1,4 +1,5 @@
 import { getOrGenerateApiToken } from '../common/apiToken';
+import { convictConfig } from '../config/convictConfig';
 import { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
 
@@ -18,8 +19,10 @@ export const checkAuthToken = (req: Request, res: Response, next: NextFunction):
     return next();
   }
 
-  // Ensure API token is set
-  const apiToken = getOrGenerateApiToken();
+  // Check for overridden API token first, fallback to generated
+  const cfg = convictConfig();
+  const overriddenToken = cfg.get('security.apiToken');
+  const apiToken = overriddenToken || getOrGenerateApiToken();
 
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];

@@ -1,8 +1,22 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import llmRoutes from './llm';
+import remoteRoutes from './remote';
+import filesRoutes from './files';
+import configRoutes from './config';
+import { rateLimiter } from '../middlewares/rateLimiter';
 
 const router = Router();
+
+// Apply rate limiting
+router.use(rateLimiter());
+
+// Mount new routes
+router.use('/llm', llmRoutes);
+router.use('/remote', remoteRoutes);
+router.use('/files', filesRoutes);
+router.use('/config', configRoutes);
 
 const CONFIG_DIR = process.env.NODE_CONFIG_DIR || 'config';
 const ENV = process.env.NODE_ENV || 'development';

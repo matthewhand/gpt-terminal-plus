@@ -1,0 +1,14 @@
+# profiles.simple.yaml
+profiles:
+  - name: gpt-terminal-plus
+    llm:
+      engine: ollama
+      model: gpt-oss:20b
+      assist:
+        enabled: true        # toggle LLM assistance
+        on: failed           # values: failed | all
+
+    code:
+      languages:
+        - python
+        - typescript

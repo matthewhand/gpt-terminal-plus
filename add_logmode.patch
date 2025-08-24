@@ -1,0 +1,11 @@
+--- src/routes/index.ts
++++ src/routes/index.ts
+@@
+ import { checkAuthToken } from '../middlewares/checkAuthToken';
+ import { initializeServerHandler } from '../middlewares/initializeServerHandler';
++import { logMode } from '../middleware/logMode';
+@@
+ export function setupApiRouter(app: express.Application): void {
+   const isTest = process.env.NODE_ENV === 'test';
+   const alwaysEnable = isTest; // enable optional endpoints during tests
++  app.use(logMode);

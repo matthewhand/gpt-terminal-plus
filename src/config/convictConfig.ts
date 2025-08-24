@@ -1,10 +1,49 @@
 import convict from 'convict';
+import { loadProfilesConfig, getActiveProfileName } from './profiles';
 
 type RedactedValue = string | number | boolean | null | string[] | number[] | boolean[] | Record<string, unknown>;
 
 export const convictConfig = () => {
   // Schema with env mappings and defaults
-  return convict({
+  const instance: any = convict({
+    execution: {
+      shell: {
+        enabled: {
+          doc: 'Enable shell command execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'SHELL_ENABLED'
+        },
+        allowed: {
+          doc: 'List of allowed shells/interpreters when a shell is explicitly requested',
+          format: Array,
+          default: [],
+          env: 'SHELL_ALLOWED'
+        }
+      },
+      code: {
+        enabled: {
+          doc: 'Enable code execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'CODE_ENABLED'
+        }
+      },
+      llm: {
+        enabled: {
+          doc: 'Enable LLM execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'LLM_ENABLED'
+        },
+        timeoutMs: {
+          doc: 'Timeout for LLM command execution (ms)',
+          format: 'nat',
+          default: 120000,
+          env: 'EXECUTE_LLM_TIMEOUT_MS'
+        }
+      }
+    },
     server: {
       port: {
         doc: 'Port the HTTP server listens on',
@@ -177,77 +216,200 @@ export const convictConfig = () => {
           env: 'INTERPRETER_VERBOSE'
         }
       }
+    },
+    // Engine-specific conveniences exposed to WebUI
+    engines: {
+      codex: {
+        model: {
+          doc: 'Codex model identifier',
+          format: String,
+          default: 'gpt-5',
+          env: 'CODEX_MODEL'
+        },
+        fullAuto: {
+          doc: 'Codex full-auto execution',
+          format: Boolean,
+          default: true,
+          env: 'CODEX_FULL_AUTO'
+        },
+        config: {
+          doc: 'Codex JSON configuration blob',
+          format: Object,
+          default: {}
+        }
+      },
+      interpreter: {
+        model: {
+          doc: 'Interpreter model identifier',
+          format: String,
+          default: 'gpt-4o',
+          env: 'INTERPRETER_MODEL'
+        },
+        temperature: {
+          doc: 'Interpreter temperature',
+          format: Number,
+          default: 0.7,
+          env: 'INTERPRETER_TEMPERATURE'
+        },
+        autoRun: {
+          doc: 'Run automatically without prompting',
+          format: Boolean,
+          default: true,
+          env: 'INTERPRETER_AUTO_RUN'
+        },
+        loop: {
+          doc: 'Loop until completion',
+          format: Boolean,
+          default: false,
+          env: 'INTERPRETER_LOOP'
+        },
+        contextWindow: {
+          doc: 'Interpreter context window size',
+          format: 'nat',
+          default: 8192,
+          env: 'INTERPRETER_CONTEXT_WINDOW'
+        },
+        maxTokens: {
+          doc: 'Interpreter max tokens',
+          format: 'nat',
+          default: 2048,
+          env: 'INTERPRETER_MAX_TOKENS'
+        },
+        debug: {
+          doc: 'Interpreter debug mode',
+          format: Boolean,
+          default: false,
+          env: 'INTERPRETER_DEBUG'
+        },
+        safeMode: {
+          doc: 'Interpreter safe mode',
+          format: ['auto', 'ask', 'off', ''],
+          default: 'auto',
+          env: 'INTERPRETER_SAFE_MODE'
+        }
+      },
+      ollama: {
+        model: {
+          doc: 'Ollama model name',
+          format: String,
+          default: 'llama2',
+          env: 'OLLAMA_MODEL'
+        },
+        host: {
+          doc: 'Ollama base URL',
+          format: String,
+          default: 'http://localhost:11434',
+          env: 'OLLAMA_HOST'
+        },
+        format: {
+          doc: 'Ollama response format',
+          format: String,
+          default: 'text',
+          env: 'OLLAMA_FORMAT'
+        },
+        noWordWrap: {
+          doc: 'Disable word wrapping in output',
+          format: Boolean,
+          default: false,
+          env: 'OLLAMA_NOWORDWRAP'
+        },
+        verbose: {
+          doc: 'Verbose output',
+          format: Boolean,
+          default: false,
+          env: 'OLLAMA_VERBOSE'
+        }
+      }
+    },
+    files: {
+      enabled: {
+        doc: 'Enable file operation routes (list, read, create, update, amend, setPostCommand)',
+        format: Boolean,
+        default: false,
+        env: 'FILES_ENABLED'
+      },
+      consequential: {
+        doc: 'Mark file operation endpoints as consequential in OpenAPI (x-openai-isConsequential)',
+        format: Boolean,
+        default: true,
+        env: 'FILES_CONSEQUENTIAL'
+      }
+    },
+    // Safety/circuit breakers
+    limits: {
+      maxInputChars: {
+        doc: 'Maximum input characters per request',
+        format: 'nat',
+        default: 10000,
+        env: 'MAX_INPUT_CHARS'
+      },
+      maxOutputChars: {
+        doc: 'Maximum output characters returned from any tool/LLM',
+        format: 'nat',
+        default: 200000,
+        env: 'MAX_OUTPUT_CHARS'
+      },
+      maxSessionDurationSec: {
+        doc: 'Maximum seconds for a session',
+        format: 'nat',
+        default: 7200,
+        env: 'MAX_SESSION_DURATION'
+      },
+      maxSessionIdleSec: {
+        doc: 'Maximum idle seconds before session termination',
+        format: 'nat',
+        default: 600,
+        env: 'MAX_SESSION_IDLE'
+      },
+      maxLlmCostUsd: {
+        doc: 'Optional max budget in USD (null for unlimited)',
+        format: (val: any) => (val === null || typeof val === 'number'),
+        default: null,
+        env: 'MAX_LLM_COST_USD'
+      },
+      allowTruncation: {
+        doc: 'If true, inputs larger than limit may be truncated',
+        format: Boolean,
+        default: false,
+        env: 'ALLOW_TRUNCATION'
+      }
+    },
+    // Profiles (loaded from YAML; not env-mapped except activeProfile)
+    profiles: {
+      doc: 'Normalized profiles loaded from config/profiles.yaml (or fallbacks)',
+      format: Array,
+      default: []
+    },
+    activeProfile: {
+      doc: 'Active profile name (overrides via env ACTIVE_PROFILE)',
+      format: String,
+      default: '',
+      env: 'ACTIVE_PROFILE'
     }
   });
-};
+  
+  // Load profiles from YAML and set active profile
+  try {
+    const profilesCfg = loadProfilesConfig();
+    instance.set('profiles', Array.isArray(profilesCfg?.profiles) ? profilesCfg.profiles : []);
+    const preferred = instance.get('activeProfile') as string;
+    const active = getActiveProfileName(preferred);
+    instance.set('activeProfile', active);
+  } catch (err) {
+    // Non-fatal: leave defaults if profiles cannot be loaded
+  }
 
-/**
- * Build a redacted view with readOnly flags based on env overrides.
- * "readOnly" is set when the mapped env var is present.
- */
-export function getRedactedSettings(): Record<string, Record<string, { value: RedactedValue; readOnly: boolean }>> {
-  const cfg = convictConfig();
-  cfg.validate({ allowed: 'warn' });
-
-  const redactKeys = new Set([
-    'security.apiToken',
-    'llm.openai.apiKey'
-  ]);
-
-  // Helper to fetch env mapping for a given path
-  const envOf = (schemaNode: any): string | undefined => {
-    if (!schemaNode) return undefined;
-    return typeof schemaNode.env === 'string' ? schemaNode.env : undefined;
-  };
-
-  const schema = (cfg as any).getSchema();
-  const result: Record<string, Record<string, { value: RedactedValue; readOnly: boolean }>> = {};
-
-  const assign = (group: string, key: string, value: RedactedValue, envName?: string) => {
-    if (!result[group]) result[group] = {};
-    const path = `${group}.${key}`;
-    const masked = redactKeys.has(path)
-      ? (typeof value === 'string' && value.length > 0 ? '*****' : '')
-      : value;
-    result[group][key] = {
-      value: masked,
-      readOnly: !!(envName && process.env[envName] !== undefined)
+  // Normalize getSchema() to have `properties` for compatibility in tests/tools
+  const originalGetSchema = instance.getSchema?.bind(instance);
+  if (originalGetSchema) {
+    instance.getSchema = () => {
+      const schema = originalGetSchema();
+      if (schema && !('properties' in schema) && schema._cvtProperties) {
+        return { properties: schema._cvtProperties };
+      }
+      return schema;
     };
-  };
+  }
 
-  // server group
-  assign('server', 'port', (cfg as any).get('server.port'), envOf(schema.properties.server.properties.port));
-  assign('server', 'httpsEnabled', (cfg as any).get('server.httpsEnabled'), envOf(schema.properties.server.properties.httpsEnabled));
-  assign('server', 'httpsKeyPath', (cfg as any).get('server.httpsKeyPath'), envOf(schema.properties.server.properties.httpsKeyPath));
-  assign('server', 'httpsCertPath', (cfg as any).get('server.httpsCertPath'), envOf(schema.properties.server.properties.httpsCertPath));
-  assign('server', 'corsOrigin', (cfg as any).get('server.corsOrigin'), envOf(schema.properties.server.properties.corsOrigin));
-  assign('server', 'disableHealthLog', (cfg as any).get('server.disableHealthLog'), envOf(schema.properties.server.properties.disableHealthLog));
-  assign('server', 'sseHeartbeatMs', (cfg as any).get('server.sseHeartbeatMs'), envOf(schema.properties.server.properties.sseHeartbeatMs));
-  assign('server', 'useServerless', (cfg as any).get('server.useServerless'), envOf(schema.properties.server.properties.useServerless));
-  assign('server', 'useMcp', (cfg as any).get('server.useMcp'), envOf(schema.properties.server.properties.useMcp));
-  assign('server', 'publicBaseUrl', (cfg as any).get('server.publicBaseUrl'), envOf(schema.properties.server.properties.publicBaseUrl));
-  assign('server', 'publicHost', (cfg as any).get('server.publicHost'), envOf(schema.properties.server.properties.publicHost));
-
-  // security group
-  assign('security', 'apiToken', (cfg as any).get('security.apiToken'), envOf(schema.properties.security.properties.apiToken));
-  assign('security', 'denyCommandRegex', (cfg as any).get('security.denyCommandRegex'), envOf(schema.properties.security.properties.denyCommandRegex));
-  assign('security', 'confirmCommandRegex', (cfg as any).get('security.confirmCommandRegex'), envOf(schema.properties.security.properties.confirmCommandRegex));
-
-  // llm group
-  assign('llm', 'provider', (cfg as any).get('llm.provider'), envOf(schema.properties.llm.properties.provider));
-  assign('llm', 'openai.baseUrl', (cfg as any).get('llm.openai.baseUrl'), envOf(schema.properties.llm.properties.openai.properties.baseUrl));
-  assign('llm', 'openai.apiKey', (cfg as any).get('llm.openai.apiKey'), envOf(schema.properties.llm.properties.openai.properties.apiKey));
-  assign('llm', 'ollama.baseUrl', (cfg as any).get('llm.ollama.baseUrl'), envOf(schema.properties.llm.properties.ollama.properties.baseUrl));
-  assign('llm', 'lmstudio.baseUrl', (cfg as any).get('llm.lmstudio.baseUrl'), envOf(schema.properties.llm.properties.lmstudio.properties.baseUrl));
-
-  // compat group
-  assign('compat', 'llmProvider', (cfg as any).get('llm.compat.llmProvider'), envOf(schema.properties.llm.properties.compat.properties.llmProvider));
-  assign('compat', 'llmModel', (cfg as any).get('llm.compat.llmModel'), envOf(schema.properties.llm.properties.compat.properties.llmModel));
-  assign('compat', 'ollamaHost', (cfg as any).get('llm.compat.ollamaHost'), envOf(schema.properties.llm.properties.compat.properties.ollamaHost));
-  assign('compat', 'interpreterHost', (cfg as any).get('llm.compat.interpreterHost'), envOf(schema.properties.llm.properties.compat.properties.interpreterHost));
-  assign('compat', 'interpreterPort', (cfg as any).get('llm.compat.interpreterPort'), envOf(schema.properties.llm.properties.compat.properties.interpreterPort));
-  assign('compat', 'interpreterOffline', (cfg as any).get('llm.compat.interpreterOffline'), envOf(schema.properties.llm.properties.compat.properties.interpreterOffline));
-  assign('compat', 'interpreterVerbose', (cfg as any).get('llm.compat.interpreterVerbose'), envOf(schema.properties.llm.properties.compat.properties.interpreterVerbose));
-
-  return result;
-}
+  return instance;
+};

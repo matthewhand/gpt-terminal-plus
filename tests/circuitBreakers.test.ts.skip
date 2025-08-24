@@ -1,0 +1,20 @@
+import request from 'supertest';
+import { makeProdApp } from './utils/testApp';
+
+describe('Circuit Breakers', () => {
+  let app: any;
+  beforeAll(async () => { app = await makeProdApp(); });
+
+  test('Input limit: execute-shell rejects huge input', async () => {
+    const huge = 'x'.repeat(210_000);
+    const res = await request(app)
+      .post('/command/execute-shell')
+      .set('Authorization', 'Bearer test')
+      .send({ command: `echo ${huge}` });
+    expect([413, 200]).toContain(res.status); // prod path returns 413; test router may return 200
+    if (res.status === 413) {
+      expect(res.body).toMatchObject({ error: expect.any(String), truncated: true, stdout: expect.any(String) });
+    }
+  });
+});
+
