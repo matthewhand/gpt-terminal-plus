@@ -37,7 +37,7 @@ export function buildSpec(req?: Request) {
   const filesConsequential = convictConfig().get('files.consequential'); // Get files.consequential from config
 
   return {
-    openapi: '3.0.3',
+    openapi: '3.1.0',
     info: {
       title: 'gpt-terminal-plus API',
       version: '0.1.0',
@@ -697,30 +697,25 @@ export function buildSpec(req?: Request) {
                 'application/json': {
                   schema: {
                     type: 'object',
-                    properties: {
-                      server: {
+                    additionalProperties: {
+                      type: 'object',
+                      description: 'Settings group (e.g., server, security, llm)',
+                      additionalProperties: {
                         type: 'object',
                         properties: {
-                          port: {
-                            type: 'object',
-                            properties: {
-                              value: { type: 'number' },
-                              readOnly: { type: 'boolean' }
-                            }
-                          }
-                        }
-                      },
-                      security: {
-                        type: 'object',
-                        properties: {
-                          apiToken: {
-                            type: 'object',
-                            properties: {
-                              value: { type: 'string' },
-                              readOnly: { type: 'boolean' }
-                            }
-                          }
-                        }
+                          value: {
+                            anyOf: [
+                              { type: 'string' },
+                              { type: 'number' },
+                              { type: 'boolean' },
+                              { type: 'object' },
+                              { type: 'array' },
+                              { type: 'null' }
+                            ]
+                          },
+                          readOnly: { type: 'boolean' }
+                        },
+                        required: ['value', 'readOnly']
                       }
                     }
                   }

@@ -53,6 +53,12 @@ router.get('/override', (_: Request, res: Response) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             description: Arbitrary configuration overrides
+ *             properties:
+ *               API_TOKEN:
+ *                 type: string
+ *                 description: Override API token (will be redacted in responses)
+ *             additionalProperties: true
  *     responses:
  *       200:
  *         description: Configuration updated

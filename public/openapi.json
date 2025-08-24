@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.1.0",
   "info": {
     "title": "gpt-terminal-plus API",
     "version": "0.1.0",
@@ -675,8 +675,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "properties": {},
                   "additionalProperties": {
                     "type": "object",
+                    "properties": {},
                     "description": "A settings group (e.g., server, security, llm, compat)",
                     "additionalProperties": {
                       "type": "object",
@@ -801,7 +803,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "description": "Arbitrary configuration overrides",
+                "properties": {
+                  "API_TOKEN": {
+                    "type": "string",
+                    "description": "Override API token (will be redacted in responses)"
+                  }
+                },
+                "additionalProperties": true
               }
             }
           }
@@ -1107,7 +1117,7 @@
           {
             "name": "id",
             "in": "path",
-            "required": false,
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -1143,6 +1153,46 @@
           },
           "404": {
             "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/shell/session/exec": {
+      "post": {
+        "operationId": "shellSessionExecAdhoc",
+        "summary": "Execute a command without an existing session (adhoc)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "command": {
+                    "type": "string"
+                  },
+                  "shell": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "command"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Command executed"
+          },
+          "400": {
+            "description": "Command required"
           }
         }
       }

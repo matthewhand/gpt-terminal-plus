@@ -100,7 +100,7 @@ router.post('/start', async (req: Request, res: Response) => {
  *     parameters:
  *       - name: id
  *         in: path
- *         required: false
+ *         required: true
  *         schema:
  *           type: string
  *     requestBody:
@@ -242,6 +242,34 @@ router.post('/:id?/exec', async (req: Request, res: Response) => {
     });
   });
 });
+
+/**
+ * @swagger
+ * /shell/session/exec:
+ *   post:
+ *     operationId: shellSessionExecAdhoc
+ *     summary: Execute a command without an existing session (adhoc)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               command:
+ *                 type: string
+ *               shell:
+ *                 type: string
+ *             required:
+ *               - command
+ *     responses:
+ *       200:
+ *         description: Command executed
+ *       400:
+ *         description: Command required
+ */
 
 /**
  * @swagger

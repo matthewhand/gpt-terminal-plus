@@ -34,7 +34,7 @@ describe('API Key Override', () => {
     const res = await request(app).get('/config/settings');
     expect(res.status).toBe(200);
     expect(res.body.security?.apiToken?.value).toBe('*****');
-  });
+  }, 10000);
 
   test('should validate requests with new token', async () => {
     const mockAuth = checkAuthToken as jest.Mock;

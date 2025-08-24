@@ -400,8 +400,10 @@
  *           application/json:
  *             schema:
  *               type: object
+ *               properties: {}
  *               additionalProperties:
  *                 type: object
+ *                 properties: {}
  *                 description: A settings group (e.g., server, security, llm, compat)
  *                 additionalProperties:
  *                   type: object
