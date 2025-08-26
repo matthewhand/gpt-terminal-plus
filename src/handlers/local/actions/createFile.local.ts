@@ -1,70 +1,52 @@
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { getPresentWorkingDirectory } from '../../../utils/GlobalStateHelper';
 
 const debug = Debug('app:local:createFile');
 
-/**
- * Create a file safely and hardened:
- *  - Validates inputs
- *  - Normalizes and validates path (no traversal outside workspace)
- *  - Ensures parent directory exists
- *  - Optional backup of existing file with timestamp
- *  - Logs truncated content preview
- */
-export async function createFile(
-  filePath: string,
-  content: string = '',
-  backup: boolean = true,
-  directory?: string
-): Promise<boolean> {
+export async function createFile(filePath: string, content: string, backup: boolean = true): Promise<boolean> {
   try {
+    // Input validation
     if (!filePath || typeof filePath !== 'string') {
-      throw new Error('filePath is required and must be a string.');
+      throw new Error('File path must be provided and must be a string.');
+    }
+    if (!content || typeof content !== 'string') {
+      throw new Error('Content must be provided and must be a string.');
     }
 
-    // Use project root instead of process.cwd() for consistent path resolution
-    const projectRoot = path.resolve(__dirname, '../../../../');
-    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
-
-    // Always resolve relative to baseDir
-    const absPath = path.resolve(baseDir, filePath);
-    debug(`📂 createFile -> resolved path: ${absPath}`);
-
-    // Guard: prevent traversal outside baseDir
-    if (!absPath.startsWith(baseDir)) {
-      throw new Error(`Refusing to write outside workspace: ${absPath}`);
+    // Resolve absolute or relative path
+    let targetPath = filePath;
+    if (!path.isAbsolute(filePath)) {
+      const base = process.env.NODE_CONFIG_DIR || getPresentWorkingDirectory() || '';
+      targetPath = path.join(base, filePath);
     }
 
-    // Ensure parent directory exists
-    const parentDir = path.dirname(absPath);
-    await fs.mkdir(parentDir, { recursive: true });
+    debug(`📂 createFile -> resolved path: ${targetPath}`);
 
-    // If file exists and backup requested, backup it
+    // If file exists and backup requested, copy to .bak
     try {
-      await fs.access(absPath);
-      if (backup) {
-        const data = await fs.readFile(absPath);
-        const backupPath = `${absPath}.${Date.now()}.bak`;
-        await fs.writeFile(backupPath, data);
-        debug(`📦 Backup created: ${backupPath}`);
+      if (fs.existsSync(targetPath)) {
+        if (backup) {
+          await fs.promises.copyFile(targetPath, `${targetPath}.bak`);
+          debug(`📦 Backup created: ${targetPath}.bak`);
+        }
       }
-    } catch {
-      // file doesn’t exist, continue
+    } catch (e: any) {
+      throw new Error(`Failed to create file ${targetPath}: ${e?.message || String(e)}`);
     }
 
-    // Truncate content in logs
-    const preview = content.length > 200 ? `${content.slice(0,200)}... (truncated)` : content;
-    debug(`📝 Writing content preview: ${preview}`);
+    // Ensure parent directory exists (best-effort)
+    try { await fs.promises.mkdir(path.dirname(targetPath), { recursive: true }); } catch {}
 
-    // Write the file
-    await fs.writeFile(absPath, content, 'utf8');
-
-    debug(`✅ createFile succeeded: ${absPath}`);
+    // Write file content
+    await fs.promises.writeFile(targetPath, content);
+    debug(`✅ createFile succeeded: ${targetPath}`);
     return true;
   } catch (err: any) {
-    debug(`❌ createFile failed: ${err.message}`);
-    throw err;
+    debug(`❌ createFile failed: ${err?.message || String(err)}`);
+    if (/^Failed to create file /.test(err?.message)) throw err;
+    throw new Error(`Failed to create file ${filePath}: ${err?.message || String(err)}`);
   }
 }
 

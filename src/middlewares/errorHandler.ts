@@ -13,8 +13,9 @@ export const errorHandler = (
   next: NextFunction
 ): void => {
   // GPT Actions expect specific error format
+  const msg = err && (err.message || String(err)) || 'Internal server error';
   const errorResponse: GPTActionError = {
-    message: err.message || 'Internal server error',
+    message: msg,
     type: 'server_error'
   };
 

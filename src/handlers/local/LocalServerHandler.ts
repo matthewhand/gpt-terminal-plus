@@ -54,6 +54,14 @@ export class LocalServerHandler extends AbstractServerHandler {
     };
   }
 
+  async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+    const directory = params.directory && String(params.directory).trim() !== '' ? String(params.directory) : '.';
+    const limit = typeof params.limit === 'number' && params.limit > 0 ? params.limit : 100;
+    const offset = typeof params.offset === 'number' && params.offset >= 0 ? params.offset : 0;
+    const orderBy = params.orderBy === 'datetime' ? 'datetime' as const : 'filename' as const;
+    return this.listFiles({ directory, limit, offset, orderBy });
+  }
+
   async getSystemInfo(): Promise<SystemInfo> {
     return await getSystemInfoAction();
   }

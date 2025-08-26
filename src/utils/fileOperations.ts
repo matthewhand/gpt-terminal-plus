@@ -2,7 +2,13 @@ import config from 'config';
 
 export function areFileOperationsEnabled(): boolean {
   try {
-    return config.get('files.enabled') !== false;
+    const val = (config as any).get('files.enabled');
+    if (val === false) return false;
+    if (val === 0) return false;
+    if (val === '') return false;
+    // undefined/null -> default allow
+    if (val === undefined || val === null) return true;
+    return true;
   } catch {
     return true; // Default to enabled if config missing
   }

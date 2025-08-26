@@ -11,8 +11,229 @@ router.use(checkAuthToken as any);
 
 /**
  * GET /settings
- * Returns a redacted snapshot of configuration settings.
- * Values overridden by environment variables are marked readOnly: true.
+ * @swagger
+ * /settings:
+ *   get:
+ *     operationId: getSettings
+ *     summary: Get redacted configuration settings
+ *     description: Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Redacted settings grouped by category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 server:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 security:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 llm:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 compat:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *               required: [server, security, llm, compat]
+ *             examples:
+ *               sample:
+ *                 summary: Example response
+ *                 value:
+ *                   server:
+ *                     port:
+ *                       value: 5005
+ *                       readOnly: false
+ *                     httpsEnabled:
+ *                       value: false
+ *                       readOnly: false
+ *                   security:
+ *                     apiToken:
+ *                       value: "*****"
+ *                       readOnly: true
+ *                   llm:
+ *                     provider:
+ *                       value: "openai"
+ *                       readOnly: false
+ *                     "openai.baseUrl":
+ *                       value: ""
+ *                       readOnly: false
+ *                     "openai.apiKey":
+ *                       value: "*****"
+ *                       readOnly: true
+ *                   compat:
+ *                     llmProvider:
+ *                       value: ""
+ *                       readOnly: false
+ */
+/**
+ * GET /settings
+ * @swagger
+ * /settings:
+ *   get:
+ *     operationId: getSettings
+ *     summary: Get redacted configuration settings
+ *     description: Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Redacted settings grouped by category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 server:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 security:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 llm:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *                 compat:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: object
+ *                     properties:
+ *                       value:
+ *                         oneOf:
+ *                           - type: string
+ *                           - type: number
+ *                           - type: boolean
+ *                           - type: object
+ *                           - type: array
+ *                           - type: "null"
+ *                       readOnly:
+ *                         type: boolean
+ *                     required: [value, readOnly]
+ *               required: [server, security, llm, compat]
+ *             examples:
+ *               sample:
+ *                 summary: Example response
+ *                 value:
+ *                   server:
+ *                     port:
+ *                       value: 5005
+ *                       readOnly: false
+ *                     httpsEnabled:
+ *                       value: false
+ *                       readOnly: false
+ *                   security:
+ *                     apiToken:
+ *                       value: "*****"
+ *                       readOnly: true
+ *                   llm:
+ *                     provider:
+ *                       value: "openai"
+ *                       readOnly: false
+ *                     "openai.baseUrl":
+ *                       value: ""
+ *                       readOnly: false
+ *                     "openai.apiKey":
+ *                       value: "*****"
+ *                       readOnly: true
+ *                   compat:
+ *                     llmProvider:
+ *                       value: ""
+ *                       readOnly: false
  */
 router.get('/settings', (_req: Request, res: Response) => {
   try {

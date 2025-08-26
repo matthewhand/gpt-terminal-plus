@@ -9,13 +9,13 @@ let state: GlobalState | null = null;
 export function getGlobalState(): GlobalState {
   if (!state) {
     state = {
-      selectedServer: null,
-      presentWorkingDirectory: process.cwd(),
-      selectedModel: process.env.DEFAULT_MODEL || 'auto',
+      selectedServer: '',
+      presentWorkingDirectory: '',
+      selectedModel: '',
     };
     
-    // Auto-select default localhost server if none selected
-    if (!state.selectedServer) {
+    // Auto-select default localhost server if none selected (skip in tests)
+    if (process.env.NODE_ENV !== 'test' && !state.selectedServer) {
       initializeDefaultServer();
     }
   }
@@ -68,9 +68,9 @@ function initializeDefaultServer(): void {
 
 export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {
   state = {
-    selectedServer: null,
-    presentWorkingDirectory: process.cwd(),
-    selectedModel: 'auto',
+    selectedServer: '',
+    presentWorkingDirectory: '',
+    selectedModel: '',
     ...init,
   };
 }

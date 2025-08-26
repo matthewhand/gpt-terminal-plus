@@ -367,7 +367,163 @@
                         "readOnly"
                       ]
                     }
-                  }
+                  },
+                  "properties": {
+                    "server": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "oneOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "readOnly": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "readOnly"
+                        ]
+                      }
+                    },
+                    "security": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "oneOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "readOnly": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "readOnly"
+                        ]
+                      }
+                    },
+                    "llm": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "oneOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "readOnly": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "readOnly"
+                        ]
+                      }
+                    },
+                    "compat": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "value": {
+                            "oneOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "readOnly": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "value",
+                          "readOnly"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "server",
+                    "security",
+                    "llm",
+                    "compat"
+                  ]
                 },
                 "examples": {
                   "sample": {
@@ -401,6 +557,12 @@
                         "openai.apiKey": {
                           "value": "*****",
                           "readOnly": true
+                        }
+                      },
+                      "compat": {
+                        "llmProvider": {
+                          "value": "",
+                          "readOnly": false
                         }
                       }
                     }
