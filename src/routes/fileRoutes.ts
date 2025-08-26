@@ -1,36 +1,82 @@
 import express from 'express';
-import { createFile } from './file/createFile';
-import { applyFuzzyPatch } from './file/fuzzyPatch';
-
-import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import fs from 'fs';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+
+// File route handlers
+import { createFile } from './file/createFile.route';
+import { listFiles } from './file/listFiles.route';
+import { readFile } from './file/readFile.route';
+import { updateFile } from './file/updateFile.route';
+import { amendFile } from './file/amendFile.route';
+
+import { applyDiff } from './file/diff';
+import { applyPatch } from './file/patch';
 
 const router = express.Router();
-// Protect file routes with API token
+
+// Secure routes and ensure a ServerHandler is attached to req
 router.use(checkAuthToken as any);
-const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
+router.use(initializeServerHandler as any);
 
 /**
- * Route to create or replace a file.
- * @route POST /file/create
+ * POST /file/create
+ * Create or replace a file using the active ServerHandler.
+ * Body: { filePath: string, content: string, backup?: boolean }
  */
 router.post('/create', createFile);
 
 /**
- * Route to list files in a directory.
- * @route POST /file/list
+ * POST /file/list
+ * List files in a directory using the active ServerHandler.
+ * Body: { directory?: string }
  */
 router.post('/list', listFiles);
 
-  try {
-    const dir = (typeof directory === 'string' && directory.trim() !== '') ? directory.toString() : '.';
-    const params = {
-      directory: dir,
-      limit: typeof limit === 'string' ? parseInt(limit, 10) : undefined,
-      offset: typeof offset === 'string' ? parseInt(offset, 10) : undefined,
-      orderBy: orderBy === 'datetime' ? 'datetime' as const : 'filename' as const,
-    };
+/**
+ * Optional GET shim for list — maps query to body for compatibility.
+ * GET /file/list?directory=...  -> same as POST /file/list
+ */
+router.get('/list', (req, res) => {
+  const { directory, limit, offset, orderBy, recursive, typeFilter } = req.query as Record<string, string>;
+  const body: any = { ...(req.body || {}) };
+  if (directory) body.directory = directory;
+  if (limit) body.limit = Number(limit);
+  if (offset) body.offset = Number(offset);
+  if (orderBy) body.orderBy = orderBy;
+  if (typeof recursive !== 'undefined') body.recursive = ['1', 'true', 'yes'].includes(String(recursive).toLowerCase());
+  if (typeFilter) body.typeFilter = typeFilter;
+  req.body = body;
+  return listFiles(req as any, res);
+});
+
+/**
+ * POST /file/read
+ * Read a single file, optionally constrained by line range.
+ * Body: { filePath: string, startLine?: number, endLine?: number, encoding?: string, maxBytes?: number }
+ */
+router.post('/read', readFile);
+
+/**
+ * Optional GET shim for read — maps query to body.
+ * GET /file/read?filePath=...&startLine=..&endLine=..
+ */
+router.get('/read', (req, res) => {
+  const { filePath, startLine, endLine, encoding, maxBytes } = req.query as Record<string, string>;
+  const body: any = { ...(req.body || {}) };
+  if (filePath) body.filePath = filePath;
+  if (startLine) body.startLine = Number(startLine);
+  if (endLine) body.endLine = Number(endLine);
+  if (encoding) body.encoding = encoding;
+  if (maxBytes) body.maxBytes = Number(maxBytes);
+  req.body = body;
+  return readFile(req as any, res);
+});
+
+/**
+ * POST /file/update
+ * Regex replace within a file. Body: { filePath, pattern, replacement, backup?, multiline? }
+ */
+router.post('/update', updateFile);
 
 /**
  * POST /file/amend
@@ -39,12 +85,11 @@ router.post('/list', listFiles);
 router.post('/amend', amendFile);
 
 /**
- * Route to apply fuzzy patch to a file using diff-match-patch.
- * @route POST /file/fuzzy-patch
+ * POST /file/diff
+ * Apply a unified diff using git apply with validation.
+ * Body: { diff: string, dryRun?: boolean }
  */
-router.post('/fuzzy-patch', applyFuzzyPatch);
-
-// Preserve additional routes and logic here if any...
+router.post('/diff', applyDiff);
 
 /**
  * POST /file/patch
