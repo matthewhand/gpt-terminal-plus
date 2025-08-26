@@ -2,7 +2,6 @@ import express, { Request } from 'express';
 import { stringify as yamlStringify } from 'yaml';
 import fs from 'fs';
 import path from 'path';
-import { convictConfig } from './config/convictConfig'; // Import convictConfig
 
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
 export function getPublicBaseUrl(req?: Request): string {
