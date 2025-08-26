@@ -40,6 +40,9 @@ const setupMiddlewares = (app: express.Application): void => {
   // Error handling middleware (must be last)
   app.use(errorHandler);
 
+  // Error handling middleware (must be last)
+  app.use(errorHandler);
+
   debug('Middlewares setup completed.');
 };
 

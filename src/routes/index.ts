@@ -13,17 +13,16 @@ import { executeLlm } from './command/executeLlm';
 import serverRoutes from './serverRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
+import settingsRoutes from './settingsRoutes';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
 let modelsRoutes: express.Router | null = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mod = require('./setupRoutes');
   setupRoutes = mod?.default ?? mod ?? null;
 } catch { /* optional */ }
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mod = require('./modelRoutes');
   modelsRoutes = mod?.default ?? mod ?? null;
 } catch { /* optional */ }
@@ -52,6 +51,8 @@ export function setupApiRouter(app: express.Application): void {
   app.use(fileRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', chatRoutes);
+  // settings (redacted view), protected by bearer token
+  app.use(settingsRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);

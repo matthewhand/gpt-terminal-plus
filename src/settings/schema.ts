@@ -55,20 +55,23 @@ export const SettingsSchema = z.object({
     enabled: z.boolean().default(true),
   }),
   features: z.object({
-    llmConsole: z.boolean().default(false),
-    executeShell: z.object({
+    executeShell: ExecuteShellSchema.default({}),
+    executeCode: ExecuteCodeSchema.default({}),
+    executeLlm: ExecuteLlmSchema.default({}),
+  }).default({}),
+  llm: z
+    .object({
       enabled: z.boolean().default(false),
-    }),
-    executeCode: z.object({
-      enabled: z.boolean().default(false),
-    }),
-    executeLlm: z.object({
-      enabled: z.boolean().default(false),
-    }),
-  }),
-  llm: z.object({
-    provider: z.string().default('none'),
-  }),
+      provider: z
+        .enum(['none', 'openai', 'ollama', 'lmstudio', 'litellm'])
+        .default('none'),
+      defaultModel: z.string().default(''),
+      baseURL: z.string().default(''),
+      apiKey: z.string().default(''),
+      ollamaURL: z.string().default('http://localhost:11434'),
+      lmstudioURL: z.string().default('http://localhost:1234/v1'),
+    })
+    .default({}),
 });
 
 export type Settings = z.infer<typeof SettingsSchema>;

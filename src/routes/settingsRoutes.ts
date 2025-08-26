@@ -14,10 +14,10 @@ router.use(checkAuthToken as any);
  * Returns a redacted snapshot of configuration settings.
  * Values overridden by environment variables are marked readOnly: true.
  */
-router.get('/', (_req: Request, res: Response) => {
+router.get('/settings', (_req: Request, res: Response) => {
   try {
-    const settings = getRedactedSettings();
-    res.status(200).json({ settings });
+    const payload = getRedactedSettings();
+    res.status(200).json(payload);
   } catch (err: any) {
     debug('Error generating redacted settings: %s', err?.message ?? err);
     res.status(500).json({ error: 'internal_error', message: err?.message ?? 'unknown' });

@@ -12,7 +12,7 @@
     "url": "/openapi.json",
     "is_user_authenticated": false
   },
-  "logo_url": "/public/icon.png",
+  "logo_url": "/icon.png",
   "contact_email": "support@localhost",
   "legal_info_url": "https://example.com/legal"
 }

@@ -14,9 +14,6 @@ import config from "config";
 import { setupApiRouter } from "./routes/index";
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
-import publicRouter from "./routes/publicRouter";
-import shellRouter from "./routes/shell";
-import { mountSimpleAdmin } from "./admin/simple";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
@@ -35,8 +32,15 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
+/**
+ * Static assets
+ * - Serve public/ at /
+ * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
+ */
 // Serve static assets from public/
 app.use(express.static(path.resolve(__dirname, '..', 'public')));
+// Serve documentation markdown as static files
+app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router
 setupApiRouter(app);
@@ -62,7 +66,13 @@ const swaggerOptions: any = {
 };
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
 
-if (process.env.USE_MCP === "true") {
+  // Dynamic OpenAPI routes
+  registerOpenApiRoutes(app);
+
+  // Swagger UI at /docs, static-first pointing to /openapi.json
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
+
+ if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");
   const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
   
