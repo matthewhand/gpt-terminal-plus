@@ -19,8 +19,14 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
       - name: Build Windows binaries
-        run: npm run pkg:win
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-win-x64,node18-win-arm64 --out-path release
+      - name: List release files
+        run: dir release
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -40,8 +46,14 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
       - name: Build macOS binary
-        run: npm run pkg:osx
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-macos-x64 --output release/gpt-terminal-plus-macos-x64
+      - name: List release files
+        run: ls -la release/
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -61,8 +73,14 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
       - name: Build Linux binaries
-        run: npm run pkg:linux
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-linux-x64,node18-linux-arm64 --out-path release
+      - name: List release files
+        run: ls -la release/
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -90,6 +108,8 @@ jobs:
         with:
           name: linux-binaries
           path: release/linux
+      - name: List all files
+        run: find release -type f
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
