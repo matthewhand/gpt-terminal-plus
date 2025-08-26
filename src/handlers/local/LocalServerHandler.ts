@@ -1,20 +1,17 @@
-import { AbstractServerHandler } from "../AbstractServerHandler";
-import { ServerConfig } from "../../types/ServerConfig";
-import { ExecutionResult } from "../../types/ExecutionResult";
-import { PaginatedResponse } from "../../types/PaginatedResponse";
-import { SystemInfo } from "../../types/SystemInfo";
-import { FileReadResult } from "../../types/FileReadResult";
-import listFilesAction from "./actions/listFiles.local";
-import { ListParams } from "../../types/ListParams";
-import { createFile as createFileAction } from "./actions/createFile.local";
-import { readFile as readFileAction } from "./actions/readFile.local";
-import { updateFile as updateFileAction } from "./actions/updateFile.local";
-import { amendFile as amendFileAction } from "./actions/amendFile.local";
-import { getSystemInfo as getSystemInfoAction } from "./actions/getSystemInfo";
-import { presentWorkingDirectory as presentWorkingDirectoryAction } from "./actions/presentWorkingDirectory";
-import { executeCommand as executeCommandAction } from "./actions/executeCommand";
-import { executeCode as executeCodeAction } from "./actions/executeCode";
-import { changeDirectory as changeDirectoryAction } from "./actions/changeDirectory";
+import { executeLocalCode } from './actions/executeCode';
+import { createFile as createLocalFile } from './actions/createFile';
+import { AbstractServerHandler } from '../AbstractServerHandler';
+import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
+import { SystemInfo } from '../../types/SystemInfo';
+import { ExecutionResult } from '../../types/ExecutionResult';
+import { PaginatedResponse } from '../../types/PaginatedResponse';
+import listFilesAction from './actions/listFiles';
+import { ListParams } from '../../types/ListParams';
+import { exec } from 'child_process';
+import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
+import Debug from 'debug';
+
+const localServerDebug = Debug('app:LocalServerHandler');
 
 export class LocalServerHandler extends AbstractServerHandler {
   constructor(serverConfig: ServerConfig) {
@@ -37,9 +34,25 @@ export class LocalServerHandler extends AbstractServerHandler {
     return await readFileAction(filePath, this.serverConfig.directory, options);
   }
 
-  async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
-    return await updateFileAction(filePath, pattern, replacement, options?.backup, options?.multiline, this.serverConfig.directory);
-  }
+    /**
+     * Lists files in a specified directory.
+     */
+    async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+        const { directory = '.', limit = 50, offset = 0, orderBy } = params;
+        localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
+        try {
+            const { files, total } = await listFilesAction({ directory, limit, offset, orderBy });
+            return {
+                items: files,
+                total,
+                limit,
+                offset,
+            };
+        } catch (error) {
+            localServerDebug('Error listing files:', error);
+            throw new Error('Failed to list files: ' + (error as Error).message);
+        }
+    }
 
   async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
     return await amendFileAction(filePath, content, options?.backup, this.serverConfig.directory);

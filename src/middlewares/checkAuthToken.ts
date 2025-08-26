@@ -29,13 +29,13 @@ export const checkAuthToken = (req: Request, res: Response, next: NextFunction):
 
   if (!token) {
     debug('No authorization token provided');
-    res.sendStatus(401); // No token present
+    res.status(401).json({ error: 'Unauthorized' });
     return;
   }
 
   if (token !== apiToken) {
     debug('Authorization token mismatch');
-    res.sendStatus(403); // Token mismatch
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
 

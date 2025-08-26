@@ -1,28 +1,9 @@
 # TODO
 
-## 🔝 Priority 1 — Activity Logging + WebUI Integration
-### Backend
-- [ ] Activity logging utility
-  - `logSessionStep(type, payload, sessionId?)`
-  - Write JSON logs to `data/activity/yyyy-mm-dd/session_xxx/`
-  - File naming convention: `01-executeShell.json`, `02-fileRead.json`, etc.
-  - `meta.json` for session metadata
-- [ ] Activity API
-  - `GET /activity/list` → paginated executions
-  - Filters: endpoint type, status
-  - Response includes: function, timestamp, input (truncated), output (truncated), success/error
-
-### Realtime
-- [ ] WebSocket/SSE streaming
-  - Event format: `{ id, type, timestamp, input, output, status }`
-
-### Frontend
-- [ ] WebUI Activity tab
-  - Live list of ~50 latest executions
-  - Filters: endpoint type + status
-  - Colored chips: ✅ success, ⚠️ warning, ❌ error
-
----
+## 🔧 Priority 1 — Activity Logging
+- [ ] Session activity logging improvements
+- [ ] Enhanced error tracking and reporting
+- [ ] Performance metrics collection
 
 ## 🔧 Priority 2 — File Handling
 ### File Listing
@@ -32,9 +13,9 @@
 - [ ] Handle symlink/stat errors safely
 
 ### File Patching
-- [ ] Implement **`applyFilePatch`** (fuzzy patching)
+- [x] Implement **`applyFilePatch`** (fuzzy patching)
   - New file: `src/handlers/local/actions/applyFilePatch.ts`
-  - Uses [`diff-match-patch`](https://www.npmjs.com/package/diff-match-patch)
+  - Uses `https://www.npmjs.com/package/diff-match-patch`
   - Signature:
     ```ts
     interface ApplyFilePatchOptions {
@@ -43,8 +24,13 @@
       newText: string;
       preview?: boolean;
     }
+    export function applyFilePatch(opts: ApplyFilePatchOptions): {
+      success: boolean;
+      patchedText?: string;
+      results?: boolean[];
+      error?: string;
+    };
     ```
-    Returns `{ success, patchedText?, results?, error? }`.
   - Behavior:
     - Fuzzy matching to apply hunks even if file drifted
     - Dry-run mode with `preview`
@@ -55,44 +41,61 @@
 - [ ] Update merge conflict workflows to use `applyFilePatch`
 - [ ] Deprecate `updateFile` (keep temporarily for trivial replaces)
 
----
+## 🔧 Priority 3 — Logging & Guards
+- [ ] Enhanced security logging
+- [ ] Input validation improvements
+- [ ] Rate limiting implementation
 
-## 🛠 Priority 3 — Logging & Guards
-- [ ] Truncated stdout/stderr logging in `executeCode`
-- [ ] Ensure raw + wrapper logs in `executeCommand`
+## 🔧 Priority 4 — TypeScript & Build
+- [ ] Type safety improvements
+- [ ] Build optimization
+- [ ] Dependency updates
 
----
+## 🔧 Later — MCP Integration
+- [ ] MCP protocol enhancements
+- [ ] Tool integration improvements
+- [ ] Performance optimizations
 
-## 🧱 Priority 4 — TypeScript & Build
-- [x] Fix ExecutionResult type: added missing `success` property
-- [x] Fix ListParams import in SSH handler
-- [ ] Fix remaining type errors (SSH2, AWS SDK, etc.)
-- [ ] Ensure `npm run lint` passes
-- [ ] Ensure `npm test` passes (fix ResponseTooLargeError)
+## 🔧 LLM Features
+### Core LLM Integration
+- [ ] Add `llm` block to settings schema (enabled, provider, defaultModel, baseURL, apiKey, ollamaURL, lmstudioURL)
+- [ ] Add env overrides + resolver (`LLM_ENABLED`, `LLM_PROVIDER`, `LLM_DEFAULT_MODEL`, `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OLLAMA_URL`, `LM_STUDIO_URL`)
+- [ ] Patch OpenAI provider to honor `baseURL` (LiteLLM/OpenAI/vLLM/TGI/LM Studio)
+- [ ] Add central `getLlmClient()` + `getDefaultModel()` selector (maps provider → client)
+- [ ] Gate `/chat/completions` + `/model` routes (return friendly 409 if disabled)
+- [ ] Make `errorAdvisor` no-op when LLM disabled (silent, no logs)
+- [ ] Add friendly "instance not configured" message for `/command/executeLlm`
+- [ ] (Optional) Make `/command/execute` a safe alias to first/primary enabled mode
+- [ ] (Optional) Deprecate `executeFile` by delegating to shell
 
----
+### WebUI Integration
+- [ ] Setup → LLM panel: enable toggle, provider dropdown, fields per provider
+- [ ] "Test" button (pings `/model` or a noop chat) with ✅/error
+- [ ] Auto-disable chat/stream/advisor UI when LLM disabled
 
-## 📝 Later
-- [ ] Abstract common actions (`getSystemInfo`, `presentWorkingDirectory`) into shared layer
-- [ ] Ensure consistency across Local, SSH, and SSM handlers
-- [ ] Fix test runner env: jest fails due to missing bash
+### Remote Reuse
+- [ ] Confirm file/folder ops use SSH/SSM when selected (no code change if already wired)
+- [ ] (Later) `executeLlm` CLI runners reuse SSH/SSM transparently
 
----
+### Settings WebUI
+- [ ] MVP panel to configure:
+  - LLM providers (Open-Interpreter, Ollama, OpenAI-compatible).
+  - Python templates (uv) CRUD with validation.
+  - Server/target list with `allowedTokens`.
+  - Health checks ("ping provider", "list models").
+- [ ] **Stretch:** Runtime config editing UI (respect env-overridden fields as read-only)
+- [ ] **Docs:** env var reference for advanced users (**no secrets in examples**; use `${...}` placeholders).
+- [ ] "Add to ChatGPT" instructions (point to `/openapi.json` or `/openapi.yaml`).
 
-## 🚀 MCP Integration
-- [ ] Profile-based MCP tool configuration
-- [ ] Runtime tool discovery from MCP instance
-- [ ] Publish discovered tools as OpenAPI endpoints (per profile)
+## 🔧 Documentation & DX
+- [ ] Update `.env.sample`
+- [ ] Update `README` (LLM optional; how to enable + test)
+- [ ] Note deprecation of `executeFile`
 
----
-
-## ✨ LLM Features
-- [ ] Investigate restricted output grammar for OpenAPI spec generation
-- [ ] Goal: auto-generate OpenAPI spec from discovered tools
-
----
+## 🔧 Future / Nice-to-have
+- [ ] Provider strategy: single / fallback / round-robin / weighted RR
+- [ ] Brand-less protocol adapters (openai-compat, ollama) to remove vendor code entirely
 
 ## ✅ Completed
-- [x] Fixed hanging tests (removed corrupted file, TypeScript fixes)
-- [x] Fixed OpenAPI spec: cleaned up `/file/list`
-- [x] Added `changeDirectory` endpoint for Local, SSH, SSM
+- [x] Test coverage for critical utilities (GlobalStateHelper, fileOperations, activityLogger)
+- [x] Test coverage for services (interpreterClient, ollamaClient)

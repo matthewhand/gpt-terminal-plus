@@ -1,22 +1,15 @@
 import express from 'express';
+import { createFile } from './file/createFile';
+import { applyFuzzyPatch } from './file/fuzzyPatch';
+
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
+import fs from 'fs';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { initializeServerHandler } from '../middlewares/initializeServerHandler';
-
-// File route handlers
-import { createFile } from './file/createFile.route';
-import { listFiles } from './file/listFiles.route';
-import { readFile } from './file/readFile.route';
-import { updateFile } from './file/updateFile.route';
-import { amendFile } from './file/amendFile.route';
-
-import { applyDiff } from './file/diff';
-import { applyPatch } from './file/patch';
 
 const router = express.Router();
-
-// Middleware for all file routes
-router.use(checkAuthToken);
-router.use(initializeServerHandler);
+// Protect file routes with API token
+router.use(checkAuthToken as any);
+const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
 
 /**
  * Route to create or replace a file.
@@ -30,17 +23,14 @@ router.post('/create', createFile);
  */
 router.post('/list', listFiles);
 
-/**
- * Route to read a file.
- * @route POST /file/read
- */
-router.post('/read', readFile);
-
-/**
- * POST /file/update
- * Regex replace within a file. Body: { filePath, pattern, replacement, backup?, multiline? }
- */
-router.post('/update', updateFile);
+  try {
+    const dir = (typeof directory === 'string' && directory.trim() !== '') ? directory.toString() : '.';
+    const params = {
+      directory: dir,
+      limit: typeof limit === 'string' ? parseInt(limit, 10) : undefined,
+      offset: typeof offset === 'string' ? parseInt(offset, 10) : undefined,
+      orderBy: orderBy === 'datetime' ? 'datetime' as const : 'filename' as const,
+    };
 
 /**
  * POST /file/amend
@@ -49,11 +39,12 @@ router.post('/update', updateFile);
 router.post('/amend', amendFile);
 
 /**
- * POST /file/diff
- * Apply a unified diff using git apply with validation.
- * Body: { diff: string, dryRun?: boolean }
+ * Route to apply fuzzy patch to a file using diff-match-patch.
+ * @route POST /file/fuzzy-patch
  */
-router.post('/diff', applyDiff);
+router.post('/fuzzy-patch', applyFuzzyPatch);
+
+// Preserve additional routes and logic here if any...
 
 /**
  * POST /file/patch

@@ -14,36 +14,8 @@ export abstract class AbstractServerHandler {
 
   abstract executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
 
-  abstract executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
-
-  abstract createFile(filePath: string, content?: string, backup?: boolean): Promise<boolean | ExecutionResult>;
-
-  abstract readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult>;
-
-  abstract updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean | ExecutionResult>;
-
-  abstract amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean | ExecutionResult>;
-
-  abstract getSystemInfo(): Promise<SystemInfo | ExecutionResult>;
-
-  abstract listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
-
-  /**
-   * List files with standardized default directory handling and parameter validation.
-   * This method ensures consistent behavior across all handler implementations.
-   */
-  async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-    const normalizedParams = {
-      ...params,
-      directory: params.directory || '.',
-      // Clamp limit between 1 and 5000
-      limit: Math.min(Math.max(params.limit || 100, 1), 5000),
-      // Clamp offset to non-negative values
-      offset: Math.max(params.offset || 0, 0),
-      orderBy: params.orderBy || 'filename'
-    };
-    return this.listFiles(normalizedParams);
-  }
+  // Modify listFiles to accept an object parameter
+  abstract listFiles(params: { directory: string; limit?: number; offset?: number; orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
 
   abstract setServerConfig(config: ServerConfig): void;
 
