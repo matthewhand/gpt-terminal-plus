@@ -12,6 +12,8 @@ import express from "express";
 import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
+import shellRouter from './routes/shell';
+import publicRouter from './routes/publicRouter';
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
 
@@ -42,13 +44,9 @@ app.use(express.static(path.resolve(__dirname, '..', 'public')));
 // Serve documentation markdown as static files
 app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
-// Setup API Router
+// Setup API Router and additional route groups
 setupApiRouter(app);
-
-// Shell session routes
 app.use('/shell', shellRouter);
-
-// Public routes (e.g., /health)
 app.use(publicRouter);
 
 // Dynamic OpenAPI routes
@@ -66,11 +64,7 @@ const swaggerOptions: any = {
 };
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
 
-  // Dynamic OpenAPI routes
-  registerOpenApiRoutes(app);
-
-  // Swagger UI at /docs, static-first pointing to /openapi.json
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
+  // (duplicate OpenAPI/Swagger mounts removed)
 
  if (process.env.USE_MCP === "true") {
   const { registerMcpTools } = require("./modules/mcpTools");

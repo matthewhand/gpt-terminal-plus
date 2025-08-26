@@ -16,7 +16,7 @@ export function validateCommand(req: Request, res: Response, next: NextFunction)
   
   const cfg = convictConfig();
   const safeGet = (key: string, def: string = ''): string => {
-    try { return String(cfg.get(key) ?? def); } catch { return def; }
+    try { return String((cfg as any).get(key) ?? def); } catch { return def; }
   };
   // Support both new 'security.*' keys and legacy 'policy.*' used in tests/config
   const denyRegex = safeGet('policy.denyRegex', safeGet('security.denyCommandRegex', ''));

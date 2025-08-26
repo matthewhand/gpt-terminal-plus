@@ -3,7 +3,6 @@ import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { FileReadResult } from '../../types/FileReadResult';
 import { ListParams } from '../../types/ListParams';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
@@ -13,10 +12,13 @@ const ssmServerDebug = Debug('app:SsmServerHandler');
 
 export class SsmServerHandler extends AbstractServerHandler {
     private ssmConfig: SsmTargetConfig;
+    private client: SSMClient;
 
     constructor(serverConfig: SsmTargetConfig) {
         super({ hostname: serverConfig.hostname, protocol: 'ssm', code: serverConfig.code || false });
         this.ssmConfig = serverConfig;
+        // Initialize AWS SSM client immediately (tests assert constructor behavior)
+        this.client = new SSMClient({ region: this.ssmConfig.region });
         ssmServerDebug('Initialized SsmServerHandler with config:', serverConfig);
     }
 
@@ -25,61 +27,39 @@ export class SsmServerHandler extends AbstractServerHandler {
         this.serverConfig = { hostname: config.hostname, protocol: 'ssm', code: config.code || false };
     }
 
-    async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
-        ssmServerDebug(`Executing SSM command via AWS SSM: ${command}`);
-        const client = new SSMClient({ region: this.ssmConfig.region });
-        const script = directory ? `cd ${directory} && ${command}` : command;
-        try {
-            const send = await client.send(new SendCommandCommand({
-                InstanceIds: [ this.ssmConfig.instanceId ],
-                DocumentName: 'AWS-RunShellScript',
-                Parameters: { commands: [ script ] }
-            }));
-            const commandId = send.Command?.CommandId as string;
-            const start = Date.now();
-            const defaultSsmTimeout = parseInt(process.env.SSM_TIMEOUT || '300000', 10); // default 5m
-            const maxMs = (timeout && timeout > 0) ? timeout : defaultSsmTimeout;
-            while (true) {
-                const inv = await client.send(new GetCommandInvocationCommand({
-                    CommandId: commandId,
-                    InstanceId: this.ssmConfig.instanceId
-                }));
-                const status = inv.Status;
-                if (status === 'Success' || status === 'Failed' || status === 'Cancelled' || status === 'TimedOut') {
-                    const exitCode = inv.ResponseCode ?? (status === 'Success' ? 0 : 1);
-                    return {
-                        stdout: inv.StandardOutputContent || '',
-                        stderr: inv.StandardErrorContent || '',
-                        error: exitCode !== 0,
-                        exitCode,
-                        success: exitCode === 0
-                    };
-                }
-                if (Date.now() - start > maxMs) {
-                    return { stdout: '', stderr: 'SSM command timeout', error: true, exitCode: 124, success: false };
-                }
-                await new Promise(r => setTimeout(r, 1500));
-            }
-        } catch (e) {
-            ssmServerDebug('SSM execute error: ' + String(e));
-            return { stdout: '', stderr: String(e), error: true, exitCode: 1, success: false };
-        }
+    async executeCommand(command: string, timeout?: number, directory?: string): Promise<any> {
+        return this.runSsmCommand(directory ? `cd ${directory} && ${command}` : command, timeout);
     }
 
-    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
+    async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<any> {
         ssmServerDebug(`Executing SSM code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
-        return { stdout: '', stderr: '', exitCode: 0, success: true, error: false };
+        let cmd: string;
+        switch ((language || '').toLowerCase()) {
+            case 'python':
+            case 'python3':
+                cmd = `python3 -c "${String(code).replace(/(["\\`$])/g, '\\$1').replace(/\n/g, '\\n')}"`;
+                break;
+            case 'bash':
+            case 'sh':
+                cmd = `bash -lc "${String(code).replace(/(["\\`$])/g, '\\$1').replace(/\n/g, '\\n')}"`;
+                break;
+            default:
+                cmd = `sh -lc "${String(code).replace(/(["\\`$])/g, '\\$1').replace(/\n/g, '\\n')}"`;
+        }
+        if (directory) cmd = `cd ${directory} && ${cmd}`;
+        return this.runSsmCommand(cmd, timeout);
     }
 
-    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
+    async createFile(filePath: string, content?: string, backup: boolean = true): Promise<any> {
         const actualContent = content ?? '';
         ssmServerDebug(`Creating file on SSM server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
-        return true;
+        const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
+        const cmd = actualContent ? `printf %s ${quoted} > ${quoted}` : `touch ${quoted}`;
+        return this.runSsmCommand(cmd);
     }
 
-    async readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
-        const content = await this.getFileContent(filePath);
-        return { content, filePath, encoding: 'utf8', truncated: false };
+    async readFile(filePath: string, _options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<any> {
+        return this.getFileContent(filePath);
     }
 
     async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
@@ -87,36 +67,23 @@ export class SsmServerHandler extends AbstractServerHandler {
         return true;
     }
 
-    async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
+    async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<any> {
         ssmServerDebug(`Amending file on SSM server: ${filePath}`);
-        return true;
+        const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
+        const cmd = `printf %s "${String(content).replace(/(["\\`$])/g, '\\$1')}" >> ${quoted}`;
+        return this.runSsmCommand(cmd);
     }
 
-    async getFileContent(filePath: string): Promise<string> {
+    async getFileContent(filePath: string): Promise<any> {
         if (!filePath || typeof filePath !== 'string') {
-            throw new Error('filePath is required');
+            return { success: false, output: '', error: 'filePath is required', exitCode: -1 };
         }
-        const effectiveDirectory = this.serverConfig.directory || '.';
-        const fullPath = `${effectiveDirectory}/${filePath}`;
-        const quoted = `'\'${String(fullPath).replace(/'/g, `'\'`)}''`;
-        const res = await this.executeCommand(`cat ${quoted}`);
-        const ok = (res.exitCode ?? 1) === 0 && !res.error;
-        if (ok) {
-            return res.stdout;
-        }
-        throw new Error(res.stderr || `Failed to read file: ${filePath}`);
+        const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
+        return this.runSsmCommand(`cat ${quoted}`);
     }
 
-    async getSystemInfo(): Promise<SystemInfo> {
-        return {
-            type: 'SsmServer',
-            platform: 'linux',
-            architecture: 'x64',
-            totalMemory: 16384,
-            freeMemory: 8192,
-            uptime: 123456,
-            currentFolder: '/home/user',
-        };
+    async getSystemInfo(): Promise<any> {
+        return this.runSsmCommand('uname -a');
     }
 
     /**
@@ -146,5 +113,47 @@ export class SsmServerHandler extends AbstractServerHandler {
             this.serverConfig.directory = directory;
         }
         return success;
+    }
+
+    private async runSsmCommand(command: string, timeout?: number): Promise<{ success: boolean; output: string; error: string; exitCode: number }> {
+        ssmServerDebug(`Executing SSM command: ${command}`);
+        const client = this.client;
+        try {
+            const send = await client.send(new SendCommandCommand({
+                InstanceIds: [ this.ssmConfig.instanceId ],
+                DocumentName: 'AWS-RunShellScript',
+                Parameters: { commands: [ command ] }
+            }));
+            const commandId = send.Command?.CommandId as string | undefined;
+            if (!commandId) {
+                return { success: false, output: '', error: 'Failed to get command ID from AWS response', exitCode: -1 };
+            }
+            const start = Date.now();
+            const defaultSsmTimeout = parseInt(process.env.SSM_TIMEOUT || '300000', 10); // default 5m
+            const maxMs = (timeout && timeout > 0) ? timeout : defaultSsmTimeout;
+            while (true) {
+                const inv = await client.send(new GetCommandInvocationCommand({
+                    CommandId: commandId,
+                    InstanceId: this.ssmConfig.instanceId
+                }));
+                const status = inv.Status;
+                if (status === 'Success' || status === 'Failed' || status === 'Cancelled' || status === 'TimedOut') {
+                    const exitCode = inv.ResponseCode ?? (status === 'Success' ? 0 : 1);
+                    const stdout = inv.StandardOutputContent || '';
+                    const stderr = inv.StandardErrorContent || '';
+                    if (exitCode === 0) {
+                        return { success: true, output: stdout, error: '', exitCode: 0 };
+                    }
+                    return { success: false, output: '', error: stderr || 'Command failed', exitCode };
+                }
+                if (Date.now() - start > maxMs) {
+                    return { success: false, output: '', error: 'Command execution timed out', exitCode: -1 };
+                }
+                await new Promise(r => setTimeout(r, 150));
+            }
+        } catch (e: any) {
+            ssmServerDebug('SSM execute error: ' + String(e?.message || e));
+            return { success: false, output: '', error: String(e?.message || e), exitCode: -1 };
+        }
     }
 }

@@ -53,11 +53,16 @@ export class SSHConnectionManager {
         let stdout = '';
         let stderr = '';
 
+        // Attach listeners separately to avoid chaining onto stderr object
         stream.on('data', (data: Buffer) => {
           stdout += data.toString();
-        }).stderr.on('data', (data: Buffer) => {
-          stderr += data.toString();
-        }).on('close', (code: number) => {
+        });
+        if (stream.stderr && typeof stream.stderr.on === 'function') {
+          stream.stderr.on('data', (data: Buffer) => {
+            stderr += data.toString();
+          });
+        }
+        stream.on('close', (code: number) => {
           if (code === 0) {
             resolve({ stdout, stderr });
           } else {

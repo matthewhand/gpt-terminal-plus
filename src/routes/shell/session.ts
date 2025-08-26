@@ -446,7 +446,7 @@ import { convictConfig } from '../../config/convictConfig';
 if (process.env.NODE_ENV !== 'test') {
   (function initWatchdog() {
     const cfg = convictConfig();
-    const getLimit = (key: string, def: number) => { try { return Number(cfg.get(key)) || def; } catch { return def; } };
+    const getLimit = (key: string, def: number) => { try { return Number((cfg as any).get(key)) || def; } catch { return def; } };
     const maxDuration = getLimit('limits.maxSessionDurationSec', 7200) * 1000;
     const maxIdle = getLimit('limits.maxSessionIdleSec', 600) * 1000;
     setInterval(async () => {

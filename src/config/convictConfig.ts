@@ -5,6 +5,53 @@ type RedactedValue = string | number | boolean | null | string[] | number[] | bo
 export const convictConfig = () => {
   // Schema with env mappings and defaults
   return convict({
+    // Execution circuit breakers and limits
+    limits: {
+      maxInputChars: {
+        doc: 'Maximum input size for commands (characters)',
+        format: 'nat',
+        default: 10000,
+        env: 'MAX_INPUT_CHARS'
+      },
+      maxOutputChars: {
+        doc: 'Maximum combined stdout+stderr size returned (characters)',
+        format: 'nat',
+        default: 200000,
+        env: 'MAX_OUTPUT_CHARS'
+      },
+      maxSessionDurationSec: {
+        doc: 'Maximum lifetime for a shell session (seconds)',
+        format: 'nat',
+        default: 7200,
+        env: 'MAX_SESSION_DURATION_SEC'
+      },
+      maxSessionIdleSec: {
+        doc: 'Maximum idle time for a shell session (seconds)',
+        format: 'nat',
+        default: 600,
+        env: 'MAX_SESSION_IDLE_SEC'
+      },
+      maxLlmCostUsd: {
+        doc: 'Maximum cumulative LLM cost (USD) before blocking',
+        format: Number,
+        default: 0,
+        env: 'MAX_LLM_COST_USD'
+      },
+      allowTruncation: {
+        doc: 'Allow truncation of outputs when exceeding limits',
+        format: Boolean,
+        default: true,
+        env: 'ALLOW_TRUNCATION'
+      }
+    },
+    shell: {
+      defaultShell: {
+        doc: 'Default shell used for WebSocket and session endpoints',
+        format: String,
+        default: 'bash',
+        env: 'DEFAULT_SHELL'
+      }
+    },
     server: {
       port: {
         doc: 'Port the HTTP server listens on',
@@ -71,6 +118,47 @@ export const convictConfig = () => {
         format: String,
         default: 'localhost',
         env: 'PUBLIC_HOST'
+      }
+    },
+    // Feature flags and execution toggles
+    execution: {
+      shell: {
+        enabled: {
+          doc: 'Enable shell execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'LOCALHOST_ENABLED'
+        }
+      },
+      llm: {
+        enabled: {
+          doc: 'Enable LLM execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'LLM_ENABLED'
+        }
+      }
+    },
+    features: {
+      llmConsole: {
+        doc: 'Enable LLM Console UI and APIs',
+        format: Boolean,
+        default: false,
+        env: 'LLM_CONSOLE_ENABLED'
+      }
+    },
+    files: {
+      enabled: {
+        doc: 'Enable file operation endpoints',
+        format: Boolean,
+        default: true,
+        env: 'FILE_OPS_ENABLED'
+      },
+      consequential: {
+        doc: 'Mark file routes as consequential in OpenAI/OpenAPI metadata',
+        format: Boolean,
+        default: true,
+        env: 'FILE_OPS_CONSEQUENTIAL'
       }
     },
     security: {
@@ -177,6 +265,19 @@ export const convictConfig = () => {
           env: 'INTERPRETER_VERBOSE'
         }
       }
+    },
+    // Optional profiles/settings exposed by configRoutes
+    activeProfile: {
+      doc: 'Active profile name (if any)',
+      format: String,
+      default: '',
+      env: 'ACTIVE_PROFILE'
+    },
+    profiles: {
+      doc: 'Profiles array (opaque structure – managed by profiles.ts)',
+      format: Array,
+      default: [] as any[],
+      env: 'PROFILES_JSON'
     }
   });
 };

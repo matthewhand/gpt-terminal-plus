@@ -1,7 +1,4 @@
 import fs from "fs";
-import { diff_match_patch } from "diff-match-patch";
-
-const dmp = new diff_match_patch();
 
 export interface ApplyFilePatchOptions {
   filePath: string;
@@ -26,16 +23,27 @@ export function applyFilePatch(
 
   const current = fs.readFileSync(filePath, "utf-8");
 
-  // Diff + patch generation
-  const diffs = dmp.diff_main(oldText, newText);
-  dmp.diff_cleanupSemantic(diffs);
-  const patches = dmp.patch_make(oldText, newText, diffs);
+  // Simple, dependency-free approach:
+  // - If current contains oldText, replace the first occurrence with newText.
+  // - Otherwise, fall back to replacing the closest match by line-based heuristic.
+  let patched = current;
+  let results: boolean[] = [];
 
-  // Apply patches fuzzily to current file
-  const [patched, results] = dmp.patch_apply(patches, current);
-
-  if (results.every((r: boolean) => !r)) {
-    return { success: false, error: "Patch could not be applied" };
+  if (oldText && current.includes(oldText)) {
+    patched = current.replace(oldText, newText);
+    results = [true];
+  } else {
+    // Line-based heuristic: find a line that starts with the first non-empty line
+    const oldLines = oldText.split(/\r?\n/).filter(l => l.trim().length > 0);
+    const anchor = oldLines[0] || '';
+    const idx = anchor ? current.indexOf(anchor) : -1;
+    if (idx >= 0) {
+      // Replace that region approximately
+      patched = current.slice(0, idx) + newText + current.slice(idx + (anchor.length));
+      results = [true];
+    } else {
+      return { success: false, error: "Patch could not be applied" };
+    }
   }
 
   if (preview) {

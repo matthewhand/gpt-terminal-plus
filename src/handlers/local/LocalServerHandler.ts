@@ -1,15 +1,21 @@
-import { executeLocalCode } from './actions/executeCode';
-import { createFile as createLocalFile } from './actions/createFile';
+import Debug from 'debug';
 import { AbstractServerHandler } from '../AbstractServerHandler';
-import { LocalServerConfig, ServerConfig } from '../../types/ServerConfig';
+import { ServerConfig } from '../../types/ServerConfig';
 import { SystemInfo } from '../../types/SystemInfo';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
-import listFilesAction from './actions/listFiles';
 import { ListParams } from '../../types/ListParams';
-import { exec } from 'child_process';
-import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
-import Debug from 'debug';
+import { FileReadResult } from '../../types/FileReadResult';
+
+import { executeCommand as executeCommandAction } from './actions/executeCommand';
+import { executeLocalCode as executeCodeAction } from './actions/executeCode';
+import { createFile as createFileAction } from './actions/createFile.local';
+import { readFile as readFileAction } from './actions/readFile.local';
+import { amendFile as amendFileAction } from './actions/amendFile.local';
+import listFilesAction from './actions/listFiles.local';
+import { getSystemInfo as getSystemInfoAction } from './actions/getSystemInfo';
+import { presentWorkingDirectory as presentWorkingDirectoryAction } from './actions/presentWorkingDirectory';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.local';
 
 const localServerDebug = Debug('app:LocalServerHandler');
 
@@ -26,45 +32,24 @@ export class LocalServerHandler extends AbstractServerHandler {
     return await executeCodeAction(code, language, timeout, directory || this.serverConfig.directory || process.cwd());
   }
 
-  async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {
-    return await createFileAction(filePath, content || '', backup, this.serverConfig.directory);
+  async createFile(filePath: string, content: string = '', backup: boolean = true): Promise<boolean> {
+    return await createFileAction(filePath, content, backup, this.serverConfig.directory);
   }
 
   async readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
     return await readFileAction(filePath, this.serverConfig.directory, options);
   }
 
-    /**
-     * Lists files in a specified directory.
-     */
-    async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-        const { directory = '.', limit = 50, offset = 0, orderBy } = params;
-        localServerDebug(`Listing files in directory: ${directory} with limit: ${limit}, offset: ${offset}`);
-        try {
-            const { files, total } = await listFilesAction({ directory, limit, offset, orderBy });
-            return {
-                items: files,
-                total,
-                limit,
-                offset,
-            };
-        } catch (error) {
-            localServerDebug('Error listing files:', error);
-            throw new Error('Failed to list files: ' + (error as Error).message);
-        }
-    }
-
   async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
     return await amendFileAction(filePath, content, options?.backup, this.serverConfig.directory);
   }
 
   async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
-    // Note: directory defaults are now handled by AbstractServerHandler.listFilesWithDefaults()
-    const raw = await listFilesAction(params as any);
+    const { files, total } = await listFilesAction(params);
     return {
-      items: raw.files,
-      total: raw.total,
-      limit: params.limit ?? raw.files.length,
+      items: files,
+      total,
+      limit: params.limit ?? files.length,
       offset: params.offset ?? 0,
     };
   }
@@ -82,7 +67,7 @@ export class LocalServerHandler extends AbstractServerHandler {
   }
 
   async changeDirectory(directory: string): Promise<boolean> {
-    const success = await changeDirectoryAction(directory, this.serverConfig.directory);
+    const success = await changeDirectoryAction(directory, this.serverConfig.directory || process.cwd());
     if (success) {
       this.serverConfig.directory = directory;
     }
