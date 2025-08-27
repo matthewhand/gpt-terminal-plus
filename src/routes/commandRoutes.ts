@@ -1,6 +1,5 @@
 import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
-import { executeLlm } from './command/executeLlm'; // Import the actual executeLlm
 import { executeCode } from './command/executeCode'; // Import the actual executeCode
 import { executeShell } from './command/executeShell'; // Import the actual executeShell
 
@@ -26,55 +25,6 @@ function sseWrite(res: Response, event: string, data: any) {
 }
 
 // Mock handlers for tests (if NODE_ENV === 'test')
-const handleExecute = (req: Request, res: Response) => {
-  logReq('/command/execute-shell', req.body);
-  const cmd: string = String(req.body?.command ?? '');
-
-  let exitCode = 0, stdout = '', stderr = '';
-
-  if (/^\s*echo\s+/.test(cmd)) {
-    stdout = cmd.replace(/^\s*echo\s+/, '').trim();
-  } else if (/^\s*exit\s+(\d+)/.test(cmd)) {
-    exitCode = Number(cmd.match(/^\s*exit\s+(\d+)/)![1]);
-  } else {
-    exitCode = 1; stderr = 'unsupported command in test harness';
-  }
-
-  const result = { stdout, stderr, exitCode, error: exitCode !== 0 };
-  const aiAnalysis = exitCode !== 0 ? { text: 'Mock analysis: command failed.' } : undefined;
-  res.status(200).json({ result, aiAnalysis });
-};
-
-const handleExecuteCode = (req: Request, res: Response) => {
-  logReq('/command/execute-code', req.body);
-  const code: string = String(req.body?.code ?? '');
-  const language: string = String(req.body?.language ?? '');
-
-  let exitCode = 0, stdout = '', stderr = '';
-
-  if (['python', 'python3'].includes(language)) {
-    const m = code.match(/^\s*print\((['"])(.*)\1\)\s*$/);
-    if (m) {
-      stdout = m[2];
-    } else {
-      exitCode = 1; stderr = `mock ${language} runtime error`;
-    }
-  } else if (language === 'bash' && /^\s*exit\s+(\d+)/.test(code)) {
-    exitCode = Number(code.match(/^\s*exit\s+(\d+)/)![1]);
-  } else if (language === 'bash' && /^\s*echo\s+/.test(code)) {
-    stdout = code.replace(/^\s*echo\s+/, '').trim();
-  } else if (language === 'node' && /console\.log\(/.test(code)) {
-    stdout = 'node-ok';
-  } else if (language === 'typescript' && /console\.log\(/.test(code)) {
-    stdout = 'tsnode-ok';
-  } else {
-    exitCode = 1; stderr = `mock ${language} runtime error`;
-  }
-
-  const result = { stdout, stderr, exitCode, error: exitCode !== 0 };
-  const aiAnalysis = exitCode !== 0 ? { text: 'Mock analysis: code failed.' } : undefined;
-  res.status(200).json({ result, aiAnalysis, language, interpreter: language === 'typescript' ? 'ts-node' : language });
-};
 
 const handleExecuteLlm = (req: Request, res: Response) => {
   logReq('/command/execute-llm', req.body);

@@ -124,7 +124,7 @@ async function mockLLMQuery(prompt: string, requestedTools: string[]): Promise<s
       } else {
         return 'No recent sessions found in today\'s activity logs.';
       }
-    } catch (error) {
+    } catch {
       return 'I encountered an error while trying to read the activity logs.';
     }
   }

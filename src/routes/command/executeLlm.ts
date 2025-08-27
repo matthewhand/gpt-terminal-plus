@@ -9,7 +9,6 @@ import { evaluateCommandSafety } from '../../utils/safety';
 import { getExecuteTimeout } from '../../utils/timeout';
 import { spawn } from 'child_process';
 import { enforceInputLimit, clipOutput, getLimitConfig } from '../../utils/limits';
-import { logSessionStep } from '../../utils/activityLogger';
 
 const debug = Debug('app:command:execute-llm');
 let __llmBudgetSpentUsd = 0; // simple in-memory day/session budget tracker
@@ -104,7 +103,7 @@ export const executeLlm = async (req: Request, res: Response) => {
         try {
           child.stdin.write(effectiveInstructions);
           child.stdin.end();
-        } catch (e) {
+        } catch {
           // best-effort; process may have exited early
         }
       }).catch((e: any) => ({ stdout: '', stderr: String(e?.message || e), exitCode: 1 }));
@@ -180,7 +179,6 @@ export const executeLlm = async (req: Request, res: Response) => {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.write(`: connected\n\n`);
-      // eslint-disable-next-line no-console
       if (process.env.NODE_ENV === 'test') console.log('[execute-llm] SSE connected');
       const hbMs = Number(process.env.SSE_HEARTBEAT_MS || (process.env.NODE_ENV === 'test' ? 50 : 15000));
       heartbeat = setInterval(() => { try { res.write(`: keep-alive\n\n`); } catch {} }, isNaN(hbMs)?15000:hbMs);
@@ -198,7 +196,6 @@ export const executeLlm = async (req: Request, res: Response) => {
           { role: 'user', content: user }
         ]
       } as any);
-      // eslint-disable-next-line no-console
       if (process.env.NODE_ENV === 'test') console.log('[execute-llm] LLM responded');
     } catch (e) {
       if (stream) {

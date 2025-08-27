@@ -1,7 +1,7 @@
 import express, { Request } from 'express';
 import { stringify as yamlStringify } from 'yaml';
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';
+// import path from 'path';
 import { convictConfig } from './config/convictConfig';
 
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
@@ -21,15 +21,7 @@ export function getPublicBaseUrl(req?: Request): string {
   return `${protocol}://${host}:${port}`;
 }
 
-/** Attempt to read a static OpenAPI artifact from public/, else return null. */
-function readPublicFileIfExists(filename: 'openapi.json' | 'openapi.yaml'): string | null {
-  try {
-    const filePath = path.resolve(process.cwd(), 'public', filename);
-    return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
-  } catch {
-    return null;
-  }
-}
+// Note: runtime spec is built below; static public OpenAPI file loading removed as unused
 
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
 export function buildSpec(req?: Request) {

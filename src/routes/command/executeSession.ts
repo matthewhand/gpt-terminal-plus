@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { getServerHandler } from '../../utils/getServerHandler';
 import { handleServerError } from '../../utils/handleServerError';
 import { spawn } from 'child_process';
 
@@ -43,7 +42,6 @@ export const executeSession = async (req: Request, res: Response) => {
   }
 
   try {
-    const server = getServerHandler(req);
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Start process

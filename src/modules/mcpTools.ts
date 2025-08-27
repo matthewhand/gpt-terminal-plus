@@ -61,7 +61,7 @@ export const registerMcpTools = (server: McpServer) => {
       filename: z.string(),
       directory: z.string().optional()
     },
-    async ({ filename, directory }: { filename: string, directory?: string }) => {
+    async () => {
       // Assuming executeFile is still needed and exists in the routes
       // If it was removed, this tool will need to be updated or removed.
       // For now, I'll assume it's still there or will be re-added.

@@ -17,7 +17,6 @@ const debug = Debug("app:command:execute-shell");
 export const executeShell = async (req: Request, res: Response) => {
   const { command, args, shell } = req.body || {};
   // Debug aid for tests
-  // eslint-disable-next-line no-console
   console.debug(`[execute-shell] body=${JSON.stringify(req.body || {})}`);
 
   if (!command || typeof command !== 'string') {

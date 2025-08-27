@@ -9,9 +9,7 @@ import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { logSessionStep } from '../../utils/activityLogger';
 import { enforceInputLimit, clipOutput } from '../../utils/limits';
-import Debug from 'debug'; // Added Debug import
-
-const debug = Debug("app:command:execute-code"); // Initialized debug
+// debug logger removed (unused)
 
 /**
  * Function to execute code on the server.

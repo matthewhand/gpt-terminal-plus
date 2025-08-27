@@ -21,7 +21,7 @@ export function registerServersFromConfig(): void {
       console.log(`✅ Registered server from config: ${hostname}`);
       if (hostname === 'localhost') hasLocalhost = true;
     }
-  } catch (err) {
+  } catch {
     console.warn('No local server config found');
   }
   
@@ -52,7 +52,7 @@ export function registerServersFromConfig(): void {
         console.log(`✅ Registered server from config: ${host.hostname}`);
       }
     }
-  } catch (err) {
+  } catch {
     console.warn('No SSH servers config found');
   }
 
@@ -70,7 +70,7 @@ export function registerServersFromConfig(): void {
         console.log(`✅ Registered server from config: ${target.hostname}`);
       }
     }
-  } catch (err) {
+  } catch {
     console.warn('No SSM targets config found');
   }
 }

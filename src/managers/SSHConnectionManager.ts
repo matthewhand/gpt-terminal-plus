@@ -8,7 +8,6 @@ export class SSHConnectionManager {
   private client: Client;
 
   constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { Client: SSHClient } = require('ssh2');
     this.client = new SSHClient();
   }

@@ -12,6 +12,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
+  void _next;
   // Normalize error
   const isErrorObject = err instanceof Error;
   const name = isErrorObject ? err.name : (err && (err.name as string)) || '';

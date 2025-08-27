@@ -1,7 +1,5 @@
 import { Request } from "express";
 import { ServerHandler } from "../types/ServerHandler";
-import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
-import { ServerConfig } from "../types/ServerConfig";
 
 /**
  * Safely gets the server handler from the request.

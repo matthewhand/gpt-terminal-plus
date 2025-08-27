@@ -4,12 +4,11 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
-import { ListParams } from '../../types/ListParams';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
 import Debug from 'debug';
 import fs from 'fs';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
-import { Client } from 'ssh2'; // Added this import
+// import { Client } from 'ssh2';
 
 const sshServerDebug = Debug('app:SshServerHandler');
 
@@ -30,7 +29,6 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH command: ${command}`);
         return new Promise<ExecutionResult>((resolve) => {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const { Client: SSHClient } = require('ssh2');
             const conn = new SSHClient();
             const key = this.sshConfig.privateKeyPath ? fs.readFileSync(this.sshConfig.privateKeyPath, 'utf8') : undefined;
@@ -95,18 +93,21 @@ export class SshServerHandler extends AbstractServerHandler {
         return true;
     }
 
-    async readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
+    async readFile(filePath: string, _options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult> {
+        void _options;
         const content = await this.getFileContent(filePath);
         return { content, filePath, encoding: 'utf8', truncated: false };
     }
 
-    async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
+    async updateFile(filePath: string, _pattern: string, _replacement: string, _options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
         sshServerDebug(`Updating file on SSH server: ${filePath}`);
+        void _pattern; void _replacement; void _options;
         return true;
     }
 
-    async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean> {
+    async amendFile(filePath: string, _content: string, _options?: { backup?: boolean }): Promise<boolean> {
         sshServerDebug(`Amending file on SSH server: ${filePath}`);
+        void _content; void _options;
         return true;
     }
 

@@ -14,7 +14,7 @@ const SESSION_FILE = path.join(process.cwd(), '.sessions.json');
 
 export async function saveSessions(sessions: Map<string, any>): Promise<void> {
   try {
-    const data = Array.from(sessions.entries()).map(([id, session]) => ({
+    const data = Array.from(sessions.entries()).map(([, session]) => ({
       id: session.id,
       shell: session.shell,
       startedAt: session.startedAt,

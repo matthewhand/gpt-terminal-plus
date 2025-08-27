@@ -1,12 +1,6 @@
 import { Request, Response } from 'express';
-import { getServerHandler } from '../../utils/getServerHandler';
 import { handleServerError } from '../../utils/handleServerError';
-import { writeFile, unlink, readFile } from 'fs/promises';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import path from 'path';
-
-const execAsync = promisify(exec);
+import { writeFile, readFile } from 'fs/promises';
 
 /**
  * Apply a structured patch to a file
@@ -24,7 +18,6 @@ export const applyPatch = async (req: Request, res: Response) => {
   }
 
   try {
-    const server = getServerHandler(req);
     
     // Read current file content
     const content = await readFile(file, 'utf8');

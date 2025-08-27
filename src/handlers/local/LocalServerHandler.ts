@@ -1,4 +1,3 @@
-import Debug from 'debug';
 import { AbstractServerHandler } from '../AbstractServerHandler';
 import { ServerConfig } from '../../types/ServerConfig';
 import { SystemInfo } from '../../types/SystemInfo';
@@ -13,7 +12,6 @@ import { createFile as createFileAction } from './actions/createFile.local';
 import { readFile as readFileAction } from './actions/readFile.local';
 import { amendFile as amendFileAction } from './actions/amendFile.local';
 import { updateFile as updateFileAction } from './actions/updateFile.local';
-import listFilesAction from './actions/listFiles.local';
 import fs from 'fs/promises';
 import path from 'path';
 import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
@@ -21,8 +19,6 @@ import { exec as _exec } from 'child_process';
 import { getSystemInfo as getSystemInfoAction } from './actions/getSystemInfo';
 import { presentWorkingDirectory as presentWorkingDirectoryAction } from './actions/presentWorkingDirectory';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.local';
-
-const localServerDebug = Debug('app:LocalServerHandler');
 
 export class LocalServerHandler extends AbstractServerHandler {
   constructor(serverConfig: ServerConfig) {
@@ -50,7 +46,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     if (ok && post && typeof post === 'string' && post.trim() !== '') {
       try {
         const execAny = _exec as unknown as (...args: any[]) => any;
-        execAny(`${post} ${filePath}`, (_err: any) => {});
+        execAny(`${post} ${filePath}`, () => {});
       } catch {/* ignore post-command failures */}
     }
     return ok;

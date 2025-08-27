@@ -9,7 +9,7 @@ const debug = Debug('app:local:getSystemInfo');
 /**
  * Retrieve hardened system information for the local server.
  */
-export async function getSystemInfo(_shell?: string): Promise<SystemInfo> {
+export async function getSystemInfo(): Promise<SystemInfo> {
   try {
     // Prefer parsing from a shell-based probe when available (tests mock this path)
     const execP = promisify(_exec as unknown as (cmd: string, cb: any) => void) as any;

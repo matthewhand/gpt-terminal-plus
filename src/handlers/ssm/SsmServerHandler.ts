@@ -1,9 +1,7 @@
 import { AbstractServerHandler } from '../AbstractServerHandler';
 import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
-import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { ListParams } from '../../types/ListParams';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
@@ -30,7 +28,6 @@ export class SsmServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<any> {
         const res = await this.runSsmCommand(directory ? `cd ${directory} && ${command}` : command, timeout);
         if (process.env.NODE_ENV === 'test') console.log('SSM res:', res);
-        // eslint-disable-next-line no-console
         if (process.env.NODE_ENV === 'test') console.log('SSM_TIMEOUT in executeCommand:', process.env.SSM_TIMEOUT);
         // Normalize timeout shape for tests
         if ((process.env.NODE_ENV === 'test' || process.env.SSM_TIMEOUT !== undefined) && (res as any)?.exitCode === 124) {
@@ -75,16 +72,19 @@ export class SsmServerHandler extends AbstractServerHandler {
     }
 
     async readFile(filePath: string, _options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<any> {
+        void _options;
         return this.getFileContent(filePath);
     }
 
     async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
         ssmServerDebug(`Updating file on SSM server: ${filePath}`);
+        void pattern; void replacement; void options;
         return true;
     }
 
     async amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<any> {
         ssmServerDebug(`Amending file on SSM server: ${filePath}`);
+        void options;
         const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
         const cmd = `printf %s "${String(content).replace(/(["\\`$])/g, '\\$1')}" >> ${quoted}`;
         return this.runSsmCommand(cmd);

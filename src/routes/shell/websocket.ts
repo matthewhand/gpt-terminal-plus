@@ -54,7 +54,7 @@ export function handleShellWebSocket(ws: WebSocket, sessionId?: string): void {
         if (data.type === 'input' && child.stdin) {
           child.stdin.write(data.data);
         }
-      } catch (err) {
+      } catch {
         ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
       }
     });

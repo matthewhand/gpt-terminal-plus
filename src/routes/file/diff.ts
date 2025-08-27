@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { getServerHandler } from '../../utils/getServerHandler';
 import { handleServerError } from '../../utils/handleServerError';
 import { writeFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
@@ -22,8 +21,6 @@ export const applyDiff = async (req: Request, res: Response) => {
   const tempFile = path.join('/tmp', `patch-${Date.now()}.diff`);
 
   try {
-    const server = getServerHandler(req);
-    
     // Write diff to temp file
     await writeFile(tempFile, diff, 'utf8');
 

@@ -43,7 +43,7 @@ router.get('/list', async (req: Request, res: Response) => {
             }
           }
         }
-      } catch (err) {
+      } catch {
         // Date directory doesn't exist
       }
     } else {
@@ -65,11 +65,11 @@ router.get('/list', async (req: Request, res: Response) => {
                 }
               }
             }
-          } catch (err) {
+          } catch {
             // Skip invalid directories
           }
         }
-      } catch (err) {
+      } catch {
         // Activity directory doesn't exist
       }
     }
@@ -186,7 +186,7 @@ async function getSessionSummary(sessionPath: string, date: string, sessionId: s
       stepCount: stepFiles.length,
       types
     };
-  } catch (error) {
+  } catch {
     return {
       sessionId,
       date,
