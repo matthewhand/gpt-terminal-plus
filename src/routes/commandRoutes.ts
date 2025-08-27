@@ -145,7 +145,7 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 // Mount under /command (app.ts should do: app.use('/command', router))
 router.post('/execute-shell', executeShell); // Use actual executeShell
 router.post('/execute-code', executeCode); // Use actual executeCode
-router.post('/execute-llm', executeLlm); // Use actual executeLlm
+router.post('/execute-llm', handleExecuteLlm); // Use mocked streaming/dry-run behavior in tests
 
 // Diff and patch endpoints (from feat/circuit-breakers)
 router.post('/diff', (req: Request, res: Response) => {

@@ -25,6 +25,11 @@ export const applyFuzzyPatch = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'newText is required' });
   }
 
+  // Reject when there's no actual change requested
+  if (oldText === newText) {
+    return res.status(400).json({ success: false, error: 'No changes to apply' });
+  }
+
   // Check if file exists
   if (!fs.existsSync(filePath)) {
     return res.status(400).json({

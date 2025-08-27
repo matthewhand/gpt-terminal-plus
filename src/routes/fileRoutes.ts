@@ -11,6 +11,7 @@ import { amendFile } from './file/amendFile.route';
 
 import { applyDiff } from './file/diff';
 import { applyPatch } from './file/patch';
+import { applyFuzzyPatch } from './file/fuzzyPatch';
 
 const router = express.Router();
 
@@ -97,5 +98,11 @@ router.post('/diff', applyDiff);
  * Body: { filePath: string, search?: string, oldText?: string, replace: string, all?: boolean, startLine?: number, endLine?: number, dryRun?: boolean }
  */
 router.post('/patch', applyPatch);
+
+/**
+ * POST /file/fuzzy-patch
+ * Apply a fuzzy patch using diff-match-patch with optional preview and backup.
+ */
+router.post('/fuzzy-patch', applyFuzzyPatch);
 
 export default router;

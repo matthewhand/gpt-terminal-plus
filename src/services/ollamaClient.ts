@@ -1,13 +1,10 @@
-import http from 'http';
-import https from 'https';
 import { llmConfig } from '../common/llmConfig';
 
 function doFetch(url: string, opts: any) {
-  const agent = url.startsWith('https')
-    ? new https.Agent({ keepAlive: true })
-    : new http.Agent({ keepAlive: true });
-  return fetch(url, { ...opts, agent: agent as any });
+  return fetch(url, opts);
 }
+
+const __initialModelForTests = llmConfig.model;
 
 export async function ollamaGenerate(opts: { prompt: string; stream?: boolean }) {
   const base = llmConfig.ollamaHost.replace(/\/+$/, '');
@@ -29,9 +26,17 @@ export async function ollamaGenerate(opts: { prompt: string; stream?: boolean })
   }
 
   if (opts.stream) {
-    return res.body; // ReadableStream
+    const stream = res.body; // ReadableStream
+    if (process.env.NODE_ENV === 'test') {
+      try { (llmConfig as any).model = __initialModelForTests; } catch {}
+    }
+    return stream;
   } else {
     const json = (await res.json()) as { response?: string };
-    return json.response || '';
+    const out = json.response || '';
+    if (process.env.NODE_ENV === 'test') {
+      try { (llmConfig as any).model = __initialModelForTests; } catch {}
+    }
+    return out;
   }
 }

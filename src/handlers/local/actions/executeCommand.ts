@@ -11,7 +11,8 @@ const DEFAULT_SHELL = process.env.DEFAULT_SHELL || '/bin/bash';
 const MAX_OUTPUT_CHARS = parseInt(process.env.MAX_OUTPUT_CHARS || '', 10) || (() => {
   try { return convictConfig().get('limits.maxOutputChars'); } catch { return 200000; }
 })();
-const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
+// Read USE_EXECFILE dynamically at call time so tests can toggle it
+const shouldUseExecFile = (): boolean => process.env.USE_EXECFILE === 'true';
 
 /**
  * Executes a shell command using either `exec` or `execFile`, depending on the configuration.
@@ -49,7 +50,8 @@ export async function executeCommand(
   executeCommandDebug(`Using shell: ${shell}`);
   executeCommandDebug(`Working directory: ${directory}`);
   executeCommandDebug(`Timeout: ${timeout}`);
-  executeCommandDebug(`Using execFile: ${USE_EXECFILE}`);
+  const useExecFile = shouldUseExecFile();
+  executeCommandDebug(`Using execFile: ${useExecFile}`);
 
   let commandToExecute: string;
   let args: string[] = [];
@@ -71,7 +73,7 @@ export async function executeCommand(
   // Execute the command and return the result
   return new Promise((resolve, reject) => {
     const { exec, execFile } = require('child_process');
-    if (USE_EXECFILE) {
+    if (useExecFile) {
       execFile(command, args, execOptions, (error: any, stdout: string, stderr: string) => {
         executeCommandDebug(`Command executed with execFile. stdout: ${stdout}, stderr: ${stderr}`);
         if (error) {

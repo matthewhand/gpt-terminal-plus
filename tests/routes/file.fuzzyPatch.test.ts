@@ -25,9 +25,10 @@ describe('POST /file/fuzzy-patch', () => {
   let app: express.Application;
   const testDir = path.join(__dirname, '../../tmp-fuzzy');
   const testFile = path.join(testDir, 'file.txt');
+  const token = 'test-token';
 
   beforeAll(() => {
-    process.env.API_TOKEN = 'test-token';
+    process.env.API_TOKEN = token;
     app = makeApp();
     if (!fs.existsSync(testDir)) fs.mkdirSync(testDir, { recursive: true });
   });
@@ -53,6 +54,7 @@ describe('POST /file/fuzzy-patch', () => {
 
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ filePath: testFile, oldText, newText, preview: true })
       .expect(200);
 
@@ -73,6 +75,7 @@ describe('POST /file/fuzzy-patch', () => {
 
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ filePath: testFile, oldText, newText })
       .expect(200);
 
@@ -96,6 +99,7 @@ describe('POST /file/fuzzy-patch', () => {
     const newText = 'b';
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ oldText, newText })
       .expect(400);
     expect(res.body).toHaveProperty('error');
@@ -105,9 +109,9 @@ describe('POST /file/fuzzy-patch', () => {
     const text = fs.readFileSync(testFile, 'utf-8');
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ filePath: testFile, oldText: text, newText: text })
       .expect(400);
     expect(res.body).toHaveProperty('error');
   });
 });
-

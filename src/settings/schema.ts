@@ -33,27 +33,41 @@ export const ExecuteLlmSchema = z.object({
 });
 
 export const SettingsSchema = z.object({
-  server: z.object({
-    port: z.number().default(5004),
-    host: z.string().default('0.0.0.0'),
-    publicBaseUrl: z.string().optional(),
-  }),
-  auth: z.object({
-    apiToken: z.string().default('gtp-token-' + Math.random().toString(36).substring(2)),
-    adminUsername: z.string().default('admin'),
-    adminPassword: z.string().default('admin-' + Math.random().toString(36).substring(2)),
-  }),
-  app: z.object({
-    corsOrigins: z.array(z.string()).default(['*']),
-  }),
-  execution: z.object({
-    shell: ExecuteShellSchema, // Integrated
-    code: ExecuteCodeSchema,   // Integrated
-    llm: ExecuteLlmSchema,     // Integrated
-  }),
-  files: z.object({
-    enabled: z.boolean().default(true),
-  }),
+  server: z
+    .object({
+      port: z.number().default(5004),
+      host: z.string().default('0.0.0.0'),
+      publicBaseUrl: z.string().optional(),
+    })
+    .default({}),
+  auth: z
+    .object({
+      apiToken: z.string().default(
+        'gtp-token-' + Math.random().toString(36).substring(2)
+      ),
+      adminUsername: z.string().default('admin'),
+      adminPassword: z
+        .string()
+        .default('admin-' + Math.random().toString(36).substring(2)),
+    })
+    .default({}),
+  app: z
+    .object({
+      corsOrigins: z.array(z.string()).default(['*']),
+    })
+    .default({}),
+  execution: z
+    .object({
+      shell: ExecuteShellSchema.default({}), // Integrated
+      code: ExecuteCodeSchema.default({}), // Integrated
+      llm: ExecuteLlmSchema.default({}), // Integrated
+    })
+    .default({}),
+  files: z
+    .object({
+      enabled: z.boolean().default(true),
+    })
+    .default({}),
   features: z.object({
     executeShell: ExecuteShellSchema.default({}),
     executeCode: ExecuteCodeSchema.default({}),

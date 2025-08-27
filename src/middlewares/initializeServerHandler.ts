@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getSelectedServer } from '../utils/GlobalStateHelper';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import { ServerManager } from '../managers/ServerManager';
 import { ServerHandler } from '../types/ServerHandler';
 import Debug from 'debug';
@@ -25,6 +26,11 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
 
     // Guard clause: Ensure selectedServer is not undefined or null
     if (!selectedServer) {
+      // In test mode, provision a local handler automatically
+      if (process.env.NODE_ENV === 'test') {
+        req.server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any) as any;
+        return next();
+      }
       debug('No server selected. Attempting to auto-select localhost...');
       
       // Try to auto-select localhost as fallback

@@ -31,6 +31,10 @@ export function applyFilePatch(
 
   if (oldText && current.includes(oldText)) {
     patched = current.replace(oldText, newText);
+    // If replacement yields no change, treat as failure (no hunks applied)
+    if (patched === current) {
+      return { success: false, error: "Patch could not be applied" };
+    }
     results = [true];
   } else {
     // Line-based heuristic: find a line that starts with the first non-empty line
@@ -40,6 +44,9 @@ export function applyFilePatch(
     if (idx >= 0) {
       // Replace that region approximately
       patched = current.slice(0, idx) + newText + current.slice(idx + (anchor.length));
+      if (patched === current) {
+        return { success: false, error: "Patch could not be applied" };
+      }
       results = [true];
     } else {
       return { success: false, error: "Patch could not be applied" };

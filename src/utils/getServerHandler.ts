@@ -11,12 +11,6 @@ import { ServerConfig } from "../types/ServerConfig";
  */
 export const getServerHandler = (req: Request): ServerHandler => {
   let server = (req as any).server as ServerHandler | undefined;
-  if (!server && process.env.NODE_ENV === 'test') {
-    // In tests, auto-provision a LocalServerHandler so routes work standalone
-    const cfg: ServerConfig = { protocol: 'local', hostname: 'localhost', code: false } as any;
-    server = new LocalServerHandler(cfg) as unknown as ServerHandler;
-    (req as any).server = server;
-  }
   if (!server) {
     throw new Error("Server handler not found on request object");
   }

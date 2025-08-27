@@ -5,6 +5,8 @@ type LogPayload = Record<string, any>;
 
 export function logActivity(step: LogPayload): void {
   try {
+    // Silence console logging during tests to avoid jest post-test logging errors
+    if (process.env.NODE_ENV === 'test') return;
     const mode = process.env.LOG_MODE || 'json';
     if (mode === 'pretty') {
       const ts = new Date().toISOString();

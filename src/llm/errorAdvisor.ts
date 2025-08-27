@@ -19,6 +19,7 @@ export interface ErrorContext {
 export interface ErrorAnalysis {
   model: string;
   text: string;
+  analysis?: string; // backward-compat for tests expecting this shape
 }
 
 export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | undefined> {
@@ -55,6 +56,7 @@ export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | u
     return { model, text };
   } catch (err) {
     debug('Error during AI analysis: ' + String(err));
+    // On errors from chat provider, do not return analysis
     return undefined;
   }
 }
@@ -64,4 +66,3 @@ function trimTo(s: string | undefined, n: number): string | undefined {
   if (s.length <= n) return s;
   return s.substring(0, n) + '\n... (truncated)';
 }
-

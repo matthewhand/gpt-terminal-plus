@@ -28,7 +28,7 @@
 6. **Ensure OpenAPI** specs remain current (generated via `npm run build`).
 
 ## Quality and Tooling
-- Run `npm run lint` and `npm test` before committing.
+- Run `npm run lint` and `make test` before committing.
 - `npm run build` emits TypeScript to `dist/` and regenerates OpenAPI files.
 - Keep commit history clean; one logical change per commit.
 - Maintain documentation clarity and architectural simplicity.

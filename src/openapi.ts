@@ -734,22 +734,11 @@ export function buildSpec(req?: Request) {
 /** Register dynamic OpenAPI routes. */
 export function registerOpenAPIRoutes(app: express.Application): void {
   app.get('/openapi.json', (req, res) => {
-    const staticJson = readPublicFileIfExists('openapi.json');
-    if (staticJson) {
-      try {
-        return res.json(JSON.parse(staticJson));
-      } catch {
-        // fall through to dynamic builder if static file is invalid
-      }
-    }
+    // Always serve dynamic spec to ensure freshness in tests and dev
     res.json(buildSpec(req));
   });
 
   app.get('/openapi.yaml', (req, res) => {
-    const staticYaml = readPublicFileIfExists('openapi.yaml');
-    if (staticYaml) {
-      return res.type('application/yaml').send(staticYaml);
-    }
     const yaml = yamlStringify(buildSpec(req));
     res.type('application/yaml').send(yaml);
   });

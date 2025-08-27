@@ -20,12 +20,12 @@ const debug = Debug("app:command:execute-code"); // Initialized debug
  */
 export const executeCode = async (req: Request, res: Response) => {
   const sessionId = `session_${Date.now()}`;
-  const { code, language = 'python' } = req.body;
+  const { code, language } = req.body;
 
   await logSessionStep('executeCode-input', { code, language }, sessionId);
 
-  if (!code) {
-    return res.status(400).json({ error: 'Code is required' });
+  if (typeof code !== 'string' || code.trim() === '' || typeof language !== 'string' || language.trim() === '') {
+    return res.status(400).json({ error: 'Code and language are required.' });
   }
 
   // Circuit breaker: input length
@@ -37,7 +37,14 @@ export const executeCode = async (req: Request, res: Response) => {
   const effectiveCode = (inputCheck as any).truncated ? (inputCheck as any).value : String(code);
 
   try {
-    const server = getServerHandler(req);
+    let server: any;
+    try {
+      server = getServerHandler(req);
+    } catch {
+      const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
+      server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
+      (req as any).server = server;
+    }
 
     // Map language to interpreter and extension
     const map: Record<string, { cmd: string; ext: string }> = {
@@ -68,10 +75,10 @@ export const executeCode = async (req: Request, res: Response) => {
     }
 
     // Check for potential interpreter availability (skip which for npx)
-    const checkResult = interpreterCmd === 'npx'
+    const checkResult: any = interpreterCmd === 'npx'
       ? { exitCode: 0 }
       : await server.executeCommand(`which ${interpreter} || command -v ${interpreter}`);
-    if (checkResult.exitCode !== 0) {
+    if (typeof checkResult.exitCode === 'number' && checkResult.exitCode !== 0) {
       return res.status(400).json({
         error: `Interpreter '${interpreter}' not available`,
         message: `${language} interpreter (${interpreter}) is not installed or not in PATH`,
@@ -87,18 +94,28 @@ export const executeCode = async (req: Request, res: Response) => {
 
     const escapedPath = shellEscape([codePath]);
     const runCmd = interpreterCmd === 'npx'
-      ? `npx -y ts-node -T ${escapedPath}`
+      ? `npx -y ts-node@latest -T ${escapedPath}`
       : `${shellEscape([interpreterCmd])} ${escapedPath}`;
 
     const timeout = getExecuteTimeout('code');
     let result: any;
     try {
-      result = await Promise.race([
-        server.executeCommand(runCmd),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
-        )
-      ]) as any;
+      const execPromise = (async () => {
+        try {
+          return await server.executeCommand(runCmd);
+        } catch (err: any) {
+          return {
+            stdout: String(err?.stdout || ''),
+            stderr: String(err?.stderr || err?.message || ''),
+            exitCode: typeof err?.exitCode === 'number' ? err.exitCode : 1,
+            error: true,
+          };
+        }
+      })();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Code execution timed out after ${timeout}ms`)), timeout)
+      );
+      result = (await Promise.race([execPromise, timeoutPromise])) as any;
     } finally {
       try { await fsp.unlink(codePath); } catch {}
     }
@@ -116,10 +133,11 @@ export const executeCode = async (req: Request, res: Response) => {
     }
 
     const clipped = clipOutput(String(result.stdout || ''), String(result.stderr || ''));
-    const final = { ...result, stdout: clipped.stdout, stderr: clipped.stderr, truncated: !!(result as any).truncated || clipped.truncated, terminated: (result as any).terminated || false };
+    const exitCodeNorm = typeof (result as any).exitCode === 'number' ? (result as any).exitCode : 0;
+    const final = { ...result, exitCode: exitCodeNorm, stdout: clipped.stdout, stderr: clipped.stderr, truncated: !!(result as any).truncated || clipped.truncated, terminated: (result as any).terminated || false };
 
     await logSessionStep('executeCode-output', { result: final, aiAnalysis, language, interpreter }, sessionId);
-    res.json({ result: final, aiAnalysis, language, interpreter });
+    res.status(200).json({ result: final, aiAnalysis, language, interpreter });
 
   } catch (error) {
     await logSessionStep('executeCode-error', { error: error instanceof Error ? error.message : String(error) }, sessionId);

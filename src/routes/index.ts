@@ -5,14 +5,17 @@ import testCommandRouter from './commandRoutes';
 
 /** --- Real command handlers for prod/dev --- */
 import { executeCommand } from './command/executeCommand';
+import { executeShell } from './command/executeShell';
 import { executeCode } from './command/executeCode';
 import { executeFile } from './command/executeFile';
 import { executeLlm } from './command/executeLlm';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
+import activityRoutes from './activityRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
+import llmConsoleRoutes from './llmConsoleRoutes';
 import settingsRoutes from './settingsRoutes';
 
 /** Optional route groups (exist in this repo tree used by tests) */
@@ -40,6 +43,8 @@ export function setupApiRouter(app: express.Application): void {
     // Real command handlers for prod/dev
     const cmd = express.Router();
     cmd.post('/command/execute', executeCommand);
+    console.log('Mounting /command/execute-shell (prod/dev)');
+    cmd.post('/command/execute-shell', executeShell);
     cmd.post('/command/execute-code', executeCode);
     cmd.post('/command/execute-file', executeFile);
     cmd.post('/command/execute-llm', executeLlm);
@@ -47,12 +52,14 @@ export function setupApiRouter(app: express.Application): void {
   }
 
   // ----- Other groups with correct prefixes -----
-  app.use(serverRoutes);
-  app.use(fileRoutes);
+  app.use('/server', serverRoutes);
+  app.use('/activity', activityRoutes);
+  app.use('/file', fileRoutes);
+  app.use('/llm', llmConsoleRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', chatRoutes);
   // settings (redacted view), protected by bearer token
-  app.use(settingsRoutes);
+  app.use('/settings', settingsRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);

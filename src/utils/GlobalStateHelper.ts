@@ -106,7 +106,18 @@ export function getCurrentServerHandler() {
 }
 
 export function clearGlobalState() {
-  state = null;
+  if (state) {
+    // Reset in-place to preserve singleton identity for references held by callers/tests
+    state.selectedServer = '' as any;
+    state.presentWorkingDirectory = '';
+    state.selectedModel = '';
+  } else {
+    state = {
+      selectedServer: '',
+      presentWorkingDirectory: '',
+      selectedModel: '',
+    };
+  }
 }
 
 export default {

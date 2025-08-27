@@ -12,7 +12,7 @@ lint:
 # Test the code
 .PHONY: test
 test:
-	npm test
+	timeout 300 npm test
 
 # Build the code
 .PHONY: build

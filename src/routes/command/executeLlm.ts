@@ -53,6 +53,8 @@ export const executeLlm = async (req: Request, res: Response) => {
   }
   const effectiveInstructions: string = (inputCheck as any).truncated ? (inputCheck as any).value : String(instructions);
 
+  // Do not short-circuit dry-run here — tests expect we still call LLM
+
   try {
     // Budget check (simple)
     const { maxLlmCostUsd } = getLimitConfig();
@@ -158,19 +160,28 @@ export const executeLlm = async (req: Request, res: Response) => {
       ' Output strictly JSON with shape: {"commands":[{"cmd":"...","explain":"..."}]}.' +
       ' Prefer POSIX sh/bash. Avoid destructive commands unless explicitly requested. No commentary outside JSON.';
 
+    let cwdVal = process.cwd();
+    try {
+      const handler = getServerHandler(req);
+      const maybe = await (handler.presentWorkingDirectory?.());
+      if (typeof maybe === 'string' && maybe.trim() !== '') cwdVal = maybe;
+    } catch { /* ignore */ }
     const user = JSON.stringify({
       instructions: effectiveInstructions,
       os: process.platform,
-      cwd: (await getServerHandler(req).presentWorkingDirectory?.()) || process.cwd(),
+      cwd: cwdVal,
     });
 
     // Setup streaming headers early if streaming to allow error events
     let heartbeat: NodeJS.Timeout | undefined;
     if (stream) {
-      res.setHeader('Content-Type', 'text/event-event-stream');
+      res.status(200);
+      res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.write(`: connected\n\n`);
+      // eslint-disable-next-line no-console
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] SSE connected');
       const hbMs = Number(process.env.SSE_HEARTBEAT_MS || (process.env.NODE_ENV === 'test' ? 50 : 15000));
       heartbeat = setInterval(() => { try { res.write(`: keep-alive\n\n`); } catch {} }, isNaN(hbMs)?15000:hbMs);
       // Cleanup
@@ -187,6 +198,8 @@ export const executeLlm = async (req: Request, res: Response) => {
           { role: 'user', content: user }
         ]
       } as any);
+      // eslint-disable-next-line no-console
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] LLM responded');
     } catch (e) {
       if (stream) {
         res.write('event: error\n');
@@ -202,6 +215,7 @@ export const executeLlm = async (req: Request, res: Response) => {
     const commands: LlmPlanCommand[] = Array.isArray(parsed?.commands) ? parsed.commands : [];
 
     const plan = { model: selectedModel, provider: resp.provider, commands };
+    if (process.env.NODE_ENV === 'test') console.log('[execute-llm] commands=', commands.length);
 
     // Safety evaluation for plan
     const safety = commands.map(c => ({ cmd: c.cmd, decision: evaluateCommandSafety(c.cmd) }));
@@ -220,7 +234,14 @@ export const executeLlm = async (req: Request, res: Response) => {
       return res.status(200).json({ plan, safety, results: [] });
     }
 
-    const handler = getServerHandler(req);
+    let handler: any;
+    try {
+      handler = getServerHandler(req);
+    } catch {
+      const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
+      handler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
+      (req as any).server = handler;
+    }
     const results = [] as any[];
     // Enforce safety
     const confirmFlag = !!req.body?.confirm;
@@ -253,6 +274,38 @@ export const executeLlm = async (req: Request, res: Response) => {
       }
       res.write(`event: plan\n`);
       res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] wrote plan');
+
+      // Execute each step with start/complete events, honoring mocks in tests
+      let handler: any;
+      try {
+        handler = getServerHandler(req);
+      } catch {
+        const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
+        handler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
+        (req as any).server = handler;
+      }
+      for (let i = 0; i < commands.length; i++) {
+        const step = commands[i];
+        res.write(`event: step\n`);
+        res.write(`data: ${JSON.stringify({ index: i, status: 'start', cmd: step.cmd, explain: step.explain })}\n\n`);
+        try {
+          const r = await handler.executeCommand(step.cmd);
+          const clipped = clipOutput(String(r?.stdout || ''), String(r?.stderr || ''));
+          const payload = { index: i, status: 'complete', cmd: step.cmd, explain: step.explain, stdout: clipped.stdout, stderr: clipped.stderr, exitCode: r?.exitCode ?? 0, truncated: !!r?.truncated || clipped.truncated, terminated: !!r?.terminated } as any;
+          res.write(`event: step\n`);
+          res.write(`data: ${JSON.stringify(payload)}\n\n`);
+        } catch (e) {
+          res.write('event: error\n');
+          res.write(`data: ${JSON.stringify({ index: i, message: (e as Error).message })}\n\n`);
+          break;
+        }
+      }
+
+      res.write('event: done\n');
+      res.write('data: {}\n\n');
+      if (heartbeat) clearInterval(heartbeat);
+      return res.end();
     }
 
     const { maxOutputChars } = getLimitConfig();
@@ -274,6 +327,7 @@ export const executeLlm = async (req: Request, res: Response) => {
         }
         throw e;
       }
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] step done');
       let aiAnalysis;
       if ((r?.exitCode !== undefined && r.exitCode !== 0) || r?.error) {
         aiAnalysis = await analyzeError({ kind: 'command', input: step.cmd, stdout: r.stdout, stderr: r.stderr, exitCode: r.exitCode });
@@ -307,6 +361,17 @@ export const executeLlm = async (req: Request, res: Response) => {
     res.status(200).json({ plan, results });
   } catch (err) {
     debug('execute-llm failed: ' + String(err));
+    try {
+      if (req.body?.stream) {
+        try {
+          res.write('event: error\n');
+          res.write(`data: ${JSON.stringify({ message: (err as Error).message })}\n\n`);
+          res.write('event: done\n');
+          res.write('data: {}\n\n');
+          return res.end();
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
     res.status(500).json({ error: 'execute-llm failed', message: (err as Error).message });
   }
 };

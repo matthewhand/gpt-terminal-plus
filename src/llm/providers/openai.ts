@@ -19,14 +19,17 @@ function getClient(): OpenAI {
 }
 
 export const toOpenAIChatMessages = (messages: ChatMessage[]) =>
-  messages.map(m => ({ role: m.role, content: m.content }));
+  messages.map((m) => ({
+    role: (m.role ?? 'user'),
+    content: m.content,
+  }));
 
 export async function chatWithOpenAI(req: ChatRequest): Promise<ChatResponse> {
   const providerModel = req.model;
   debug('POST model=' + providerModel);
   const res = await getClient().chat.completions.create({
     model: providerModel,
-    messages: toOpenAIChatMessages(req.messages),
+    messages: toOpenAIChatMessages(req.messages) as any,
     stream: false,
   });
   const choice = res.choices[0]?.message;
@@ -44,7 +47,7 @@ export async function* chatWithOpenAIStream(req: ChatRequest): AsyncGenerator<st
   debug('STREAM POST model=' + providerModel);
   const stream = await getClient().chat.completions.create({
     model: providerModel,
-    messages: toOpenAIChatMessages(req.messages),
+    messages: toOpenAIChatMessages(req.messages) as any,
     stream: true,
   });
   for await (const chunk of stream as any) {

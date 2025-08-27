@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "sess-1756329324186",
+    "shell": "bash",
+    "startedAt": "2025-08-27T21:15:24.186Z",
+    "lastActivity": "2025-08-27T21:15:24.186Z",
+    "status": "running"
+  }
+]
