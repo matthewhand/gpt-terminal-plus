@@ -60,14 +60,14 @@ export class LocalServerHandler extends AbstractServerHandler {
     return await amendFileAction(filePath, content, options?.backup, this.serverConfig.directory);
   }
 
-  async listFiles(params: ListParams): Promise<PaginatedResponse<string>> {
+  async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const directory = params.directory ?? '.';
     const limit = typeof params.limit === 'number' ? params.limit : 10;
     const offset = typeof params.offset === 'number' ? params.offset : 0;
     const recursive = !!params.recursive;
     const typeFilter = params.typeFilter; // 'files' | 'folders' | undefined
 
-    const items: string[] = [];
+    const items: { name: string; isDirectory: boolean }[] = [];
     const walk = async (dirAbs: string, relPrefix = ''): Promise<void> => {
       const entries = await fs.readdir(dirAbs, { withFileTypes: true });
       for (const entry of entries) {
@@ -75,7 +75,7 @@ export class LocalServerHandler extends AbstractServerHandler {
         const rel = relPrefix ? path.join(relPrefix, entry.name) : entry.name;
         const isDir = entry.isDirectory();
         if (!typeFilter || (typeFilter === 'folders' && isDir) || (typeFilter === 'files' && !isDir)) {
-          items.push(rel);
+          items.push({ name: rel, isDirectory: isDir });
         }
         if (recursive && isDir) {
           await walk(full, rel);
@@ -84,13 +84,13 @@ export class LocalServerHandler extends AbstractServerHandler {
     };
 
     await walk(directory);
-    items.sort((a, b) => a.localeCompare(b));
+    items.sort((a, b) => a.name.localeCompare(b.name));
     const total = items.length;
     const paged = items.slice(offset, offset + limit);
     return { items: paged, total, limit, offset };
   }
 
-  async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<string>> {
+  async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const directory = params.directory && String(params.directory).trim() !== '' ? String(params.directory) : '.';
     const limit = typeof params.limit === 'number' && params.limit > 0 ? params.limit : 100;
     const offset = typeof params.offset === 'number' && params.offset >= 0 ? params.offset : 0;
