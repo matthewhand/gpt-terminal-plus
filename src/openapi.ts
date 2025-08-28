@@ -3,6 +3,134 @@ import { stringify as yamlStringify } from 'yaml';
 // import fs from 'fs';
 // import path from 'path';
 import { convictConfig } from './config/convictConfig';
+import { listExecutors } from './utils/executors';
+
+function buildExecutorPaths(cfg: any) {
+  const execMode = (cfg as any).get('executors.exposureMode') as string;
+  const includeGeneric = execMode === 'generic' || execMode === 'both';
+  const includeSpecific = execMode === 'specific' || execMode === 'both';
+  const paths: Record<string, any> = {};
+  if (includeGeneric) {
+    paths['/command/execute-shell'] = {
+      post: {
+        operationId: 'executeShell',
+        summary: 'Execute a command using configured shell (generic)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { command: { type: 'string' }, args: { type: 'array', items: { type: 'string' } }, shell: { type: 'string' } },
+                required: ['command'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Execution complete',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    result: { $ref: '#/components/schemas/ExecutionResult' },
+                    aiAnalysis: { type: 'object' },
+                  },
+                  required: ['result'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] as any[] }],
+      },
+    };
+  }
+  if (includeSpecific) {
+    const execs = listExecutors();
+    for (const ex of execs) {
+      const pathKey = `/command/execute-${ex.name}`;
+      if (ex.kind === 'shell') {
+        paths[pathKey] = {
+          post: {
+            operationId: `execute_${ex.name}`,
+            summary: `Execute a ${ex.name} command`,
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { command: { type: 'string' }, args: { type: 'array', items: { type: 'string' } } },
+                    required: ['command'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'Execution complete',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        result: { $ref: '#/components/schemas/ExecutionResult' },
+                        aiAnalysis: { type: 'object' },
+                      },
+                      required: ['result'],
+                    },
+                  },
+                },
+              },
+            },
+            security: [{ bearerAuth: [] as any[] }],
+          },
+        };
+      } else {
+        paths[pathKey] = {
+          post: {
+            operationId: `execute_${ex.name}`,
+            summary: `Execute a ${ex.name} snippet`,
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { code: { type: 'string' }, timeoutMs: { type: 'integer' } },
+                    required: ['code'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'Execution complete',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        result: { $ref: '#/components/schemas/ExecutionResult' },
+                        aiAnalysis: { type: 'object' },
+                      },
+                      required: ['result'],
+                    },
+                  },
+                },
+              },
+            },
+            security: [{ bearerAuth: [] as any[] }],
+          },
+        };
+      }
+    }
+  }
+  return paths;
+}
 
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
 export function getPublicBaseUrl(req?: Request): string {
@@ -26,7 +154,8 @@ export function getPublicBaseUrl(req?: Request): string {
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
 export function buildSpec(req?: Request) {
   const baseUrl = getPublicBaseUrl(req);
-  const filesConsequential = convictConfig().get('files.consequential'); // Get files.consequential from config
+  const cfg = convictConfig();
+  const filesConsequential = (cfg as any).get('files.consequential'); // Get files.consequential from config
 
   return {
     openapi: '3.1.0',
@@ -78,122 +207,91 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
-      '/command/execute': {
-        post: {
-          operationId: 'executeCommand',
-          summary: 'Execute using first available mode',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { command: { type: 'string' } },
-                  required: ['command'],
-                },
-              },
-            },
-          },
+      ...buildExecutorPaths(cfg),
+      
+      '/command/executors': {
+        get: {
+          operationId: 'listExecutors',
+          summary: 'List available executors (bash, python, etc.)',
           responses: {
             200: {
-              description: 'Execution complete',
+              description: 'OK',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
+                      executors: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            enabled: { type: 'boolean' },
+                            cmd: { type: 'string' },
+                            args: { type: 'array', items: { type: 'string' } },
+                            kind: { type: 'string', enum: ['shell','code'] }
+                          }
+                        }
+                      }
                     },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
+                    required: ['executors']
+                  }
+                }
+              }
+            }
           },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
-      '/command/execute-code': {
+      '/command/executors/{name}/toggle': {
         post: {
-          operationId: 'executeCode',
-          summary: 'Execute a code snippet',
+          operationId: 'toggleExecutor',
+          summary: 'Enable or disable an executor',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
           requestBody: {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    language: { type: 'string' },
-                    code: { type: 'string' },
-                    timeoutMs: { type: 'integer' },
-                  },
-                  required: ['language', 'code'],
-                },
-              },
-            },
+                schema: { type: 'object', properties: { enabled: { type: 'boolean' } }, required: ['enabled'] }
+              }
+            }
           },
-          responses: {
-            200: {
-              description: 'Execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
-                    },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
-          },
+          responses: { 200: { description: 'OK' }, 404: { description: 'Not found' }, 400: { description: 'Bad request' } },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
-      '/command/execute-file': {
+      '/command/executors/{name}/test': {
         post: {
-          operationId: 'executeFile',
-          summary: 'Execute a file present on the server/target (deprecated)',
-          deprecated: true,
+          operationId: 'testExecutor',
+          summary: 'Run a lightweight version command to validate executor',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
+          responses: { 200: { description: 'OK' }, 404: { description: 'Not found' }, 409: { description: 'Disabled' } },
+          security: [{ bearerAuth: [] as any[] }],
+        }
+      },
+      '/command/executors/{name}/update': {
+        post: {
+          operationId: 'updateExecutor',
+          summary: 'Update executor command and args',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
           requestBody: {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    filename: { type: 'string' },
-                    directory: { type: 'string' },
-                    timeoutMs: { type: 'integer' },
-                  },
-                  required: ['filename'],
-                },
-              },
-            },
+                schema: { type: 'object', properties: { cmd: { type: 'string' }, args: { type: 'array', items: { type: 'string' } } } }
+              }
+            }
           },
-          responses: {
-            200: {
-              description: 'Execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
-                    },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
-          },
+          responses: { 200: { description: 'OK' }, 400: { description: 'Bad request' } },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
       '/command/execute-llm': {
         post: {
@@ -504,178 +602,7 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
-      '/shell/session/start': {
-        post: {
-          operationId: 'startShellSession',
-          summary: 'Start a new persistent shell session',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    shell: { type: 'string' },
-                    env: { type: 'object' },
-                  },
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: 'Session started successfully',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      id: { type: 'string' },
-                      startedAt: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
-      '/shell/session/{id}/exec': {
-        post: {
-          operationId: 'executeShellSessionCommand',
-          summary: 'Execute command inside existing session',
-          parameters: [
-            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-          ],
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    command: { type: 'string' },
-                  },
-                  required: ['command'],
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: 'Command executed successfully',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      stdout: { type: 'string' },
-                      stderr: { type: 'string' },
-                      exitCode: { type: 'integer' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
-      '/shell/session/{id}/stop': {
-        post: {
-          operationId: 'stopShellSession',
-          summary: 'Stop a persistent shell session',
-          parameters: [
-            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-          ],
-          responses: {
-            200: {
-              description: 'Session stopped successfully',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      success: { type: 'boolean' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
-      '/shell/session/list': {
-        get: {
-          operationId: 'listShellSessions',
-          summary: 'List active shell sessions',
-          responses: {
-            200: {
-              description: 'List of active sessions',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      sessions: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'string' },
-                            shell: { type: 'string' },
-                            startedAt: { type: 'string' },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
-      '/shell/session/{id}/logs': {
-        get: {
-          operationId: 'getShellSessionLogs',
-          summary: 'Fetch logs from a shell session',
-          parameters: [
-            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
-            { name: 'since', in: 'query', required: false, schema: { type: 'string' } },
-          ],
-          responses: {
-            200: {
-              description: 'Session logs',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      logs: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            timestamp: { type: 'string' },
-                            command: { type: 'string' },
-                            stdout: { type: 'string' },
-                            stderr: { type: 'string' },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
+      
       '/settings': {
         get: {
           operationId: 'getSettings',

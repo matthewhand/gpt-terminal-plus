@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Debug from "debug";
 import shellEscape from "shell-escape";
 import { handleServerError } from "../../utils/handleServerError";
+import { convictConfig } from "../../config/convictConfig";
 import { getServerHandler } from "../../utils/getServerHandler";
 import { analyzeError } from "../../llm/errorAdvisor";
 import { getPresentWorkingDirectory } from "../../utils/GlobalStateHelper";
@@ -28,8 +29,20 @@ export const executeShell = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Command is required' });
   }
 
-  // If a shell was requested, enforce allow-list if configured
+  // If a shell was requested, enforce executors-enabled and optional env allow-list
   if (typeof shell === 'string') {
+    try {
+      const cfg = convictConfig();
+      const ex = (cfg as any).get('executors');
+      const enabledShells = new Set<string>();
+      if (ex?.bash?.enabled) enabledShells.add('bash');
+      if (ex?.zsh?.enabled) enabledShells.add('zsh');
+      if (ex?.powershell?.enabled) { enabledShells.add('powershell'); enabledShells.add('pwsh'); }
+      if (enabledShells.size > 0 && !enabledShells.has(shell)) {
+        return res.status(403).json({ error: `Shell '${shell}' is disabled` });
+      }
+    } catch { /* fallback to env allow-list only */ }
+
     const raw = process.env.SHELL_ALLOWED;
     if (raw !== undefined) {
       const allowed = raw.split(',').map(s => s.trim()).filter(Boolean);
@@ -62,7 +75,24 @@ export const executeShell = async (req: Request, res: Response) => {
       const cwd = typeof (server as any)?.serverConfig?.directory === 'string'
         ? (server as any).serverConfig.directory
         : process.cwd();
-      result = await executeLocalCommand(cmd, 0, cwd, shell);
+      // Per-executor timeout if configured
+      let timeoutMs = 0;
+      try {
+        const cfg = convictConfig();
+        const key = ((): string => {
+          const s = String(shell).toLowerCase();
+          if (s === 'pwsh') return 'executors.powershell.timeoutMs';
+          if (s === 'powershell') return 'executors.powershell.timeoutMs';
+          if (s === 'bash') return 'executors.bash.timeoutMs';
+          if (s === 'zsh') return 'executors.zsh.timeoutMs';
+          return '';
+        })();
+        if (key) {
+          const v = (cfg as any).get(key);
+          if (typeof v === 'number' && v > 0) timeoutMs = v;
+        }
+      } catch { /* ignore */ }
+      result = await executeLocalCommand(cmd, timeoutMs, cwd, shell);
     } else {
       result = await server.executeCommand(cmd);
     }

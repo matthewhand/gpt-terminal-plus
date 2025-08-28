@@ -2,9 +2,12 @@ import convict from 'convict';
 
 type RedactedValue = string | number | boolean | null | string[] | number[] | boolean[] | Record<string, unknown>;
 
+let __singletonCfg: any | null = null;
+
 export const convictConfig = () => {
+  if (__singletonCfg) return __singletonCfg;
   // Schema with env mappings and defaults
-  return convict({
+  __singletonCfg = convict({
     // Execution circuit breakers and limits
     limits: {
       maxInputChars: {
@@ -137,6 +140,45 @@ export const convictConfig = () => {
           default: true,
           env: 'LLM_ENABLED'
         }
+      }
+    },
+    // Configurable executors/runtimes
+    executors: {
+      exposureMode: {
+        doc: 'Which execution endpoints to expose in OpenAPI: generic (execute-shell), specific (execute-<name>), both, or none',
+        format: ['generic','specific','both','none'],
+        default: 'generic',
+        env: 'EXEC_EXPOSURE_MODE'
+      },
+      bash: {
+        enabled: { doc: 'Enable bash executor', format: Boolean, default: true, env: 'EXEC_BASH_ENABLED' },
+        cmd: { doc: 'Command to run bash', format: String, default: 'bash', env: 'EXEC_BASH_CMD' },
+        args: { doc: 'Default args for bash', format: Array, default: [] as any[], env: 'EXEC_BASH_ARGS' },
+        timeoutMs: { doc: 'Timeout for bash commands', format: 'nat', default: 0, env: 'EXEC_BASH_TIMEOUT_MS' }
+      },
+      zsh: {
+        enabled: { doc: 'Enable zsh executor', format: Boolean, default: false, env: 'EXEC_ZSH_ENABLED' },
+        cmd: { doc: 'Command to run zsh', format: String, default: 'zsh', env: 'EXEC_ZSH_CMD' },
+        args: { doc: 'Default args for zsh', format: Array, default: [] as any[], env: 'EXEC_ZSH_ARGS' },
+        timeoutMs: { doc: 'Timeout for zsh commands', format: 'nat', default: 0, env: 'EXEC_ZSH_TIMEOUT_MS' }
+      },
+      powershell: {
+        enabled: { doc: 'Enable PowerShell executor', format: Boolean, default: false, env: 'EXEC_POWERSHELL_ENABLED' },
+        cmd: { doc: 'Command to run PowerShell (pwsh or powershell)', format: String, default: 'pwsh', env: 'EXEC_POWERSHELL_CMD' },
+        args: { doc: 'Default args for PowerShell', format: Array, default: ['-NoLogo','-NonInteractive','-Command'] as any[], env: 'EXEC_POWERSHELL_ARGS' },
+        timeoutMs: { doc: 'Timeout for PowerShell commands', format: 'nat', default: 0, env: 'EXEC_POWERSHELL_TIMEOUT_MS' }
+      },
+      python: {
+        enabled: { doc: 'Enable python executor', format: Boolean, default: true, env: 'EXEC_PYTHON_ENABLED' },
+        cmd: { doc: 'Python interpreter', format: String, default: 'python3', env: 'EXEC_PYTHON_CMD' },
+        args: { doc: 'Default args for python', format: Array, default: [] as any[], env: 'EXEC_PYTHON_ARGS' },
+        timeoutMs: { doc: 'Timeout for Python code execution', format: 'nat', default: 0, env: 'EXEC_PYTHON_TIMEOUT_MS' }
+      },
+      typescript: {
+        enabled: { doc: 'Enable TypeScript executor', format: Boolean, default: false, env: 'EXEC_TS_ENABLED' },
+        cmd: { doc: 'TypeScript runner', format: String, default: 'npx', env: 'EXEC_TS_CMD' },
+        args: { doc: 'Default args for TS runner', format: Array, default: ['-y','ts-node@latest','-T'] as any[], env: 'EXEC_TS_ARGS' },
+        timeoutMs: { doc: 'Timeout for TS code execution', format: 'nat', default: 0, env: 'EXEC_TS_TIMEOUT_MS' }
       }
     },
     features: {
@@ -280,6 +322,49 @@ export const convictConfig = () => {
       env: 'PROFILES_JSON'
     }
   });
+  // Auto-detect common executors on first init (skip during tests to keep determinism)
+  try {
+    if (process.env.NODE_ENV !== 'test') {
+      const { detectSystemExecutors } = require('../utils/executorDetect');
+      const detected = detectSystemExecutors();
+
+      // Helper to only set when env var not explicitly provided
+      const ensure = (envName: string | undefined, setFn: () => void) => {
+        if (!envName || process.env[envName] === undefined) setFn();
+      };
+      const schema = (__singletonCfg as any).getSchema();
+      const envOf = (path: string): string | undefined => {
+        const segs = path.split('.');
+        let node: any = schema.properties;
+        for (const s of segs) {
+          node = node?.[s] || node?.properties?.[s];
+        }
+        return node?.env;
+      };
+
+      // bash
+      ensure(envOf('executors.bash.enabled'), () => (__singletonCfg as any).set('executors.bash.enabled', !!detected.bash?.available));
+      if (detected.bash?.cmd) ensure(envOf('executors.bash.cmd'), () => (__singletonCfg as any).set('executors.bash.cmd', detected.bash.cmd));
+      // zsh
+      if (detected.zsh?.available) ensure(envOf('executors.zsh.enabled'), () => (__singletonCfg as any).set('executors.zsh.enabled', true));
+      if (detected.zsh?.cmd) ensure(envOf('executors.zsh.cmd'), () => (__singletonCfg as any).set('executors.zsh.cmd', detected.zsh.cmd));
+      // powershell (prefer pwsh)
+      if (detected.pwsh?.available || detected.powershell?.available) {
+        ensure(envOf('executors.powershell.enabled'), () => (__singletonCfg as any).set('executors.powershell.enabled', true));
+        const psCmd = detected.pwsh?.cmd || detected.powershell?.cmd || 'pwsh';
+        ensure(envOf('executors.powershell.cmd'), () => (__singletonCfg as any).set('executors.powershell.cmd', psCmd));
+      }
+      // python (prefer python3)
+      if (detected.python3?.available || detected.python?.available) {
+        ensure(envOf('executors.python.cmd'), () => (__singletonCfg as any).set('executors.python.cmd', detected.python3?.cmd || detected.python?.cmd || 'python3'));
+        // keep enabled default true unless explicitly disabled
+      }
+    }
+  } catch (e) {
+    // Detection failures should never crash boot
+    console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
+  }
+  return __singletonCfg;
 };
 
 /**

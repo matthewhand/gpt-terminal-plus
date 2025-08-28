@@ -8,6 +8,7 @@ import { promises as fsp } from 'fs';
 import shellEscape from 'shell-escape';
 import { analyzeError } from '../../llm/errorAdvisor';
 import { logSessionStep } from '../../utils/activityLogger';
+import { convictConfig } from '../../config/convictConfig';
 import { enforceInputLimit, clipOutput } from '../../utils/limits';
 // debug logger removed (unused)
 
@@ -95,7 +96,24 @@ export const executeCode = async (req: Request, res: Response) => {
       ? `npx -y ts-node@latest -T ${escapedPath}`
       : `${shellEscape([interpreterCmd])} ${escapedPath}`;
 
-    const timeout = getExecuteTimeout('code');
+    // Resolve timeout preference: per-executor > body.timeoutMs > generic code timeout
+    const cfg = convictConfig();
+    const execKey = ((): string | null => {
+      const lang = String(language || '').toLowerCase();
+      if (lang === 'python' || lang === 'python3') return 'executors.python.timeoutMs';
+      if (lang === 'typescript' || lang === 'ts' || lang === 'ts-node') return 'executors.typescript.timeoutMs';
+      return null;
+    })();
+    let timeout = getExecuteTimeout('code');
+    if (execKey) {
+      try {
+        const v = (cfg as any).get(execKey);
+        if (typeof v === 'number' && v > 0) timeout = v;
+      } catch { /* ignore */ }
+    }
+    if (typeof (req.body as any)?.timeoutMs === 'number' && (req.body as any).timeoutMs > 0) {
+      timeout = (req.body as any).timeoutMs;
+    }
     let result: any;
     try {
       const execPromise = (async () => {

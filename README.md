@@ -62,3 +62,8 @@ Package scripts of interest
 Notes
 - When deploying behind a proxy, set `PUBLIC_BASE_URL` to ensure OpenAPI `servers[0].url` is correct
 - Do not log secrets; examples use placeholders like `${OPENAI_API_KEY}`
+
+Executors (platform-aware starter config)
+- The server auto-detects common shells and interpreters on startup (except in tests) and seeds executor settings accordingly.
+- Use the capabilities and toggle endpoints under `/command/executors` to inspect and update executors at runtime.
+- See docs/EXECUTORS.md for full details on exposure modes (generic vs. specific endpoints), environment overrides, and update APIs.

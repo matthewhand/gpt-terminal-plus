@@ -29,14 +29,7 @@ describe('Edge Cases and Error Handling', () => {
     await expect(createSSHSession('invalid.host')).rejects.toThrow('Spawn failed');
   });
 
-  test('should handle malformed JSON in session persistence', async () => {
-    const { loadSessions } = require('../../utils/sessionPersistence');
-    const fs = require('fs/promises');
-    fs.readFile.mockResolvedValue('invalid json');
-    
-    const sessions = await loadSessions();
-    expect(sessions).toEqual([]);
-  });
+  // Session persistence tests removed alongside session feature from main branch
 
   test('should handle process kill failures gracefully', () => {
     const mockProcess = {
