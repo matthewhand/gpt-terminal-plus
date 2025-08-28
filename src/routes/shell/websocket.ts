@@ -1,6 +1,5 @@
 // Minimal WS typing to avoid dependency on @types/ws
 // and keep build portable in environments without DOM lib
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const WS: any = require('ws');
 import { spawn } from 'child_process';
 import { convictConfig } from '../../config/convictConfig';

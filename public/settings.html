@@ -120,6 +120,25 @@
         <pre class="raw" id="rawJson"></pre>
       </details>
     </section>
+
+    <section id="executorsPanel" class="panel" hidden>
+      <h3 style="margin-top: 0;">Executors</h3>
+      <div class="controls">
+        <label>Exposure Mode:
+          <select id="exposureMode">
+            <option value="generic">generic (execute-shell)</option>
+            <option value="specific">specific (execute-&lt;name&gt;)</option>
+            <option value="both">both</option>
+            <option value="none">none</option>
+          </select>
+        </label>
+        <button id="saveExposure">Save</button>
+        <span class="spacer"></span>
+        <button id="reloadExecutors" class="secondary">Reload</button>
+      </div>
+      <div id="executorsStatus" class="status"></div>
+      <div id="executors"></div>
+    </section>
   </main>
 
   <script>
@@ -234,9 +253,137 @@
           setStatus('Loaded.', 'ok');
           content.hidden = false;
           saveTokenMaybe();
+          await loadExecutors();
         } catch (err) {
           setStatus('Network error: ' + (err && err.message ? err.message : err), 'error');
         }
+      }
+
+      async function loadExecutors() {
+        const token = tokenInput.value.trim();
+        const setExecStatus = (msg, cls) => {
+          const el = document.getElementById('executorsStatus');
+          el.textContent = msg || '';
+          el.className = 'status' + (cls ? ' ' + cls : '');
+        };
+        setExecStatus('Loading executors...', '');
+        const panel = document.getElementById('executorsPanel');
+        const listEl = document.getElementById('executors');
+        listEl.innerHTML = '';
+        try {
+          const res = await fetch('/command/executors', { headers: { 'Authorization': 'Bearer ' + token } });
+          if (!res.ok) {
+            setExecStatus('Failed to load executors: ' + res.status, 'error');
+            return;
+          }
+          const payload = await res.json();
+          const execs = payload.executors || [];
+
+          // Render each executor row
+          execs.forEach((ex) => {
+            const row = document.createElement('div');
+            row.className = 'grid';
+
+            const left = document.createElement('div');
+            left.innerHTML = '<strong>' + ex.name + '</strong> <span class="badge">' + ex.kind + '</span>';
+
+            const enabledBox = document.createElement('div');
+            enabledBox.innerHTML = '<label><input type="checkbox" ' + (ex.enabled ? 'checked' : '') + ' /> Enabled</label>';
+            const enabledInput = enabledBox.querySelector('input');
+            enabledInput.addEventListener('change', async () => {
+              try {
+                await fetch('/command/executors/' + ex.name + '/toggle', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({ enabled: enabledInput.checked })
+                });
+                setExecStatus('Updated executor ' + ex.name, 'ok');
+              } catch (e) { setExecStatus('Failed to toggle: ' + e.message, 'error'); }
+            });
+
+            const cmdBox = document.createElement('div');
+            cmdBox.innerHTML = '<label>cmd: <input type="text" value="' + (ex.cmd || '') + '" /></label>';
+            const cmdInput = cmdBox.querySelector('input');
+
+            const argsBox = document.createElement('div');
+            argsBox.innerHTML = '<label>args: <input type="text" value="' + (ex.args || []).join(' ') + '" placeholder="space separated" /></label>';
+            const argsInput = argsBox.querySelector('input');
+
+            const actions = document.createElement('div');
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = 'Save';
+            saveBtn.addEventListener('click', async () => {
+              const args = argsInput.value.trim() ? argsInput.value.trim().split(/\s+/) : [];
+              try {
+                await fetch('/command/executors/' + ex.name + '/update', {
+                  method: 'POST',
+                  headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ cmd: cmdInput.value, args })
+                });
+                setExecStatus('Saved executor ' + ex.name, 'ok');
+              } catch (e) { setExecStatus('Failed to save: ' + e.message, 'error'); }
+            });
+            const testBtn = document.createElement('button');
+            testBtn.textContent = 'Test';
+            testBtn.className = 'secondary';
+            testBtn.addEventListener('click', async () => {
+              try {
+                const r = await fetch('/command/executors/' + ex.name + '/test', {
+                  method: 'POST', headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const body = await r.json();
+                setExecStatus('Test ' + ex.name + ': status=' + r.status + ' exit=' + (body.status ?? 'n/a'), r.ok ? 'ok' : 'error');
+              } catch (e) { setExecStatus('Failed to test: ' + e.message, 'error'); }
+            });
+            actions.appendChild(saveBtn);
+            actions.appendChild(testBtn);
+
+            row.appendChild(left);
+            row.appendChild(enabledBox);
+            row.appendChild(cmdBox);
+            row.appendChild(argsBox);
+            row.appendChild(actions);
+            listEl.appendChild(row);
+          });
+
+          // Load exposure mode via /settings redacted config
+          try {
+            const res2 = await fetch('/settings', { headers: { 'Authorization': 'Bearer ' + token } });
+            if (res2.ok) {
+              const red = await res2.json();
+              const val = (((red || {}).executors || {}).exposureMode || {}).value || 'generic';
+              const sel = document.getElementById('exposureMode');
+              sel.value = val;
+            }
+          } catch {}
+
+          panel.hidden = false;
+          setExecStatus('Loaded executors.', 'ok');
+        } catch (e) {
+          setExecStatus('Network error: ' + e.message, 'error');
+        }
+      }
+
+      async function saveExposureMode() {
+        const token = tokenInput.value.trim();
+        const mode = (document.getElementById('exposureMode') as HTMLSelectElement).value;
+        const setExecStatus = (msg, cls) => {
+          const el = document.getElementById('executorsStatus');
+          el.textContent = msg || '';
+          el.className = 'status' + (cls ? ' ' + cls : '');
+        };
+        try {
+          const res = await fetch('/config/override', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ executors: { exposureMode: mode } })
+          });
+          if (res.ok) setExecStatus('Updated exposure mode to ' + mode, 'ok');
+          else setExecStatus('Failed to update exposure: ' + res.status, 'error');
+        } catch (e) { setExecStatus('Network error: ' + e.message, 'error'); }
       }
 
       // Wire events
@@ -254,6 +401,8 @@
         rawToggle.textContent = rawDetails.hidden ? 'Show raw JSON' : 'Hide raw JSON';
       });
       remember.addEventListener('change', saveTokenMaybe);
+      document.getElementById('reloadExecutors').addEventListener('click', loadExecutors);
+      document.getElementById('saveExposure').addEventListener('click', saveExposureMode);
       tokenInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') loadSettings();
       });
