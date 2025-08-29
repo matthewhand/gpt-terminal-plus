@@ -2,6 +2,9 @@ import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
 import { executeCode } from './command/executeCode'; // Import the actual executeCode
 import { executeShell } from './command/executeShell'; // Import the actual executeShell
+import { executeBash } from './command/executeBash';
+import { executePython } from './command/executePython';
+import executeDynamicRouter from './command/executeDynamic';
 
 const router = Router();
 
@@ -95,7 +98,12 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 // Mount under /command (app.ts should do: app.use('/command', router))
 router.post('/execute-shell', executeShell); // Use actual executeShell
 router.post('/execute-code', executeCode); // Use actual executeCode
+// New explicit executor endpoints used by tests
+router.post('/execute-bash', executeBash);
+router.post('/execute-python', executePython);
 router.post('/execute-llm', handleExecuteLlm); // Use mocked streaming/dry-run behavior in tests
+// Dynamic executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
+router.use('/', executeDynamicRouter);
 
 // Diff and patch endpoints (from feat/circuit-breakers)
 router.post('/diff', (req: Request, res: Response) => {

@@ -34,6 +34,8 @@ describe('session uplift logs', () => {
     const res: any = { json: (p: any) => { jsonPayload = p; return p; } };
 
     const p = handler(req, res);
+    // Allow any awaited work to schedule the timeout before advancing timers
+    await Promise.resolve();
     expect((logSessionStep as jest.Mock)).toHaveBeenCalledWith('exec-start', expect.any(Object), undefined);
 
     jest.advanceTimersByTime(5000);
@@ -43,4 +45,3 @@ describe('session uplift logs', () => {
     expect((logSessionStep as jest.Mock)).toHaveBeenCalledWith('executeCommand', expect.objectContaining({ status: 'timeout' }), expect.any(String));
   });
 });
-

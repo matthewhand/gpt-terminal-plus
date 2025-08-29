@@ -9,6 +9,11 @@ export interface LLMResponse {
 }
 
 export async function planCommand(userInput: string): Promise<LLMResponse> {
+  // Validate input
+  if (!userInput || userInput.trim() === '') {
+    throw new Error('Input is required for command planning');
+  }
+  
   let cfg: any;
   try { cfg = convictConfig(); } catch {}
   const engine = safeGet(cfg, 'llm.engine', 'codex');
@@ -38,10 +43,19 @@ async function handleCodex(input: string): Promise<LLMResponse> {
   
   // Simplified implementation - would integrate with actual OpenAI API
   const estimatedCost = 0.01; // Mock cost
-  costTracker.addCost(estimatedCost);
+  
+  try {
+    costTracker.addCost(estimatedCost);
+  } catch (error) {
+    // Cost tracking failed, but don't fail the command planning
+    console.warn('Cost tracking failed:', error);
+  }
+  
+  // Basic command sanitization
+  const sanitizedInput = input.replace(/rm\s+-rf\s*\//g, 'echo "Dangerous command blocked"');
   
   return {
-    command: `echo "Planned command for: ${input}"`,
+    command: `echo "Planned command for: ${sanitizedInput}"`,
     explanation: `Generated command using ${model}`,
     needsApproval: !fullAuto,
     cost: estimatedCost,

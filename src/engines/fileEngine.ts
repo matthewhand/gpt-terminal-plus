@@ -16,6 +16,11 @@ export async function executeFileOperation(op: FileOperation): Promise<any> {
     throw new Error(`Unknown file operation: ${op.type}`);
   }
 
+  // Validate path parameter
+  if (!op.path || op.path.trim() === '') {
+    throw new Error('Path is required');
+  }
+
   // Read allowed paths safely; fall back to CWD if schema key not present or config mocked
   let allowedPaths: string[] = [process.cwd()];
   try {
@@ -43,7 +48,9 @@ export async function executeFileOperation(op: FileOperation): Promise<any> {
       return await fs.readFile(resolvedPath, 'utf8');
     
     case 'write':
-      if (!op.content) throw new Error('Content required for write operation');
+      if (op.content === undefined) {
+        throw new Error('Content required for write operation');
+      }
       await fs.writeFile(resolvedPath, op.content);
       return { success: true };
     

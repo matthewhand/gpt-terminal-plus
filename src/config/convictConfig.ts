@@ -5,9 +5,12 @@ type RedactedValue = string | number | boolean | null | string[] | number[] | bo
 let __singletonCfg: any | null = null;
 
 export const convictConfig = () => {
-  if (__singletonCfg) return __singletonCfg;
+  // In test environment, always construct a fresh instance so per-test
+  // environment variable changes are reflected. Cache only outside tests.
+  const useCache = process.env.NODE_ENV !== 'test';
+  if (useCache && __singletonCfg) return __singletonCfg;
   // Schema with env mappings and defaults
-  __singletonCfg = convict({
+  const cfg = convict({
     // Execution circuit breakers and limits
     limits: {
       maxInputChars: {
@@ -332,7 +335,7 @@ export const convictConfig = () => {
       const ensure = (envName: string | undefined, setFn: () => void) => {
         if (!envName || process.env[envName] === undefined) setFn();
       };
-      const schema = (__singletonCfg as any).getSchema();
+      const schema = (cfg as any).getSchema();
       const envOf = (path: string): string | undefined => {
         const segs = path.split('.');
         let node: any = schema.properties;
@@ -343,20 +346,20 @@ export const convictConfig = () => {
       };
 
       // bash
-      ensure(envOf('executors.bash.enabled'), () => (__singletonCfg as any).set('executors.bash.enabled', !!detected.bash?.available));
-      if (detected.bash?.cmd) ensure(envOf('executors.bash.cmd'), () => (__singletonCfg as any).set('executors.bash.cmd', detected.bash.cmd));
+      ensure(envOf('executors.bash.enabled'), () => (cfg as any).set('executors.bash.enabled', !!detected.bash?.available));
+      if (detected.bash?.cmd) ensure(envOf('executors.bash.cmd'), () => (cfg as any).set('executors.bash.cmd', detected.bash.cmd));
       // zsh
-      if (detected.zsh?.available) ensure(envOf('executors.zsh.enabled'), () => (__singletonCfg as any).set('executors.zsh.enabled', true));
-      if (detected.zsh?.cmd) ensure(envOf('executors.zsh.cmd'), () => (__singletonCfg as any).set('executors.zsh.cmd', detected.zsh.cmd));
+      if (detected.zsh?.available) ensure(envOf('executors.zsh.enabled'), () => (cfg as any).set('executors.zsh.enabled', true));
+      if (detected.zsh?.cmd) ensure(envOf('executors.zsh.cmd'), () => (cfg as any).set('executors.zsh.cmd', detected.zsh.cmd));
       // powershell (prefer pwsh)
       if (detected.pwsh?.available || detected.powershell?.available) {
-        ensure(envOf('executors.powershell.enabled'), () => (__singletonCfg as any).set('executors.powershell.enabled', true));
+        ensure(envOf('executors.powershell.enabled'), () => (cfg as any).set('executors.powershell.enabled', true));
         const psCmd = detected.pwsh?.cmd || detected.powershell?.cmd || 'pwsh';
-        ensure(envOf('executors.powershell.cmd'), () => (__singletonCfg as any).set('executors.powershell.cmd', psCmd));
+        ensure(envOf('executors.powershell.cmd'), () => (cfg as any).set('executors.powershell.cmd', psCmd));
       }
       // python (prefer python3)
       if (detected.python3?.available || detected.python?.available) {
-        ensure(envOf('executors.python.cmd'), () => (__singletonCfg as any).set('executors.python.cmd', detected.python3?.cmd || detected.python?.cmd || 'python3'));
+        ensure(envOf('executors.python.cmd'), () => (cfg as any).set('executors.python.cmd', detected.python3?.cmd || detected.python?.cmd || 'python3'));
         // keep enabled default true unless explicitly disabled
       }
     }
@@ -364,7 +367,8 @@ export const convictConfig = () => {
     // Detection failures should never crash boot
     console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
   }
-  return __singletonCfg;
+  if (useCache) __singletonCfg = cfg;
+  return cfg;
 };
 
 /**

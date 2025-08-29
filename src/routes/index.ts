@@ -43,7 +43,8 @@ export function setupApiRouter(app: express.Application): void {
   if (isTest) {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
-    app.use('/command', testCommandRouter);
+    console.log('Mounting test command router under /command');
+    app.use('/command', testCommandRouter as any);
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
@@ -55,11 +56,11 @@ export function setupApiRouter(app: express.Application): void {
     // New explicit executor endpoints
     cmd.post('/command/execute-bash', executeBash);
     cmd.post('/command/execute-python', executePython);
-    // Dynamic per-executor endpoints: /command/execute-:name
-    cmd.use('/command', executeDynamicRouter);
-    // Deprecated route retained only for compatibility; not advertised in OpenAPI
+    // Deprecated/other routes
     cmd.post('/command/execute-file', executeFile);
     cmd.post('/command/execute-llm', executeLlm);
+    // Dynamic per-executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
+    cmd.use('/command', executeDynamicRouter);
     app.use(cmd);
   }
 

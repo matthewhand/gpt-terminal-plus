@@ -11,6 +11,13 @@ export interface RemoteSession {
 const remoteSessions = new Map<string, RemoteSession>();
 
 export async function createSSHSession(host: string, user?: string): Promise<RemoteSession> {
+  if (!host || host.trim() === '') {
+    throw new Error('Invalid hostname');
+  }
+  if (user !== undefined && user.trim() === '') {
+    throw new Error('Invalid username');
+  }
+  
   const id = `ssh-${Date.now()}`;
   const sshCmd = user ? `${user}@${host}` : host;
   
@@ -41,6 +48,13 @@ export async function createSSHSession(host: string, user?: string): Promise<Rem
 }
 
 export async function createSSMSession(instanceId: string): Promise<RemoteSession> {
+  if (!instanceId || instanceId.trim() === '') {
+    throw new Error('Instance ID required');
+  }
+  if (!instanceId.match(/^i-[0-9a-f]{8,17}$/)) {
+    throw new Error('Invalid instance ID');
+  }
+  
   const id = `ssm-${Date.now()}`;
   
   const session: RemoteSession = {

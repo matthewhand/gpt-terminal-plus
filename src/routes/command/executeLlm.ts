@@ -198,6 +198,7 @@ export const executeLlm = async (req: Request, res: Response) => {
       } as any);
       if (process.env.NODE_ENV === 'test') console.log('[execute-llm] LLM responded');
     } catch (e) {
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] LLM error:', (e as Error).message);
       if (stream) {
         res.write('event: error\n');
         res.write(`data: ${JSON.stringify({ message: (e as Error).message })}\n\n`);
@@ -229,6 +230,12 @@ export const executeLlm = async (req: Request, res: Response) => {
         return res.end();
       }
       return res.status(200).json({ plan, safety, results: [] });
+    }
+
+    if (stream) {
+      res.write(`event: plan\n`);
+      res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
+      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] wrote plan');
     }
 
     let handler: any;
@@ -269,19 +276,8 @@ export const executeLlm = async (req: Request, res: Response) => {
       if (serverConfig.protocol === 'ssm') {
         return res.status(501).json({ error: 'execute-llm streaming is not supported for SSM protocol' });
       }
-      res.write(`event: plan\n`);
-      res.write(`data: ${JSON.stringify({ ...plan, safety })}\n\n`);
-      if (process.env.NODE_ENV === 'test') console.log('[execute-llm] wrote plan');
 
       // Execute each step with start/complete events, honoring mocks in tests
-      let handler: any;
-      try {
-        handler = getServerHandler(req);
-      } catch {
-        const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
-        handler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
-        (req as any).server = handler;
-      }
       for (let i = 0; i < commands.length; i++) {
         const step = commands[i];
         res.write(`event: step\n`);

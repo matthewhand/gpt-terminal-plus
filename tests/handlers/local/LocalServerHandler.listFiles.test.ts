@@ -22,11 +22,11 @@ describe('LocalServerHandler.listFiles integration', () => {
     handler = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false });
   });
 
-  it('returns PaginatedResponse of strings (flat default)', async () => {
+  it('returns PaginatedResponse of objects (flat default)', async () => {
     const res = await handler.listFiles({ directory: tmpRoot });
     expect(Array.isArray(res.items)).toBe(true);
     // Should include root.txt and dirA
-    expect(new Set(res.items)).toEqual(new Set(['root.txt', 'dirA']));
+    expect(new Set(res.items.map(item => item.name))).toEqual(new Set(['root.txt', 'dirA']));
     expect(typeof res.total).toBe('number');
     expect(typeof res.limit).toBe('number');
     expect(typeof res.offset).toBe('number');
@@ -35,7 +35,7 @@ describe('LocalServerHandler.listFiles integration', () => {
   it('respects recursive and typeFilter options', async () => {
     const res = await handler.listFiles({ directory: tmpRoot, recursive: true, typeFilter: 'files' });
     // Should include root.txt and dirA/a.txt
-    expect(new Set(res.items)).toEqual(new Set(['root.txt', path.join('dirA', 'a.txt')]));
+    expect(new Set(res.items.map(item => item.name))).toEqual(new Set(['root.txt', path.join('dirA', 'a.txt')]));
   });
 });
 

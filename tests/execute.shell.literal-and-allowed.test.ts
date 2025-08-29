@@ -44,7 +44,8 @@ describe('execute-shell (prod route) — literal vs allowed shells', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ shell: 'zsh', command: 'echo ok' });
     expect([400,403]).toContain(res.status);
-    expect(String(res.body?.error || '')).toMatch(/not allowed/i);
+    // Accept both allow-list and executor-disable styles
+    expect(String(res.body?.error || '')).toMatch(/(not allowed|disabled)/i);
   });
 
   it('allows configured shell (bash)', async () => {
@@ -59,4 +60,3 @@ describe('execute-shell (prod route) — literal vs allowed shells', () => {
     expect(String(res.body?.result?.stdout).trim()).toBe('bash-ok');
   });
 });
-

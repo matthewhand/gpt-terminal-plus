@@ -19,6 +19,7 @@ import { exec as _exec } from 'child_process';
 import { getSystemInfo as getSystemInfoAction } from './actions/getSystemInfo';
 import { presentWorkingDirectory as presentWorkingDirectoryAction } from './actions/presentWorkingDirectory';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.local';
+import listFilesAction from './actions/listFiles.local';
 
 export class LocalServerHandler extends AbstractServerHandler {
   constructor(serverConfig: ServerConfig) {
@@ -64,30 +65,14 @@ export class LocalServerHandler extends AbstractServerHandler {
     const directory = params.directory ?? '.';
     const limit = typeof params.limit === 'number' ? params.limit : 10;
     const offset = typeof params.offset === 'number' ? params.offset : 0;
+    const orderBy = params.orderBy ?? 'filename';
     const recursive = !!params.recursive;
-    const typeFilter = params.typeFilter; // 'files' | 'folders' | undefined
+    const typeFilter = params.typeFilter;
 
-    const items: { name: string; isDirectory: boolean }[] = [];
-    const walk = async (dirAbs: string, relPrefix = ''): Promise<void> => {
-      const entries = await fs.readdir(dirAbs, { withFileTypes: true });
-      for (const entry of entries) {
-        const full = path.join(dirAbs, entry.name);
-        const rel = relPrefix ? path.join(relPrefix, entry.name) : entry.name;
-        const isDir = entry.isDirectory();
-        if (!typeFilter || (typeFilter === 'folders' && isDir) || (typeFilter === 'files' && !isDir)) {
-          items.push({ name: rel, isDirectory: isDir });
-        }
-        if (recursive && isDir) {
-          await walk(full, rel);
-        }
-      }
-    };
-
-    await walk(directory);
-    items.sort((a, b) => a.name.localeCompare(b.name));
-    const total = items.length;
-    const paged = items.slice(offset, offset + limit);
-    return { items: paged, total, limit, offset };
+    // Delegate to the action to keep behavior consistent with other tests
+    const { files, total } = await listFilesAction({ directory, limit, offset, orderBy, recursive, typeFilter });
+    const items = files.map(f => ({ name: f.name, isDirectory: f.isDirectory }));
+    return { items, total, limit, offset };
   }
 
   async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {

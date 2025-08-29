@@ -29,28 +29,32 @@ export const executeShell = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Command is required' });
   }
 
-  // If a shell was requested, enforce executors-enabled and optional env allow-list
+  // If a shell was requested, enforce optional env allow-list and executors-enabled
   if (typeof shell === 'string') {
     try {
+      // First enforce explicit allow-list via environment
+      const raw = process.env.SHELL_ALLOWED;
+      if (raw !== undefined) {
+        const allowed = raw.split(',').map(s => s.trim()).filter(Boolean);
+        const isAllowed = allowed.length > 0 && allowed.includes(shell);
+        if (!isAllowed) {
+          return res.status(403).json({ error: `Shell '${shell}' is not allowed` });
+        }
+      }
+
+      // Then enforce enabled executors from config
       const cfg = convictConfig();
       const ex = (cfg as any).get('executors');
       const enabledShells = new Set<string>();
       if (ex?.bash?.enabled) enabledShells.add('bash');
       if (ex?.zsh?.enabled) enabledShells.add('zsh');
       if (ex?.powershell?.enabled) { enabledShells.add('powershell'); enabledShells.add('pwsh'); }
+      // Allow python interpreters when the python executor is enabled
+      if (ex?.python?.enabled) { enabledShells.add('python'); enabledShells.add('python3'); }
       if (enabledShells.size > 0 && !enabledShells.has(shell)) {
         return res.status(403).json({ error: `Shell '${shell}' is disabled` });
       }
-    } catch { /* fallback to env allow-list only */ }
-
-    const raw = process.env.SHELL_ALLOWED;
-    if (raw !== undefined) {
-      const allowed = raw.split(',').map(s => s.trim()).filter(Boolean);
-      const isAllowed = allowed.length > 0 && allowed.includes(shell);
-      if (!isAllowed) {
-        return res.status(403).json({ error: `Shell '${shell}' is not allowed` });
-      }
-    }
+    } catch { /* fall through */ }
   }
 
   // Build the command line, supporting literal args array

@@ -1,6 +1,5 @@
 import express from 'express';
 import request from 'supertest';
-import { setupApiRouter } from '../src/routes';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 
 jest.mock('../src/llm', () => {
@@ -15,31 +14,40 @@ jest.mock('../src/llm', () => {
   };
 });
 
+function makeProdApp() {
+  const app = express();
+  app.use(express.json());
+  const commandRoutes = require('../src/routes/commandRoutes').default;
+  app.use('/command', commandRoutes);
+  return app;
+}
+
 describe('execute-llm streaming', () => {
   let app: express.Express;
   let token: string;
 
   beforeAll(() => {
-    process.env.NODE_ENV = 'test';
+    // Use prod/dev router to expose /command/execute-llm
     process.env.NODE_CONFIG_DIR = 'config/test';
     token = getOrGenerateApiToken();
-    app = express();
-    app.use(express.json());
-    setupApiRouter(app);
+    app = makeProdApp();
   });
 
-  it('streams plan and step events for local', async () => {
-    const res = await request(app)
-      .post('/command/execute-llm')
+  it('streams plan and step events for local', (done) => {
+    const agent = request.agent(app);
+    agent.post('/command/execute-llm')
       .set('Authorization', `Bearer ${token}`)
       .set('Accept', 'text/event-stream')
-      .send({ instructions: 'say hi', stream: true });
-
-    expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toMatch(/text\/event-stream/);
-    expect(res.text).toContain(': connected');
-    expect(res.text).toContain('event: plan');
-    expect(res.text).toContain('event: step');
-    expect(res.text).toContain('event: done');
+      .send({ instructions: 'say hi', stream: true })
+      .expect(200)
+      .expect('Content-Type', /text\/event-stream/)
+      .end((err, res) => {
+        if (err) return done(err);
+        expect(res.text).toContain(': connected');
+        expect(res.text).toContain('event: plan');
+        expect(res.text).toContain('event: step');
+        expect(res.text).toContain('event: done');
+        done();
+      });
   });
 });

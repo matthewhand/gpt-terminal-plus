@@ -4,7 +4,7 @@ const requests = new Map<string, { count: number; resetTime: number }>();
 
 export function rateLimiter(maxRequests = 100, windowMs = 60000) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
     const now = Date.now();
     
     const record = requests.get(ip);
