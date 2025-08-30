@@ -5,15 +5,16 @@ import { fileRateLimit } from '../middlewares/rateLimit';
 import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation';
 
 // File route handlers
-import { createFile } from './file/createFile.route';
-import { listFiles } from './file/listFiles.route';
-import { readFile } from './file/readFile.route';
-import { updateFile } from './file/updateFile.route';
-import { amendFile } from './file/amendFile.route';
-
-import { applyDiff } from './file/diff';
-import { applyPatch } from './file/patch';
-import { applyFuzzyPatch } from './file/fuzzyPatch';
+import { 
+  createFile, 
+  listFiles, 
+  readFile, 
+  updateFile, 
+  amendFile, 
+  applyDiff, 
+  applyPatch, 
+  applyFuzzyPatch 
+} from './file';
 
 const router = express.Router();
 
