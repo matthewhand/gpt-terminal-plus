@@ -2,8 +2,7 @@ import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { listRegisteredServers } from '../managers/serverRegistry';
-import { registerServer } from './server/registerServer'; // New import
-import { removeServer } from './server/removeServer'; // New import
+import { registerServer, removeServer } from './server';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
