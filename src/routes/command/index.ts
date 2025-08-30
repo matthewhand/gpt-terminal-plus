@@ -21,6 +21,7 @@ import { executeCommand as executeLocalCommand } from "../../handlers/local/acti
 import express from "express";
 import { checkAuthToken } from "../../middlewares/checkAuthToken";
 import { listExecutors, setExecutorEnabled } from "../../utils/executors";
+import { isLlmEnabled } from "../../llm/llmClient";
 
 const debug = Debug("app:command");
 
@@ -319,6 +320,14 @@ function extractCandidateCommands(output: string): string[] {
 let __llmBudgetSpentUsd = 0; // simple in-memory day/session budget tracker
 
 export const executeLlm = async (req: Request, res: Response) => {
+  // Check if LLM is enabled and configured
+  if (!isLlmEnabled()) {
+    return res.status(409).json({
+      error: 'LLM_NOT_CONFIGURED',
+      message: 'LLM functionality is not enabled or configured. Please configure LLM settings in the Setup panel to use this endpoint.'
+    });
+  }
+
   const { instructions, dryRun = false, model, stream = false, engine, costUsd } = req.body || {};
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });

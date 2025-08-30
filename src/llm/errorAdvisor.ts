@@ -2,6 +2,7 @@ import Debug from 'debug';
 import { chat } from './index';
 import { getSupportedModels } from '../common/models';
 import { getSelectedModel } from '../utils/GlobalStateHelper';
+import { isLlmEnabled } from './llmClient';
 
 const debug = Debug('app:llm:errorAdvisor');
 
@@ -23,6 +24,9 @@ export interface ErrorAnalysis {
 }
 
 export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | undefined> {
+  // Silent no-op when LLM disabled
+  if (!isLlmEnabled()) return undefined;
+  
   const auto = process.env.AUTO_ANALYZE_ERRORS !== 'false';
   if (!auto) return undefined;
 

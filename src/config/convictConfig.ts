@@ -228,11 +228,23 @@ export const convictConfig = () => {
       }
     },
     llm: {
+      enabled: {
+        doc: 'Enable LLM functionality',
+        format: Boolean,
+        default: false,
+        env: 'LLM_ENABLED'
+      },
       provider: {
         doc: 'Selected AI provider',
         format: ['openai', 'ollama', 'lmstudio', 'open-interpreter', 'auto', ''],
         default: '',
-        env: 'AI_PROVIDER'
+        env: 'LLM_PROVIDER'
+      },
+      defaultModel: {
+        doc: 'Default model to use',
+        format: String,
+        default: '',
+        env: 'LLM_DEFAULT_MODEL'
       },
       openai: {
         baseUrl: {
@@ -254,7 +266,7 @@ export const convictConfig = () => {
           doc: 'Ollama base URL',
           format: String,
           default: '',
-          env: 'OLLAMA_BASE_URL'
+          env: 'OLLAMA_URL'
         }
       },
       lmstudio: {
@@ -262,7 +274,7 @@ export const convictConfig = () => {
           doc: 'LM Studio base URL',
           format: String,
           default: '',
-          env: 'LMSTUDIO_BASE_URL'
+          env: 'LM_STUDIO_URL'
         }
       },
       // Compatibility with src/common/llmConfig.ts environment knobs

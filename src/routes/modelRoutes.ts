@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import Debug from 'debug';
 import { getSupportedModels, isSupportedModel } from '../common/models';
 import { getSelectedModel, setSelectedModel } from '../utils/GlobalStateHelper';
+import { isLlmEnabled } from '../llm/llmClient';
 
 const debug = Debug('app:modelRoutes');
 const router = express.Router();
@@ -11,6 +12,13 @@ const router = express.Router();
  * Returns supported models and the currently selected model.
  */
 router.get('/', (_req: Request, res: Response) => {
+  if (!isLlmEnabled()) {
+    return res.status(409).json({ 
+      error: 'LLM_DISABLED',
+      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.' 
+    });
+  }
+  
   const supported = getSupportedModels();
   const selected = getSelectedModel();
   debug('Returning supported and selected models');

@@ -5,6 +5,7 @@ import { chat, chatStream } from '../llm';
 import { ChatMessage } from '../llm/types';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { chatRateLimit } from '../middlewares/rateLimit';
+import { isLlmEnabled } from '../llm/llmClient';
 
 const debug = Debug('app:chatRoutes');
 const router = express.Router();
@@ -17,6 +18,13 @@ router.use(checkAuthToken as any);
  * POST /chat/completions
  */
 router.post('/completions', async (req: Request, res: Response) => {
+  if (!isLlmEnabled()) {
+    return res.status(409).json({ 
+      error: 'LLM_DISABLED',
+      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.' 
+    });
+  }
+
   try {
     const { messages, model, stream = false } = (req.body || {}) as any;
 
