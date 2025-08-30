@@ -245,4 +245,34 @@ router.get('/settings', (_req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /settings
+ * Update configuration settings (runtime only, not persisted)
+ */
+router.post('/settings', (req: Request, res: Response) => {
+  try {
+    const { convictConfig } = require('../config/convictConfig');
+    const cfg = convictConfig();
+    const updates = req.body || {};
+    
+    // Apply updates to runtime config
+    for (const [key, value] of Object.entries(updates)) {
+      try {
+        cfg.set(key, value);
+      } catch (err: any) {
+        debug(`Failed to set ${key}: ${err.message}`);
+        return res.status(400).json({ error: 'invalid_setting', key, message: err.message });
+      }
+    }
+    
+    // Validate the updated config
+    cfg.validate({ allowed: 'warn' });
+    
+    res.status(200).json({ message: 'Settings updated successfully', updated: Object.keys(updates) });
+  } catch (err: any) {
+    debug('Error updating settings: %s', err?.message ?? err);
+    res.status(500).json({ error: 'internal_error', message: err?.message ?? 'unknown' });
+  }
+});
+
 export default router;

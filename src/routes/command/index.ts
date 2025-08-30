@@ -213,13 +213,14 @@ export const executeCode = async (req: Request, res: Response) => {
 };
 
 /**
- * Generic execute endpoint that delegates to the first enabled mode.
+ * Safe alias to first/primary enabled execution mode.
  * Prefers shell > code > llm. Returns 409 if none are enabled.
  */
 export const executeCommand = async (req: Request, res: Response) => {
-  const shellEnabled = process.env.ENABLE_COMMAND_MANAGEMENT !== 'false';
+  const cfg = convictConfig();
+  const shellEnabled = cfg.get('execution.shell.enabled');
   const codeEnabled = process.env.ENABLE_CODE_EXECUTION !== 'false';
-  const llmEnabled = process.env.LLM_ENABLED === 'true';
+  const llmEnabled = isLlmEnabled();
 
   if (shellEnabled) {
     return executeShell(req, res);
@@ -267,7 +268,8 @@ executeDynamicRouter.post('/execute-:name', async (req: Request, res: Response) 
 });
 
 /**
- * Deprecated file execution route. Delegates to shell executor.
+ * @deprecated Use /command/execute with shell commands instead.
+ * Delegates to shell executor for backward compatibility.
  */
 export const executeFile = async (req: Request, res: Response) => {
   const { filename, directory } = req.body;
@@ -279,14 +281,11 @@ export const executeFile = async (req: Request, res: Response) => {
     return res.status(400).json({ error: "Filename is required." });
   }
 
-  let warned = false;
-  if (!warned) {
-    warned = true;
-    console.warn('executeFile is deprecated; use /command/execute with a shell command instead.');
-  }
+  console.warn('⚠️  executeFile is deprecated and will be removed in a future version. Use /command/execute with shell commands instead.');
   res.setHeader('Warning', '299 - "executeFile is deprecated; use /command/execute instead"');
+  res.setHeader('Deprecation', 'true');
 
-  const cmd = directory ? `cd ${directory} && ./${filename}` : `./${filename}`;
+  const cmd = directory ? `cd ${shellEscape([directory])} && ./${shellEscape([filename])}` : `./${shellEscape([filename])}`;
   req.body = { command: cmd };
   return executeShell(req, res);
 };
