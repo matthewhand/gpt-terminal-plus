@@ -10,8 +10,8 @@ export async function createFile(filePath: string, content: string, backup: bool
   if (!filePath || typeof filePath !== 'string') {
     throw new Error('File path must be provided and must be a string.');
   }
-  if (!content || typeof content !== 'string') {
-    throw new Error('Content must be provided and must be a string.');
+  if (typeof content !== 'string') {
+    throw new Error('Content must be a string.');
   }
 
   // Resolve absolute or relative path using provided directory when present

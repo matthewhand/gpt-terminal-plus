@@ -16,7 +16,12 @@ export const setServer = (req: Request, res: Response): void => {
   }
 
   try {
-    new ServerManager(hostname);
+    const serverManager = ServerManager.getInstance();
+    const serverConfig = serverManager.getServerConfig(hostname);
+    if (!serverConfig) {
+      res.status(404).json({ message: `Server not found: ${hostname}` });
+      return;
+    }
     debug('Server set to:', hostname);
     res.status(200).json({ message: `Server set to: ${hostname}` });
   } catch (error) {

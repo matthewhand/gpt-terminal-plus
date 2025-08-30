@@ -6,8 +6,25 @@ import { validateInput, validationPatterns, sanitizers } from "../../middlewares
 export const createFile = async (req: Request, res: Response) => {
   const { filePath, content = '', backup = true } = req.body;
 
+  // Check if filePath is provided and is a string
+  if (!filePath) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'File path is required',
+      data: null
+    });
+  }
+
+  if (typeof filePath !== 'string') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'File path must be a string',
+      data: null
+    });
+  }
+
   // Validate and sanitize file path
-  const pathValidation = validateInput(filePath, validationPatterns.safePath, 'filePath');
+  const pathValidation = validateInput(filePath, validationPatterns.safePath, 'File path');
   if (!pathValidation.isValid) {
     return res.status(400).json({
       status: 'error',
@@ -17,7 +34,11 @@ export const createFile = async (req: Request, res: Response) => {
   }
 
   // Sanitize file path and content
-  const sanitizedPath = sanitizers.sanitizePath(pathValidation.sanitizedValue);
+  let sanitizedPath = sanitizers.sanitizePath(pathValidation.sanitizedValue);
+  // Restore absolute path if original was absolute
+  if (filePath.startsWith('/') && !sanitizedPath.startsWith('/')) {
+    sanitizedPath = '/' + sanitizedPath;
+  }
   const sanitizedContent = sanitizers.sanitizeString(content, 1000000); // 1MB limit
 
   try {

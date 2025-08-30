@@ -58,10 +58,10 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
 
     // Initialize the ServerManager with the hostname
     debug('Initializing ServerManager with the hostname: ' + selectedServer);
-    const serverManager = new ServerManager(selectedServer);
+    const serverManager = ServerManager.getInstance();
 
     // Create the appropriate server handler based on the server configuration
-    const handler = serverManager.createHandler();
+    const handler = serverManager.createHandler(selectedServer);
 
     // Cast handler to ServerHandler interface
     req.server = handler as unknown as ServerHandler;

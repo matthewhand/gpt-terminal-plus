@@ -52,7 +52,7 @@ export function redact(key: string, value: any): string {
                               /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(value); // Private keys
 
     if (isSensitiveKey || hasSensitiveValue) {
-        const visibleLength = Math.max(5, Math.floor(value.length / 4));
+        const visibleLength = Math.max(1, Math.floor(value.length / 4));
         const redactedPart = value.substring(0, visibleLength) + '...' + value.slice(-visibleLength);
         return key + ': ' + redactedPart;
     }
