@@ -59,8 +59,13 @@
       "privateKeyPath": "/home/chatgpt/.ssh/id_rsa",
       "llm": {
         "provider": "ollama",
-        "baseUrl": "http://sshhost:11434"
+        "baseUrl": "http://mock:11434"
       }
+    }
+  },
+  "executors": {
+    "python": {
+      "cmd": "python"
     }
   }
 }

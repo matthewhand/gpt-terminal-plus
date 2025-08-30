@@ -38,12 +38,20 @@ export function redact(key: string, value: any): string {
         }
     }
 
-    // Define sensitive keys for redaction
-    const sensitiveKeys = ['token', 'password', 'secret', 'apikey', 'api_key'];
+    // Define sensitive keys and patterns for redaction
+    const sensitiveKeys = ['token', 'password', 'secret', 'apikey', 'api_key', 'private_key', 'ssh_private_key'];
+    const sensitiveKeyPatterns = ['database_url', 'db_url', 'connection_string'];
 
     // Check if the key contains sensitive information
     const lowerKey = key.toLowerCase();
-    if (sensitiveKeys.some(sensitiveKey => lowerKey.includes(sensitiveKey))) {
+    const isSensitiveKey = sensitiveKeys.some(sensitiveKey => lowerKey.includes(sensitiveKey)) ||
+                          sensitiveKeyPatterns.some(pattern => lowerKey.includes(pattern));
+
+    // Check for sensitive value patterns (URLs with credentials, private keys, etc.)
+    const hasSensitiveValue = /:\/\/[^:]+:[^@]+@/.test(value) || // URLs with user:pass@
+                              /-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(value); // Private keys
+
+    if (isSensitiveKey || hasSensitiveValue) {
         const visibleLength = Math.max(5, Math.floor(value.length / 4));
         const redactedPart = value.substring(0, visibleLength) + '...' + value.slice(-visibleLength);
         return key + ': ' + redactedPart;

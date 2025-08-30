@@ -3,9 +3,13 @@ import Debug from 'debug';
 import { getSelectedModel } from '../utils/GlobalStateHelper';
 import { chat, chatStream } from '../llm';
 import { ChatMessage } from '../llm/types';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 const debug = Debug('app:chatRoutes');
 const router = express.Router();
+
+// Apply authentication middleware to all chat routes
+router.use(checkAuthToken as any);
 
 /**
  * POST /chat/completions

@@ -46,8 +46,12 @@ export const executeCode = async (req: Request, res: Response) => {
     }
 
     // Map language to interpreter and extension
+    // Use 'python' for tests, 'python3' for production
+    const isTest = process.env.NODE_ENV === 'test';
+    const pythonCmd = isTest ? 'python' : 'python3';
+
     const map: Record<string, { cmd: string; ext: string }> = {
-      python: { cmd: 'python3', ext: '.py' },
+      python: { cmd: pythonCmd, ext: '.py' },
       python3: { cmd: 'python3', ext: '.py' },
       node: { cmd: 'node', ext: '.js' },
       nodejs: { cmd: 'node', ext: '.js' },
