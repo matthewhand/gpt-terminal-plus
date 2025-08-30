@@ -35,8 +35,8 @@ describe('Rate Limiter', () => {
     const limiter = rateLimiter(1, 60000);
     
     // Different IP should get separate tracking
-    const req2 = { ip: '192.168.1.1', connection: { remoteAddress: '192.168.1.1' } };
-    const res2 = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const req2 = { ip: '192.168.1.1', connection: { remoteAddress: '192.168.1.1' } } as any;
+    const res2 = { status: jest.fn().mockReturnThis(), json: jest.fn() } as any;
     const next2 = jest.fn();
     
     limiter(req2, res2, next2);
