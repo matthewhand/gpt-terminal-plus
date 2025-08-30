@@ -4,11 +4,13 @@ import { getSelectedModel } from '../utils/GlobalStateHelper';
 import { chat, chatStream } from '../llm';
 import { ChatMessage } from '../llm/types';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { chatRateLimit } from '../middlewares/rateLimit';
 
 const debug = Debug('app:chatRoutes');
 const router = express.Router();
 
-// Apply authentication middleware to all chat routes
+// Apply rate limiting and authentication middleware to all chat routes
+router.use(chatRateLimit);
 router.use(checkAuthToken as any);
 
 /**

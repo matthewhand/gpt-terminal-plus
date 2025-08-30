@@ -21,6 +21,7 @@ import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
 import { registerServersFromConfig } from './bootstrap/serverLoader';
+import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown';
 
 import './modules/ngrok';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -159,33 +160,20 @@ const main = async (): Promise<void> => {
       console.log(`Server running on ${protocol}://localhost:${port}`);
       console.log(`OpenAPI (JSON): ${protocol}://localhost:${port}/openapi.json`);
       console.log(`OpenAPI (YAML): ${protocol}://localhost:${port}/openapi.yaml`);
-      console.log(`OpenAPI YAML: ${protocol}://localhost:${port}/openapi.yaml`);
       console.log(`Plugin manifest: ${protocol}://localhost:${port}/.well-known/ai-plugin.json`);
       console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);
+      console.log(`Health check: ${protocol}://localhost:${port}/health`);
+      console.log(`Detailed health: ${protocol}://localhost:${port}/health/detailed`);
     });
 
-    // Graceful shutdown handling
-    process.on("SIGINT", () => shutdown(server));
-    process.on("SIGTERM", () => shutdown(server));
-  };
-
-  /**
-   * Shutdown the server gracefully.
-   * @param server - The server instance to shutdown.
-   */
-  const shutdown = (server: http.Server | https.Server): void => {
-    console.log("Shutting down server...");
-    server.close(() => {
-      console.log("Server closed.");
-      process.exit(1);
+    // Setup graceful shutdown handling
+    setupGracefulShutdown({
+      server,
+      timeout: 30000, // 30 seconds
+      onShutdown: createShutdownHandler()
     });
-
-    // Force server shutdown after a timeout
-    setTimeout(() => {
-      console.error("Forcing server shutdown...");
-      process.exit(2);
-    }, 10001); // 10-second timeout
   };
+
 
   if (process.env.USE_SERVERLESS === "true") {
     try {

@@ -1,17 +1,24 @@
 import { Request, Response } from "express";
 import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
+import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
 
 export const createFile = async (req: Request, res: Response) => {
   const { filePath, content = '', backup = true } = req.body;
 
-  if (!filePath || typeof filePath !== 'string') {
-    return res.status(400).json({ 
-      status: 'error', 
-      message: 'File path is required and must be a string',
-      data: null 
+  // Validate and sanitize file path
+  const pathValidation = validateInput(filePath, validationPatterns.safePath, 'filePath');
+  if (!pathValidation.isValid) {
+    return res.status(400).json({
+      status: 'error',
+      message: pathValidation.errors.join(', '),
+      data: null
     });
   }
+
+  // Sanitize file path and content
+  const sanitizedPath = sanitizers.sanitizePath(pathValidation.sanitizedValue);
+  const sanitizedContent = sanitizers.sanitizeString(content, 1000000); // 1MB limit
 
   try {
     const server = getServerHandler(req);
@@ -19,13 +26,13 @@ export const createFile = async (req: Request, res: Response) => {
       throw new Error("Server handler not found");
     }
 
-    const success = await server.createFile(filePath, content, backup);
+    const success = await server.createFile(sanitizedPath, sanitizedContent, backup);
 
     if (success) {
-      res.status(200).json({ 
-        status: 'success', 
-        message: 'File created successfully', 
-        data: { filePath, backup } 
+      res.status(200).json({
+        status: 'success',
+        message: 'File created successfully',
+        data: { filePath: sanitizedPath, backup }
       });
     } else {
       res.status(400).json({ 

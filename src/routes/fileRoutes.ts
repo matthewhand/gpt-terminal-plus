@@ -1,6 +1,8 @@
 import express from 'express';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+import { fileRateLimit } from '../middlewares/rateLimit';
+import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation';
 
 // File route handlers
 import { createFile } from './file/createFile.route';
@@ -15,7 +17,8 @@ import { applyFuzzyPatch } from './file/fuzzyPatch';
 
 const router = express.Router();
 
-// Secure routes and ensure a ServerHandler is attached to req
+// Apply rate limiting, secure routes and ensure a ServerHandler is attached to req
+router.use(fileRateLimit);
 router.use(checkAuthToken as any);
 router.use(initializeServerHandler as any);
 

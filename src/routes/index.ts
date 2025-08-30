@@ -22,6 +22,7 @@ import chatRoutes from './chatRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import settingsRoutes from './settingsRoutes';
 import configRoutes from './config';
+import healthRoutes from './healthRoutes';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -75,6 +76,8 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/settings', settingsRoutes);
   // config overrides and schema endpoints
   app.use('/config', configRoutes);
+  // health check endpoints
+  app.use('/health', healthRoutes);
   // executors capability and toggles
   app.use('/command', executorsRouter);
 
