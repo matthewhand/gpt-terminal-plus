@@ -103,6 +103,10 @@ export async function readFile(req: Request, res: Response): Promise<void> {
   }
 }
 
+/**
+ * @deprecated Use applyFuzzyPatch for better fuzzy matching and conflict resolution.
+ * Kept temporarily for backward compatibility with trivial replaces.
+ */
 export const updateFile = async (req: Request, res: Response): Promise<void> => {
   try {
     const { filePath, pattern, replacement, backup = true, multiline = false } = req.body;
@@ -120,6 +124,11 @@ export const updateFile = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    // Add deprecation warning
+    console.warn('⚠️  updateFile is deprecated. Use applyFuzzyPatch for better fuzzy matching and conflict resolution.');
+    res.setHeader('Warning', '299 - "updateFile is deprecated; use applyFuzzyPatch instead"');
+    res.setHeader('Deprecation', 'true');
+
     const server = getServerHandler(req);
     if (!server) {
       throw new Error("Server handler not found");
@@ -129,7 +138,7 @@ export const updateFile = async (req: Request, res: Response): Promise<void> => 
 
     res.status(200).json({ 
       status: 'success', 
-      message: 'File updated successfully.' 
+      message: 'File updated successfully. Consider using applyFuzzyPatch for better conflict resolution.' 
     });
   } catch (error) {
     handleServerError(error, res, 'Failed to update file');

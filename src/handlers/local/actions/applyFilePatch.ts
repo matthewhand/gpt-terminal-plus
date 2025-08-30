@@ -1,4 +1,5 @@
 import fs from "fs";
+import { diff_match_patch } from "diff-match-patch";
 
 export interface ApplyFilePatchOptions {
   filePath: string;
@@ -23,40 +24,38 @@ export function applyFilePatch(
 
   const current = fs.readFileSync(filePath, "utf-8");
 
-  // Simple, dependency-free approach:
-  // - If current contains oldText, replace the first occurrence with newText.
-  // - Otherwise, fall back to replacing the closest match by line-based heuristic.
-  let patched = current;
-  let results: boolean[] = [];
+  // Use diff-match-patch for fuzzy matching to apply hunks even if file drifted
+  const dmp = new diff_match_patch();
+  
+  // Create patches from oldText to newText
+  const patches = dmp.patch_make(oldText, newText);
+  
+  if (patches.length === 0) {
+    return { success: false, error: "No patches to apply" };
+  }
 
-  if (oldText && current.includes(oldText)) {
-    patched = current.replace(oldText, newText);
-    // If replacement yields no change, treat as failure (no hunks applied)
-    if (patched === current) {
-      return { success: false, error: "Patch could not be applied" };
-    }
-    results = [true];
-  } else {
-    // Line-based heuristic: find a line that starts with the first non-empty line
-    const oldLines = oldText.split(/\r?\n/).filter(l => l.trim().length > 0);
-    const anchor = oldLines[0] || '';
-    const idx = anchor ? current.indexOf(anchor) : -1;
-    if (idx >= 0) {
-      // Replace that region approximately
-      patched = current.slice(0, idx) + newText + current.slice(idx + (anchor.length));
-      if (patched === current) {
-        return { success: false, error: "Patch could not be applied" };
-      }
-      results = [true];
-    } else {
-      return { success: false, error: "Patch could not be applied" };
-    }
+  // Apply patches to current file content with fuzzy matching
+  const [patchedText, results] = dmp.patch_apply(patches, current);
+  
+  // Check if any hunks were successfully applied
+  const appliedCount = results.filter(Boolean).length;
+  if (appliedCount === 0) {
+    return { success: false, error: "No hunks could be applied - file may have drifted too much" };
   }
 
   if (preview) {
-    return { success: true, patchedText: patched, results };
+    return { 
+      success: true, 
+      patchedText, 
+      results,
+      error: appliedCount < results.length ? `Only ${appliedCount}/${results.length} hunks applied` : undefined
+    };
   }
 
-  fs.writeFileSync(filePath, patched, "utf-8");
-  return { success: true, results };
+  fs.writeFileSync(filePath, patchedText, "utf-8");
+  return { 
+    success: true, 
+    results,
+    error: appliedCount < results.length ? `Only ${appliedCount}/${results.length} hunks applied` : undefined
+  };
 }
