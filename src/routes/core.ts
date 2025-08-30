@@ -8,6 +8,7 @@ import { buildSpec } from '../openapi';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { loadProfilesConfig, upsertProfile, deleteProfile, exportProfilesYaml, importProfilesYaml } from '../config/profiles';
 import { rateLimiter } from '../middlewares/rateLimiter';
+import { getSecurityEvents } from '../middlewares/securityLogger';
 import Debug from 'debug';
 
 const debug = Debug('app:coreRoutes');
@@ -178,6 +179,16 @@ configRouter.delete('/profiles/:name', checkAuthToken as any, (req: Request, res
     return res.status(200).json(updated);
   } catch (e: any) {
     return res.status(400).json({ error: String(e?.message || e) });
+  }
+});
+
+// Security Events API
+configRouter.get('/security/events', checkAuthToken as any, (_req: Request, res: Response) => {
+  try {
+    const events = getSecurityEvents();
+    return res.status(200).json({ events });
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e?.message || e) });
   }
 });
 

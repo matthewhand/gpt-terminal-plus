@@ -3,6 +3,7 @@ import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
 import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
 import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
+import { logSecurityEvent } from '../../middlewares/securityLogger';
 import { writeFile, readFile as fsReadFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -15,6 +16,9 @@ const execAsync = promisify(exec);
 
 export const createFile = async (req: Request, res: Response) => {
   const { filePath, content = '', backup = true } = req.body;
+
+  // Log security event for file creation
+  logSecurityEvent(req, 'FILE_CREATE', { filePath });
 
   if (!filePath) {
     return res.status(400).json({

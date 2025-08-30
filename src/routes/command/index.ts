@@ -22,6 +22,9 @@ import express from "express";
 import { checkAuthToken } from "../../middlewares/checkAuthToken";
 import { listExecutors, setExecutorEnabled } from "../../utils/executors";
 import { isLlmEnabled } from "../../llm/llmClient";
+import { securityLogger, logSecurityEvent } from "../../middlewares/securityLogger";
+import { validateRequest, commonValidations } from "../../middlewares/enhancedValidation";
+import { rateLimiters } from "../../middlewares/advancedRateLimit";
 
 const debug = Debug("app:command");
 
@@ -786,6 +789,9 @@ export const executeShell = async (req: Request, res: Response) => {
   const { command, args, shell } = req.body || {};
   // Debug aid for tests
   console.debug(`[execute-shell] body=${JSON.stringify(req.body || {})}`);
+
+  // Log security event for command execution
+  logSecurityEvent(req, 'COMMAND_EXECUTION', { command: typeof command === 'string' ? command.substring(0, 100) : command });
 
   if (!command || typeof command !== 'string') {
     debug("Command is required but not provided.");
