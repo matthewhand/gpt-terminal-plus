@@ -13,8 +13,7 @@ import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import settingsRoutes from './settingsRoutes';
-import configRoutes from './config';
-import healthRoutes from './healthRoutes';
+import { configRouter, healthRouter } from './core';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -67,9 +66,9 @@ export function setupApiRouter(app: express.Application): void {
   // settings (redacted view), protected by bearer token
   app.use('/settings', settingsRoutes);
   // config overrides and schema endpoints
-  app.use('/config', configRoutes);
+  app.use('/config', configRouter);
   // health check endpoints
-  app.use('/health', healthRoutes);
+  app.use('/health', healthRouter);
   // executors capability and toggles
   app.use('/command', executorsRouter);
 
