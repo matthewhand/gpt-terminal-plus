@@ -2,6 +2,8 @@
 
 Static-first OpenAPI artifacts with deterministic generation, an Express server with Convict-based configuration and secure redacted settings endpoint, plus a minimal web UI.
 
+**🤖 LLM Optional**: The app works perfectly without AI. LLM features are cleanly gated and optional.
+
 - OpenAPI (static artifacts):
   - [public/openapi.json](public/openapi.json)
   - [public/openapi.yaml](public/openapi.yaml)
@@ -25,6 +27,19 @@ Quick start
   - Settings UI at [public/settings.html](public/settings.html)
 - Auth header for protected endpoints:
   - `Authorization: Bearer YOUR_API_TOKEN`
+
+## LLM Configuration (Optional)
+
+The app works without AI, but you can enable LLM features:
+
+1. **Enable LLM**: Set `LLM_ENABLED=true` in environment or via [/llm-setup.html](/llm-setup.html)
+2. **Choose Provider**: 
+   - **OpenAI**: Set `LLM_PROVIDER=openai` and `OPENAI_API_KEY`
+   - **Ollama**: Set `LLM_PROVIDER=ollama` and `OLLAMA_URL=http://localhost:11434`
+   - **LM Studio**: Set `LLM_PROVIDER=lmstudio` and `LM_STUDIO_URL=http://localhost:1234/v1`
+3. **Test**: Visit [/chat-ui.html](/chat-ui.html) or use `/model` endpoint
+
+**WebUI Setup**: Use [/llm-setup.html](/llm-setup.html) for visual configuration with test button.
 
 Add to ChatGPT (Custom GPT Actions)
 - Follow the guide: [docs/CHATGPT_configuration.md](docs/CHATGPT_configuration.md)
@@ -62,6 +77,7 @@ Package scripts of interest
 Notes
 - When deploying behind a proxy, set `PUBLIC_BASE_URL` to ensure OpenAPI `servers[0].url` is correct
 - Do not log secrets; examples use placeholders like `${OPENAI_API_KEY}`
+- **⚠️ Deprecation**: `executeFile` is deprecated. Use `/command/execute` with shell commands instead.
 
 Executors (platform-aware starter config)
 - The server auto-detects common shells and interpreters on startup (except in tests) and seeds executor settings accordingly.
