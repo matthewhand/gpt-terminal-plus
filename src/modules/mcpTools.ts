@@ -1,13 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
-import { changeDirectory } from "../routes/command/changeDirectory";
-import { executeCommand } from "../routes/command/executeCommand";
-import { executeCode } from "../routes/command/executeCode";
+import { changeDirectory, executeCommand, executeCode, executeLlm } from "../routes/command";
 import { createFile } from "../routes/file";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
 import { getSupportedModels, isSupportedModel } from "../common/models";
 import { getSelectedModel, setSelectedModel } from "../utils/GlobalStateHelper";
-import { executeLlm } from "../routes/command/executeLlm";
 
 /**
  * Registers MCP tools to expose Express routes as discoverable MCP tools.

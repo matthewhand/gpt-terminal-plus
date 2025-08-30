@@ -1,10 +1,6 @@
 import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
-import { executeCode } from './command/executeCode'; // Import the actual executeCode
-import { executeShell } from './command/executeShell'; // Import the actual executeShell
-import { executeBash } from './command/executeBash';
-import { executePython } from './command/executePython';
-import executeDynamicRouter from './command/executeDynamic';
+import { executeCode, executeShell, executeBash, executePython, executeDynamicRouter } from './command';
 
 const router = Router();
 

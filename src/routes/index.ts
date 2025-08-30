@@ -4,15 +4,7 @@ import express from 'express';
 import testCommandRouter from './commandRoutes';
 
 /** --- Real command handlers for prod/dev --- */
-import { executeCommand } from './command/executeCommand';
-import { executeShell } from './command/executeShell';
-import { executeCode } from './command/executeCode';
-import { executeFile } from './command/executeFile';
-import { executeLlm } from './command/executeLlm';
-import { executeBash } from './command/executeBash';
-import { executePython } from './command/executePython';
-import executorsRouter from './command/executors';
-import executeDynamicRouter from './command/executeDynamic';
+import { executeCommand, executeShell, executeCode, executeFile, executeLlm, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
