@@ -14,6 +14,8 @@ import chatRoutes from './chatRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import settingsRoutes from './settingsRoutes';
 import { configRouter, healthRouter } from './core';
+import { securityLogger } from '../middlewares/securityLogger';
+import { rateLimiters } from '../middlewares/advancedRateLimit';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -57,14 +59,14 @@ export function setupApiRouter(app: express.Application): void {
   }
 
   // ----- Other groups with correct prefixes -----
-  app.use('/server', serverRoutes);
-  app.use('/activity', activityRoutes);
-  app.use('/file', fileRoutes);
-  app.use('/llm', llmConsoleRoutes);
+  app.use('/server', securityLogger, rateLimiters.moderate, serverRoutes);
+  app.use('/activity', securityLogger, rateLimiters.lenient, activityRoutes);
+  app.use('/file', securityLogger, rateLimiters.strict, fileRoutes);
+  app.use('/llm', securityLogger, rateLimiters.moderate, llmConsoleRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
-  app.use('/chat', chatRoutes);
+  app.use('/chat', securityLogger, rateLimiters.moderate, chatRoutes);
   // settings (redacted view), protected by bearer token
-  app.use('/settings', settingsRoutes);
+  app.use('/settings', securityLogger, rateLimiters.strict, settingsRoutes);
   // config overrides and schema endpoints
   app.use('/config', configRouter);
   // health check endpoints
