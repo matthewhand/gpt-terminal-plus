@@ -32,9 +32,10 @@ try {
 /** Named export expected by tests */
 export function setupApiRouter(app: express.Application): void {
   const isTest = process.env.NODE_ENV === 'test';
+  const useProdRoutesForTest = process.env.USE_PROD_ROUTES_FOR_TEST === '1';
 
   // ----- Command endpoints -----
-  if (isTest) {
+  if (isTest && !useProdRoutesForTest) {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
     console.log('Mounting test command router under /command');

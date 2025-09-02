@@ -13,6 +13,7 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   void _next;
+  try { if (process.env.NODE_ENV === 'test') { /* helpful during tests */ console.error('[errorHandler]', err); } } catch {}
   // Handle JSON/body parse errors from express.json/body-parser
   // body-parser sets err.type === 'entity.parse.failed' for malformed JSON
   if (err && (err instanceof SyntaxError || err.type === 'entity.parse.failed')) {

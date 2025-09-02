@@ -793,9 +793,24 @@ export const executeSession = async (req: Request, res: Response) => {
  * Function to execute a shell command on the server.
  */
 export const executeShell = async (req: Request, res: Response) => {
+  try { console.debug('[execute-shell] handler invoked'); } catch {}
   const { command, args, shell, workingDirectory } = req.body || {};
-  // Debug aid for tests
-  console.debug(`[execute-shell] body=${JSON.stringify(req.body || {})}`);
+  // Circuit breaker: input length (pre-check on raw command to avoid logging huge payloads)
+  try {
+    const raw = typeof command === 'string' ? command : '';
+    const preCheck = enforceInputLimit('executeShell', String(raw));
+    if ((preCheck as any)?.ok === false) {
+      return res.status(413).json({ ...(preCheck as any).payload });
+    }
+    if ((preCheck as any)?.truncated) {
+      (req as any)._effectiveCommand = (preCheck as any).value;
+    }
+  } catch { /* ignore */ }
+  // Debug aid for tests (log only a small preview)
+  try {
+    const preview = typeof command === 'string' ? (command.length > 200 ? command.slice(0, 200) + '…' : command) : command;
+    console.debug(`[execute-shell] cmdPreview=${JSON.stringify(preview)}`);
+  } catch { /* ignore */ }
 
   // Log security event for command execution
   logSecurityEvent(req, 'COMMAND_EXECUTION', { command: typeof command === 'string' ? command.substring(0, 100) : command });
@@ -843,9 +858,10 @@ export const executeShell = async (req: Request, res: Response) => {
   }
 
   // Build the command line, supporting literal args array
+  const baseCommand = (req as any)._effectiveCommand ?? String(command);
   const cmd = Array.isArray(args) && args.length > 0
-    ? shellEscape([command, ...args.map((a: any) => String(a))])
-    : String(command);
+    ? shellEscape([baseCommand, ...args.map((a: any) => String(a))])
+    : String(baseCommand);
 
   try {
     let server: any;
@@ -886,11 +902,13 @@ export const executeShell = async (req: Request, res: Response) => {
           if (typeof v === 'number' && v > 0) timeoutMs = v;
         }
       } catch { /* ignore */ }
-      const finalCmd = envExport ? `${envExport} && ${cmd}` : cmd;
+      const effectiveCmd = (req as any)._effectiveCommand ?? cmd;
+      const finalCmd = envExport ? `${envExport} && ${effectiveCmd}` : effectiveCmd;
       result = await executeLocalCommand(finalCmd, timeoutMs, cwd, shell);
     } else {
       // Support custom workingDirectory by prefixing command with cd &&
-      let cmdToRun = envExport ? `${envExport} && ${String(cmd)}` : String(cmd);
+      const effectiveCmd = (req as any)._effectiveCommand ?? cmd;
+      let cmdToRun = envExport ? `${envExport} && ${String(effectiveCmd)}` : String(effectiveCmd);
       if (typeof workingDirectory === 'string' && workingDirectory.trim() !== '') {
         cmdToRun = `cd ${shellEscape([workingDirectory])} && ${cmdToRun}`;
       }
