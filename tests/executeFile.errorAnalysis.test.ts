@@ -1,8 +1,35 @@
-// This test file is disabled because /command/execute-file endpoint has been removed
-// The functionality has been consolidated into /command/execute-shell
+import request from 'supertest';
+import express, { Router } from 'express';
+import setupMiddlewares from '../src/middlewares/setupMiddlewares';
+import * as routesMod from '../src/routes';
+import { getOrGenerateApiToken } from '../src/common/apiToken';
+
+function makeApp() {
+  const app = express();
+  setupMiddlewares(app);
+
+  const anyRoutes: any = routesMod as any;
+  if (typeof anyRoutes.setupApiRouter === 'function') {
+    anyRoutes.setupApiRouter(app);
+  } else {
+    const router = Router();
+    const setup = anyRoutes.setupRoutes || anyRoutes.default;
+    if (typeof setup === 'function') setup(router);
+    app.use('/', router);
+  }
+  return app;
+}
 
 describe('execute-file (removed)', () => {
-  it('endpoint no longer exists', () => {
-    expect(true).toBe(true);
+  const app = makeApp();
+  const token = getOrGenerateApiToken();
+
+  it('rejects requests to removed endpoint with 404', async () => {
+    const res = await request(app)
+      .post('/command/execute-file')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ filename: 'script.sh' });
+
+    expect([404, 400]).toContain(res.status);
   });
 });
