@@ -283,4 +283,3 @@ describe('Chat Completions API', () => {
     });
   });
 });
-

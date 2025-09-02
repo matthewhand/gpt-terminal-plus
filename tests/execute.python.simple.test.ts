@@ -74,7 +74,7 @@ describe('Python Code Execution', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ 
           language: 'python', 
-          code: 'data = {"items": [1, 2, 3]}\nprint(f"Sum: {sum(data["items"])}")' 
+          code: 'data = {"items": [1, 2, 3]}\nprint(f"Sum: {sum(data[\'items\'])}")' 
         });
 
       expect(res.status).toBe(200);

@@ -52,7 +52,7 @@ router.post('/completions', async (req: Request, res: Response) => {
       // Special, deterministic behavior for tests:
       if (String(process.env.NODE_ENV).toLowerCase() === 'test') {
         const all = safeMessages.map(m => m.content).join(' ');
-        if (/\berror\b/i.test(all)) {
+        if (/error/i.test(all)) {
           // Simulate an error then finish
           res.write('event: error\n');
           res.write('data: ' + JSON.stringify({ message: 'Simulated error' }) + '\n\n');
