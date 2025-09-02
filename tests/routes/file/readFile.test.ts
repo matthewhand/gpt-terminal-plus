@@ -5,8 +5,6 @@ import path from 'path';
 import setupMiddlewares from '../../../src/middlewares/setupMiddlewares';
 import * as routesMod from '../../../src/routes';
 
-console.log('Executing readFile.test.ts');
-
 function makeApp() {
   const app = express();
   setupMiddlewares(app);

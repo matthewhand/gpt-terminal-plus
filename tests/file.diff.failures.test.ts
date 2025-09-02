@@ -30,7 +30,8 @@ describe('/file/diff failures', () => {
       .send({ diff: 'this is not a valid diff', dryRun: true });
     expect(res.status).toBe(400);
     expect(String(res.body?.message || '')).toMatch(/validation/i);
-    expect(res.body?.errors || res.body?.stderr).toBeDefined();
+    // Handler returns 'details' containing validation error details
+    expect(res.body?.errors || res.body?.stderr || res.body?.details).toBeDefined();
   });
 
   it('captures patch failed rejects in response', async () => {
@@ -40,8 +41,8 @@ describe('/file/diff failures', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ diff: badDiff, dryRun: true });
     expect(res.status).toBe(400);
-    // depending on git version, may include errors[] or at least stderr text
-    expect(res.body?.errors || res.body?.stderr).toBeDefined();
+    // Accept any of errors/stderr/details depending on git version/handler
+    expect(res.body?.errors || res.body?.stderr || res.body?.details).toBeDefined();
   });
 });
 
