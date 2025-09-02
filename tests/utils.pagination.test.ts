@@ -19,5 +19,33 @@ describe('pagination helpers', () => {
     expect(r.limit).toBe(4);
     expect(r.offset).toBe(6);
   });
-});
 
+  it('offset beyond length returns empty slice', () => {
+    const r1 = paginateUtil(items, 5, 20);
+    const r2 = paginateHandler(items, 5, 20);
+    expect(r1.items).toEqual([]);
+    expect(r2.items).toEqual([]);
+  });
+
+  it('zero limit returns empty slice', () => {
+    const r1 = paginateUtil(items, 0, 0);
+    const r2 = paginateHandler(items, 0, 0);
+    expect(r1.items).toEqual([]);
+    // Handler defaults 0 limit to 10 via constructor fallback
+    expect(r2.items).toEqual(items);
+  });
+
+  it('large limit clamps to available items by slice behavior', () => {
+    const r1 = paginateUtil(items, 100, 8);
+    const r2 = paginateHandler(items, 100, 8);
+    expect(r1.items).toEqual([9, 10]);
+    expect(r2.items).toEqual([9, 10]);
+  });
+
+  it('negative offset yields empty slice for both implementations', () => {
+    const r1 = paginateUtil(items, 3, -2);
+    const r2 = paginateHandler(items, 3, -2);
+    expect(r1.items).toEqual([]);
+    expect(r2.items).toEqual([]);
+  });
+});
