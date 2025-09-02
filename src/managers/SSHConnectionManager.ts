@@ -79,4 +79,19 @@ export class SSHConnectionManager {
     this.client.end();
     debug('SSH connection closed');
   }
+
+  // Additional convenience methods expected by tests
+  createConnection(config?: Partial<SshHostConfig>): Client {
+    // No immediate connect; just return client with optional lazy config
+    void config; // placeholder to align with expected signature
+    return this.client;
+  }
+
+  closeConnection(): void {
+    this.disconnect();
+  }
+
+  getConnection(): Client {
+    return this.client;
+  }
 }

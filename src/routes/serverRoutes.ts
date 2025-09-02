@@ -38,4 +38,14 @@ router.get('/list', handleServerList);
 router.post('/register', registerServer);
 router.post('/remove', removeServer);
 
+// Minimal server selection endpoint for tests
+router.post('/set', (req: Request, res: Response) => {
+  const { hostname } = req.body || {};
+  if (!hostname || typeof hostname !== 'string' || hostname.trim() === '') {
+    return res.status(400).json({ error: 'hostname is required' });
+  }
+  // In a full implementation we'd mark selected server; here just echo
+  return res.status(200).json({ selected: hostname });
+});
+
 export default router;

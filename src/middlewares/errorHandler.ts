@@ -13,6 +13,11 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   void _next;
+  // Handle JSON/body parse errors from express.json/body-parser
+  // body-parser sets err.type === 'entity.parse.failed' for malformed JSON
+  if (err && (err instanceof SyntaxError || err.type === 'entity.parse.failed')) {
+    return res.status(400).json({ message: 'Bad Request', type: 'validation' });
+  }
   // Normalize error
   const isErrorObject = err instanceof Error;
   const name = isErrorObject ? err.name : (err && (err.name as string)) || '';

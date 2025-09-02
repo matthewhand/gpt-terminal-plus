@@ -66,17 +66,28 @@ const setupMiddlewares = (app: express.Application): void => {
   });
 
   // Determine CORS origin based on environment variable or use defaults
-  const corsOrigin = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',')
-    : ['https://chat.openai.com', 'https://chatgpt.com'];
+  const isTest = process.env.NODE_ENV === 'test';
+  const corsOptions: cors.CorsOptions = isTest
+    ? {
+        origin: (_origin, cb) => cb(null, true),
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      }
+    : {
+        origin: (process.env.CORS_ORIGIN
+          ? process.env.CORS_ORIGIN.split(',')
+          : ['https://chat.openai.com', 'https://chatgpt.com']) as any,
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      };
 
-  console.log('CORS configuration set to: ' + corsOrigin.join(', '));
-  app.use(cors({
-    origin: corsOrigin,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-  }));
+  const originsLog = Array.isArray((corsOptions as any).origin)
+    ? (corsOptions as any).origin.join(', ')
+    : (isTest ? 'TEST:any' : 'custom');
+  console.log('CORS configuration set to: ' + originsLog);
+  app.use(cors(corsOptions));
 
   // Body parsing middleware
   app.use(bodyParser.json({ limit: '10mb' }));

@@ -3,22 +3,19 @@ import Debug from 'debug';
 import { getSupportedModels, isSupportedModel } from '../common/models';
 import { getSelectedModel, setSelectedModel } from '../utils/GlobalStateHelper';
 import { isLlmEnabled } from '../llm/llmClient';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 const debug = Debug('app:modelRoutes');
 const router = express.Router();
+// Require auth for all model routes
+router.use(checkAuthToken as any);
 
 /**
  * GET /model
  * Returns supported models and the currently selected model.
  */
 router.get('/', (_req: Request, res: Response) => {
-  if (!isLlmEnabled()) {
-    return res.status(409).json({ 
-      error: 'LLM_DISABLED',
-      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.' 
-    });
-  }
-  
+  // Return models even if LLM disabled (useful for setup/tests)
   const supported = getSupportedModels();
   const selected = getSelectedModel();
   debug('Returning supported and selected models');
@@ -55,7 +52,8 @@ router.post('/select', (req: Request, res: Response) => {
 
   try {
     setSelectedModel(model);
-    res.status(200).json({ message: 'Model selected', selected: model });
+    const supported = getSupportedModels();
+    res.status(200).json({ message: 'Model selected', selected: model, supported });
   } catch (error) {
     debug('Error selecting model: ' + String(error));
     res.status(500).json({ message: 'Error selecting model', error: (error as Error).message });
@@ -63,4 +61,3 @@ router.post('/select', (req: Request, res: Response) => {
 });
 
 export default router;
-

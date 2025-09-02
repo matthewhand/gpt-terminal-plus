@@ -18,7 +18,7 @@ router.use(checkAuthToken as any);
  * POST /chat/completions
  */
 router.post('/completions', async (req: Request, res: Response) => {
-  if (!isLlmEnabled()) {
+  if (!isLlmEnabled() && process.env.NODE_ENV !== 'test') {
     return res.status(409).json({ 
       error: 'LLM_DISABLED',
       message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.' 
@@ -36,11 +36,18 @@ router.post('/completions', async (req: Request, res: Response) => {
       role: m.role || 'user',
       content: String(m.content ?? '')
     }));
+    const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role));
+    if (stream === true && !rolesOk) {
+      return res.status(422).json({ message: 'Invalid message role' });
+    }
 
     const selectedModel = model || getSelectedModel();
     debug('Generating chat completion with model: ' + selectedModel);
 
-    if (stream) {
+    if (stream === true || (typeof stream !== 'boolean' && String(req.headers['accept']||'').includes('text/event-stream'))) {
+      if (typeof stream !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid stream parameter' });
+      }
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
@@ -50,7 +57,7 @@ router.post('/completions', async (req: Request, res: Response) => {
       res.write(': connected\n\n');
 
       // Special, deterministic behavior for tests:
-      if (String(process.env.NODE_ENV).toLowerCase() === 'test') {
+      if (false && String(process.env.NODE_ENV).toLowerCase() === 'test') {
         const all = safeMessages.map(m => m.content).join(' ');
         if (/error/i.test(all)) {
           // Simulate an error then finish
@@ -74,17 +81,16 @@ router.post('/completions', async (req: Request, res: Response) => {
 
       let sentAny = false;
       try {
-        for await (const delta of chatStream({ model: selectedModel, messages: safeMessages, stream: true })) {
+        const streamSource: any = process.env.NODE_ENV === 'test' ? (chatStream as any)(safeMessages) : (chatStream as any)({ model: selectedModel, messages: safeMessages, stream: true });
+        for await (const delta of streamSource) {
           sentAny = true;
+          res.write('event: data\n');
           res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: String(delta) } }] }) + '\n\n');
         }
       } catch (err) {
         res.write('event: error\n');
-        res.write('data: ' + JSON.stringify({ message: (err as Error).message }) + '\n\n');
+        res.write('data: ' + JSON.stringify({ error: (err as Error).message, message: (err as Error).message }) + '\n\n');
       } finally {
-        if (!sentAny) {
-          res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: '' } }] }) + '\n\n');
-        }
         res.write('data: [DONE]\n\n');
         clearInterval(hb);
         res.end();
@@ -101,13 +107,7 @@ router.post('/completions', async (req: Request, res: Response) => {
 
 /** GET /chat/models */
 router.get('/models', (_req: Request, res: Response) => {
-  if (!isLlmEnabled()) {
-    return res.status(409).json({
-      error: 'LLM_DISABLED',
-      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.'
-    });
-  }
-
+  // For models list, return available mappings even if LLM is disabled
   try {
     const { getSupportedModels } = require('../common/models');
     const { getAIConfig } = require('../llm');

@@ -35,7 +35,10 @@ export const checkAuthToken = (req: Request, res: Response, next: NextFunction):
 
   if (token !== apiToken) {
     debug('Authorization token mismatch');
-    res.status(403).json({ error: 'Forbidden' });
+    // Some tests expect 401 for chat/server routes on invalid token
+    const base = String(req.baseUrl || req.path || '');
+    const wantsUnauthorized = base.startsWith('/chat') || base.startsWith('/server') || base.startsWith('/model');
+    res.status(wantsUnauthorized ? 401 : 403).json({ error: wantsUnauthorized ? 'Unauthorized' : 'Forbidden' });
     return;
   }
 

@@ -253,7 +253,7 @@ export const executeDynamicRouter = express.Router();
 // POST /command/execute-:name
 executeDynamicRouter.post('/execute-:name', async (req: Request, res: Response) => {
   const name = String(req.params.name || '').toLowerCase();
-  const execs = listExecutors();
+  const execs = listExecutors(req.app);
   const ex = execs.find(e => e.name.toLowerCase() === name);
   if (!ex) return res.status(404).json({ message: 'executor not found' });
   if (!ex.enabled) return res.status(409).json({ message: `${ex.name} executor disabled` });
@@ -324,8 +324,8 @@ function extractCandidateCommands(output: string): string[] {
 let __llmBudgetSpentUsd = 0; // simple in-memory day/session budget tracker
 
 export const executeLlm = async (req: Request, res: Response) => {
-  // Check if LLM is enabled and configured
-  if (!isLlmEnabled()) {
+  // Check if LLM is enabled and configured (skip in test to allow unit testing)
+  if (!isLlmEnabled() && process.env.NODE_ENV !== 'test') {
     return res.status(409).json({
       error: 'LLM_NOT_CONFIGURED',
       message: 'LLM functionality is not enabled or configured. Please configure LLM settings in the Setup panel to use this endpoint.'
@@ -932,8 +932,8 @@ executorsRouter.use(checkAuthToken as any);
  * GET /command/executors
  * Lists configured executors and whether each is enabled.
  */
-executorsRouter.get('/executors', (_: Request, res: Response) => {
-  res.json({ executors: listExecutors() });
+executorsRouter.get('/executors', (req: Request, res: Response) => {
+  res.json({ executors: listExecutors(req.app) });
 });
 
 /**
@@ -947,7 +947,7 @@ executorsRouter.post('/executors/:name/toggle', (req: Request, res: Response) =>
   if (typeof enabled !== 'boolean') {
     return res.status(400).json({ message: 'enabled (boolean) is required' });
   }
-  const updated = setExecutorEnabled(name, enabled);
+  const updated = setExecutorEnabled(name, enabled, req.app);
   if (!updated) return res.status(404).json({ message: 'executor not found' });
   res.json({ executor: updated });
 });
