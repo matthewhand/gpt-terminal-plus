@@ -1,7 +1,26 @@
 import request from 'supertest';
 import express from 'express';
-import { applyDiff } from '../src/routes/file/diff';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
+
+// Mock child_process.exec so applyDiff doesn't call real git
+jest.mock('child_process', () => {
+  return {
+    exec: (cmd: string, cb: any) => {
+      // Support both exec(cmd, cb) and exec(cmd, opts, cb)
+      const callback = typeof cb === 'function' ? cb : arguments[2];
+      if (cmd.includes('--check')) {
+        // Simulate successful validation
+        callback(null, '', '');
+      } else {
+        // Simulate successful application
+        callback(null, 'applied', '');
+      }
+    }
+  } as any;
+});
+
+// Import after mocks so module-level exec is wrapped by jest
+import { applyDiff } from '../src/routes/file';
 
 const app = express();
 app.use(express.json());
