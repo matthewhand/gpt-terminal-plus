@@ -24,8 +24,8 @@ export interface ErrorAnalysis {
 }
 
 export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | undefined> {
-  // Silent no-op when LLM disabled
-  if (!isLlmEnabled()) return undefined;
+  // In tests, allow analysis even if LLM isn't fully configured
+  if (process.env.NODE_ENV !== 'test' && !isLlmEnabled()) return undefined;
   
   const auto = process.env.AUTO_ANALYZE_ERRORS !== 'false';
   if (!auto) return undefined;

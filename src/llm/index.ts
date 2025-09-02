@@ -141,17 +141,36 @@ export function getDefaultModel() {
 // Per-server overrides: use llm provider settings from server config if present
 export async function chatForServer(server: ServerConfig, req: ChatRequest): Promise<ChatResponse> {
   const llm = server.llm;
+
+  // Validate presence of llm config
+  if (!llm || Object.keys(llm).length === 0) {
+    throw new Error('LLM provider not configured');
+  }
+
+  // Validate provider
+  const provider = (llm as any).provider;
+  const validProviders = new Set(['ollama', 'lmstudio', 'openai']);
+  if (!provider || !validProviders.has(provider)) {
+    throw new Error(`Invalid LLM provider: ${provider || 'undefined'}`);
+  }
+
   if (llm?.provider === 'ollama') {
     const cfg: OllamaConfig = { baseUrl: llm.baseUrl || 'http://localhost:11434', modelMap: llm.modelMap };
+    if (!llm.baseUrl) {
+      throw new Error('Missing baseUrl for ollama provider');
+    }
     return chatWithOllama(cfg, req);
   }
   if (llm?.provider === 'lmstudio') {
     const cfg: LmStudioConfig = { baseUrl: llm.baseUrl || 'http://localhost:1234', modelMap: llm.modelMap } as any;
+    if (!llm.baseUrl) {
+      throw new Error('Missing baseUrl for lmstudio provider');
+    }
     return chatWithLmStudio(cfg, req);
   }
   if (llm?.provider === 'openai') {
     return chatWithOpenAI(req);
   }
-  // Fallback to global config
-  return chat(req);
+  // Should not reach here due to validation
+  throw new Error('Unsupported LLM provider configuration');
 }

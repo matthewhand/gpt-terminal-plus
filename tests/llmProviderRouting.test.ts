@@ -248,10 +248,9 @@ describe('LLM Provider Routing', () => {
       await chatForServer(server as any, { model: 'test', messages: complexMessages } as any);
       
       expect(chatWithOllama).toHaveBeenCalledWith(
-        expect.objectContaining({ messages: complexMessages }),
-        expect.any(Object)
+        expect.any(Object),
+        expect.objectContaining({ messages: complexMessages })
       );
     });
   });
 });
-

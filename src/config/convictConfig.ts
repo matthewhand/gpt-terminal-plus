@@ -380,6 +380,26 @@ export const convictConfig = () => {
     console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
   }
   if (useCache) __singletonCfg = cfg;
+
+  // Env var compatibility shims for tests and legacy names
+  // Prefer explicit envs if provided; otherwise support aliases.
+  try {
+    // Provider alias: AI_PROVIDER -> llm.provider
+    const existingProvider = (cfg as any).get('llm.provider');
+    if ((!existingProvider || existingProvider === '') && process.env.AI_PROVIDER) {
+      (cfg as any).set('llm.provider', process.env.AI_PROVIDER);
+    }
+    // Ollama URL alias: OLLAMA_BASE_URL -> llm.ollama.baseUrl
+    const existingOllama = (cfg as any).get('llm.ollama.baseUrl');
+    if ((!existingOllama || existingOllama === '') && process.env.OLLAMA_BASE_URL) {
+      (cfg as any).set('llm.ollama.baseUrl', process.env.OLLAMA_BASE_URL);
+    }
+    // LM Studio URL alias: LMSTUDIO_BASE_URL -> llm.lmstudio.baseUrl
+    const existingLm = (cfg as any).get('llm.lmstudio.baseUrl');
+    if ((!existingLm || existingLm === '') && process.env.LMSTUDIO_BASE_URL) {
+      (cfg as any).set('llm.lmstudio.baseUrl', process.env.LMSTUDIO_BASE_URL);
+    }
+  } catch {}
   return cfg;
 };
 

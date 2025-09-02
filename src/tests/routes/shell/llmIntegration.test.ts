@@ -9,7 +9,8 @@ jest.mock('../../../engines/llmEngine');
 
 const app = express();
 app.use(express.json());
-app.use('/llm', llmIntegrationRoutes);
+// Mount the shell router at root; it exposes /llm/plan-exec
+app.use('/', shellRoutes);
 
 describe('LLM Integration Routes', () => {
   test('POST /llm/plan-exec should require input', async () => {

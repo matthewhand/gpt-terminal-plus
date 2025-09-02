@@ -31,7 +31,7 @@ export function applyFilePatch(
   const patches = dmp.patch_make(oldText, newText);
   
   if (patches.length === 0) {
-    return { success: false, error: "No patches to apply" };
+    return { success: false, error: "Patch could not be applied" };
   }
 
   // Apply patches to current file content with fuzzy matching
@@ -40,7 +40,7 @@ export function applyFilePatch(
   // Check if any hunks were successfully applied
   const appliedCount = results.filter(Boolean).length;
   if (appliedCount === 0) {
-    return { success: false, error: "No hunks could be applied - file may have drifted too much" };
+    return { success: false, error: "Patch could not be applied" };
   }
 
   if (preview) {
