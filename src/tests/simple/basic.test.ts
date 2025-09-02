@@ -24,17 +24,24 @@ describe('Core Utilities Integration', () => {
     expect(getExecuteCommand('powershell', 'test.ps1')).toBe('Powershell -File test.ps1');
   });
 
+  test('quotes file paths with spaces or special chars', () => {
+    expect(getExecuteCommand('bash', '/path/with space.sh')).toBe('bash "/path/with space.sh"');
+    expect(getExecuteCommand('powershell', 'C:/Program Files/script.ps1')).toBe('Powershell -File "C:/Program Files/script.ps1"');
+    expect(getExecuteCommand('unknown', 'file(name).sh')).toBe('bash "file(name).sh"');
+  });
+
   test('should handle edge cases in utilities', () => {
     expect(() => getExecuteCommand('', 'test')).toThrow();
     expect(() => getExecuteCommand('bash', '')).toThrow();
     expect(escapeSpecialChars('')).toBe('');
   });
 
-  test('should maintain consistency across multiple calls', () => {
+  test('returns same token across multiple calls once set', () => {
+    // Force a fresh token generation
+    delete process.env.API_TOKEN;
     const token1 = getOrGenerateApiToken();
     const token2 = getOrGenerateApiToken();
-    // Should be same if API_TOKEN env var is set, different if generated
+    expect(token1).toBe(token2);
     expect(typeof token1).toBe('string');
-    expect(typeof token2).toBe('string');
   });
 });
