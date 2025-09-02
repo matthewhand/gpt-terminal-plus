@@ -46,61 +46,73 @@ export const listServers = async (req: Request, res: Response) => {
  * Register a new server dynamically
  */
 export const registerServer = async (req: Request, res: Response) => {
-  const { hostname, protocol, config } = req.body;
+  const { hostname, protocol, config } = req.body || {};
 
+  // Basic presence validation
   if (!hostname || !protocol) {
-    return res.status(400).json({ 
-      error: 'hostname and protocol are required' 
-    });
+    return res.status(400).json({ error: 'hostname and protocol are required' });
+  }
+
+  // Hostname format: letters, numbers, dots, dashes and underscores only
+  const name = String(hostname).trim();
+  if (!/^[A-Za-z0-9._-]+$/.test(name)) {
+    return res.status(400).json({ error: 'invalid hostname format' });
   }
 
   if (!['local', 'ssh', 'ssm'].includes(protocol)) {
-    return res.status(400).json({ 
-      error: 'protocol must be local, ssh, or ssm' 
-    });
+    return res.status(400).json({ error: 'protocol must be local, ssh, or ssm' });
   }
 
   try {
     const configPath = path.join(process.cwd(), 'config', 'servers.json');
-    
-    let servers = {};
+
+    let servers: Record<string, any> = {};
     try {
       const content = await readFile(configPath, 'utf8');
       servers = JSON.parse(content);
     } catch {
-      // File doesn't exist, start with empty object
+      // File doesn't exist or invalid; start with empty object
+      servers = {};
+    }
+
+    // Duplicate prevention
+    if (servers[name]) {
+      return res.status(409).json({ error: `Server '${name}' already exists` });
     }
 
     // Validate server config based on protocol
-    if (protocol === 'ssh' && (!config?.host || !config?.username)) {
-      return res.status(400).json({ 
-        error: 'SSH servers require host and username in config' 
-      });
+    if (protocol === 'ssh') {
+      if (!config?.host || !config?.username) {
+        return res.status(400).json({ error: 'SSH servers require host and username in config' });
+      }
     }
 
-    if (protocol === 'ssm' && !config?.instanceId) {
-      return res.status(400).json({ 
-        error: 'SSM servers require instanceId in config' 
-      });
+    if (protocol === 'ssm') {
+      const instanceId = config?.instanceId;
+      if (!instanceId) {
+        return res.status(400).json({ error: 'SSM servers require instanceId in config' });
+      }
+      // Strict-ish EC2 instance id validation
+      if (!/^i-[0-9a-fA-F]{17}$/.test(String(instanceId))) {
+        return res.status(422).json({ error: 'Invalid SSM instanceId format' });
+      }
     }
 
-    // Add server to configuration
-    (servers as any)[hostname] = {
+    // Persist with nested config for API consistency
+    servers[name] = {
+      hostname: name,
       protocol,
-      hostname,
-      ...config,
-      registeredAt: new Date().toISOString()
+      config: config ? { ...config } : {},
+      registeredAt: new Date().toISOString(),
     };
 
-    // Write updated configuration
     await writeFile(configPath, JSON.stringify(servers, null, 2), 'utf8');
 
-    res.json({
+    return res.status(201).json({
       success: true,
-      message: `Server ${hostname} registered successfully`,
-      server: (servers as any)[hostname]
+      message: `Server ${name} registered successfully`,
+      server: servers[name],
     });
-
   } catch (error) {
     handleServerError(error, res, 'Error registering server');
   }
@@ -110,7 +122,8 @@ export const registerServer = async (req: Request, res: Response) => {
  * Remove a server from configuration
  */
 export const removeServer = async (req: Request, res: Response) => {
-  const { hostname } = req.params;
+  // Accept hostname via params (DELETE /remove/:hostname) or body (POST /remove)
+  const hostname = (req.params && (req.params as any).hostname) || (req.body && (req.body as any).hostname);
 
   if (!hostname) {
     return res.status(400).json({ 

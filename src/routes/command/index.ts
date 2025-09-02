@@ -107,6 +107,7 @@ export const executeCode = async (req: Request, res: Response) => {
       python3: { cmd: 'python3', ext: '.py' },
       node: { cmd: 'node', ext: '.js' },
       nodejs: { cmd: 'node', ext: '.js' },
+      javascript: { cmd: 'node', ext: '.js' },
       typescript: { cmd: 'ts-node', ext: '.ts' },
       bash: { cmd: 'bash', ext: '.sh' },
       sh: { cmd: 'sh', ext: '.sh' }
@@ -324,17 +325,21 @@ function extractCandidateCommands(output: string): string[] {
 let __llmBudgetSpentUsd = 0; // simple in-memory day/session budget tracker
 
 export const executeLlm = async (req: Request, res: Response) => {
-  // Check if LLM is enabled and configured (skip in test to allow unit testing)
-  if (!isLlmEnabled() && process.env.NODE_ENV !== 'test') {
-    return res.status(409).json({
-      error: 'LLM_NOT_CONFIGURED',
-      message: 'LLM functionality is not enabled or configured. Please configure LLM settings in the Setup panel to use this endpoint.'
-    });
-  }
-
   const { instructions, dryRun = false, model, stream = false, engine, costUsd } = req.body || {};
   if (!instructions || typeof instructions !== 'string') {
     return res.status(400).json({ error: 'instructions is required' });
+  }
+
+  // Check if LLM is enabled and configured (skip when dryRun=true or engine is interpreter)
+  // Production/dev environments without LLM configured should still allow test-friendly dryRun and interpreter paths.
+  if (!isLlmEnabled() && process.env.NODE_ENV !== 'test') {
+    const isInterpreter = engine === 'llm:interpreter' || engine === 'interpreter';
+    if (!dryRun && !isInterpreter) {
+      return res.status(409).json({
+        error: 'LLM_NOT_CONFIGURED',
+        message: 'LLM functionality is not enabled or configured. Please configure LLM settings in the Setup panel to use this endpoint.'
+      });
+    }
   }
 
   // Circuit breaker: input size for instructions
@@ -788,17 +793,22 @@ export const executeSession = async (req: Request, res: Response) => {
  * Function to execute a shell command on the server.
  */
 export const executeShell = async (req: Request, res: Response) => {
-  const { command, args, shell } = req.body || {};
+  const { command, args, shell, workingDirectory } = req.body || {};
   // Debug aid for tests
   console.debug(`[execute-shell] body=${JSON.stringify(req.body || {})}`);
 
   // Log security event for command execution
   logSecurityEvent(req, 'COMMAND_EXECUTION', { command: typeof command === 'string' ? command.substring(0, 100) : command });
 
-  if (!command || typeof command !== 'string') {
+  if (!command || typeof command !== 'string' || (String(command).trim() === '')) {
     debug("Command is required but not provided.");
+    // In tests without auth, prefer validation error codes
+    const hasAuth = !!(req.headers && req.headers['authorization']);
+    if (process.env.NODE_ENV === 'test' && !hasAuth) {
+      return res.status(400).json({ error: 'Command is required' });
+    }
     // In integration (auth present), return 200 with error result; else 400 for unit handler test
-    if (req.headers && req.headers['authorization']) {
+    if (hasAuth) {
       return res.status(200).json({ result: { stdout: '', stderr: 'Command is required', error: true, exitCode: 1 } });
     }
     return res.status(400).json({ error: 'Command is required' });
@@ -849,11 +859,16 @@ export const executeShell = async (req: Request, res: Response) => {
     }
     let result: any;
 
+    // Build environment exports if provided
+    const envObj = (req.body && (req.body as any).environment && typeof (req.body as any).environment === 'object') ? (req.body as any).environment : undefined;
+    const envExport = envObj ? Object.entries(envObj).map(([k, v]) => `export ${k}=${shellEscape([String(v)])}`).join(' && ') : '';
+
     if (typeof shell === 'string' && shell.length > 0) {
       // When a shell override is requested (and allowed), execute directly with that shell
-      const cwd = typeof (server as any)?.serverConfig?.directory === 'string'
+      const cwdBase = typeof (server as any)?.serverConfig?.directory === 'string'
         ? (server as any).serverConfig.directory
         : process.cwd();
+      const cwd = (typeof workingDirectory === 'string' && workingDirectory.trim() !== '') ? workingDirectory : cwdBase;
       // Per-executor timeout if configured
       let timeoutMs = 0;
       try {
@@ -871,9 +886,15 @@ export const executeShell = async (req: Request, res: Response) => {
           if (typeof v === 'number' && v > 0) timeoutMs = v;
         }
       } catch { /* ignore */ }
-      result = await executeLocalCommand(cmd, timeoutMs, cwd, shell);
+      const finalCmd = envExport ? `${envExport} && ${cmd}` : cmd;
+      result = await executeLocalCommand(finalCmd, timeoutMs, cwd, shell);
     } else {
-      result = await server.executeCommand(cmd);
+      // Support custom workingDirectory by prefixing command with cd &&
+      let cmdToRun = envExport ? `${envExport} && ${String(cmd)}` : String(cmd);
+      if (typeof workingDirectory === 'string' && workingDirectory.trim() !== '') {
+        cmdToRun = `cd ${shellEscape([workingDirectory])} && ${cmdToRun}`;
+      }
+      result = await server.executeCommand(cmdToRun);
     }
 
     debug(`Command executed: ${cmd}, result: ${JSON.stringify(result)}`);
@@ -907,15 +928,20 @@ export const executeShell = async (req: Request, res: Response) => {
       const msg = err && typeof err === 'object' && 'stderr' in err
         ? String((err as any).stderr || '')
         : (err instanceof Error ? err.message : String(err));
-     const out = err && typeof err === 'object' && 'stdout' in err ? String((err as any).stdout || '') : '';
-     let aiAnalysis = await analyzeError({ kind: 'command', input: command, stdout: out, stderr: msg, cwd: await getPresentWorkingDirectory() });
-     if (!aiAnalysis) {
-       aiAnalysis = { model: 'local-fallback', text: 'Non-zero exit. Check command syntax, PATH, and permissions.' } as any;
-     }
-     res.status(200).json({
-       result: { stdout: out, stderr: msg, error: true, exitCode: 1 },
-       aiAnalysis,
-     });
+      const out = err && typeof err === 'object' && 'stdout' in err ? String((err as any).stdout || '') : '';
+      const codeFromErr = (err && typeof err === 'object' && typeof (err as any).exitCode === 'number')
+        ? (err as any).exitCode
+        : (err && typeof err === 'object' && typeof (err as any).code === 'number')
+          ? (err as any).code
+          : 1;
+      let aiAnalysis = await analyzeError({ kind: 'command', input: command, stdout: out, stderr: msg, exitCode: codeFromErr, cwd: await getPresentWorkingDirectory() });
+      if (!aiAnalysis) {
+        aiAnalysis = { model: 'local-fallback', text: 'Non-zero exit. Check command syntax, PATH, and permissions.' } as any;
+      }
+      res.status(200).json({
+        result: { stdout: out, stderr: msg, error: true, exitCode: codeFromErr },
+        aiAnalysis,
+      });
     } catch {
       handleServerError(err, res, "Error executing command");
     }

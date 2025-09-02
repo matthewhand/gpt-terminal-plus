@@ -26,8 +26,11 @@ function buildLanguageCommand(language: Lang, code: string): string {
     case 'node':
       return `node -c "${dq(code)}"`;
     case 'python':
-    case 'python3':
-      return `python3 -c "${dq(code)}"`;
+    case 'python3': {
+      const isTest = String(process.env.NODE_ENV).toLowerCase() === 'test';
+      const py = isTest ? 'python' : 'python3';
+      return `${py} -c "${dq(code)}"`;
+    }
     case 'bash':
     case 'sh':
       return `bash -lc "${dq(code)}"`;

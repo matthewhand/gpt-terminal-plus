@@ -78,8 +78,6 @@ export async function executeCommand(
           executeCommandDebug(`Error during command execution with execFile: ${error.message}`);
           const out = String(stdout || '');
           const err = String(stderr || '');
-          // const isMax = /maxBuffer/i.test(error?.message || '');
-          // const exitCode = typeof error?.code === 'number' ? error.code : 1;
           // In error cases, some tests expect a rejected promise with a slim shape
           return reject({ stdout: out, stderr: err, presentWorkingDirectory: directory });
         } else {
@@ -93,8 +91,6 @@ export async function executeCommand(
           executeCommandDebug(`Error during command execution with exec: ${error.message}`);
           const out = String(stdout || '');
           const err = String(stderr || '');
-          // const isMax = /maxBuffer/i.test(error?.message || '');
-          // const exitCode = typeof error?.code === 'number' ? error.code : 1;
           return reject({ stdout: out, stderr: err, presentWorkingDirectory: directory });
         } else {
           resolve({ stdout, stderr, presentWorkingDirectory: directory });

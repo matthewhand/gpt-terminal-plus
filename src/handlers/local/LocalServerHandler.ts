@@ -28,8 +28,37 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
     const cwd = directory || getPresentWorkingDirectory() || this.serverConfig.directory || process.cwd();
-    // Execute via local shell to capture proper exit codes
-    return await (executeCommandAction as any)(command, typeof timeout === 'number' ? timeout : 0, cwd, '/bin/bash');
+    const childProc = require('child_process');
+    const spawn = childProc.spawn as (cmd: string, args: string[], opts: any) => any;
+    const shell = '/bin/bash';
+    const args = ['-lc', command];
+    const opts = { cwd, env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] };
+    return await new Promise<ExecutionResult>((resolve) => {
+      const child = spawn(shell, args, opts);
+      let stdout = '';
+      let stderr = '';
+      child.stdout?.on('data', (d: any) => { stdout += String(d || ''); });
+      child.stderr?.on('data', (d: any) => { stderr += String(d || ''); });
+      let settled = false;
+      let t: any;
+      if (typeof timeout === 'number' && timeout > 0) {
+        t = setTimeout(() => {
+          try { child.kill('SIGKILL'); } catch {}
+          if (!settled) {
+            settled = true;
+            resolve({ stdout, stderr: (stderr || '') + '\n[timeout]', exitCode: 124, error: true, truncated: false, terminated: true } as any);
+          }
+        }, timeout);
+      }
+      child.on('close', (code: number) => {
+        if (t) clearTimeout(t);
+        if (!settled) {
+          settled = true;
+          const exitCode = typeof code === 'number' ? code : 0;
+          resolve({ stdout, stderr, exitCode, error: exitCode !== 0 } as any);
+        }
+      });
+    });
   }
 
   async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {

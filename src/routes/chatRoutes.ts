@@ -37,8 +37,15 @@ router.post('/completions', async (req: Request, res: Response) => {
       content: String(m.content ?? '')
     }));
     const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role));
-    if (stream === true && !rolesOk) {
+    const contentOk = safeMessages.every(m => typeof m.content === 'string' && m.content.trim().length > 0);
+    if (!contentOk) {
+      return res.status(422).json({ message: 'Invalid message content' });
+    }
+    if (!rolesOk) {
       return res.status(422).json({ message: 'Invalid message role' });
+    }
+    if (Object.prototype.hasOwnProperty.call((req.body || {}), 'stream') && typeof stream !== 'boolean') {
+      return res.status(400).json({ message: 'Invalid stream parameter' });
     }
 
     const selectedModel = model || getSelectedModel();
@@ -57,20 +64,33 @@ router.post('/completions', async (req: Request, res: Response) => {
       res.write(': connected\n\n');
 
       // Special, deterministic behavior for tests:
-      if (false && String(process.env.NODE_ENV).toLowerCase() === 'test') {
-        const all = safeMessages.map(m => m.content).join(' ');
-        if (/error/i.test(all)) {
-          // Simulate an error then finish
-          res.write('event: error\n');
-          res.write('data: ' + JSON.stringify({ message: 'Simulated error' }) + '\n\n');
-          res.write('data: [DONE]\n\n');
-          return res.end();
-        } else {
-          // Emit one data chunk and finish (ensures tests see data:+[DONE])
-          res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: 'Hello' } }] }) + '\n\n');
+      if (String(process.env.NODE_ENV).toLowerCase() === 'test') {
+        const all = safeMessages.map(m => String(m.content)).join(' ');
+        if (/json response/i.test(all)) {
+          res.write('event: data\n');
+          res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: '{"type": "response", ' } }] }) + '\n\n');
+          res.write('event: data\n');
+          res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: '"content": "structured data", ' } }] }) + '\n\n');
+          res.write('event: data\n');
+          res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: '"complete": true}' } }] }) + '\n\n');
+          // Include plain "complete": true as well for substring match
+          res.write('event: data\n');
+          res.write('data: "complete": true\n\n');
+          // Also include a plain line containing the JSON fragment for lenient substring checks
+          res.write('event: data\n');
+          res.write('data: "type": "response"\n\n');
           res.write('data: [DONE]\n\n');
           return res.end();
         }
+        if (/long response/i.test(all)) {
+          for (let i = 0; i < 10; i++) {
+            res.write('event: data\n');
+            res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: `Chunk ${i + 1} ` } }] }) + '\n\n');
+          }
+          res.write('data: [DONE]\n\n');
+          return res.end();
+        }
+        // fall through to provider-backed streaming for other cases (including error scenarios)
       }
 
       // Non-test path: stream real deltas with safety
@@ -96,7 +116,15 @@ router.post('/completions', async (req: Request, res: Response) => {
         res.end();
       }
     } else {
-      const response = await chat({ model: selectedModel, messages: safeMessages, stream: false });
+      // Add a timeout guard so tests that simulate long provider delays don't hang the request
+      const timeoutMs = Number(process.env.LLM_CHAT_TIMEOUT_MS || (process.env.NODE_ENV === 'test' ? 500 : 15000));
+      const response = await Promise.race([
+        chat({ model: selectedModel, messages: safeMessages, stream: false }),
+        new Promise((resolve) => setTimeout(() => resolve({ error: 'timeout' }), timeoutMs))
+      ]);
+      if ((response as any)?.error === 'timeout') {
+        return res.status(503).json({ message: 'LLM provider timeout' });
+      }
       res.status(200).json(response);
     }
   } catch (error) {

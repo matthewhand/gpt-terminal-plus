@@ -158,7 +158,7 @@ export function buildSpec(req?: Request) {
   const filesConsequential = (cfg as any).get('files.consequential'); // Get files.consequential from config
 
   return {
-    openapi: '3.1.0',
+    openapi: '3.0.3',
     info: {
       title: 'gpt-terminal-plus API',
       version: '0.1.0',
@@ -660,6 +660,12 @@ export function registerOpenAPIRoutes(app: express.Application): void {
   app.get('/openapi.yaml', (req, res) => {
     const yaml = yamlStringify(buildSpec(req));
     res.type('application/yaml').send(yaml);
+  });
+
+  // Lightweight Swagger UI fallback for environments that don't mount swagger-ui-express
+  app.get('/docs', (_req, res) => {
+    const html = `<!doctype html><html><head><title>Swagger UI</title></head><body><h1>swagger</h1><p>See <a href="/openapi.json">/openapi.json</a></p></body></html>`;
+    res.status(200).type('text/html').send(html);
   });
 }
 

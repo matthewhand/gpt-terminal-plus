@@ -161,10 +161,16 @@ router.post('/local', (req: Request, res: Response) => {
     // Basic hostname validation: letters, numbers, dots and dashes only
     const hostnameOk = /^[a-zA-Z0-9.-]+$/.test(hostname.trim());
     if (!hostnameOk) return res.status(422).send('Invalid hostname format');
-    // Optional URL validation when provided
+    // Optional URL validation when provided: require http(s) scheme and non-empty host
     if (typeof baseUrl === 'string' && baseUrl.trim() !== '') {
-      const ok = /^https?:\/\//.test(baseUrl);
-      if (!ok) return res.status(422).send('Invalid baseUrl');
+      try {
+        const u = new URL(baseUrl);
+        const schemeOk = u.protocol === 'http:' || u.protocol === 'https:';
+        const hostOk = typeof u.hostname === 'string' && u.hostname.trim().length > 0;
+        if (!schemeOk || !hostOk) return res.status(422).send('Invalid baseUrl');
+      } catch {
+        return res.status(422).send('Invalid baseUrl');
+      }
     }
     const path = require('path');
     const fs = require('fs');

@@ -37,6 +37,7 @@ router.get('/list', handleServerList);
 // New routes from feat/circuit-breakers
 router.post('/register', registerServer);
 router.post('/remove', removeServer);
+router.delete('/remove/:hostname', removeServer);
 
 // Minimal server selection endpoint for tests
 router.post('/set', (req: Request, res: Response) => {
