@@ -101,6 +101,13 @@ router.post('/completions', async (req: Request, res: Response) => {
 
 /** GET /chat/models */
 router.get('/models', (_req: Request, res: Response) => {
+  if (!isLlmEnabled()) {
+    return res.status(409).json({
+      error: 'LLM_DISABLED',
+      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.'
+    });
+  }
+
   try {
     const { getSupportedModels } = require('../common/models');
     const { getAIConfig } = require('../llm');

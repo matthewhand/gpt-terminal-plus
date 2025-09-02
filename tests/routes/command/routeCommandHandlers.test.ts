@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
 
+// Mock the LLM enabled check
+jest.mock('../../../src/llm/llmClient', () => ({
+  isLlmEnabled: jest.fn(() => process.env.LLM_ENABLED !== 'false')
+}));
+
 // Import the actual handlers to test their real behavior
 const executeCommandHandler = require('../../../src/routes/command/executeCommand');
 const executeCodeHandler = require('../../../src/routes/command/executeCode');
@@ -42,11 +47,11 @@ describe('Route Command Handlers', () => {
 
     it('should handle delegation when no execution modes enabled', async () => {
       // Temporarily disable all execution modes
-      const originalShell = process.env.ENABLE_COMMAND_MANAGEMENT;
+      const originalShell = process.env.LOCALHOST_ENABLED;
       const originalCode = process.env.ENABLE_CODE_EXECUTION;
       const originalLlm = process.env.LLM_ENABLED;
 
-      process.env.ENABLE_COMMAND_MANAGEMENT = 'false';
+      process.env.LOCALHOST_ENABLED = 'false';
       process.env.ENABLE_CODE_EXECUTION = 'false';
       process.env.LLM_ENABLED = 'false';
 
@@ -63,7 +68,7 @@ describe('Route Command Handlers', () => {
       });
 
       // Restore environment
-      process.env.ENABLE_COMMAND_MANAGEMENT = originalShell;
+      process.env.LOCALHOST_ENABLED = originalShell;
       process.env.ENABLE_CODE_EXECUTION = originalCode;
       process.env.LLM_ENABLED = originalLlm;
     });

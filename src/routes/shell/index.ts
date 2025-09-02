@@ -196,4 +196,4 @@ router.use('/llm', llmRouter);
 router.use('/session', sessionRouter);
 
 export default router;
-export { handleShellWebSocket };
+export { handleShellWebSocket, sessionRouter };

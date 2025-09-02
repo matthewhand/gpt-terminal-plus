@@ -17,7 +17,7 @@ interface RateLimitEntry {
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 export function advancedRateLimit(config: RateLimitConfig) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const key = config.keyGenerator ? config.keyGenerator(req) : req.ip || 'unknown';
     const now = Date.now();
     
@@ -51,10 +51,11 @@ export function advancedRateLimit(config: RateLimitConfig) {
         limit: config.maxRequests 
       });
       
-      return res.status(429).json({
+      res.status(429).json({
         error: 'Too Many Requests',
         retryAfter: Math.ceil((entry.resetTime - now) / 1000)
       });
+      return;
     }
 
     // Add rate limit headers

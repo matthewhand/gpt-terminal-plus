@@ -12,7 +12,7 @@ export interface ValidationRule {
 }
 
 export function validateRequest(rules: ValidationRule[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const errors: string[] = [];
     const body = req.body || {};
 
@@ -58,7 +58,8 @@ export function validateRequest(rules: ValidationRule[]) {
 
     if (errors.length > 0) {
       logSecurityEvent(req, 'VALIDATION_FAILED', { errors });
-      return res.status(400).json({ error: 'Validation failed', details: errors });
+      res.status(400).json({ error: 'Validation failed', details: errors });
+      return;
     }
 
     next();

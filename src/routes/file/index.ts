@@ -4,6 +4,8 @@ import { getServerHandler } from "../../utils/getServerHandler";
 import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
 import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
 import { logSecurityEvent } from '../../middlewares/securityLogger';
+import { ApiResponse, FileRequest } from '../../types/api';
+import { isValidFilePath } from '../../utils/typeGuards';
 import { writeFile, readFile as fsReadFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';

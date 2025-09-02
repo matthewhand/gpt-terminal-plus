@@ -19,8 +19,8 @@ const MAX_EVENTS = 1000;
 export function logSecurityEvent(req: Request, event: string, details?: any) {
   const securityEvent: SecurityEvent = {
     timestamp: new Date().toISOString(),
-    ip: req.ip || req.connection.remoteAddress || 'unknown',
-    userAgent: req.get('User-Agent'),
+    ip: req.ip || (req.connection && req.connection.remoteAddress) || 'unknown',
+    userAgent: (req.get && req.get('User-Agent')) || req.headers?.['user-agent'] || 'unknown',
     method: req.method,
     path: req.path,
     event,

@@ -25,6 +25,8 @@ import { isLlmEnabled } from "../../llm/llmClient";
 import { securityLogger, logSecurityEvent } from "../../middlewares/securityLogger";
 import { validateRequest, commonValidations } from "../../middlewares/enhancedValidation";
 import { rateLimiters } from "../../middlewares/advancedRateLimit";
+import { ApiResponse, ExecutionResult, CommandRequest, CodeRequest, LlmRequest } from "../../types/api";
+import { isValidCommand, isValidCode } from "../../utils/typeGuards";
 
 const debug = Debug("app:command");
 
