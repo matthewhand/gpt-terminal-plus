@@ -38,6 +38,8 @@ describe('LLM Query Routes', () => {
       expect(response.body.data).toHaveProperty('prompt');
       expect(response.body.data).toHaveProperty('response');
       expect(response.body.data).toHaveProperty('toolsUsed');
+      // Ensure toolsUsed echoes the requested tools and preserves order
+      expect(response.body.data.toolsUsed).toEqual(['readFile', 'listSessions']);
     });
 
     it('should require authentication', async () => {
@@ -75,6 +77,8 @@ describe('LLM Query Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.response).toMatch(/session|activity|logs/i);
+      // Should include the same tools back in the response data
+      expect(response.body.data.toolsUsed).toEqual(['listSessions', 'readFile']);
     });
 
     it('should handle summarization requests', async () => {
@@ -88,6 +92,7 @@ describe('LLM Query Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.response).toMatch(/summarize|tools|analyze/i);
+      expect(response.body.data.toolsUsed).toEqual(['listSessions', 'readFile']);
     });
   });
 
