@@ -44,4 +44,19 @@ describe('logMode middleware', () => {
     await request(app).get('/health');
     expect(logs.length).toBe(0);
   });
+
+  it('logs for non-GET methods and ignores query strings', async () => {
+    // No route is mounted for POST here; we only care that middleware ran
+    await request(app).post('/command/executeLlm?foo=bar');
+    expect(logs.some(l => l.includes('mode=executeLlm'))).toBe(true);
+    // Ensure only one log line is produced per request
+    const count = logs.filter(l => typeof l === 'string' && l.startsWith('[TODO] Incoming request')).length;
+    expect(count).toBe(1);
+  });
+
+  it('does not log when path lacks domain segment trailing slash', async () => {
+    // '/command' should not match '/command/' prefix check
+    await request(app).get('/command');
+    expect(logs.length).toBe(0);
+  });
 });
