@@ -109,17 +109,18 @@ describe('Middleware Setup and Configuration', () => {
         .get('/security-test');
       
       expect(res.status).toBe(200);
-      // Check for common security headers that might be set
-      const securityHeaders = [
-        'x-content-type-options',
-        'x-frame-options',
-        'x-xss-protection',
-        'strict-transport-security'
+      // Assert key helmet headers are present with expected values
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(res.headers['x-frame-options']).toBeDefined();
+      // HSTS is configured in setupMiddlewares; header should be present
+      expect(res.headers['strict-transport-security']).toBeDefined();
+      // Some helmet headers may vary by version; ensure at least one additional is present
+      const extraHelmetHeaders = [
+        'x-dns-prefetch-control',
+        'referrer-policy',
+        'cross-origin-resource-policy'
       ];
-      
-      // At least some security headers should be present
-      const hasSecurityHeaders = securityHeaders.some(header => res.headers[header]);
-      // This is optional since security headers might not be configured
+      expect(extraHelmetHeaders.some(h => h in res.headers)).toBe(true);
     });
   });
 
@@ -271,4 +272,3 @@ describe('Middleware Setup and Configuration', () => {
     });
   });
 });
-
