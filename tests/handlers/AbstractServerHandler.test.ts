@@ -14,7 +14,7 @@ class DummyHandler extends AbstractServerHandler {
   }
 
   executeCommand() {
-    return Promise.resolve({ stdout: '', stderr: '' });
+    return Promise.resolve({ stdout: '', stderr: '', success: true, exitCode: 0 });
   }
 
   executeCode() {
@@ -104,8 +104,15 @@ class DummyHandler extends AbstractServerHandler {
 }
 
 describe('AbstractServerHandler', () => {
-    it('should allow extension and basic functionality', () => {
-        const handler = new DummyHandler({});
+    it('should allow extension and basic functionality', async () => {
+        const handler = new DummyHandler({ hostname: 'local', protocol: 'local', llm: { provider: 'ollama', baseUrl: '' } } as any);
         expect(handler.handle()).toBe('handled');
+        // executeCommand returns a minimally valid ExecutionResult
+        await expect(handler.executeCommand('echo ok')).resolves.toEqual({ stdout: '', stderr: '', success: true, exitCode: 0 });
+        // listFiles echoes pagination inputs
+        await expect(handler.listFiles({ directory: '.', limit: 2, offset: 5, orderBy: 'filename' as any })).resolves.toEqual({ items: [], limit: 2, offset: 5, total: 0 });
+        // presentWorkingDirectory and changeDirectory basic behavior
+        await expect(handler.presentWorkingDirectory()).resolves.toBe('.');
+        await expect(handler.changeDirectory('..')).resolves.toBe(true);
     });
 });
