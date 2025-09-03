@@ -29,11 +29,15 @@ describe('logMode middleware', () => {
   it('logs command mode', async () => {
     await request(app).get('/command/executeShell');
     expect(logs.some(l => l.includes('mode=executeShell'))).toBe(true);
+    // Ensure the TODO prefix is preserved for structured logging
+    expect(logs.some(l => typeof l === 'string' && l.startsWith('[TODO] Incoming request'))).toBe(true);
   });
 
   it('logs file mode', async () => {
     await request(app).get('/file/read');
     expect(logs.some(l => l.includes('mode=file:read'))).toBe(true);
+    // Ensure the TODO prefix is preserved for structured logging
+    expect(logs.some(l => typeof l === 'string' && l.startsWith('[TODO] Incoming request'))).toBe(true);
   });
 
   it('does not log for unrelated paths', async () => {
