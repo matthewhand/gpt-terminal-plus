@@ -12,7 +12,8 @@ lint:
 # Test the code
 .PHONY: test
 test:
-	timeout 300 npm test
+	# Enable optional prod-route circuit tests for full coverage
+	ENABLE_PROD_CIRCUIT_TESTS=1 timeout 300 npm test
 
 # Build the code
 .PHONY: build
@@ -22,4 +23,4 @@ build:
 # Coverage report
 .PHONY: coverage
 coverage:
-	npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand
+	ENABLE_PROD_CIRCUIT_TESTS=1 npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand
