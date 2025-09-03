@@ -80,7 +80,8 @@ describe('Chat Completions API', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.choices[0].message.content).toBeTruthy();
+      // Mock returns 'Hello from mock LLM' — assert meaningful content
+      expect(res.body.choices[0].message.content).toContain('Hello');
     });
 
     it('requires authentication', async () => {

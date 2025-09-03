@@ -212,7 +212,8 @@ describe('Admin Server Management', () => {
       server.lastSeen = new Date().toISOString();
       
       expect(server.status).toBe('connected');
-      expect(server.lastSeen).toBeTruthy();
+      // Ensure timestamp is ISO-8601 string for traceability
+      expect(server.lastSeen).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
     });
   });
 
