@@ -35,7 +35,8 @@ describe('LocalServerHandler', () => {
   });
 
   it('executes code', async () => {
-    const result = await handler.executeCode('print("hi")', 'python');
+    // Use bash which is reliably available in test environment
+    const result = await handler.executeCode('echo hi', 'bash');
     expect(result.stdout).toContain('hi');
   });
 });
