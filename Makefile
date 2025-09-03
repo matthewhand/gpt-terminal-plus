@@ -18,3 +18,8 @@ test:
 .PHONY: build
 build:
 	npm run build
+
+# Coverage report
+.PHONY: coverage
+coverage:
+	npx cross-env NODE_CONFIG_DIR=config/test/ NODE_ENV=test jest --coverage --runInBand
