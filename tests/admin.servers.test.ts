@@ -33,6 +33,13 @@ describe('Admin Server Management', () => {
     if (existsSync(testServersPath)) {
       unlinkSync(testServersPath);
     }
+    // Clean up real server registry file to avoid cross-test interference
+    try {
+      const realConfigPath = path.join(process.cwd(), 'config', 'servers.json');
+      if (existsSync(realConfigPath)) {
+        unlinkSync(realConfigPath);
+      }
+    } catch {}
   });
 
   describe('File-based Server Storage', () => {
@@ -112,6 +119,11 @@ describe('Admin Server Management', () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('servers');
       expect(Array.isArray(res.body.servers)).toBe(true);
+      if (res.body.servers.length > 0) {
+        const s = res.body.servers[0];
+        expect(typeof s.hostname).toBe('string');
+        expect(['local', 'ssh', 'ssm']).toContain(s.protocol);
+      }
     });
 
     test('registers server via API', async () => {
@@ -125,7 +137,15 @@ describe('Admin Server Management', () => {
         .set('Authorization', `Bearer ${token}`)
         .send(serverData);
       
-      expect([200, 201]).toContain(res.status);
+      // Allow 409 in case a previous test registered the same hostname
+      expect([200, 201, 409]).toContain(res.status);
+      if ([200, 201].includes(res.status)) {
+        expect(res.body).toHaveProperty('server');
+        expect(res.body.server.hostname).toBe('api-test-server');
+        expect(['local', 'ssh', 'ssm']).toContain(res.body.server.protocol);
+      } else if (res.status === 409) {
+        expect(res.body).toHaveProperty('error');
+      }
     });
 
     test('validates server registration data', async () => {
