@@ -1,5 +1,6 @@
 import request from 'supertest';
 import express, { Router } from 'express';
+import path from 'path';
 import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
 import * as routesMod from '../../src/routes';
 
@@ -11,6 +12,10 @@ function makeApp() {
   if (typeof anyRoutes.setupApiRouter === 'function') {
     anyRoutes.setupApiRouter(app);
   }
+
+  // Serve static files like the prod index does so we can assert HTML assets.
+  const rootDir = path.resolve(__dirname, '..', '..');
+  app.use(express.static(path.join(rootDir, 'public')));
   return app;
 }
 
@@ -86,10 +91,11 @@ describe('LLM Console Feature Toggle', () => {
 
   describe('Dashboard integration', () => {
     it('should serve dashboard page', async () => {
-      const response = await request(app)
-        .get('/dashboard.html');
-
-      expect([200, 404]).toContain(response.status);
+      const response = await request(app).get('/dashboard.html');
+      expect(response.status).toBe(200);
+      // Basic content check to ensure correct asset served
+      expect(String(response.headers['content-type'])).toMatch(/text\/html/);
+      expect(response.text).toMatch(/<title>Dashboard - GPT Terminal Plus<\/title>|<h1>Dashboard<\/h1>/i);
     });
   });
 });
