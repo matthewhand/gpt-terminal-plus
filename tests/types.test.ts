@@ -3,6 +3,10 @@ import { SystemInfo } from '../src/types/SystemInfo';
 import { CommandRequest, ExecutionResult } from '../src/types/api';
 import { FileOperation } from '../src/engines/fileEngine';
 import { ChatMessage, ChatRequest, ChatResponse } from '../src/llm/types';
+import { getSystemInfo as getLocalSystemInfo } from '../src/handlers/local/actions/getSystemInfo';
+import { executeFileOperation } from '../src/engines/fileEngine';
+import path from 'path';
+import fs from 'fs/promises';
 
 describe('Type Definitions', () => {
   describe('ServerConfig', () => {
@@ -140,44 +144,51 @@ describe('Type Definitions', () => {
   });
 
   describe('FileOperation', () => {
-    it('should validate read operation', () => {
-      const operation: FileOperation = {
-        type: 'read',
-        path: '/path/to/file.txt'
-      };
-      
-      expect(operation.type).toBe('read');
-      expect(operation.path).toBe('/path/to/file.txt');
+    it('rejects unknown operation types at runtime', async () => {
+      // @ts-expect-error: intentionally invalid type to assert runtime guard
+      await expect(executeFileOperation({ type: 'move', path: '.' })).rejects.toThrow('Unknown file operation');
     });
 
-    it('should validate write operation with content', () => {
-      const operation: FileOperation = {
-        type: 'write',
-        path: '/path/to/file.txt',
-        content: 'File content'
-      };
-      
-      expect(operation.type).toBe('write');
-      expect(operation.content).toBe('File content');
+    it('supports write/read/list/delete/mkdir within allowed paths', async () => {
+      const baseDir = path.join(process.cwd(), 'tmp-types-test');
+      const filePath = path.join(baseDir, 'note.txt');
+
+      // mkdir
+      await expect(executeFileOperation({ type: 'mkdir', path: baseDir, recursive: true })).resolves.toEqual({ success: true });
+
+      // write
+      await expect(
+        executeFileOperation({ type: 'write', path: filePath, content: 'hello' })
+      ).resolves.toEqual({ success: true });
+
+      // read
+      await expect(executeFileOperation({ type: 'read', path: filePath })).resolves.toBe('hello');
+
+      // list
+      const listed = await executeFileOperation({ type: 'list', path: baseDir });
+      expect(Array.isArray(listed)).toBe(true);
+      expect(listed.find((e: any) => e.name === 'note.txt')?.type).toBe('file');
+
+      // delete
+      await expect(executeFileOperation({ type: 'delete', path: filePath })).resolves.toEqual({ success: true });
+
+      // cleanup
+      await fs.rmdir(baseDir).catch(() => void 0);
     });
   });
 
   describe('SystemInfo', () => {
-    it('should validate system information structure', () => {
-      const info: SystemInfo = {
-        platform: 'linux',
-        arch: 'x64',
-        hostname: 'test-server',
-        uptime: 86400,
-        memory: {
-          total: 8589934592,
-          free: 4294967296
-        }
-      };
-      
-      expect(info.platform).toBe('linux');
-      expect(info.arch).toBe('x64');
-      expect(info.memory.total).toBe(8589934592);
+    it('matches runtime contract from getSystemInfo()', async () => {
+      const info: SystemInfo = await getLocalSystemInfo();
+      expect(typeof info.type).toBe('string');
+      expect(typeof info.platform).toBe('string');
+      expect(typeof info.architecture).toBe('string');
+      expect(typeof info.totalMemory).toBe('number');
+      expect(typeof info.freeMemory).toBe('number');
+      expect(typeof info.uptime).toBe('number');
+      expect(typeof info.currentFolder).toBe('string');
+      expect(info.totalMemory).toBeGreaterThan(0);
+      expect(info.uptime).toBeGreaterThanOrEqual(0);
     });
   });
 
