@@ -20,8 +20,10 @@ describe('Module Loading and Integration', () => {
       expect(() => require('../src/managers/SSHConnectionManager')).not.toThrow();
     });
 
-    test('should load initializeServerHandler middleware', () => {
-      expect(() => require('../src/middlewares/initializeServerHandler')).not.toThrow();
+    test('should load initializeServerHandler middleware and export a function', () => {
+      const mod = require('../src/middlewares/initializeServerHandler');
+      expect(mod).toBeDefined();
+      expect(typeof mod.initializeServerHandler).toBe('function');
     });
 
     test('should load apiToken utility module', () => {
@@ -37,6 +39,8 @@ describe('Module Loading and Integration', () => {
     test('configHandler should export required functions', () => {
       const configHandler = require('../src/config/configHandler');
       expect(typeof configHandler.generateDefaultConfig).toBe('function');
+      expect(typeof configHandler.isConfigLoaded).toBe('function');
+      expect(typeof configHandler.persistConfig).toBe('function');
     });
 
     test('PaginationHandler should export class', () => {
@@ -201,6 +205,27 @@ describe('Middleware Integration', () => {
       expect(() => {
         middleware.initializeServerHandler(mockReq, mockRes, mockNext);
       }).not.toThrow();
+    });
+
+    test('attaches a server handler in test env when none selected', () => {
+      const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+      const { LocalServerHandler } = require('../src/handlers/local/LocalServerHandler');
+      const originalEnv = process.env.NODE_ENV;
+      try {
+        process.env.NODE_ENV = 'test';
+        _resetGlobalStateForTests({ selectedServer: '' });
+        const mockReq: any = { headers: {}, body: {} };
+        const mockRes: any = { locals: {} };
+        const mockNext = jest.fn();
+        middleware.initializeServerHandler(mockReq, mockRes, mockNext);
+        expect(mockNext).toHaveBeenCalled();
+        expect(mockReq.server).toBeDefined();
+        expect(typeof mockReq.server.executeCommand).toBe('function');
+        // Instance check to ensure correct handler type in test env
+        expect(mockReq.server).toBeInstanceOf(LocalServerHandler);
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+      }
     });
   });
 });
