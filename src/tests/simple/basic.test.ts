@@ -4,11 +4,13 @@ import { getExecuteCommand } from '../../common/getExecuteCommand';
 
 describe('Core Utilities Integration', () => {
   test('should generate valid API tokens', () => {
+    delete process.env.API_TOKEN;
     const token = getOrGenerateApiToken();
-    expect(token.length).toBeGreaterThan(0);
     expect(typeof token).toBe('string');
-    // Token can contain alphanumeric characters
-    expect(token).toMatch(/^[a-zA-Z0-9]+$/);
+    // Generated via crypto.randomBytes(16).toString('hex')
+    expect(token).toMatch(/^[a-f0-9]{32}$/);
+    // Stable within process once set
+    expect(getOrGenerateApiToken()).toBe(token);
   });
 
   test('should escape special characters consistently', () => {

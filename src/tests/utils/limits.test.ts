@@ -72,6 +72,12 @@ describe('utils/limits', () => {
       expect((res as any).truncated).toBeUndefined();
     });
 
+    it('treats empty input as ok', () => {
+      process.env.MAX_INPUT_CHARS = '0';
+      const res = enforceInputLimit('test', '');
+      expect(res).toEqual({ ok: true });
+    });
+
     it('truncates when over limit and truncation allowed', () => {
       process.env.MAX_INPUT_CHARS = '5';
       process.env.ALLOW_TRUNCATION = 'true';
@@ -108,6 +114,14 @@ describe('utils/limits', () => {
       expect(out.truncated).toBe(true);
       expect(out.stdout).toBe('ABCD');
       expect(out.stderr).toBe('I');
+    });
+
+    it('clips only stderr when stdout is empty', () => {
+      process.env.MAX_OUTPUT_CHARS = '4';
+      const out = clipOutput('', 'ABCDEFG');
+      expect(out.truncated).toBe(true);
+      expect(out.stdout).toBe('');
+      expect(out.stderr).toBe('ABCD');
     });
   });
 });
