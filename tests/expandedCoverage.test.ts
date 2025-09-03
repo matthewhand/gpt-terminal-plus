@@ -98,10 +98,10 @@ describe('Utility Functions', () => {
       expect(token1).toBe(token2);
     });
 
-    test('should generate secure token format', () => {
+    test('should generate secure token format (32-char lowercase hex)', () => {
+      // getOrGenerateApiToken uses crypto.randomBytes(16).toString('hex')
       const token = getOrGenerateApiToken();
-      expect(token).toMatch(/^[a-zA-Z0-9_-]+$/);
-      expect(token.length).toBeGreaterThanOrEqual(32);
+      expect(token).toMatch(/^[a-f0-9]{32}$/);
     });
   });
 });
