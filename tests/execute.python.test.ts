@@ -37,4 +37,18 @@ describe('execute-shell (python) smoke', () => {
     expect(res.body?.result?.exitCode).toBe(0);
     expect(res.body?.result?.stdout).toContain('hey');
   });
+
+  it('reports errors for invalid Python code', async () => {
+    const res = await request(app)
+      .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
+      .set('Content-Type', 'application/json')
+      .send({ shell: 'python', command: 'this is not valid python' });
+
+    expect(res.status).toBe(200);
+    expect(res.body?.result?.exitCode).not.toBe(0);
+    // stderr should include a Python error indicator
+    expect(String(res.body?.result?.stderr || '').toLowerCase()).toMatch(/syntaxerror|traceback|error/);
+    expect(res.body?.result?.error).toBe(true);
+  });
 });
