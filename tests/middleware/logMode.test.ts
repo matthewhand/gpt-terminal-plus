@@ -5,22 +5,25 @@ import { logMode } from '../../src/middleware/logMode';
 describe('logMode middleware', () => {
   let app: express.Application;
   let logs: string[] = [];
+  let originalConsoleLog: typeof console.log;
 
   beforeEach(() => {
     app = express();
     logs = [];
-    const origLog = console.log;
+    originalConsoleLog = console.log;
     console.log = (msg?: any, ...optionalParams: any[]) => {
       logs.push(msg);
-      origLog(msg, ...optionalParams);
+      originalConsoleLog(msg, ...optionalParams);
     };
     app.use(logMode);
     app.get('/command/executeShell', (req, res) => res.send('ok'));
     app.get('/file/read', (req, res) => res.send('ok'));
+    app.get('/health', (req, res) => res.send('ok'));
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    // restore our manual patch to console.log
+    console.log = originalConsoleLog;
   });
 
   it('logs command mode', async () => {
@@ -31,5 +34,10 @@ describe('logMode middleware', () => {
   it('logs file mode', async () => {
     await request(app).get('/file/read');
     expect(logs.some(l => l.includes('mode=file:read'))).toBe(true);
+  });
+
+  it('does not log for unrelated paths', async () => {
+    await request(app).get('/health');
+    expect(logs.length).toBe(0);
   });
 });
