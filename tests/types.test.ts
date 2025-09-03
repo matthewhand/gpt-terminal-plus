@@ -1,14 +1,8 @@
-import {
-  ServerConfig,
-  ExecuteRequest,
-  ExecuteResponse,
-  ChatMessage,
-  ChatRequest,
-  ChatResponse,
-  FileOperation,
-  SystemInfo,
-  SessionInfo
-} from '../src/types';
+import { ServerConfig } from '../src/types/ServerConfig';
+import { SystemInfo } from '../src/types/SystemInfo';
+import { CommandRequest, ExecutionResult } from '../src/types/api';
+import { FileOperation } from '../src/engines/fileEngine';
+import { ChatMessage, ChatRequest, ChatResponse } from '../src/llm/types';
 
 describe('Type Definitions', () => {
   describe('ServerConfig', () => {
@@ -45,56 +39,58 @@ describe('Type Definitions', () => {
     });
   });
 
-  describe('ExecuteRequest', () => {
+  describe('CommandRequest', () => {
     it('should validate command execution request', () => {
-      const request: ExecuteRequest = {
+      const request: CommandRequest = {
         command: 'ls -la',
-        workingDirectory: '/home/user'
+        directory: '/home/user'
       };
-      
+
       expect(request.command).toBe('ls -la');
-      expect(request.workingDirectory).toBe('/home/user');
+      expect(request.directory).toBe('/home/user');
     });
 
-    it('should support optional environment variables', () => {
-      const request: ExecuteRequest = {
-        command: 'echo $TEST_VAR',
-        environment: {
-          TEST_VAR: 'test_value'
-        }
+    it('should support optional args and timeout', () => {
+      const request: CommandRequest = {
+        command: 'echo',
+        args: ['hello'],
+        timeout: 5000
       };
-      
-      expect(request.environment?.TEST_VAR).toBe('test_value');
+
+      expect(request.args).toEqual(['hello']);
+      expect(request.timeout).toBe(5000);
     });
   });
 
-  describe('ExecuteResponse', () => {
-    it('should validate successful execution response', () => {
-      const response: ExecuteResponse = {
+  describe('ExecutionResult', () => {
+    it('should validate successful execution result', () => {
+      const response: ExecutionResult = {
         success: true,
         stdout: 'Command output',
         stderr: '',
         exitCode: 0,
-        executionTime: 1500
+        error: false
       };
-      
+
       expect(response.success).toBe(true);
       expect(response.exitCode).toBe(0);
-      expect(response.executionTime).toBe(1500);
+      expect(response.error).toBe(false);
     });
 
-    it('should validate error execution response', () => {
-      const response: ExecuteResponse = {
+    it('should validate error execution result', () => {
+      const response: ExecutionResult = {
         success: false,
         stdout: '',
         stderr: 'Command not found',
         exitCode: 127,
-        error: 'Command execution failed'
+        error: true,
+        truncated: false,
+        terminated: false
       };
-      
+
       expect(response.success).toBe(false);
       expect(response.exitCode).toBe(127);
-      expect(response.error).toBe('Command execution failed');
+      expect(response.error).toBe(true);
     });
   });
 
@@ -185,18 +181,5 @@ describe('Type Definitions', () => {
     });
   });
 
-  describe('SessionInfo', () => {
-    it('should validate session information', () => {
-      const session: SessionInfo = {
-        id: 'session-123',
-        createdAt: new Date('2024-01-01T00:00:00Z'),
-        lastActivity: new Date('2024-01-01T01:00:00Z'),
-        status: 'active'
-      };
-      
-      expect(session.id).toBe('session-123');
-      expect(session.status).toBe('active');
-      expect(session.createdAt).toBeInstanceOf(Date);
-    });
-  });
+  // Note: Session types are validated through dedicated session driver tests
 });
