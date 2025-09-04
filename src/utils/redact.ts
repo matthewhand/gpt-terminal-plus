@@ -27,25 +27,28 @@ export function redact(key: string, value: any): string {
 
     // Handle null or undefined values
     if (value == null) {
-        return key + ': [Value is null or undefined]';
+        return '[Value is null or undefined]';
     } else if (typeof value !== 'string') {
         // Safely stringify non-string values
         try {
             value = JSON.stringify(value);
         } catch (error: any) {
             debug('Error stringifying value: ' + error.message);
-            return key + ': [Complex value cannot be stringified]';
+            return '[Complex value cannot be stringified]';
         }
     }
 
     // Define sensitive keys and patterns for redaction
-    const sensitiveKeys = ['token', 'password', 'secret', 'apikey', 'api_key', 'private_key', 'ssh_private_key', 'auth', 'authorization', 'credential', 'key', 'privatekey', 'accesstoken', 'refreshtoken', 'sessiontoken', 'jwt'];
+    const sensitiveKeys = ['token', 'password', 'secret', 'apikey', 'api_key', 'private_key', 'ssh_private_key', 'auth', 'authorization', 'credential', 'privatekey', 'accesstoken', 'refreshtoken', 'sessiontoken', 'jwt'];
     const sensitiveKeyPatterns = ['database_url', 'db_url', 'connection_string'];
 
     // Check if the key contains sensitive information
     const lowerKey = key.toLowerCase();
     const isSensitiveKey = sensitiveKeys.some(sensitiveKey => lowerKey.includes(sensitiveKey)) ||
-                          sensitiveKeyPatterns.some(pattern => lowerKey.includes(pattern));
+                          sensitiveKeyPatterns.some(pattern => lowerKey.includes(pattern)) ||
+                          // More specific key patterns
+                          /\b(api|secret|private|auth|token|jwt|credential).*key\b/.test(lowerKey) ||
+                          /\bkey\b/.test(lowerKey) && !/^(normal|regular|simple|basic|public|test)key$/i.test(lowerKey);
 
     // Check for sensitive value patterns (URLs with credentials, private keys, etc.)
     const hasSensitiveValue = /:\/\/[^:]+:[^@]+@/.test(value) || // URLs with user:pass@
@@ -54,13 +57,13 @@ export function redact(key: string, value: any): string {
     if (isSensitiveKey || hasSensitiveValue) {
         // Ensure value is a string and has length property
         if (typeof value !== 'string') {
-            return key + ': [Redacted sensitive value]';
+            return '[Redacted sensitive value]';
         }
         const visibleLength = Math.max(1, Math.floor(value.length / 4));
         const redactedPart = value.substring(0, visibleLength) + '...' + value.slice(-visibleLength);
-        return key + ': ' + redactedPart;
+        return redactedPart;
     }
 
-    // Return the original key-value pair if no redaction is needed
-    return key + ': ' + value;
+    // Return the original value if no redaction is needed
+    return value;
 }
