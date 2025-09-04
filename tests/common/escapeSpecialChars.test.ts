@@ -18,7 +18,7 @@ describe('escapeRegExp', () => {
 
     it('should handle all regex special characters', () => {
       const input = '*+?^${}()|[]\\\\.';
-      const expected = '\\\\*\\\\+\\\\?\\\\^\\\\$\\\\{\\\\}\\\\(\\\\)\\\\|\\\\[\\\\]\\\\\\\\\\\\.'
+      const expected = '\\\\*\\\\+\\\\?\\\\^\\\\$\\\\{\\\\}\\\\(\\\\)\\\\|\\\\[\\\\]\\\\\\\\\\\\\.';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });

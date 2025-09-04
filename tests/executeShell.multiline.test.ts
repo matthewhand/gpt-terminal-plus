@@ -243,7 +243,7 @@ echo "stderr line 2" >&2`;
 		it('should handle shell-specific syntax differences', async () => {
 			// Test bash-specific features
 			const bashScript = `arr=(one two three)
-echo ${arr[1]}`;
+echo \${arr[1]}`;
 			
 			const res = await request(app)
 				.post('/command/execute-shell')
