@@ -24,7 +24,16 @@ function makeApp() {
 describe('execute-shell (python) smoke', () => {
   const app = makeApp();
   const token = 'test-token';
-  process.env.API_TOKEN = token;
+  let originalApiToken;
+
+  beforeAll(() => {
+    originalApiToken = process.env.API_TOKEN;
+    process.env.API_TOKEN = token;
+  });
+
+  afterAll(() => {
+    process.env.API_TOKEN = originalApiToken;
+  });
 
   it('runs simple print via /command/execute-shell', async () => {
     const res = await request(app)

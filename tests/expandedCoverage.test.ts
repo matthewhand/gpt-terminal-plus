@@ -3,6 +3,10 @@ import fs from 'fs';
 import path from 'path';
 
 describe('Module Loading and Integration', () => {
+  afterAll(() => {
+    console.log('API_TOKEN after expandedCoverage.test.ts:', process.env.API_TOKEN);
+  });
+
   describe('Core Module Loading', () => {
     test('should load configHandler module', () => {
       expect(() => require('../src/config/configHandler')).not.toThrow();

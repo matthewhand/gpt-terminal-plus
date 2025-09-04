@@ -21,8 +21,15 @@ function makeProdApp() {
 
 describe('execute-shell (prod route) — literal vs allowed shells', () => {
   const token = 'test-token';
+  let originalApiToken;
+
   beforeAll(() => {
+    originalApiToken = process.env.API_TOKEN;
     process.env.API_TOKEN = token;
+  });
+
+  afterAll(() => {
+    process.env.API_TOKEN = originalApiToken;
   });
 
   it('runs echo in literal mode with args', async () => {
