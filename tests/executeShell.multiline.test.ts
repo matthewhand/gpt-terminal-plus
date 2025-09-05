@@ -233,7 +233,7 @@ echo "stderr line 2" >&2`;
 			const res = await request(app)
 				.post('/command/execute-shell')
 				.set('Authorization', `Bearer ${token}`)
-				.send({ shell: 'sh', command: script });
+				.send({ shell: 'bash', command: script }); // Use bash instead of sh since sh executor is not enabled
 				
 			expect(res.status).toBe(200);
 			expect(String(res.body.result.stdout)).toContain('first');
