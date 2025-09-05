@@ -96,6 +96,8 @@ describe('redact', () => {
             const result = redact('secretArray', arrayValue);
             expect(result).toContain('...');
             expect(result).not.toContain('secret1');
+            expect(result).not.toContain('secret2');
+            expect(result).not.toContain('secret3');
         });
 
         it('should handle function values', () => {
