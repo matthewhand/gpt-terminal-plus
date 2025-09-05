@@ -32,7 +32,7 @@ function initializeDefaultServer(): void {
     let defaultServer = registeredServers.find((s: any) => 
       s.hostname === 'localhost' && 
       s.protocol === 'local' &&
-      (s.directory === '.' || s.directory === process.cwd())
+      (s.directory === '.' || s.directory === process.cwd() || !s.directory)
     );
     
     // If not found, look for any localhost server
