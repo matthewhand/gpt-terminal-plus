@@ -57,9 +57,9 @@ export function redact(key: string, value: any): string {
     if (isSensitiveKey || hasSensitiveValue) {
         // Ensure value is a string and has length property
         if (typeof value !== 'string') {
-            return '[Redacted sensitive value]';
+            return '...[Redacted sensitive value]...';
         }
-        const visibleLength = Math.max(1, Math.floor(value.length / 4));
+        const visibleLength = Math.max(1, Math.floor(value.length / 8)); // Show less of the original
         const redactedPart = value.substring(0, visibleLength) + '...' + value.slice(-visibleLength);
         return redactedPart;
     }
