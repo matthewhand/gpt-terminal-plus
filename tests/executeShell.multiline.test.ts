@@ -184,7 +184,8 @@ echo "after error"`;
 			expect(res.status).toBe(200);
 			expect(String(res.body.result.stdout)).toContain('before error');
 			expect(String(res.body.result.stdout)).toContain('after error');
-			expect(res.body.result.exitCode).toBe(1); // Last command failed
+			// In bash, the exit code is from the last command (echo), which succeeds
+			expect(res.body.result.exitCode).toBe(0);
 		});
 
 		it('should handle scripts with set -e (exit on error)', async () => {
