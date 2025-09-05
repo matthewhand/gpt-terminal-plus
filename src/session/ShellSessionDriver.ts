@@ -56,6 +56,19 @@ export class ShellSessionDriver {
     return s.logs.slice();
   }
 
+  async list(): Promise<Array<{ id: string; shell: string; status: string; createdAt: Date }>> {
+    const result = [];
+    for (const [id, session] of sessions.entries()) {
+      result.push({
+        id,
+        shell: session.meta.shell,
+        status: 'running',
+        createdAt: new Date(session.meta.createdAt)
+      });
+    }
+    return result;
+  }
+
   async stop(id: string): Promise<void> {
     // No persistent process is maintained in this minimal driver.
     // Retain logs for post-stop inspection.
