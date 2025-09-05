@@ -6,6 +6,7 @@ type SessionLog = {
   stderr: string;
   exitCode: number;
   at: number;
+  timestamp?: Date;
 };
 
 type SessionMeta = {
@@ -17,15 +18,15 @@ type SessionMeta = {
 const sessions = new Map<string, { meta: SessionMeta; logs: SessionLog[] }>();
 
 export class ShellSessionDriver {
-  async start(params?: { shell?: string }): Promise<SessionMeta> {
+  async start(params?: { shell?: string }): Promise<SessionMeta & { status: string; createdAt: Date }> {
     const shell = params?.shell || 'bash';
     const id = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const meta: SessionMeta = { id, shell, createdAt: Date.now() };
     sessions.set(id, { meta, logs: [] });
-    return meta;
+    return { ...meta, status: 'running', createdAt: new Date(meta.createdAt) };
   }
 
-  async exec(id: string, command: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  async exec(id: string, command: string): Promise<{ stdout: string; stderr: string; exitCode: number; success: boolean }> {
     const s = sessions.get(id);
     if (!s) throw new Error(`Session not found: ${id}`);
 
@@ -45,7 +46,7 @@ export class ShellSessionDriver {
         const exitCode = typeof code === 'number' ? code : 1;
         const log: SessionLog = { command, stdout, stderr, exitCode, at: Date.now() };
         s.logs.push(log);
-        resolve({ stdout, stderr, exitCode });
+        resolve({ stdout, stderr, exitCode, success: exitCode === 0 });
       });
     });
   }
@@ -53,7 +54,7 @@ export class ShellSessionDriver {
   async logs(id: string): Promise<SessionLog[]> {
     const s = sessions.get(id);
     if (!s) throw new Error(`Session not found: ${id}`);
-    return s.logs.slice();
+    return s.logs.map(log => ({ ...log, timestamp: new Date(log.at) }));
   }
 
   async list(): Promise<Array<{ id: string; shell: string; status: string; createdAt: Date }>> {
