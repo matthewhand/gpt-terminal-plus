@@ -74,8 +74,8 @@ describe('execute-code error analysis', () => {
       expect(res.body.result.exitCode).toBe(9);
       expect(res.body.result.success).toBe(false);
       expect(res.body.aiAnalysis).toBeDefined();
-      expect(res.body.aiAnalysis).toContain('Mock analysis');
-      expect(res.body.aiAnalysis).toContain('exit code');
+      expect(res.body.aiAnalysis.text).toContain('Mock analysis');
+      expect(res.body.aiAnalysis.text).toContain('exit code');
     });
 
     it('should not attach aiAnalysis on successful execution', async () => {
@@ -107,7 +107,7 @@ describe('execute-code error analysis', () => {
         expect(res.status).toBe(200);
         expect(res.body.result.exitCode).not.toBe(0);
         expect(res.body.aiAnalysis).toBeDefined();
-        expect(res.body.aiAnalysis).toContain('Mock analysis');
+        expect(res.body.aiAnalysis.text).toContain('Mock analysis');
       }
     });
   });

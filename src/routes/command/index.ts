@@ -207,7 +207,15 @@ export const executeCode = async (req: Request, res: Response) => {
 
     const clipped = clipOutput(String(result.stdout || ''), String(result.stderr || ''));
     const exitCodeNorm = typeof (result as any).exitCode === 'number' ? (result as any).exitCode : 0;
-    const final = { ...result, exitCode: exitCodeNorm, stdout: clipped.stdout, stderr: clipped.stderr, truncated: !!(result as any).truncated || clipped.truncated, terminated: (result as any).terminated || false };
+    const final = { 
+      ...result, 
+      exitCode: exitCodeNorm, 
+      success: exitCodeNorm === 0,
+      stdout: clipped.stdout, 
+      stderr: clipped.stderr, 
+      truncated: !!(result as any).truncated || clipped.truncated, 
+      terminated: (result as any).terminated || false 
+    };
 
     await logSessionStep('executeCode-output', { result: final, aiAnalysis, language, interpreter }, sessionId);
     res.status(200).json({ result: final, aiAnalysis, language, interpreter });
