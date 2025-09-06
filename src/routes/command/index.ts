@@ -81,6 +81,9 @@ export const executeCode = async (req: Request, res: Response) => {
   if (typeof code !== 'string') {
     return res.status(400).json({ error: 'Code must be a string.' });
   }
+  if (code.trim() === '') {
+    return res.status(422).json({ error: 'Code cannot be empty.' });
+  }
 
   // Circuit breaker: input length
   const inputCheck = enforceInputLimit('executeCode', String(code));
