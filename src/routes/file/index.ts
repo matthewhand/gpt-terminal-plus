@@ -51,7 +51,8 @@ export const createFile = async (req: Request, res: Response) => {
   if (filePath.startsWith('/') && !sanitizedPath.startsWith('/')) {
     sanitizedPath = '/' + sanitizedPath;
   }
-  const sanitizedContent = sanitizers.sanitizeString(content, 1000000);
+  // For file content, preserve newlines but still sanitize dangerous characters
+  const sanitizedContent = content.replace(/\0/g, ''); // Only remove null bytes
 
   try {
     const server = getServerHandler(req);
