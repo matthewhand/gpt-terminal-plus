@@ -25,8 +25,8 @@ export const generalRateLimit = rateLimit({
     });
   },
   skip: (req: Request) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health' || req.path === '/';
+    // Skip rate limiting for health checks and during tests
+    return req.path === '/health' || req.path === '/' || process.env.NODE_ENV === 'test';
   }
 });
 
