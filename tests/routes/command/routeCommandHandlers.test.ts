@@ -102,7 +102,10 @@ describe('Route Command Handlers', () => {
 
       await executeCodeHandler.executeCode(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.status).toHaveBeenCalledWith(422);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Code cannot be empty.'
+      });
     });
 
     it('should handle empty language', async () => {

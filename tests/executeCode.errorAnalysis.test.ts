@@ -322,11 +322,9 @@ describe('execute-code error analysis', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({ code: '', language: 'bash' });
 
-      // Empty code might be rejected or might execute successfully
-      expect(res.status).toBe(200);
-      if (res.body.result && res.body.result.exitCode !== 0) {
-        expect(res.body.aiAnalysis).toBeDefined();
-      }
+      // Empty code should be rejected with validation error
+      expect(res.status).toBe(422);
+      expect(res.body.error).toBe('Code cannot be empty.');
     });
 
     it('should handle very long error output', async () => {
