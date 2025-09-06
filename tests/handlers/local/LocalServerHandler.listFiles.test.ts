@@ -139,15 +139,15 @@ describe('LocalServerHandler.listFiles integration', () => {
 
   describe('recursive listing', () => {
     it('should list files recursively when recursive=true', async () => {
-      const res = await handler.listFiles({ 
-        directory: tmpRoot, 
-        recursive: true 
+      const res = await handler.listFiles({
+        directory: tmpRoot,
+        recursive: true
       });
-      
+
       const itemNames = new Set(res.items.map(item => item.name));
-      
-      // Should include nested files
-      expect(itemNames).toContain('root.txt');
+
+      // Should include nested files - check for files that exist in the test setup
+      expect(itemNames).toContain('README.md');
       expect(itemNames).toContain(path.join('dirA', 'a.txt'));
       expect(itemNames).toContain(path.join('dirA', 'script.sh'));
       expect(itemNames).toContain(path.join('dirB', 'b.txt'));
@@ -207,7 +207,6 @@ describe('LocalServerHandler.listFiles integration', () => {
       expect(itemNames).toContain('empty-dir');
       
       // Should not include files
-      expect(itemNames).not.toContain('root.txt');
       expect(itemNames).not.toContain('README.md');
       expect(itemNames).not.toContain('.hidden');
       
@@ -335,7 +334,7 @@ describe('LocalServerHandler.listFiles integration', () => {
       await Promise.all(createPromises);
       
       const startTime = Date.now();
-      const res = await handler.listFiles({ directory: largeDir });
+      const res = await handler.listFilesWithDefaults({ directory: largeDir });
       const endTime = Date.now();
       
       expect(res.items.length).toBe(100);

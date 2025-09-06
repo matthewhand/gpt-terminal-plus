@@ -92,19 +92,31 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const directory = params.directory ?? '.';
-    const limit = typeof params.limit === 'number' ? params.limit : 10;
+    const limit = typeof params.limit === 'number' ? params.limit : undefined;
     const offset = typeof params.offset === 'number' ? params.offset : 0;
-    const orderBy = params.orderBy ?? 'filename';
+    // Normalize orderBy to handle both 'name' and 'filename'
+    const orderBy = (params.orderBy === 'name' as any ? 'filename' : params.orderBy) ?? 'filename';
     const recursive = !!params.recursive;
     const typeFilter = params.typeFilter;
 
     // Delegate to the action to keep behavior consistent with other tests
     const { files, total } = await listFilesAction({ directory, limit, offset, orderBy, recursive, typeFilter });
     const items = files.map(f => ({ name: f.name, isDirectory: f.isDirectory }));
-    return { items, total, limit, offset };
+    return { items, total, limit: limit ?? total, offset };
   }
 
   async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
+    // Validate parameters
+    if (params.directory !== undefined && (typeof params.directory !== 'string' || params.directory.trim() === '')) {
+      throw new Error('Directory must be a non-empty string');
+    }
+    if (params.limit !== undefined && (typeof params.limit !== 'number' || params.limit <= 0)) {
+      throw new Error('Limit must be a positive number');
+    }
+    if (params.offset !== undefined && (typeof params.offset !== 'number' || params.offset < 0)) {
+      throw new Error('Offset must be a non-negative number');
+    }
+
     const directory = params.directory && String(params.directory).trim() !== '' ? String(params.directory) : '.';
     const limit = typeof params.limit === 'number' && params.limit > 0 ? params.limit : 100;
     const offset = typeof params.offset === 'number' && params.offset >= 0 ? params.offset : 0;

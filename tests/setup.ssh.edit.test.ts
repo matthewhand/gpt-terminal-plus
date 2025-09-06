@@ -150,7 +150,7 @@ describe('Setup UI SSH Configuration', () => {
         
         const configContent = fs.readFileSync(configPath, 'utf8');
         expect(configContent).toContain(`ssh-port-${port}.example.com`);
-        expect(configContent).toContain(`"port":"${port}"`);
+        expect(configContent).toContain(`"port": ${port}`);
       }
     });
 

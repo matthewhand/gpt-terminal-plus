@@ -104,6 +104,8 @@ describe('Utility Functions', () => {
 
     test('should generate secure token format (32-char lowercase hex)', () => {
       // getOrGenerateApiToken uses crypto.randomBytes(16).toString('hex')
+      // Clear any existing token to ensure we get a fresh one
+      delete process.env.API_TOKEN;
       const token = getOrGenerateApiToken();
       expect(token).toMatch(/^[a-f0-9]{32}$/);
     });

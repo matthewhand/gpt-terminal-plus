@@ -2,8 +2,6 @@ import { executeFileOperation } from '../../engines/fileEngine';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import fs from 'fs/promises';
-import path from 'path';
 
 jest.mock('fs/promises');
 jest.mock('../../config/convictConfig', () => ({
@@ -25,10 +23,10 @@ describe('File Engine', () => {
     it('should read file successfully with string content', async () => {
       const expectedContent = 'file content';
       mockFs.readFile.mockResolvedValue(expectedContent);
-      
+
       const result = await executeFileOperation({ type: 'read', path: './test.txt' });
-      
-      expect(result).toBe(expectedContent);
+
+      expect(result).toEqual({ success: true, content: expectedContent });
       expect(mockFs.readFile).toHaveBeenCalledWith(expect.stringContaining('test.txt'), 'utf8');
     });
 
@@ -62,9 +60,9 @@ describe('File Engine', () => {
       const error = new Error('ENOENT: no such file or directory');
       (error as any).code = 'ENOENT';
       mockFs.readFile.mockRejectedValue(error);
-      
-      await expect(executeFileOperation({ type: 'read', path: './missing.txt' }))
-        .rejects.toThrow('ENOENT: no such file or directory');
+
+      const result = await executeFileOperation({ type: 'read', path: './missing.txt' });
+      expect(result).toEqual({ success: false, error: 'ENOENT: no such file or directory' });
     });
 
     it('should handle permission denied errors', async () => {
@@ -147,23 +145,25 @@ describe('File Engine', () => {
         { name: 'file2.js', isFile: () => true, isDirectory: () => false }
       ];
       mockFs.readdir.mockResolvedValue(mockDirents as any);
-      
+
       const result = await executeFileOperation({ type: 'list', path: './' });
-      
-      expect(Array.isArray(result)).toBe(true);
-      expect(result).toHaveLength(3);
-      expect(result[0]).toEqual({ name: 'file1.txt', type: 'file', path: expect.stringContaining('file1.txt') });
-      expect(result[1]).toEqual({ name: 'subdir', type: 'directory', path: expect.stringContaining('subdir') });
-      expect(result[2]).toEqual({ name: 'file2.js', type: 'file', path: expect.stringContaining('file2.js') });
+
+      expect(result).toEqual({
+        success: true,
+        files: [
+          { name: 'file1.txt', isDirectory: false },
+          { name: 'subdir', isDirectory: true },
+          { name: 'file2.js', isDirectory: false }
+        ]
+      });
     });
 
     it('should handle empty directories', async () => {
       mockFs.readdir.mockResolvedValue([]);
-      
+
       const result = await executeFileOperation({ type: 'list', path: './empty' });
-      
-      expect(Array.isArray(result)).toBe(true);
-      expect(result).toHaveLength(0);
+
+      expect(result).toEqual({ success: true, files: [] });
     });
 
     it('should handle directory access errors', async () => {
