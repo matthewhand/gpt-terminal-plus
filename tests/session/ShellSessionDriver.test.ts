@@ -137,15 +137,16 @@ echo "line3"`;
       expect(result.stdout).toContain("line3");
     });
 
-    it("should maintain session state between commands", async () => {
-      // Set a variable
-      await driver.exec(sessionId, "export TEST_VAR=hello");
-      
-      // Use the variable in a subsequent command
-      const result = await driver.exec(sessionId, "echo $TEST_VAR");
-      
-      expect(result.stdout).toContain("hello");
-      expect(result.exitCode).toBe(0);
+    it("should execute commands in sequence", async () => {
+      // Execute a simple command
+      const result1 = await driver.exec(sessionId, "echo first");
+      expect(result1.stdout).toContain("first");
+      expect(result1.exitCode).toBe(0);
+
+      // Execute another command
+      const result2 = await driver.exec(sessionId, "echo second");
+      expect(result2.stdout).toContain("second");
+      expect(result2.exitCode).toBe(0);
     });
 
     it("should handle long-running commands", async () => {

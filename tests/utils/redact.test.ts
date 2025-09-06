@@ -80,15 +80,15 @@ describe('redact', () => {
         });
 
         it('should handle object values', () => {
-            const objValue = { 
-                nested: 'secret', 
+            const objValue = {
+                nested: 'secret',
                 data: { deep: 'value' },
                 array: [1, 2, 3]
             };
             const result = redact('secretObj', objValue);
             expect(result).toContain('...');
-            expect(result).not.toContain('secret');
-            expect(result).not.toContain('value');
+            expect(result).toContain('secretObj');
+            expect(result).toContain('[Redacted sensitive value]');
         });
 
         it('should handle array values', () => {
@@ -104,7 +104,8 @@ describe('redact', () => {
             const funcValue = () => 'secret';
             const result = redact('secretFunc', funcValue);
             expect(result).toContain('...');
-            expect(result).not.toContain('secret');
+            expect(result).toContain('secretFunc');
+            expect(result).toContain('[Redacted sensitive value]');
         });
 
         it('should handle Date values', () => {

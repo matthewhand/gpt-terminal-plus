@@ -160,11 +160,11 @@ describe('escapeRegExp', () => {
   describe('performance', () => {
     it('should handle many escape operations efficiently', () => {
       const startTime = Date.now();
-      
+
       for (let i = 0; i < 1000; i++) {
-        escapeRegExp(`test.string.${i}.*+?^${}()|[]\\\\`);
+        escapeRegExp(`test.string.${i}.*+?^()|[]\\\\`);
       }
-      
+
       const endTime = Date.now();
       expect(endTime - startTime).toBeLessThan(100); // Should complete quickly
     });

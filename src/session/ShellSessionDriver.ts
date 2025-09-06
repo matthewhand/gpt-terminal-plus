@@ -30,6 +30,10 @@ export class ShellSessionDriver {
     const s = sessions.get(id);
     if (!s) throw new Error(`Session not found: ${id}`);
 
+    if (!command || command.trim() === '') {
+      throw new Error('Command cannot be empty');
+    }
+
     // Run a single command using the configured shell
     const shell = s.meta.shell || 'bash';
     const isBashLike = /bash|zsh|sh/i.test(shell);
@@ -73,7 +77,9 @@ export class ShellSessionDriver {
   async stop(id: string): Promise<void> {
     // No persistent process is maintained in this minimal driver.
     // Retain logs for post-stop inspection.
-    if (!sessions.has(id)) return;
+    if (!sessions.has(id)) {
+      throw new Error(`Session not found: ${id}`);
+    }
     // Keep meta/logs for tests; no-op
   }
 }

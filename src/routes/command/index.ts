@@ -75,8 +75,11 @@ export const executeCode = async (req: Request, res: Response) => {
 
   await logSessionStep('executeCode-input', { code, language }, sessionId);
 
-  if (typeof code !== 'string' || code.trim() === '' || typeof language !== 'string' || language.trim() === '') {
-    return res.status(400).json({ error: 'Code and language are required.' });
+  if (typeof language !== 'string' || language.trim() === '') {
+    return res.status(400).json({ error: 'Language is required.' });
+  }
+  if (typeof code !== 'string') {
+    return res.status(400).json({ error: 'Code must be a string.' });
   }
 
   // Circuit breaker: input length
