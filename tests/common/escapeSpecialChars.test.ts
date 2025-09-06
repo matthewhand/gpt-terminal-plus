@@ -4,7 +4,7 @@ describe('escapeRegExp', () => {
   describe('basic functionality', () => {
     it('should escape special regex characters', () => {
       const input = 'Hello. How are you? (I am fine)';
-      const expected = 'Hello\\\\. How are you\\\\? \\\\(I am fine\\\\)';
+      const expected = 'Hello\\. How are you\\? \\(I am fine\\)';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });
@@ -18,7 +18,7 @@ describe('escapeRegExp', () => {
 
     it('should handle all regex special characters', () => {
       const input = '*+?^${}()|[]\\\\.';
-      const expected = '\\\\*\\\\+\\\\?\\\\^\\\\$\\\\{\\\\}\\\\(\\\\)\\\\|\\\\[\\\\]\\\\\\\\\\\\\.';
+      const expected = '\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\\\\\.';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });
@@ -35,12 +35,12 @@ describe('escapeRegExp', () => {
     it('should handle whitespace-only strings', () => {
       const input = '   \\t\\n  ';
       const result = escapeRegExp(input);
-      expect(result).toBe(input); // Whitespace should not be escaped
+      expect(result).toBe('   \\\\t\\\\n  '); // Whitespace with tabs/newlines escaped
     });
 
     it('should handle strings with only special characters', () => {
       const input = '.*+?^${}()|[]\\\\';
-      const expected = '\\\\.\\\\*\\\\+\\\\?\\\\^\\\\$\\\\{\\\\}\\\\(\\\\)\\\\|\\\\[\\\\]\\\\\\\\';
+      const expected = '\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\\\\\';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });
@@ -50,12 +50,12 @@ describe('escapeRegExp', () => {
       const result = escapeRegExp(input);
       expect(result).toContain('a'.repeat(1000));
       expect(result).toContain('b'.repeat(1000));
-      expect(result).toContain('\\\\.\\\\*\\\\+\\\\?');
+      expect(result).toContain('\\.\\*\\+\\?');
     });
 
     it('should handle unicode characters', () => {
       const input = 'Hello 世界 🌍 café.txt';
-      const expected = 'Hello 世界 🌍 café\\\\.txt';
+      const expected = 'Hello 世界 🌍 café\\.txt';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });
@@ -63,19 +63,19 @@ describe('escapeRegExp', () => {
 
   describe('specific character escaping', () => {
     const testCases = [
-      { char: '.', escaped: '\\\\.' },
-      { char: '*', escaped: '\\\\*' },
-      { char: '+', escaped: '\\\\+' },
-      { char: '?', escaped: '\\\\?' },
-      { char: '^', escaped: '\\\\^' },
-      { char: '$', escaped: '\\\\$' },
-      { char: '{', escaped: '\\\\{' },
-      { char: '}', escaped: '\\\\}' },
-      { char: '(', escaped: '\\\\(' },
-      { char: ')', escaped: '\\\\)' },
-      { char: '|', escaped: '\\\\|' },
-      { char: '[', escaped: '\\\\[' },
-      { char: ']', escaped: '\\\\]' },
+      { char: '.', escaped: '\\.' },
+      { char: '*', escaped: '\\*' },
+      { char: '+', escaped: '\\+' },
+      { char: '?', escaped: '\\?' },
+      { char: '^', escaped: '\\^' },
+      { char: '$', escaped: '\\$' },
+      { char: '{', escaped: '\\{' },
+      { char: '}', escaped: '\\}' },
+      { char: '(', escaped: '\\(' },
+      { char: ')', escaped: '\\)' },
+      { char: '|', escaped: '\\|' },
+      { char: '[', escaped: '\\[' },
+      { char: ']', escaped: '\\]' },
       { char: '\\\\', escaped: '\\\\\\\\' }
     ];
 
@@ -88,7 +88,7 @@ describe('escapeRegExp', () => {
 
     it('should escape multiple occurrences of the same character', () => {
       const input = '...***???';
-      const expected = '\\\\.\\\\.\\\\.\\\\*\\\\*\\\\*\\\\?\\\\?\\\\?';
+      const expected = '\\.\\.\\.\\*\\*\\*\\?\\?\\?';
       const result = escapeRegExp(input);
       expect(result).toBe(expected);
     });
@@ -99,29 +99,29 @@ describe('escapeRegExp', () => {
       const input = 'C:\\\\Users\\\\John\\\\Documents\\\\file.txt';
       const result = escapeRegExp(input);
       expect(result).toContain('\\\\\\\\'); // Escaped backslashes
-      expect(result).toContain('\\\\.'); // Escaped dot
+      expect(result).toContain('\\.'); // Escaped dot
     });
 
     it('should work with URLs', () => {
       const input = 'https://example.com/path?query=value&other=123';
       const result = escapeRegExp(input);
-      expect(result).toContain('\\\\.'); // Escaped dots
-      expect(result).toContain('\\\\?'); // Escaped question mark
+      expect(result).toContain('\\.'); // Escaped dots
+      expect(result).toContain('\\?'); // Escaped question mark
     });
 
     it('should work with email addresses', () => {
       const input = 'user+tag@example.com';
       const result = escapeRegExp(input);
-      expect(result).toContain('\\\\+'); // Escaped plus
-      expect(result).toContain('\\\\.'); // Escaped dot
+      expect(result).toContain('\\+'); // Escaped plus
+      expect(result).toContain('\\.'); // Escaped dot
     });
 
     it('should work with regex patterns themselves', () => {
       const input = '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$';
       const result = escapeRegExp(input);
-      expect(result).toContain('\\\\^'); // Escaped caret
-      expect(result).toContain('\\\\['); // Escaped brackets
-      expect(result).toContain('\\\\$'); // Escaped dollar
+      expect(result).toContain('\\^'); // Escaped caret
+      expect(result).toContain('\\['); // Escaped brackets
+      expect(result).toContain('\\$'); // Escaped dollar
     });
   });
 
