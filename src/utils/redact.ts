@@ -69,6 +69,6 @@ export function redact(key: string, value: any): string {
         }
     }
 
-    // Return the value only if no redaction is needed (for backward compatibility with tests)
-    return value;
+    // Return the key-value pair if no redaction is needed
+    return `${key}: ${value}`;
 }
