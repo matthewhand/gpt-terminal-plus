@@ -19,7 +19,7 @@ const rateLimitStore = new Map<string, RateLimitEntry>();
 export function advancedRateLimit(config: RateLimitConfig) {
   return (req: Request, res: Response, next: NextFunction): void => {
     // Skip rate limiting during tests
-    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID || req.headers['user-agent']?.includes('supertest')) {
+    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID || req.headers?.['user-agent']?.includes('supertest')) {
       return next();
     }
 

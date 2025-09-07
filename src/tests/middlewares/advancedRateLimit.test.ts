@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-describe.skip('advancedRateLimit middleware', () => {
+describe('advancedRateLimit middleware', () => {
   const fixedNow = new Date('2025-01-01T00:00:00Z');
 
   const mkRes = () => {
@@ -35,6 +35,12 @@ describe.skip('advancedRateLimit middleware', () => {
 
   test('sets rate limit headers and allows requests within limit', async () => {
     await jest.isolateModulesAsync(async () => {
+      // Mock environment to not skip rate limiting
+      const originalEnv = process.env.NODE_ENV;
+      const originalJestWorkerId = process.env.JEST_WORKER_ID;
+      process.env.NODE_ENV = 'production';
+      delete process.env.JEST_WORKER_ID;
+
       const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
       const mw = advancedRateLimit({ windowMs: 1000, maxRequests: 2 });
 
@@ -57,11 +63,20 @@ describe.skip('advancedRateLimit middleware', () => {
       mw(req, res2, next2);
       expect(next2).toHaveBeenCalledTimes(1);
       expect(res2.headers['X-RateLimit-Remaining']).toBe('0');
+
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
     });
   });
 
   test('blocks after exceeding max and returns retryAfter', async () => {
     await jest.isolateModulesAsync(async () => {
+      // Mock environment to not skip rate limiting
+      const originalEnv = process.env.NODE_ENV;
+      const originalJestWorkerId = process.env.JEST_WORKER_ID;
+      process.env.NODE_ENV = 'production';
+      delete process.env.JEST_WORKER_ID;
+
       const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
       const mw = advancedRateLimit({ windowMs: 2000, maxRequests: 2 });
 
@@ -81,11 +96,24 @@ describe.skip('advancedRateLimit middleware', () => {
       expect(res3.body).toMatchObject({ error: 'Too Many Requests' });
       expect(typeof res3.body.retryAfter).toBe('number');
       expect(res3.body.retryAfter).toBeGreaterThan(0);
+
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
+      if (originalJestWorkerId) {
+        process.env.JEST_WORKER_ID = originalJestWorkerId;
+      }
+      if (originalJestWorkerId) {
+        process.env.JEST_WORKER_ID = originalJestWorkerId;
+      }
     });
   });
 
   test('resets counts after window passes', async () => {
     await jest.isolateModulesAsync(async () => {
+      // Mock environment to not skip rate limiting
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+
       const windowMs = 1500;
       const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
       const mw = advancedRateLimit({ windowMs, maxRequests: 1 });
@@ -106,11 +134,20 @@ describe.skip('advancedRateLimit middleware', () => {
       expect(next2).toHaveBeenCalledTimes(1);
       expect(res2.status).not.toHaveBeenCalled();
       expect(res2.headers['X-RateLimit-Remaining']).toBe('0');
+
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
     });
   });
 
   test('perUser limiter keys by bearer token', async () => {
     await jest.isolateModulesAsync(async () => {
+      // Mock environment to not skip rate limiting
+      const originalEnv = process.env.NODE_ENV;
+      const originalJestWorkerId = process.env.JEST_WORKER_ID;
+      process.env.NODE_ENV = 'production';
+      delete process.env.JEST_WORKER_ID;
+
       const { rateLimiters } = await import('@src/middlewares/advancedRateLimit');
       const mw = rateLimiters.perUser(1); // only one request per unique key
 
@@ -134,6 +171,9 @@ describe.skip('advancedRateLimit middleware', () => {
       const nextA2 = jest.fn();
       mw(mkReq('Bearer token-AAA'), resA2, nextA2);
       expect(resA2.status).toHaveBeenCalledWith(429);
+
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
     });
   });
 });
