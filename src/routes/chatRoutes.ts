@@ -36,7 +36,7 @@ router.post('/completions', async (req: Request, res: Response) => {
       role: m.role || 'user',
       content: String(m.content ?? '')
     }));
-    const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role));
+    const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role || 'user'));
     const contentOk = safeMessages.every(m => typeof m.content === 'string' && m.content.trim().length > 0);
     if (!contentOk) {
       return res.status(422).json({ message: 'Invalid message content' });

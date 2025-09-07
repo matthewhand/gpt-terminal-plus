@@ -18,12 +18,13 @@ type SessionMeta = {
 const sessions = new Map<string, { meta: SessionMeta; logs: SessionLog[] }>();
 
 export class ShellSessionDriver {
-  async start(params?: { shell?: string }): Promise<SessionMeta & { status: string; createdAt: Date }> {
+  async start(params?: { shell?: string }): Promise<SessionMeta & { status: string }> {
     const shell = params?.shell || 'bash';
     const id = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    const meta: SessionMeta = { id, shell, createdAt: Date.now() };
+    const createdAt = Date.now();
+    const meta: SessionMeta = { id, shell, createdAt };
     sessions.set(id, { meta, logs: [] });
-    return { ...meta, status: 'running', createdAt: new Date(meta.createdAt) };
+    return { ...meta, status: 'running' };
   }
 
   async exec(id: string, command: string): Promise<{ stdout: string; stderr: string; exitCode: number; success: boolean }> {

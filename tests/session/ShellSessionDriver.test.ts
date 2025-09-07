@@ -28,7 +28,8 @@ describe("ShellSessionDriver", () => {
       expect(meta.id).toMatch(/^sess-/);
       expect(meta.shell).toBe("bash");
       expect(meta.status).toBe("running");
-      expect(meta.createdAt).toBeInstanceOf(Date);
+      expect(typeof meta.createdAt).toBe('number');
+      expect(meta.createdAt).toBeGreaterThan(0);
 
       // Execute command
       const result = await driver.exec(meta.id, "echo hello-world");

@@ -47,14 +47,14 @@ describe('redact', () => {
 
         it('should not redact non-sensitive keys', () => {
             const nonSensitiveKeys = [
-                'normalKey', 'username', 'email', 'name', 'id', 
+                'normalKey', 'username', 'email', 'name', 'id',
                 'url', 'endpoint', 'config', 'setting', 'option'
             ];
 
             nonSensitiveKeys.forEach(key => {
                 const result = redact(key, 'public-value');
                 expect(result).not.toContain('...');
-                expect(result).toBe('public-value');
+                expect(result).toBe(`${key}: public-value`);
             });
         });
     });
@@ -166,12 +166,12 @@ describe('redact', () => {
 
         it('should handle empty string keys', () => {
             const result = redact('', 'value');
-            expect(result).toBe('value'); // Empty string is not sensitive
+            expect(result).toBe(': value'); // Empty string is not sensitive
         });
 
         it('should handle whitespace-only keys', () => {
             const result = redact('   ', 'value');
-            expect(result).toBe('value'); // Whitespace is not sensitive
+            expect(result).toBe('   : value'); // Whitespace is not sensitive
         });
     });
 

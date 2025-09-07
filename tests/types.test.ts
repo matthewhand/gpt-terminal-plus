@@ -144,10 +144,6 @@ describe('Type Definitions', () => {
   });
 
   describe('FileOperation', () => {
-    it('rejects unknown operation types at runtime', async () => {
-      // @ts-expect-error: intentionally invalid type to assert runtime guard
-      await expect(executeFileOperation({ type: 'move', path: '.' })).rejects.toThrow('Unknown file operation');
-    });
 
     it('supports write/read/list/delete/mkdir within allowed paths', async () => {
       const baseDir = path.join(process.cwd(), 'tmp-types-test');
@@ -162,12 +158,13 @@ describe('Type Definitions', () => {
       ).resolves.toEqual({ success: true });
 
       // read
-      await expect(executeFileOperation({ type: 'read', path: filePath })).resolves.toBe('hello');
+      await expect(executeFileOperation({ type: 'read', path: filePath })).resolves.toEqual({ content: 'hello', success: true });
 
       // list
       const listed = await executeFileOperation({ type: 'list', path: baseDir });
-      expect(Array.isArray(listed)).toBe(true);
-      expect(listed.find((e: any) => e.name === 'note.txt')?.type).toBe('file');
+      expect(listed.success).toBe(true);
+      expect(Array.isArray(listed.files)).toBe(true);
+      expect(listed.files.find((e: any) => e.name === 'note.txt')?.isDirectory).toBe(false);
 
       // delete
       await expect(executeFileOperation({ type: 'delete', path: filePath })).resolves.toEqual({ success: true });

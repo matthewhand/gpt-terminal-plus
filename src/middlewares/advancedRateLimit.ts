@@ -78,7 +78,9 @@ export function advancedRateLimit(config: RateLimitConfig) {
 export const rateLimiters = {
   strict: advancedRateLimit({
     windowMs: process.env.NODE_ENV === 'test' ? 1000 : 15 * 60 * 1000, // 1 second for tests, 15 minutes for production
-    maxRequests: process.env.NODE_ENV === 'test' ? 1000 : 100 // 1000 for tests, 100 for production
+    maxRequests: process.env.NODE_ENV === 'test' ? 10000 : 100, // 10000 for tests, 100 for production
+    skipSuccessfulRequests: false,
+    skipFailedRequests: false
   }),
   
   moderate: advancedRateLimit({

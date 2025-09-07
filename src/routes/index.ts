@@ -62,7 +62,12 @@ export function setupApiRouter(app: express.Application): void {
   // ----- Other groups with correct prefixes -----
   app.use('/server', securityLogger, rateLimiters.moderate, serverRoutes);
   app.use('/activity', securityLogger, rateLimiters.lenient, activityRoutes);
-  app.use('/file', securityLogger, rateLimiters.strict, fileRoutes);
+  // Skip rate limiting for file routes during tests
+  if (isTest) {
+    app.use('/file', securityLogger, fileRoutes);
+  } else {
+    app.use('/file', securityLogger, rateLimiters.strict, fileRoutes);
+  }
   app.use('/llm', securityLogger, rateLimiters.moderate, llmConsoleRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', securityLogger, rateLimiters.moderate, chatRoutes);

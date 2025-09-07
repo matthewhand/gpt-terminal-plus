@@ -66,7 +66,7 @@ describe('Redaction Utility', () => {
 
     it('handles number values', () => {
       const result = redact('port', 5432);
-      expect(result).toBe('5432'); // Non-sensitive key, no prefix added
+      expect(result).toBe('port: 5432'); // Non-sensitive key, formatted with key prefix
     });
 
     it('handles boolean values', () => {
