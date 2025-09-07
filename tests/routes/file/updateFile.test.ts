@@ -19,7 +19,7 @@ function makeApp() {
 
 describe('POST /file/update', () => {
   let app: express.Application;
-  const testDir = path.join(__dirname, '../../../tmp');
+  const testDir = path.join(process.cwd(), 'tmp');
   const testFile = path.join(testDir, 'update-test.txt');
   const token = 'test-token';
 

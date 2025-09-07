@@ -3,7 +3,7 @@ import { makeProdApp } from './utils/testApp';
 
 // Only run these end-to-end prod-route tests when explicitly enabled.
 // They exercise real middleware + route ordering and may be environment-sensitive.
-const run = process.env.ENABLE_PROD_CIRCUIT_TESTS === '1' ? describe : describe.skip;
+const run = describe; // Enable circuit breaker tests
 
 run('Circuit Breakers (prod routes)', () => {
   let app: any;

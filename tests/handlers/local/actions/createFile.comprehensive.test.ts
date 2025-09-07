@@ -57,8 +57,8 @@ describe('createFile Action', () => {
       expect(mockFs.promises.writeFile).not.toHaveBeenCalled();
     });
 
-    it.skip('should throw error for missing content', async () => {
-      // Skip this test as empty strings are now allowed
+    it('should handle empty content successfully', async () => {
+      // Empty strings are now allowed
       const result = await createFile('/test/file.txt', '');
       expect(result).toBe(true);
       expect(mockFs.promises.writeFile).toHaveBeenCalled();

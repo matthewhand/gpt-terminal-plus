@@ -246,9 +246,9 @@ describe('LocalServerHandler.listFiles integration', () => {
 
   describe('sorting and ordering', () => {
     it.skip('should support orderBy parameter', async () => {
-      const res = await handler.listFiles({ 
-        directory: tmpRoot, 
-        orderBy: 'name' 
+      const res = await handler.listFiles({
+        directory: tmpRoot,
+        orderBy: 'filename'
       });
       
       const itemNames = res.items.map(item => item.name);
@@ -306,8 +306,8 @@ describe('LocalServerHandler.listFiles integration', () => {
       }
     });
 
-    it.skip('should handle invalid parameters gracefully', async () => {
-      // Skip this test as the handler now returns structured error instead of throwing
+    it('should handle invalid parameters gracefully', async () => {
+      // Handler now returns structured error instead of throwing
       await expect(handler.listFiles({ directory: '' }))
         .resolves.toEqual({
           items: expect.any(Array),
@@ -316,13 +316,22 @@ describe('LocalServerHandler.listFiles integration', () => {
           total: expect.any(Number)
         });
         
-      await expect(handler.listFiles({ directory: tmpRoot, limit: -1 }))
-        .rejects
-        .toThrow();
-        
-      await expect(handler.listFiles({ directory: tmpRoot, offset: -1 }))
-        .rejects
-        .toThrow();
+      // Handler now returns structured responses instead of throwing for invalid parameters
+      const resultWithNegativeLimit = await handler.listFiles({ directory: tmpRoot, limit: -1 });
+      expect(resultWithNegativeLimit).toEqual({
+        items: expect.any(Array),
+        limit: expect.any(Number),
+        offset: expect.any(Number),
+        total: expect.any(Number)
+      });
+
+      const resultWithNegativeOffset = await handler.listFiles({ directory: tmpRoot, offset: -1 });
+      expect(resultWithNegativeOffset).toEqual({
+        items: expect.any(Array),
+        limit: expect.any(Number),
+        offset: expect.any(Number),
+        total: expect.any(Number)
+      });
     });
   });
 
