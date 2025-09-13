@@ -1,13 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
+import Debug from 'debug';
 
-// TODO middleware: logs the mode of incoming requests
+const debug = Debug('app:logMode');
+
 export function logMode(req: Request, res: Response, next: NextFunction) {
+  let mode: string | undefined;
+  let type: string | undefined;
+
   if (req.path.startsWith('/command/')) {
-    const mode = req.path.replace('/command/', '');
-    console.log(`[TODO] Incoming request → mode=${mode}`);
+    type = 'command';
+    mode = req.path.replace('/command/', '');
   } else if (req.path.startsWith('/file/')) {
-    const mode = req.path.replace('/file/', '');
-    console.log(`[TODO] Incoming request → mode=file:${mode}`);
+    type = 'file';
+    mode = req.path.replace('/file/', '');
   }
+
+  if (type && mode) {
+    debug({ type, mode, path: req.path });
+  }
+  
   next();
 }

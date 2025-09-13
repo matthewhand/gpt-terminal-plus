@@ -1,3 +1,4 @@
+import { describe, it, test, expect } from '@jest/globals';
 import request from 'supertest';
 import express, { Router } from 'express';
 import setupMiddlewares from '../src/middlewares/setupMiddlewares';
@@ -25,218 +26,118 @@ describe('Shell Command Execution', () => {
   const token = getOrGenerateApiToken();
 
   describe('Basic Command Execution', () => {
-    it('executes simple echo command', async () => {
+    const basicCases = [
+      { command: 'echo "Hello World"', expected: 'Hello World', desc: 'simple echo' },
+      { command: 'echo "Test: $HOME & /tmp"', expected: /Test:/, desc: 'special characters' },
+      { command: 'echo -e "Line 1\nLine 2\nLine 3"', expected: /Line 1.*Line 2.*Line 3/s, desc: 'multiline output' },
+      { command: 'echo $TEST_VAR', environment: { TEST_VAR: 'test_value' }, expected: 'test_value', desc: 'environment variables' }
+    ];
+
+    test.each(basicCases)('handles $desc', async ({ command, environment, expected }) => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo "Hello World"' });
+        .send({ command, ...(environment && { environment }) });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout.trim()).toBe('Hello World');
-      expect(res.body.result.stderr).toBe('');
-    });
-
-    it('executes commands with special characters', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo "Test: $HOME & /tmp"' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Test:');
-    });
-
-    it('handles multiline output', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo -e "Line 1\nLine 2\nLine 3"' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Line 1');
-      expect(res.body.result.stdout).toContain('Line 2');
-      expect(res.body.result.stdout).toContain('Line 3');
-    });
-
-    it('executes commands with environment variables', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          command: 'echo $TEST_VAR',
-          environment: { TEST_VAR: 'test_value' }
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout.trim()).toBe('test_value');
+      expect(res.body.result.stdout).toMatch(expected);
+      if (expected === 'Hello World') expect(res.body.result.stderr).toBe('');
     });
   });
 
   describe('Error Handling', () => {
-    it('handles non-zero exit codes', async () => {
+    const errorCases = [
+      { command: 'exit 42', expectedCode: 42, additionalCheck: (res) => expect(res.body.aiAnalysis).toBeDefined(), desc: 'non-zero exit' },
+      { command: 'echo "error message" >&2', expectedCode: 0, additionalCheck: (res) => expect(res.body.result.stderr.trim()).toBe('error message'), desc: 'stderr output' },
+      { command: 'nonexistentcommand123', expectedCode: null, additionalCheck: (res) => { expect(res.body.result.exitCode).not.toBe(0); expect(res.body.result.stderr).toContain('not found'); }, desc: 'command not found' },
+      { command: 'echo "unclosed quote', expectedCode: null, additionalCheck: (res) => expect(res.body.result.exitCode).not.toBe(0), desc: 'syntax errors' }
+    ];
+
+    test.each(errorCases)('handles $desc', async ({ command, expectedCode, additionalCheck }) => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'exit 42' });
+        .send({ command });
 
       expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(42);
-      expect(res.body.aiAnalysis).toBeDefined();
-    });
-
-    it('captures stderr output', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo "error message" >&2' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.stderr.trim()).toBe('error message');
-    });
-
-    it('handles command not found', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'nonexistentcommand123' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
-      expect(res.body.result.stderr).toContain('not found');
-    });
-
-    it('handles syntax errors', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo "unclosed quote' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
+      if (expectedCode !== null) {
+        expect(res.body.result.exitCode).toBe(expectedCode);
+      }
+      additionalCheck(res);
     });
   });
 
   describe('Input Validation', () => {
-    it('validates missing command parameter', async () => {
+    const validationCases = [
+      { payload: {}, expectedStatus: 200, expectedCode: 1, error: 'Command is required', additionalCheck: null, desc: 'missing command' },
+      { payload: { command: '' }, expectedStatus: 200, expectedCode: 1, error: 'Command is required', additionalCheck: null, desc: 'empty command' },
+      { payload: { command: 'echo ' + 'x'.repeat(10000) }, expectedStatus: 200, expectedCode: 0, additionalCheck: (res) => expect(res.body.result.stdout.length).toBeGreaterThan(1000), desc: 'long command' },
+      { payload: 'invalid json', headers: { 'Content-Type': 'application/json' }, expectedStatus: 400, desc: 'malformed JSON' }
+    ];
+
+    test.each(validationCases)('handles $desc', async ({ payload, expectedStatus, expectedCode, error, headers, additionalCheck }) => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
-        .send({});
+        .set(headers || {})
+        .send(payload);
 
-      // With auth header, endpoint returns 200 and error payload
-      expect(res.status).toBe(200);
-      expect(res.body.result).toBeDefined();
-      expect(res.body.result.exitCode).toBe(1);
-      expect(String(res.body.result.stderr)).toContain('Command is required');
-    });
-
-    it('validates empty command', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: '' });
-
-      // With auth header, endpoint returns 200 and error payload
-      expect(res.status).toBe(200);
-      expect(res.body.result).toBeDefined();
-      expect(res.body.result.exitCode).toBe(1);
-      expect(String(res.body.result.stderr)).toContain('Command is required');
-    });
-
-    it('validates command length limits', async () => {
-      const longCommand = 'echo ' + 'x'.repeat(10000);
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: longCommand });
-
-      // Currently no explicit limit enforced; expect normal success
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(typeof res.body.result.stdout).toBe('string');
-      expect(res.body.result.stdout.length).toBeGreaterThan(1000);
-    });
-
-    it('handles malformed JSON', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Content-Type', 'application/json')
-        .send('invalid json');
-
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(expectedStatus);
+      if (expectedStatus === 200) {
+        if (expectedCode !== undefined) expect(res.body.result.exitCode).toBe(expectedCode);
+        if (error) expect(String(res.body.result.stderr)).toContain(error);
+        if (additionalCheck) additionalCheck(res);
+      }
     });
   });
 
   describe('Authentication and Authorization', () => {
-    it('requires authentication in production mode', async () => {
+    const authCases = [
+      { auth: null, env: 'production', expectedStatus: 200, desc: 'no auth in production' },
+      { auth: 'Bearer invalid-token', expectedStatus: 200, desc: 'invalid token' },
+      { auth: '', expectedStatus: 200, desc: 'missing header' }
+    ];
+
+    test.each(authCases)('handles $desc', async ({ auth, env, expectedStatus }) => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      
-      const res = await request(app)
+      if (env) process.env.NODE_ENV = env;
+
+      const requestBuilder = request(app)
         .post('/command/execute-shell')
         .send({ command: 'echo test' });
-      
-      process.env.NODE_ENV = originalEnv;
-      // Command endpoints do not enforce auth; expect 200
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-    });
 
-    it('validates auth token format', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', 'Bearer invalid-token')
-        .send({ command: 'echo test' });
+      if (auth) {
+        requestBuilder.set('Authorization', auth);
+      }
 
-      // Command endpoints do not enforce auth; expect 200
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-    });
+      const res = await requestBuilder;
 
-    it('handles missing authorization header', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', '')
-        .send({ command: 'echo test' });
+      if (env) process.env.NODE_ENV = originalEnv;
 
-      // Command endpoints do not enforce auth; expect 200
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
+      expect(res.status).toBe(expectedStatus);
+      if (expectedStatus === 200) expect(res.body.result.exitCode).toBe(0);
     });
   });
 
   describe('Working Directory', () => {
-    it('executes commands in specified directory', async () => {
+    const wdCases = [
+      { dir: '/tmp', expectedCode: 0, expectedOut: '/tmp', additionalCheck: null, desc: 'valid directory' },
+      { dir: '/nonexistent/directory', expectedCode: null, additionalCheck: (res) => expect(res.body.result.exitCode).not.toBe(0), desc: 'invalid directory' }
+    ];
+
+    test.each(wdCases)('handles $desc', async ({ dir, expectedCode, expectedOut, additionalCheck }) => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          command: 'pwd',
-          workingDirectory: '/tmp'
-        });
+        .send({ command: 'pwd', workingDirectory: dir });
 
       expect(res.status).toBe(200);
-      if (res.body.result.exitCode === 0) {
-        expect(res.body.result.stdout.trim()).toBe('/tmp');
+      if (expectedCode !== null) {
+        expect(res.body.result.exitCode).toBe(expectedCode);
       }
-    });
-
-    it('handles invalid working directory', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          command: 'pwd',
-          workingDirectory: '/nonexistent/directory'
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
+      if (additionalCheck) additionalCheck(res);
+      if (expectedOut) expect(res.body.result.stdout.trim()).toBe(expectedOut);
     });
   });
 
@@ -256,7 +157,7 @@ describe('Shell Command Execution', () => {
   });
 
   describe('Response Format', () => {
-    it('returns consistent response structure', async () => {
+    test('returns consistent structure and metadata', async () => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
@@ -270,15 +171,6 @@ describe('Shell Command Execution', () => {
       expect(typeof res.body.result.exitCode).toBe('number');
       expect(typeof res.body.result.stdout).toBe('string');
       expect(typeof res.body.result.stderr).toBe('string');
-    });
-
-    it('includes execution metadata', async () => {
-      const res = await request(app)
-        .post('/command/execute-shell')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ command: 'echo metadata' });
-
-      expect(res.status).toBe(200);
       if (res.body.result.executionTime) {
         expect(typeof res.body.result.executionTime).toBe('number');
         expect(res.body.result.executionTime).toBeGreaterThan(0);
@@ -287,7 +179,7 @@ describe('Shell Command Execution', () => {
   });
 
   describe('Concurrent Execution', () => {
-    it('handles multiple concurrent commands', async () => {
+    test('handles multiple concurrent commands', async () => {
       const commands = ['echo test1', 'echo test2', 'echo test3'];
       const requests = commands.map(command =>
         request(app)
@@ -306,21 +198,14 @@ describe('Shell Command Execution', () => {
   });
 
   describe('Security Considerations', () => {
-    it('handles potentially dangerous commands safely', async () => {
-      const dangerousCommands = [
-        'rm -rf /',
-        'sudo rm -rf /',
-        'format c:',
-        'del /s /q c:\\*'
-      ];
-
-      for (const command of dangerousCommands.slice(0, 2)) { // Test first two
+    test('handles potentially dangerous commands safely', async () => {
+      const dangerousCommands = ['rm -rf /', 'sudo rm -rf /'];
+      for (const command of dangerousCommands) {
         const res = await request(app)
           .post('/command/execute-shell')
           .set('Authorization', `Bearer ${token}`)
           .send({ command });
 
-        // Should either block the command or execute safely in test environment
         expect([200, 400, 403]).toContain(res.status);
       }
     });

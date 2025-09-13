@@ -10,6 +10,7 @@ describe("Model Management API - Enhanced", () => {
   beforeAll(() => {
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
+    process.env.LLM_ENABLED = 'true';
     token = getOrGenerateApiToken();
     app = express();
     app.use(express.json());

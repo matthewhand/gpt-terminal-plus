@@ -15,7 +15,9 @@ router.use(checkAuthToken as any);
  * Returns supported models and the currently selected model.
  */
 router.get('/', (_req: Request, res: Response) => {
-  // Return models even if LLM disabled (useful for setup/tests)
+  if (!isLlmEnabled()) {
+    return res.status(200).json({ supported: [], selected: '' });
+  }
   const supported = getSupportedModels();
   const selected = getSelectedModel();
   debug('Returning supported and selected models');
@@ -27,6 +29,9 @@ router.get('/', (_req: Request, res: Response) => {
  * Returns the currently selected model only.
  */
 router.get('/selected', (_req: Request, res: Response) => {
+  if (!isLlmEnabled()) {
+    return res.status(200).json({ selected: '' });
+  }
   const selected = getSelectedModel();
   debug('Returning selected model: ' + selected);
   res.status(200).json({ selected });
@@ -38,6 +43,12 @@ router.get('/selected', (_req: Request, res: Response) => {
  * Sets the selected model if supported.
  */
 router.post('/select', (req: Request, res: Response) => {
+  if (!isLlmEnabled()) {
+    return res.status(409).json({ 
+      error: 'LLM_DISABLED',
+      message: 'LLM functionality is not enabled. Configure LLM settings to use this endpoint.' 
+    });
+  }
   const { model } = req.body || {};
   debug('Request to select model: ' + model);
 
