@@ -91,3 +91,64 @@ describe('SettingsSchema', () => {
     expect(bad.success).toBe(false);
   });
 });
+
+
+it('should generate unique random auth tokens and passwords', () => {
+  const parsed1 = SettingsSchema.parse({});
+  const parsed2 = SettingsSchema.parse({});
+  expect(parsed1.auth.apiToken).not.toBe(parsed2.auth.apiToken);
+  expect(parsed1.auth.adminPassword).not.toBe(parsed2.adminPassword);
+  expect(parsed1.auth.apiToken).toMatch(/^gtp-token-/);
+  expect(parsed1.auth.adminPassword).toMatch(/^admin-/);
+});
+
+it('should validate llm provider enum values', () => {
+  const validProviders = ['none', 'openai', 'ollama', 'lmstudio', 'litellm'];
+  validProviders.forEach(provider => {
+    const parsed = SettingsSchema.safeParse({ llm: { provider } });
+    expect(parsed.success).toBe(true);
+  });
+});
+
+it('should reject invalid llm provider', () => {
+  const parsed = SettingsSchema.safeParse({ llm: { provider: 'invalid' } });
+  expect(parsed.success).toBe(false);
+  expect(parsed.error.errors[0].path).toEqual([ 'llm', 'provider' ]);
+});
+
+it('should parse full settings with nested overrides', () => {
+  const input = {
+    server: { port: 3000, host: 'localhost' },
+    auth: { adminUsername: 'user' },
+    app: { corsOrigins: ['https://example.com'] },
+    execution: {
+      shell: { local: { timeoutMs: 30000 } },
+      code: { languages: ['js'] },
+      llm: { providersAllowed: ['ollama'] }
+    },
+    files: { enabled: false },
+    llm: { provider: 'ollama', enabled: true, ollamaURL: 'http://localhost:11434' }
+  };
+  const parsed = SettingsSchema.parse(input);
+  expect(parsed.server.port).toBe(3000);
+  expect(parsed.app.corsOrigins).toEqual(['https://example.com']);
+  expect(parsed.execution.shell.local.timeoutMs).toBe(30000);
+  expect(parsed.execution.code.languages).toEqual(['js']);
+  expect(parsed.llm.provider).toBe('ollama');
+  expect(parsed.llm.ollamaURL).toBe('http://localhost:11434');
+});
+
+it('should reject invalid port (non-number or out of range)', () => {
+  const invalid = SettingsSchema.safeParse({ server: { port: 'invalid' } });
+  expect(invalid.success).toBe(false);
+  expect(invalid.error.errors[0].path).toEqual([ 'server', 'port' ]);
+
+  const outOfRange = SettingsSchema.safeParse({ server: { port: 70000 } });
+  expect(outOfRange.success).toBe(false); // Assuming port format is 'port' which is 0-65535
+});
+
+it('should validate file ops enabled', () => {
+  const parsed = SettingsSchema.parse({ files: { enabled: false, fsRead: true } });
+  expect(parsed.files.enabled).toBe(false);
+  expect(parsed.files.fsRead).toBe(true);
+});
