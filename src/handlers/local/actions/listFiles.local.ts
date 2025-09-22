@@ -14,7 +14,7 @@ const debug = Debug('app:local:listFiles');
  */
 const listFiles = async ({
   directory = '.',
-  limit = 100,
+  limit,
   offset = 0,
   orderBy = 'filename',
   recursive = false,
@@ -37,6 +37,12 @@ const listFiles = async ({
     const safeOffset = offset;
     const safeOrderBy = orderBy;
 
+    // Normalize typeFilter to handle both 'directories' and 'folders'
+    let normalizedTypeFilter = typeFilter;
+    if (typeFilter === 'directories' as any) {
+      normalizedTypeFilter = 'folders';
+    }
+
     type Item = { name: string; isDirectory: boolean; mtime: Date };
 
     // Helper: recursively collect entries
@@ -50,7 +56,7 @@ const listFiles = async ({
           const stats = await fs.promises.stat(fullPath);
           const isDir = stats.isDirectory();
           // Apply type filter on inclusion, not traversal
-          if (!typeFilter || (typeFilter === 'folders' && isDir) || (typeFilter === 'files' && !isDir)) {
+          if (!normalizedTypeFilter || (normalizedTypeFilter === 'folders' && isDir) || (normalizedTypeFilter === 'files' && !isDir)) {
             results.push({ name: relPath, isDirectory: isDir, mtime: stats.mtime });
           }
           if (recursive && isDir) {
@@ -75,7 +81,7 @@ const listFiles = async ({
             const stats = await fs.promises.stat(filePath);
             const isDir = stats.isDirectory();
             // Include based on typeFilter at top-level
-            if (!typeFilter || (typeFilter === 'folders' && isDir) || (typeFilter === 'files' && !isDir)) {
+            if (!normalizedTypeFilter || (normalizedTypeFilter === 'folders' && isDir) || (normalizedTypeFilter === 'files' && !isDir)) {
               return { name: entry.name, isDirectory: isDir, mtime: stats.mtime } as Item;
             }
             return null;
@@ -98,7 +104,8 @@ const listFiles = async ({
     const totalFiles = allFiles.length;
 
     // Apply pagination
-    const paginated = allFiles.slice(safeOffset, safeOffset + safeLimit).map(({ name, isDirectory }) => ({
+    const effectiveLimit = safeLimit ?? allFiles.length;
+    const paginated = allFiles.slice(safeOffset, safeOffset + effectiveLimit).map(({ name, isDirectory }) => ({
       name,
       isDirectory
     }));

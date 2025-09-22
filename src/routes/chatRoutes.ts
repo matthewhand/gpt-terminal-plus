@@ -36,7 +36,7 @@ router.post('/completions', async (req: Request, res: Response) => {
       role: m.role || 'user',
       content: String(m.content ?? '')
     }));
-    const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role));
+    const rolesOk = safeMessages.every(m => ['user','assistant','system'].includes(m.role || 'user'));
     const contentOk = safeMessages.every(m => typeof m.content === 'string' && m.content.trim().length > 0);
     if (!contentOk) {
       return res.status(422).json({ message: 'Invalid message content' });
@@ -138,15 +138,15 @@ router.get('/models', (_req: Request, res: Response) => {
   // For models list, return available mappings even if LLM is disabled
   try {
     const { getSupportedModels } = require('../common/models');
-    const { getAIConfig } = require('../llm');
+    const { getLlmClient } = require('../llm/llmClient');
     const supported = getSupportedModels();
-    const aiCfg = getAIConfig();
+    const client = getLlmClient();
     const modelMaps: Record<string, Record<string, string> | undefined> = {
-      ollama: aiCfg.providers?.ollama?.modelMap,
-      lmstudio: aiCfg.providers?.lmstudio?.modelMap,
-      openai: aiCfg.providers?.openai?.modelMap,
+      ollama: undefined,
+      lmstudio: undefined,
+      openai: undefined,
     };
-    res.status(200).json({ supported, modelMaps, provider: aiCfg.provider });
+    res.status(200).json({ supported, modelMaps, provider: client?.provider || 'openai' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to load model maps', error: (error as Error).message });
   }
@@ -155,14 +155,14 @@ router.get('/models', (_req: Request, res: Response) => {
 /** GET /chat/providers */
 router.get('/providers', (_req: Request, res: Response) => {
   try {
-    const { getAIConfig } = require('../llm');
-    const aiCfg = getAIConfig();
+    const { getLlmClient } = require('../llm/llmClient');
+    const client = getLlmClient();
     const providers = {
-      provider: aiCfg.provider,
+      provider: client?.provider || 'openai',
       endpoints: {
-        ollama: aiCfg.providers?.ollama?.baseUrl,
-        lmstudio: aiCfg.providers?.lmstudio?.baseUrl,
-        openai: aiCfg.providers?.openai?.baseUrl,
+        ollama: client?.provider === 'ollama' ? client.baseUrl : undefined,
+        lmstudio: client?.provider === 'lmstudio' ? client.baseUrl : undefined,
+        openai: client?.provider === 'openai' ? client.baseUrl : undefined,
       }
     };
     res.status(200).json(providers);

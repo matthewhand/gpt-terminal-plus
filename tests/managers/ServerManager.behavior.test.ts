@@ -69,5 +69,62 @@ describe('ServerManager behavior', () => {
     expect(unknown?.protocol).toBe('local');
     expect(unknown?.hostname).toBe('localhost');
   });
+
+  test('createHandler throws for unknown hostname', () => {
+    const mgr = ServerManager.getInstance();
+    expect(() => mgr.createHandler('nonexistent')).toThrow('Server not found: nonexistent');
+  });
+
+  test('createHandler throws for unsupported protocol', () => {
+    const mgr = ServerManager.getInstance();
+    mgr.addServer({ protocol: 'unknown' as any, hostname: 'badproto' });
+    expect(() => mgr.createHandler('badproto')).toThrow('Unsupported server protocol: unknown');
+  });
+
+  test('addServer throws for invalid config', () => {
+    const mgr = ServerManager.getInstance();
+    expect(() => mgr.addServer({ protocol: 'local' } as any)).toThrow('Invalid server configuration');
+    expect(() => mgr.addServer(null as any)).toThrow('Invalid server configuration');
+  });
+
+  test('removeServer returns false for non-existent', () => {
+    const mgr = ServerManager.getInstance();
+    expect(mgr.removeServer('nonexistent')).toBe(false);
+  });
+
+  test('getServerConfig returns undefined for non-existent', () => {
+    const mgr = ServerManager.getInstance();
+    expect(mgr.getServerConfig('nonexistent')).toBeUndefined();
+  });
+
+  test('getDefaultLocalServerConfig returns correct defaults', () => {
+    const defaultConfig = ServerManager.getDefaultLocalServerConfig();
+    expect(defaultConfig).toEqual({
+      protocol: 'local',
+      hostname: 'localhost',
+      code: false,
+      directory: '.'
+    });
+  });
+
+  test('listAvailableServers handles missing configs gracefully', () => {
+    // Temporarily mock config to throw for all
+    const originalGet = require('config').get;
+    require('config').get = jest.fn(() => { throw new Error('config missing'); });
+
+    const list = ServerManager.listAvailableServers();
+    // Should include default local
+    expect(list).toHaveLength(1);
+    expect(list[0].hostname).toBe('localhost');
+
+    // Restore
+    require('config').get = originalGet;
+  });
+
+  test('singleton instance is reused', () => {
+    const mgr1 = ServerManager.getInstance();
+    const mgr2 = ServerManager.getInstance();
+    expect(mgr1).toBe(mgr2);
+  });
 });
 

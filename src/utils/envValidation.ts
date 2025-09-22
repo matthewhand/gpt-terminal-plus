@@ -8,6 +8,12 @@ const debug = Debug('app:envValidation');
  * Logs warnings or errors if any variables are missing or misconfigured.
  */
 export const validateEnvironmentVariables = (): void => {
+  // Handle case where process.env is undefined
+  if (!process || !process.env) {
+    debug('process.env is not available');
+    return;
+  }
+
   const requiredVariables = [
     'API_TOKEN',
     'NODE_CONFIG_DIR',

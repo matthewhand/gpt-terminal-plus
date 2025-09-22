@@ -206,6 +206,14 @@ export const convictConfig = () => {
         env: 'FILE_OPS_CONSEQUENTIAL'
       }
     },
+    fileOps: {
+      allowedPaths: {
+        doc: 'List of allowed paths for file operations',
+        format: Array,
+        default: [process.cwd()],
+        env: 'FILE_OPS_ALLOWED_PATHS'
+      }
+    },
     security: {
       apiToken: {
         doc: 'Bearer API token; generated at runtime if not set',

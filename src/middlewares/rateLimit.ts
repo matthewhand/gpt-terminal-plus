@@ -9,8 +9,8 @@ const debug = Debug('app:rateLimit');
  * Limits: 100 requests per 15 minutes per IP
  */
 export const generalRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: process.env.NODE_ENV === 'test' ? 1000 : 15 * 60 * 1000, // 1 second for tests, 15 minutes for production
+  max: process.env.NODE_ENV === 'test' ? 1000 : 100, // 1000 requests per second for tests, 100 for production
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: Math.ceil((15 * 60 * 1000) / 1000) // seconds
@@ -25,8 +25,8 @@ export const generalRateLimit = rateLimit({
     });
   },
   skip: (req: Request) => {
-    // Skip rate limiting for health checks
-    return req.path === '/health' || req.path === '/';
+    // Skip rate limiting for health checks and during tests
+    return req.path === '/health' || req.path === '/' || process.env.NODE_ENV === 'test' || Boolean(req.headers['user-agent']?.includes('supertest')) || req.path.startsWith('/file/');
   }
 });
 

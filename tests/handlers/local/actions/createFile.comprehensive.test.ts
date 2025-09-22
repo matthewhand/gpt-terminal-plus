@@ -57,11 +57,11 @@ describe('createFile Action', () => {
       expect(mockFs.promises.writeFile).not.toHaveBeenCalled();
     });
 
-    it('should throw error for missing content', async () => {
-      await expect(createFile('/test/file.txt', ''))
-        .rejects.toThrow('Content must be provided and must be a string.');
-
-      expect(mockFs.promises.writeFile).not.toHaveBeenCalled();
+    it('should handle empty content successfully', async () => {
+      // Empty strings are now allowed
+      const result = await createFile('/test/file.txt', '');
+      expect(result).toBe(true);
+      expect(mockFs.promises.writeFile).toHaveBeenCalled();
     });
 
     it('should throw error for null content', async () => {
@@ -231,9 +231,9 @@ describe('createFile Action', () => {
       mockFs.existsSync.mockReturnValue(false);
       (mockFs.promises.writeFile as jest.Mock).mockResolvedValue(undefined);
 
-      // Currently this would fail validation, but testing the write logic
-      await expect(createFile('/test/empty.txt', ''))
-        .rejects.toThrow('Content must be provided and must be a string.');
+      // Skip this test as empty strings are now allowed
+      const result = await createFile('/test/empty.txt', '');
+      expect(result).toBe(true);
     });
 
     it('should handle write errors with Error objects', async () => {

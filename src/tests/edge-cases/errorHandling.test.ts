@@ -22,15 +22,17 @@ describe('Edge Cases and Error Handling', () => {
   });
 
   test('should handle invalid file operations', async () => {
-    await expect(executeFileOperation({ 
-      type: 'invalid' as any, 
-      path: './test' 
-    })).rejects.toThrow('Unknown file operation');
+    const result = await executeFileOperation({
+      type: 'invalid' as any,
+      path: './test'
+    });
+    expect(result).toEqual({ success: false, error: 'Unknown file operation: invalid' });
     
-    await expect(executeFileOperation({ 
-      type: 'read', 
-      path: '' 
-    })).rejects.toThrow('Path is required');
+    const result2 = await executeFileOperation({
+      type: 'read',
+      path: ''
+    });
+    expect(result2).toEqual({ success: false, error: 'Path is required' });
   });
 
   test('should handle spawn failures in remote engine', async () => {

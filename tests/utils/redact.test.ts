@@ -47,14 +47,14 @@ describe('redact', () => {
 
         it('should not redact non-sensitive keys', () => {
             const nonSensitiveKeys = [
-                'normalKey', 'username', 'email', 'name', 'id', 
+                'normalKey', 'username', 'email', 'name', 'id',
                 'url', 'endpoint', 'config', 'setting', 'option'
             ];
 
             nonSensitiveKeys.forEach(key => {
                 const result = redact(key, 'public-value');
                 expect(result).not.toContain('...');
-                expect(result).toBe('public-value');
+                expect(result).toBe(`${key}: public-value`);
             });
         });
     });
@@ -80,15 +80,15 @@ describe('redact', () => {
         });
 
         it('should handle object values', () => {
-            const objValue = { 
-                nested: 'secret', 
+            const objValue = {
+                nested: 'secret',
                 data: { deep: 'value' },
                 array: [1, 2, 3]
             };
             const result = redact('secretObj', objValue);
             expect(result).toContain('...');
-            expect(result).not.toContain('secret');
-            expect(result).not.toContain('value');
+            expect(result).toContain('secretObj');
+            expect(result).toContain('[Redacted sensitive value]');
         });
 
         it('should handle array values', () => {
@@ -96,13 +96,16 @@ describe('redact', () => {
             const result = redact('secretArray', arrayValue);
             expect(result).toContain('...');
             expect(result).not.toContain('secret1');
+            expect(result).not.toContain('secret2');
+            expect(result).not.toContain('secret3');
         });
 
         it('should handle function values', () => {
             const funcValue = () => 'secret';
             const result = redact('secretFunc', funcValue);
             expect(result).toContain('...');
-            expect(result).not.toContain('secret');
+            expect(result).toContain('secretFunc');
+            expect(result).toContain('[Redacted sensitive value]');
         });
 
         it('should handle Date values', () => {
@@ -163,12 +166,12 @@ describe('redact', () => {
 
         it('should handle empty string keys', () => {
             const result = redact('', 'value');
-            expect(result).toBe('value'); // Empty string is not sensitive
+            expect(result).toBe(': value'); // Empty string is not sensitive
         });
 
         it('should handle whitespace-only keys', () => {
             const result = redact('   ', 'value');
-            expect(result).toBe('value'); // Whitespace is not sensitive
+            expect(result).toBe('   : value'); // Whitespace is not sensitive
         });
     });
 

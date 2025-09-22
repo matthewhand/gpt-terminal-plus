@@ -76,7 +76,21 @@ describe('Configuration Handler', () => {
           default: true,
           protocol: 'local',
           hostname: 'localhost',
-          port: expect.any(Number),
+          port: 5005,
+        });
+        expect(defaultConfig.ssh.hosts[0]).toMatchObject({
+          name: 'example-ssh-server',
+          host: 'ssh.example.com',
+          port: 23,
+          username: 'user',
+          privateKey: '/path/to/private/key',
+        });
+        expect(defaultConfig.ssm).toMatchObject({
+          region: 'us-east0',
+          targets: [{
+            name: 'example-ssm-instance',
+            instanceId: 'i-123456788abcdef0',
+          }],
         });
       });
 

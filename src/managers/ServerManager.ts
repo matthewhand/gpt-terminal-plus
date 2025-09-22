@@ -178,7 +178,8 @@ export class ServerManager {
     const defaultLocalServerConfig: LocalServerConfig = {
       protocol: 'local',
       hostname: 'localhost',
-      code: false
+      code: false,
+      directory: '.'
     };
 
     serverManagerDebug('Default local server config: ' + JSON.stringify(defaultLocalServerConfig));

@@ -1,3 +1,4 @@
+import { describe, it, test, expect } from '@jest/globals';
 import request from 'supertest';
 import fs from 'fs/promises';
 import path from 'path';
@@ -28,278 +29,121 @@ describe('Python Code Execution', () => {
   const token = getOrGenerateApiToken();
 
   describe('Basic Python Execution', () => {
-    it('executes simple print statement', async () => {
+    const basicCases = [
+      { code: 'print("Hello Python")', expected: 'Hello Python', desc: 'simple print' },
+      { code: 'result = 2 + 3 * 4\nprint(f"Result: {result}")', expected: 'Result: 14', desc: 'mathematical calculations' },
+      { code: 'text = "Hello"\nprint(text.upper() + " WORLD")', expected: 'HELLO WORLD', desc: 'string operations' },
+      { code: 'data = {"items": [1, 2, 3]}\nprint(f"Sum: {sum(data[\'items\'])}")', expected: 'Sum: 6', desc: 'list and dictionary operations' }
+    ];
+
+    test.each(basicCases)('handles $desc', async ({ code, expected }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'print("Hello Python")' 
-        });
+        .send({ language: 'python', code });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Hello Python');
+      expect(res.body.result.stdout).toContain(expected);
       expect(res.body.interpreter).toBe('python');
-    });
-
-    it('executes mathematical calculations', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'result = 2 + 3 * 4\nprint(f"Result: {result}")' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Result: 14');
-    });
-
-    it('handles string operations', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'text = "Hello"\nprint(text.upper() + " WORLD")' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('HELLO WORLD');
-    });
-
-    it('executes list and dictionary operations', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'data = {"items": [1, 2, 3]}\nprint(f"Sum: {sum(data[\'items\'])}")' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Sum: 6');
     });
   });
 
   describe('Python Standard Library', () => {
-    it('uses datetime module', async () => {
+    const stdLibCases = [
+      { code: 'import datetime\nprint("Year:", datetime.datetime.now().year)', expected: 'Year:', desc: 'datetime module' },
+      { code: 'import json\ndata = {"test": True}\nprint(json.dumps(data))', expected: '{"test": true}', desc: 'json module' },
+      { code: 'import os\nprint("PATH" in os.environ)', expected: 'True', desc: 'os module for environment' }
+    ];
+
+    test.each(stdLibCases)('handles $desc', async ({ code, expected }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'import datetime\nprint("Year:", datetime.datetime.now().year)' 
-        });
+        .send({ language: 'python', code });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Year:');
-    });
-
-    it('uses json module', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'import json\ndata = {"test": True}\nprint(json.dumps(data))' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('{"test": true}');
-    });
-
-    it('uses os module for environment', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'import os\nprint("PATH" in os.environ)' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('True');
+      expect(res.body.result.stdout).toContain(expected);
     });
   });
 
   describe('Error Handling', () => {
-    it('handles syntax errors', async () => {
+    const errorCases = [
+      { code: 'print("unclosed string', expectedError: 'SyntaxError', desc: 'syntax errors' },
+      { code: 'result = 1 / 0', expectedError: 'ZeroDivisionError', desc: 'runtime errors' },
+      { code: 'import nonexistent_module', expectedError: 'ModuleNotFoundError', desc: 'import errors' },
+      { code: 'print(undefined_variable)', expectedError: 'NameError', desc: 'name errors' }
+    ];
+
+    test.each(errorCases)('handles $desc', async ({ code, expectedError }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'print("unclosed string' 
-        });
+        .send({ language: 'python', code });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).not.toBe(0);
-      expect(res.body.result.stderr).toContain('SyntaxError');
-    });
-
-    it('handles runtime errors', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'result = 1 / 0' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
-      expect(res.body.result.stderr).toContain('ZeroDivisionError');
-    });
-
-    it('handles import errors', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'import nonexistent_module' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
-      expect(res.body.result.stderr).toContain('ModuleNotFoundError');
-    });
-
-    it('handles name errors', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'print(undefined_variable)' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).not.toBe(0);
-      expect(res.body.result.stderr).toContain('NameError');
+      expect(res.body.result.stderr).toContain(expectedError);
     });
   });
 
   describe('Input Validation', () => {
-    it('validates missing code parameter', async () => {
+    const validationCases = [
+      { payload: { language: 'python' }, expectedStatus: [400, 422], desc: 'missing code parameter' },
+      { payload: { language: 'python', code: '' }, expectedStatus: [400, 422], desc: 'empty code' },
+      { payload: { code: 'print("test")' }, expectedStatus: [400, 422], desc: 'missing language parameter' },
+      { payload: { language: 'python', code: 'print("' + 'x'.repeat(1000) + '")' }, expectedStatus: [200, 413], desc: 'large code blocks' }
+    ];
+
+    test.each(validationCases)('handles $desc', async ({ payload, expectedStatus }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ language: 'python' });
+        .send(payload);
 
-      expect([400, 422]).toContain(res.status);
-    });
-
-    it('validates empty code', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ language: 'python', code: '' });
-
-      expect([400, 422]).toContain(res.status);
-    });
-
-    it('validates language parameter', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ code: 'print("test")' });
-
-      expect([400, 422]).toContain(res.status);
-    });
-
-    it('handles large code blocks', async () => {
-      const largeCode = 'print("' + 'x'.repeat(1000) + '")';
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ language: 'python', code: largeCode });
-
-      expect([200, 413]).toContain(res.status);
+      expect(expectedStatus).toContain(res.status);
     });
   });
 
   describe('Advanced Python Features', () => {
-    it('handles function definitions', async () => {
+    const advancedCases = [
+      { code: 'def greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("World"))', expected: 'Hello, World!', desc: 'function definitions' },
+      { code: 'class Counter:\n    def __init__(self):\n        self.count = 0\n    def increment(self):\n        self.count += 1\n\nc = Counter()\nc.increment()\nprint(c.count)', expected: '1', desc: 'class definitions' },
+      { code: 'squares = [x**2 for x in range(5)]\nprint(squares)', expected: '[0, 1, 4, 9, 16]', desc: 'list comprehensions' }
+    ];
+
+    test.each(advancedCases)('handles $desc', async ({ code, expected }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'def greet(name):\n    return f"Hello, {name}!"\n\nprint(greet("World"))' 
-        });
+        .send({ language: 'python', code });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Hello, World!');
-    });
-
-    it('handles class definitions', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'class Counter:\n    def __init__(self):\n        self.count = 0\n    def increment(self):\n        self.count += 1\n\nc = Counter()\nc.increment()\nprint(c.count)' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('1');
-    });
-
-    it('handles list comprehensions', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'squares = [x**2 for x in range(5)]\nprint(squares)' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('[0, 1, 4, 9, 16]');
+      expect(res.body.result.stdout).toContain(expected);
     });
   });
 
   describe('Output Handling', () => {
-    it('captures multiple print statements', async () => {
+    const outputCases = [
+      { code: 'print("Line 1")\nprint("Line 2")\nprint("Line 3")', expected: ['Line 1', 'Line 2', 'Line 3'], desc: 'multiple print statements' },
+      { code: 'import sys\nprint("Error message", file=sys.stderr)', expected: 'Error message', checkStderr: true, desc: 'stderr output' }
+    ];
+
+    test.each(outputCases)('handles $desc', async ({ code, expected, checkStderr }) => {
       const res = await request(app)
         .post('/command/execute-code')
         .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'print("Line 1")\nprint("Line 2")\nprint("Line 3")' 
-        });
+        .send({ language: 'python', code });
 
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toContain('Line 1');
-      expect(res.body.result.stdout).toContain('Line 2');
-      expect(res.body.result.stdout).toContain('Line 3');
-    });
-
-    it('handles stderr output', async () => {
-      const res = await request(app)
-        .post('/command/execute-code')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ 
-          language: 'python', 
-          code: 'import sys\nprint("Error message", file=sys.stderr)' 
-        });
-
-      expect(res.status).toBe(200);
-      expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stderr).toContain('Error message');
+      if (Array.isArray(expected)) {
+        expected.forEach(line => expect(res.body.result.stdout).toContain(line));
+      } else if (checkStderr) {
+        expect(res.body.result.stderr).toContain(expected);
+      }
     });
   });
 
@@ -321,6 +165,31 @@ describe('Python Code Execution', () => {
 
       // Should either block or execute safely in test environment
       expect([200, 400, 403]).toContain(res.status);
+    });
+
+    test('runs simple print via execute-shell with python', async () => {
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Content-Type', 'application/json')
+        .send({ shell: 'python', command: 'print("hey")' });
+
+      expect(res.status).toBe(200);
+      expect(res.body?.result?.exitCode).toBe(0);
+      expect(res.body?.result?.stdout).toContain('hey');
+    });
+
+    test('reports errors for invalid Python code via execute-shell', async () => {
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .set('Content-Type', 'application/json')
+        .send({ shell: 'python', command: 'this is not valid python' });
+
+      expect(res.status).toBe(200);
+      expect(res.body?.result?.exitCode).not.toBe(0);
+      expect(String(res.body?.result?.stderr || '').toLowerCase()).toMatch(/syntaxerror|traceback|error/);
+      expect(res.body?.result?.error).toBe(true);
     });
   });
 
@@ -350,16 +219,35 @@ describe('Python Code Execution', () => {
         expect(typeof res.body.result.executionTime).toBe('number');
       }
     });
+
+    test('executes echo via execute-bash endpoint', async () => {
+      const res = await request(app)
+        .post('/command/execute-bash')
+        .set('authorization', 'Bearer test-token')
+        .send({ command: 'echo hello' });
+      expect(res.status).toBe(200);
+      expect(res.body.result.stdout).toBe('hello\n');
+    });
+
+    test('executes code via execute-python endpoint', async () => {
+      const res = await request(app)
+        .post('/command/execute-python')
+        .set('authorization', 'Bearer test-token')
+        .send({ code: 'print("ping")' });
+      expect(res.status).toBe(200);
+      expect(res.body.result.exitCode).toBe(0);
+      expect(res.body.result.stdout).toBe('ping\n');
+    });
   });
 
   describe('Concurrent Execution', () => {
-    it('handles multiple concurrent Python executions', async () => {
+    test('handles multiple concurrent Python executions', async () => {
       const codes = [
         'print("Script 1")',
         'print("Script 2")',
         'print("Script 3")'
       ];
-      
+
       const requests = codes.map(code =>
         request(app)
           .post('/command/execute-code')

@@ -77,11 +77,18 @@ describe('/file/diff endpoint - Enhanced', () => {
     });
 
     test('validates diff content is not just whitespace', async () => {
+      mockExec.mockImplementation((cmd: string, cb: any) => {
+        const callback = typeof cb === 'function' ? cb : arguments[2];
+        const error: any = new Error('patch: malformed patch');
+        error.code = 1;
+        callback(error, '', 'patch: malformed patch');
+      });
+
       const res = await request(app)
         .post('/file/diff')
         .set('Authorization', `Bearer ${token}`)
         .send({ diff: '   ' });
-      
+
       expect(res.status).toBeGreaterThanOrEqual(400);
       expect(res.body.error).toMatch(/Diff content is required|Invalid diff format/);
     });

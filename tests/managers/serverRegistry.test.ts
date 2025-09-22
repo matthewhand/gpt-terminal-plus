@@ -69,6 +69,32 @@ describe('serverRegistry', () => {
       protocol: '',
       registeredAt: new Date().toISOString(),
     })).toThrow('Server must have hostname and protocol');
+
+    expect(() => registerServerInMemory({
+      // @ts-expect-error
+      protocol: 'local',
+      registeredAt: new Date().toISOString(),
+    })).toThrow('Server must have hostname and protocol');
+  });
+
+  it('returns empty list when no servers registered', () => {
+    const { listRegisteredServers } = require('../../src/managers/serverRegistry');
+    const all = listRegisteredServers();
+    expect(all).toEqual([]);
+  });
+
+  it('returns undefined for non-existent server', () => {
+    const { getRegisteredServer } = require('../../src/managers/serverRegistry');
+    const found = getRegisteredServer('nonexistent');
+    expect(found).toBeUndefined();
+  });
+
+  it('handles server with modes', () => {
+    const { registerServerInMemory, getRegisteredServer } = require('../../src/managers/serverRegistry');
+    const serverWithModes = { ...base, modes: ['shell', 'code'] };
+    registerServerInMemory(serverWithModes);
+    const found = getRegisteredServer('local');
+    expect(found?.modes).toEqual(['shell', 'code']);
   });
 });
 

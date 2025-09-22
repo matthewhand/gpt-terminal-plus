@@ -37,7 +37,17 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
       try {
         const { listRegisteredServers } = require('../managers/serverRegistry');
         const servers = listRegisteredServers();
-        const localhostServer = servers.find((s: any) => s.hostname === 'localhost' && s.protocol === 'local');
+        // Prioritize localhost server with directory '.' first
+        let localhostServer = servers.find((s: any) => 
+          s.hostname === 'localhost' && 
+          s.protocol === 'local' && 
+          (s.directory === '.' || !s.directory)
+        );
+        
+        // Fallback to any localhost server
+        if (!localhostServer) {
+          localhostServer = servers.find((s: any) => s.hostname === 'localhost' && s.protocol === 'local');
+        }
         
         if (localhostServer) {
           const { setSelectedServer } = require('../utils/GlobalStateHelper');

@@ -1,4 +1,8 @@
 import { convictConfig } from '../config/convictConfig';
+import { ChatRequest, ChatResponse } from './types';
+import { chatWithOpenAI } from './providers/openai';
+import { chatWithOllama, OllamaConfig } from './providers/ollama';
+import { chatWithLmStudio, LmStudioConfig } from './providers/lmstudio';
 
 export interface LlmClient {
   provider: string;
@@ -30,9 +34,8 @@ export function getLlmClient(): LlmClient | null {
         provider: 'openai',
         baseUrl: baseUrl || 'https://api.openai.com/v1',
         apiKey,
-        async chat(options: any) {
-          // Implementation would use OpenAI client
-          throw new Error('OpenAI client not implemented');
+        async chat(options: ChatRequest): Promise<ChatResponse> {
+          return chatWithOpenAI(options);
         }
       };
     }
@@ -41,12 +44,12 @@ export function getLlmClient(): LlmClient | null {
       const baseUrl = cfg.get('llm.ollama.baseUrl') || cfg.get('llm.compat.ollamaHost');
       if (!baseUrl) return null;
       
+      const ollamaConfig: OllamaConfig = { baseUrl };
       return {
         provider: 'ollama',
         baseUrl,
-        async chat(options: any) {
-          // Implementation would use Ollama client
-          throw new Error('Ollama client not implemented');
+        async chat(options: ChatRequest): Promise<ChatResponse> {
+          return chatWithOllama(ollamaConfig, options);
         }
       };
     }
@@ -55,12 +58,12 @@ export function getLlmClient(): LlmClient | null {
       const baseUrl = cfg.get('llm.lmstudio.baseUrl');
       if (!baseUrl) return null;
       
+      const lmStudioConfig: LmStudioConfig = { baseUrl };
       return {
         provider: 'lmstudio',
         baseUrl,
-        async chat(options: any) {
-          // Implementation would use LM Studio client
-          throw new Error('LM Studio client not implemented');
+        async chat(options: ChatRequest): Promise<ChatResponse> {
+          return chatWithLmStudio(lmStudioConfig, options);
         }
       };
     }
@@ -99,5 +102,5 @@ export function getDefaultModel(): string {
  */
 export function isLlmEnabled(): boolean {
   const cfg = convictConfig();
-  return (cfg.get('llm.enabled') || cfg.get('execution.llm.enabled')) && getLlmClient() !== null;
+  return (cfg.get('llm.enabled') || cfg.get('execution.llm.enabled'));
 }

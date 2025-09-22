@@ -82,7 +82,7 @@ describe('Route Command Handlers', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Code and language are required.'
+        error: 'Code must be a string.'
       });
     });
 
@@ -93,7 +93,7 @@ describe('Route Command Handlers', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Code and language are required.'
+        error: 'Language is required.'
       });
     });
 
@@ -102,9 +102,9 @@ describe('Route Command Handlers', () => {
 
       await executeCodeHandler.executeCode(mockRequest as Request, mockResponse as Response);
 
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.status).toHaveBeenCalledWith(422);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Code and language are required.'
+        error: 'Code cannot be empty.'
       });
     });
 
@@ -115,7 +115,7 @@ describe('Route Command Handlers', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Code and language are required.'
+        error: 'Language is required.'
       });
     });
 
@@ -266,7 +266,7 @@ describe('Route Command Handlers', () => {
         {
           handler: executeCodeHandler.executeCode,
           validInput: { code: 'print("test")', language: 'python' },
-          invalidInput: { code: '', language: 'python' }
+          invalidInput: { code: 'print("test")', language: '' }
         },
         {
           handler: executeFileHandler.executeFile,

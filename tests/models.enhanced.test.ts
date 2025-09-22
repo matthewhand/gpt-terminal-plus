@@ -10,6 +10,7 @@ describe("Model Management API - Enhanced", () => {
   beforeAll(() => {
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
+    process.env.LLM_ENABLED = 'true';
     token = getOrGenerateApiToken();
     app = express();
     app.use(express.json());
@@ -362,11 +363,22 @@ describe("Model Management API - Enhanced", () => {
       ];
 
       for (const contentType of contentTypes) {
-        const res = await request(app)
-          .post("/model/select")
-          .send({ model: testModel })
-          .set("Authorization", `Bearer ${token}`)
-          .set('Content-Type', contentType);
+        let res;
+        if (contentType === 'text/plain') {
+          // Send as string for text/plain
+          res = await request(app)
+            .post("/model/select")
+            .send(JSON.stringify({ model: testModel }))
+            .set("Authorization", `Bearer ${token}`)
+            .set('Content-Type', contentType);
+        } else {
+          // Send as object for JSON content types
+          res = await request(app)
+            .post("/model/select")
+            .send({ model: testModel })
+            .set("Authorization", `Bearer ${token}`)
+            .set('Content-Type', contentType);
+        }
 
         // Should either succeed or fail gracefully
         expect(res.status).toBeGreaterThanOrEqual(200);

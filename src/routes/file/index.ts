@@ -17,7 +17,7 @@ const debug = Debug('app:fileRoutes');
 const execAsync = promisify(exec);
 
 export const createFile = async (req: Request, res: Response) => {
-  const { filePath, content = '', backup = true } = req.body;
+  const { filePath, content, backup = true } = req.body;
 
   // Log security event for file creation
   logSecurityEvent(req, 'FILE_CREATE', { filePath });
@@ -38,6 +38,14 @@ export const createFile = async (req: Request, res: Response) => {
     });
   }
 
+  if (content === undefined) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Content is required',
+      data: null
+    });
+  }
+
   const pathValidation = validateInput(filePath, validationPatterns.safePath, 'File path');
   if (!pathValidation.isValid) {
     return res.status(400).json({
@@ -51,7 +59,18 @@ export const createFile = async (req: Request, res: Response) => {
   if (filePath.startsWith('/') && !sanitizedPath.startsWith('/')) {
     sanitizedPath = '/' + sanitizedPath;
   }
-  const sanitizedContent = sanitizers.sanitizeString(content, 1000000);
+
+  // Validate content type
+  if (content !== undefined && typeof content !== 'string') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Content must be a string',
+      data: null
+    });
+  }
+
+  // For file content, preserve newlines but still sanitize dangerous characters
+  const sanitizedContent = content ? content.replace(/\0/g, '') : ''; // Only remove null bytes
 
   try {
     const server = getServerHandler(req);

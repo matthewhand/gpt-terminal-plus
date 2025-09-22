@@ -22,7 +22,7 @@ export async function getSystemInfo(executionFunction: () => Promise<string>): P
     debug('System information retrieved successfully: ' + result);
     return result;
   } catch (error) {
-    const errorMessage = `Failed to retrieve system information: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    const errorMessage = `Failed to retrieve system information: ${error instanceof Error ? error.message : String(error)}`;
     debug(errorMessage);
     throw new Error(errorMessage);
   }

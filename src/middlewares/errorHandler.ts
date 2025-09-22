@@ -17,7 +17,8 @@ export const errorHandler = (
   // Handle JSON/body parse errors from express.json/body-parser
   // body-parser sets err.type === 'entity.parse.failed' for malformed JSON
   if (err && (err instanceof SyntaxError || err.type === 'entity.parse.failed')) {
-    return res.status(400).json({ message: 'Bad Request', type: 'validation' });
+    res.status(400).json({ message: 'Bad Request', type: 'validation' });
+    return;
   }
   // Normalize error
   const isErrorObject = err instanceof Error;
