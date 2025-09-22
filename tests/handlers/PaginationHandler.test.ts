@@ -45,4 +45,43 @@ describe('PaginationHandler', () => {
     expect(viaFn).toEqual(viaClass);
     expect(viaFn.items).toEqual([40, 50]);
   });
+
+  it('handles empty array', () => {
+    const data: number[] = [];
+    const handler = new PaginationHandler({ limit: 5, offset: 0 });
+    const res = handler.paginate(data);
+
+    expect(res.items).toEqual([]);
+    expect(res.limit).toBe(5);
+    expect(res.offset).toBe(0);
+    expect(res.total).toBe(0);
+  });
+
+  it('defaults limit to 10 when limit is 0', () => {
+    const data = Array.from({ length: 15 }, (_, i) => i);
+    const handler = new PaginationHandler({ limit: 0, offset: 0 });
+    const res = handler.paginate(data);
+
+    expect(res.items.length).toBe(10);
+    expect(res.limit).toBe(10);
+  });
+
+  it('handles negative offset gracefully', () => {
+    const data = [1, 2, 3, 4, 5];
+    const handler = new PaginationHandler({ limit: 2, offset: -1 });
+    const res = handler.paginate(data);
+
+    // slice(-1, -1+2) = slice(-1,1) which is empty in JS
+    expect(res.items).toEqual([]);
+    expect(res.offset).toBe(-1);
+  });
+
+  it('returns all items when limit exceeds array length', () => {
+    const data = [1, 2, 3];
+    const handler = new PaginationHandler({ limit: 10, offset: 0 });
+    const res = handler.paginate(data);
+
+    expect(res.items).toEqual([1, 2, 3]);
+    expect(res.total).toBe(3);
+  });
 });

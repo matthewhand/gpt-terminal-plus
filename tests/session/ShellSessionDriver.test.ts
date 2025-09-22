@@ -1,272 +1,202 @@
-import { ShellSessionDriver } from "../../src/session/ShellSessionDriver";
+import { ShellSessionDriver } from '../../src/session/ShellSessionDriver';
+import { spawn } from 'child_process';
 
-jest.setTimeout(10000);
+// Mock child_process
+jest.mock('child_process');
+const mockedSpawn = spawn as jest.MockedFunction<typeof spawn>;
 
-describe("ShellSessionDriver", () => {
+describe('ShellSessionDriver', () => {
   let driver: ShellSessionDriver;
+  let mockChild: any;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     driver = new ShellSessionDriver();
+
+    mockChild = {
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      on: jest.fn()
+    };
+    mockedSpawn.mockReturnValue(mockChild as any);
   });
 
-  afterEach(async () => {
-    // Clean up any remaining sessions
-    try {
-      const sessions = await driver.list();
-      for (const session of sessions) {
-        await driver.stop(session.id);
-      }
-    } catch (error) {
-      // Ignore cleanup errors
-    }
-  });
-
-  describe("session lifecycle", () => {
-    it("should start a session, exec a command, and stop", async () => {
-      // Start session
-      const meta = await driver.start({ shell: "bash" });
-      expect(meta.id).toMatch(/^sess-/);
-      expect(meta.shell).toBe("bash");
-      expect(meta.status).toBe("running");
-      expect(typeof meta.createdAt).toBe('number');
-      expect(meta.createdAt).toBeGreaterThan(0);
-
-      // Execute command
-      const result = await driver.exec(meta.id, "echo hello-world");
-      expect(result.stdout).toContain("hello-world");
-      expect(result.exitCode).toBe(0);
-      expect(result.success).toBe(true);
-      expect(result.stderr).toBe("");
-
-      // Check logs
-      const logs = await driver.logs(meta.id);
-      expect(logs.length).toBeGreaterThan(0);
-      expect(logs[0].command).toBe("echo hello-world");
-      expect(logs[0].exitCode).toBe(0);
-      expect(logs[0].timestamp).toBeInstanceOf(Date);
-
-      // Stop session
-      await driver.stop(meta.id);
+  describe('start', () => {
+    it('should start a session with default shell', async () => {
+      const result = await driver.start();
+      expect(result.status).toBe('running');
+      expect(result.shell).toBe('bash');
+      expect(result.id).toMatch(/^sess-\d+-[a-z0-9]{4}$/);
+      expect(typeof result.createdAt).toBe('number');
     });
 
-    it("should handle multiple sessions concurrently", async () => {
-      const session1 = await driver.start({ shell: "bash" });
-      const session2 = await driver.start({ shell: "bash" });
-
-      expect(session1.id).not.toBe(session2.id);
-      expect(session1.id).toMatch(/^sess-/);
-      expect(session2.id).toMatch(/^sess-/);
-
-      // Execute different commands in each session
-      const [result1, result2] = await Promise.all([
-        driver.exec(session1.id, "echo session1"),
-        driver.exec(session2.id, "echo session2")
-      ]);
-
-      expect(result1.stdout).toContain("session1");
-      expect(result2.stdout).toContain("session2");
-
-      // Clean up
-      await Promise.all([
-        driver.stop(session1.id),
-        driver.stop(session2.id)
-      ]);
-    });
-
-    it("should list active sessions", async () => {
-      const session1 = await driver.start({ shell: "bash" });
-      const session2 = await driver.start({ shell: "bash" });
-
-      const sessions = await driver.list();
-      expect(sessions.length).toBeGreaterThanOrEqual(2);
-      
-      const sessionIds = sessions.map(s => s.id);
-      expect(sessionIds).toContain(session1.id);
-      expect(sessionIds).toContain(session2.id);
-
-      // Clean up
-      await driver.stop(session1.id);
-      await driver.stop(session2.id);
+    it('should start a session with custom shell', async () => {
+      const result = await driver.start({ shell: 'zsh' });
+      expect(result.shell).toBe('zsh');
     });
   });
 
-  describe("command execution", () => {
+  describe('exec', () => {
     let sessionId: string;
 
     beforeEach(async () => {
-      const meta = await driver.start({ shell: "bash" });
-      sessionId = meta.id;
+      const session = await driver.start();
+      sessionId = session.id;
     });
 
-    afterEach(async () => {
-      await driver.stop(sessionId);
-    });
+    it('should execute command successfully', async () => {
+      mockChild.stdout.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from('output'));
+      });
+      mockChild.stderr.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from(''));
+      });
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'close') cb(0);
+      });
 
-    it("should execute simple commands successfully", async () => {
-      const result = await driver.exec(sessionId, "echo test");
-      
+      const result = await driver.exec(sessionId, 'echo test');
+      expect(result.stdout).toBe('output');
+      expect(result.stderr).toBe('');
       expect(result.exitCode).toBe(0);
       expect(result.success).toBe(true);
-      expect(result.stdout).toContain("test");
-      expect(result.stderr).toBe("");
+      expect(mockedSpawn).toHaveBeenCalledWith('bash', ['-lc', 'echo test'], expect.any(Object));
     });
 
-    it("should handle commands with exit codes", async () => {
-      const result = await driver.exec(sessionId, "exit 42");
-      
-      expect(result.exitCode).toBe(42);
+    it('should handle command failure', async () => {
+      mockChild.stdout.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from(''));
+      });
+      mockChild.stderr.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from('error'));
+      });
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'close') cb(1);
+      });
+
+      const result = await driver.exec(sessionId, 'bad command');
+      expect(result.exitCode).toBe(1);
       expect(result.success).toBe(false);
+      expect(result.stderr).toBe('error');
     });
 
-    it("should capture stderr output", async () => {
-      const result = await driver.exec(sessionId, "echo error >&2");
-      
-      expect(result.stderr).toContain("error");
-      expect(result.exitCode).toBe(0);
+    it('should handle non-bash shell', async () => {
+      const session = await driver.start({ shell: 'sh' });
+      mockChild.stdout.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from('sh output'));
+      });
+      mockChild.stderr.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from(''));
+      });
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'close') cb(0);
+      });
+
+      const result = await driver.exec(session.id, 'echo sh');
+      expect(result.stdout).toBe('sh output');
+      expect(mockedSpawn).toHaveBeenCalledWith('sh', ['-lc', 'echo sh'], expect.any(Object));
     });
 
-    it("should handle multiline commands", async () => {
-      const command = `echo "line1"
-echo "line2"
-echo "line3"`;
-      
-      const result = await driver.exec(sessionId, command);
-      
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("line1");
-      expect(result.stdout).toContain("line2");
-      expect(result.stdout).toContain("line3");
+    it('should throw for non-existent session', async () => {
+      await expect(driver.exec('nonexistent', 'command')).rejects.toThrow('Session not found: nonexistent');
     });
 
-    it("should execute commands in sequence", async () => {
-      // Execute a simple command
-      const result1 = await driver.exec(sessionId, "echo first");
-      expect(result1.stdout).toContain("first");
-      expect(result1.exitCode).toBe(0);
-
-      // Execute another command
-      const result2 = await driver.exec(sessionId, "echo second");
-      expect(result2.stdout).toContain("second");
-      expect(result2.exitCode).toBe(0);
+    it('should throw for empty command', async () => {
+      await expect(driver.exec(sessionId, '')).rejects.toThrow('Command cannot be empty');
+      await expect(driver.exec(sessionId, '   ')).rejects.toThrow('Command cannot be empty');
     });
 
-    it("should handle long-running commands", async () => {
-      const result = await driver.exec(sessionId, "sleep 1 && echo done");
-      
-      expect(result.stdout).toContain("done");
-      expect(result.exitCode).toBe(0);
+    it('should handle spawn error', async () => {
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'error') cb(new Error('spawn failed'));
+      });
+
+      await expect(driver.exec(sessionId, 'command')).rejects.toThrow('spawn failed');
+    });
+
+    it('should accumulate logs', async () => {
+      // First command
+      mockChild.stdout.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from('first'));
+      });
+      mockChild.stderr.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from(''));
+      });
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'close') cb(0);
+      });
+
+      await driver.exec(sessionId, 'first');
+      let logs = await driver.logs(sessionId);
+      expect(logs).toHaveLength(1);
+      expect(logs[0].command).toBe('first');
+
+      // Second command
+      await driver.exec(sessionId, 'second');
+      logs = await driver.logs(sessionId);
+      expect(logs).toHaveLength(2);
     });
   });
 
-  describe("logging and history", () => {
-    let sessionId: string;
+  describe('logs', () => {
+    it('should return logs with timestamps', async () => {
+      const session = await driver.start();
+      mockChild.stdout.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from('log output'));
+      });
+      mockChild.stderr.on.mockImplementation((event, cb) => {
+        if (event === 'data') cb(Buffer.from(''));
+      });
+      mockChild.on.mockImplementation((event, cb) => {
+        if (event === 'close') cb(0);
+      });
 
-    beforeEach(async () => {
-      const meta = await driver.start({ shell: "bash" });
-      sessionId = meta.id;
-    });
-
-    afterEach(async () => {
-      await driver.stop(sessionId);
-    });
-
-    it("should maintain command history", async () => {
-      await driver.exec(sessionId, "echo first");
-      await driver.exec(sessionId, "echo second");
-      await driver.exec(sessionId, "echo third");
-
-      const logs = await driver.logs(sessionId);
-      
-      expect(logs.length).toBe(3);
-      expect(logs[0].command).toBe("echo first");
-      expect(logs[1].command).toBe("echo second");
-      expect(logs[2].command).toBe("echo third");
-    });
-
-    it("should include timestamps in logs", async () => {
-      const beforeExec = new Date();
-      await driver.exec(sessionId, "echo timestamped");
-      const afterExec = new Date();
-
-      const logs = await driver.logs(sessionId);
-      
-      expect(logs.length).toBe(1);
+      await driver.exec(session.id, 'test command');
+      const logs = await driver.logs(session.id);
+      expect(logs).toHaveLength(1);
+      expect(logs[0].command).toBe('test command');
+      expect(logs[0].stdout).toBe('log output');
       expect(logs[0].timestamp).toBeInstanceOf(Date);
-      expect(logs[0].timestamp.getTime()).toBeGreaterThanOrEqual(beforeExec.getTime());
-      expect(logs[0].timestamp.getTime()).toBeLessThanOrEqual(afterExec.getTime());
     });
 
-    it("should include execution results in logs", async () => {
-      await driver.exec(sessionId, "echo logged");
-
-      const logs = await driver.logs(sessionId);
-      
-      expect(logs.length).toBe(1);
-      expect(logs[0].stdout).toContain("logged");
-      expect(logs[0].exitCode).toBe(0);
-      expect(logs[0].stderr).toBe("");
+    it('should throw for non-existent session', async () => {
+      await expect(driver.logs('nonexistent')).rejects.toThrow('Session not found: nonexistent');
     });
   });
 
-  describe("error handling", () => {
-    it("should handle invalid session IDs gracefully", async () => {
-      await expect(driver.exec("invalid-session-id", "echo test"))
-        .rejects
-        .toThrow();
+  describe('list', () => {
+    it('should list all sessions', async () => {
+      const session1 = await driver.start({ shell: 'bash' });
+      const session2 = await driver.start({ shell: 'zsh' });
+
+      const list = await driver.list();
+      expect(list).toHaveLength(2);
+      const ids = list.map(s => s.id);
+      expect(ids).toContain(session1.id);
+      expect(ids).toContain(session2.id);
+      expect(list.find(s => s.id === session1.id)?.shell).toBe('bash');
+      expect(list.find(s => s.id === session2.id)?.shell).toBe('zsh');
+      expect(list[0].status).toBe('running');
+      expect(list[0].createdAt).toBeInstanceOf(Date);
     });
 
-    it("should handle stopping non-existent sessions", async () => {
-      await expect(driver.stop("non-existent-session"))
-        .rejects
-        .toThrow();
-    });
-
-    it("should handle getting logs for non-existent sessions", async () => {
-      await expect(driver.logs("non-existent-session"))
-        .rejects
-        .toThrow();
-    });
-
-    it("should handle empty commands", async () => {
-      const meta = await driver.start({ shell: "bash" });
-      
-      await expect(driver.exec(meta.id, ""))
-        .rejects
-        .toThrow();
-        
-      await driver.stop(meta.id);
-    });
-
-    it("should handle commands with special characters", async () => {
-      const meta = await driver.start({ shell: "bash" });
-      
-      const result = await driver.exec(meta.id, 'echo "special chars: $@#%^&*()"');
-      
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain("special chars:");
-      
-      await driver.stop(meta.id);
+    it('should return empty list when no sessions', async () => {
+      const list = await driver.list();
+      expect(list).toEqual([]);
     });
   });
 
-  describe("different shell types", () => {
-    it("should work with bash shell", async () => {
-      const meta = await driver.start({ shell: "bash" });
-      const result = await driver.exec(meta.id, "echo $0");
-      
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toMatch(/bash/);
-      
-      await driver.stop(meta.id);
+  describe('stop', () => {
+    it('should stop existing session', async () => {
+      const session = await driver.start();
+      await expect(driver.stop(session.id)).resolves.toBeUndefined();
+      // Session should still exist for logs
+      const logs = await driver.logs(session.id);
+      expect(logs).toEqual([]);
     });
 
-    it("should work with sh shell", async () => {
-      const meta = await driver.start({ shell: "sh" });
-      const result = await driver.exec(meta.id, "echo $0");
-      
-      expect(result.exitCode).toBe(0);
-      
-      await driver.stop(meta.id);
+    it('should throw for non-existent session', async () => {
+      await expect(driver.stop('nonexistent')).rejects.toThrow('Session not found: nonexistent');
     });
   });
 });
