@@ -3,6 +3,7 @@ import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws
 
 // Mock AWS SDK
 jest.mock('@aws-sdk/client-ssm');
+jest.mock('../../../src/handlers/ssm/actions/changeDirectory.ssm');
 
 const MockedSSMClient = SSMClient as jest.MockedClass<typeof SSMClient>;
 
@@ -375,6 +376,213 @@ describe('SSM Server Handler', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Command failed');
+    });
+  });
+
+  describe('executeCode', () => {
+    it('should execute bash code', async () => {
+      const mockSendResponse = {
+        Command: {
+          CommandId: 'test-command-id'
+        }
+      };
+
+      const mockInvocationResponse = {
+        Status: 'Success',
+        StandardOutputContent: 'bash output',
+        StandardErrorContent: '',
+        ResponseCode: 0
+      };
+
+      mockClient.send
+        .mockResolvedValueOnce(mockSendResponse as any)
+        .mockResolvedValueOnce(mockInvocationResponse as any);
+
+      const result = await ssmHandler.executeCode('echo "test"', 'bash');
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('bash output');
+    });
+
+    it('should default to sh for unknown language', async () => {
+      const mockSendResponse = {
+        Command: {
+          CommandId: 'test-command-id'
+        }
+      };
+
+      const mockInvocationResponse = {
+        Status: 'Success',
+        StandardOutputContent: 'sh output',
+        StandardErrorContent: '',
+        ResponseCode: 0
+      };
+
+      mockClient.send
+        .mockResolvedValueOnce(mockSendResponse as any)
+        .mockResolvedValueOnce(mockInvocationResponse as any);
+
+      const result = await ssmHandler.executeCode('echo "test"', 'unknown');
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('sh output');
+    });
+  });
+
+  describe('amendFile', () => {
+    it('should append to file successfully', async () => {
+      const mockSendResponse = {
+        Command: {
+          CommandId: 'test-command-id'
+        }
+      };
+
+      const mockInvocationResponse = {
+        Status: 'Success',
+        StandardOutputContent: '',
+        StandardErrorContent: '',
+        ResponseCode: 0
+      };
+
+      mockClient.send
+        .mockResolvedValueOnce(mockSendResponse as any)
+        .mockResolvedValueOnce(mockInvocationResponse as any);
+
+      const result = await ssmHandler.amendFile('/tmp/test.txt', 'new content');
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('readFile', () => {
+    it('should read file via getFileContent', async () => {
+      const mockSendResponse = {
+        Command: {
+          CommandId: 'test-command-id'
+        }
+      };
+
+      const mockInvocationResponse = {
+        Status: 'Success',
+        StandardOutputContent: 'file content',
+        StandardErrorContent: '',
+        ResponseCode: 0
+      };
+
+      mockClient.send
+        .mockResolvedValueOnce(mockSendResponse as any)
+        .mockResolvedValueOnce(mockInvocationResponse as any);
+
+      const result = await ssmHandler.readFile('/tmp/test.txt');
+      expect(result.success).toBe(true);
+      expect(result.output).toBe('file content');
+    });
+  });
+
+  describe('getFileContent', () => {
+    it('should handle invalid filePath', async () => {
+      const result = await ssmHandler.getFileContent('');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('filePath is required');
+      expect(result.exitCode).toBe(-1);
+    });
+
+    it('should handle non-string filePath', async () => {
+      const result = await ssmHandler.getFileContent(null as any);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('filePath is required');
+    });
+  });
+
+  describe('updateFile', () => {
+    it('should return true (stub)', async () => {
+      const result = await ssmHandler.updateFile('/tmp/test.txt', 'old', 'new');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('listFiles', () => {
+    it('should return mock file list', async () => {
+      const result = await ssmHandler.listFiles({ directory: '/tmp' });
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.limit).toBe(10);
+      expect(result.offset).toBe(0);
+    });
+
+    it('should respect limit and offset', async () => {
+      const result = await ssmHandler.listFiles({ directory: '/tmp', limit: 5, offset: 2 });
+      expect(result.limit).toBe(5);
+      expect(result.offset).toBe(2);
+    });
+  });
+
+  describe('presentWorkingDirectory', () => {
+    it('should return mock pwd', async () => {
+      const pwd = await ssmHandler.presentWorkingDirectory();
+      expect(pwd).toBe('/home/user');
+    });
+  });
+
+  describe('changeDirectory', () => {
+    it('should call changeDirectoryAction and update config on success', async () => {
+      const { changeDirectory: changeDirectoryAction } = require('../../../src/handlers/ssm/actions/changeDirectory.ssm');
+      changeDirectoryAction.mockResolvedValue(true);
+
+      const result = await ssmHandler.changeDirectory('/new/dir');
+      expect(result).toBe(true);
+      expect(ssmHandler.serverConfig.directory).toBe('/new/dir');
+    });
+
+    it('should not update config on failure', async () => {
+      const { changeDirectory: changeDirectoryAction } = require('../../../src/handlers/ssm/actions/changeDirectory.ssm');
+      changeDirectoryAction.mockResolvedValue(false);
+
+      const result = await ssmHandler.changeDirectory('/bad/dir');
+      expect(result).toBe(false);
+      expect(ssmHandler.serverConfig.directory).not.toBe('/bad/dir');
+    });
+  });
+
+  describe('searchFiles', () => {
+    it('should return empty results', async () => {
+      const result = await ssmHandler.searchFiles({ query: 'test' });
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
+    });
+  });
+
+  describe('constructor', () => {
+    it('should initialize with code property', () => {
+      const handler = new SsmServerHandler({
+        protocol: 'ssm',
+        hostname: 'test',
+        instanceId: 'i-123',
+        region: 'us-east-1',
+        code: true
+      });
+      expect(handler).toBeInstanceOf(SsmServerHandler);
+    });
+
+    it('should handle missing code property', () => {
+      const handler = new SsmServerHandler({
+        protocol: 'ssm',
+        hostname: 'test',
+        instanceId: 'i-123',
+        region: 'us-east-1'
+      });
+      expect(handler).toBeInstanceOf(SsmServerHandler);
+    });
+  });
+
+  describe('setServerConfig', () => {
+    it('should update server configuration', () => {
+      const newConfig = {
+        protocol: 'ssm',
+        hostname: 'new-host',
+        instanceId: 'i-new',
+        region: 'eu-west-1',
+        code: false
+      };
+      ssmHandler.setServerConfig(newConfig);
+      expect(ssmHandler.serverConfig.hostname).toBe('new-host');
     });
   });
 

@@ -18,7 +18,7 @@ describe('File Engine - Enhanced', () => {
     // Clean up and recreate test environment
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
-    } catch (error) {
+    } catch {
       // Directory might not exist
     }
     await fs.mkdir(tempDir, { recursive: true });

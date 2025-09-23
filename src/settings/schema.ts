@@ -66,6 +66,9 @@ export const SettingsSchema = z.object({
   files: z
     .object({
       enabled: z.boolean().default(true),
+      fsRead: z.boolean().default(true),
+      fsWrite: z.boolean().default(true),
+      fsSearch: z.boolean().default(true),
     })
     .default({}),
   features: z.object({

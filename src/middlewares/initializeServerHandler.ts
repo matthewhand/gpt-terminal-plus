@@ -3,6 +3,7 @@ import { getSelectedServer } from '../utils/GlobalStateHelper';
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
 import { ServerManager } from '../managers/ServerManager';
 import { ServerHandler } from '../types/ServerHandler';
+import type { ServerRequest } from '../types/ServerRequest';
 import Debug from 'debug';
 
 const debug = Debug('app:middlewares:initializeServerHandler');
@@ -17,6 +18,7 @@ const debug = Debug('app:middlewares:initializeServerHandler');
  */
 export const initializeServerHandler = (req: Request, res: Response, next: NextFunction): void => {
   try {
+    const serverRequest = req as ServerRequest;
     // Start the server handler initialization process
     debug('Initializing server handler');
 
@@ -28,7 +30,8 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     if (!selectedServer) {
       // In test mode, provision a local handler automatically
       if (process.env.NODE_ENV === 'test') {
-        req.server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any) as any;
+        serverRequest.server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any) as any;
+        serverRequest.serverHandler = serverRequest.server;
         return next();
       }
       debug('No server selected. Attempting to auto-select localhost...');
@@ -74,7 +77,8 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
     const handler = serverManager.createHandler(selectedServer);
 
     // Cast handler to ServerHandler interface
-    req.server = handler as unknown as ServerHandler;
+    serverRequest.server = handler as unknown as ServerHandler;
+    serverRequest.serverHandler = serverRequest.server;
 
     // Final debug statement to confirm successful initialization
     debug('Server handler initialized successfully');

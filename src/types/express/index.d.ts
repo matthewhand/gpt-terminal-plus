@@ -1,10 +1,12 @@
-// src/types/express/index.d.ts
+import type { ServerHandler } from '../ServerHandler';
 
-import 'express';
-
-declare module 'express' {
-  export interface Request {
-    serverHandler?: any; // Replace 'any' with the actual type if available
+declare global {
+  namespace Express {
+    interface Request {
+      server?: ServerHandler;
+      serverHandler?: ServerHandler;
+    }
   }
 }
 
+export {};

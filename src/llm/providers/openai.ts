@@ -24,10 +24,11 @@ export const toOpenAIChatMessages = (messages: ChatMessage[]) =>
     content: m.content,
   }));
 
-export async function chatWithOpenAI(req: ChatRequest): Promise<ChatResponse> {
+export async function chatWithOpenAI(req: ChatRequest, apiKey?: string): Promise<ChatResponse> {
   const providerModel = req.model;
   debug('POST model=' + providerModel);
-  const res = await getClient().chat.completions.create({
+  const client = apiKey ? new OpenAI({ apiKey }) : getClient();
+  const res = await client.chat.completions.create({
     model: providerModel,
     messages: toOpenAIChatMessages(req.messages) as any,
     stream: false,

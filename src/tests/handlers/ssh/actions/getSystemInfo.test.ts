@@ -1,9 +1,9 @@
 import { Client } from 'ssh2';
-import { getSystemInfo } from '@src/handlers/ssh/actions/getSystemInfo';
-import { escapeSpecialChars } from '@src/common/escapeSpecialChars';
+import { getSystemInfo } from '../../../../handlers/ssh/actions/getSystemInfo';
+import { escapeSpecialChars } from '../../../../common/escapeSpecialChars';
 
 jest.mock('ssh2');
-jest.mock('@src/common/escapeSpecialChars');
+jest.mock('../../../../common/escapeSpecialChars');
 
 describe('SSH getSystemInfo', () => {
     let sshClient: Client;
@@ -173,6 +173,7 @@ describe('SSH getSystemInfo', () => {
             mockStream.stderr.on.mockImplementation((event: string, handler: Function) => {
                 if (event === 'data') {
                     // No stderr data for successful execution
+                    handler('');
                 }
                 return mockStream.stderr;
             });
@@ -190,7 +191,7 @@ describe('SSH getSystemInfo', () => {
 
             const stderrData = 'Warning: deprecated API usage';
             
-            mockStream.on.mockImplementation((event: string, handler: Function) => {
+            mockStream.on.mockImplementation((event, handler) => {
                 if (event === 'close') {
                     setTimeout(() => handler(1), 10); // Non-zero exit code
                 } else if (event === 'data') {
@@ -216,7 +217,7 @@ describe('SSH getSystemInfo', () => {
                 callback(null, mockStream);
             });
 
-            mockStream.on.mockImplementation((event: string, handler: Function) => {
+            mockStream.on.mockImplementation((event, handler) => {
                 if (event === 'close') {
                     setTimeout(() => handler(0), 10);
                 } else if (event === 'data') {
@@ -226,6 +227,9 @@ describe('SSH getSystemInfo', () => {
             });
 
             mockStream.stderr.on.mockImplementation((event: string, handler: Function) => {
+                if (event === 'data') {
+                    handler('');
+                }
                 return mockStream.stderr;
             });
 
@@ -241,7 +245,7 @@ describe('SSH getSystemInfo', () => {
                 callback(null, mockStream);
             });
 
-            mockStream.on.mockImplementation((event: string, handler: Function) => {
+            mockStream.on.mockImplementation((event, handler) => {
                 if (event === 'close') {
                     setTimeout(() => handler(0), 10);
                 } else if (event === 'data') {
@@ -251,6 +255,9 @@ describe('SSH getSystemInfo', () => {
             });
 
             mockStream.stderr.on.mockImplementation((event: string, handler: Function) => {
+                if (event === 'data') {
+                    handler('');
+                }
                 return mockStream.stderr;
             });
 

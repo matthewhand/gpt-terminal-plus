@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Shell Sessions | GPT Terminal Plus</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #070b1c;
+        --panel: rgba(16, 21, 43, 0.9);
+        --card: rgba(9, 13, 27, 0.75);
+        --text: #f6f7fb;
+        --muted: #a7acc4;
+        --accent: linear-gradient(135deg, #5cd6ff, #ff71ce);
+        --border: rgba(255,255,255,0.12);
+        --shadow: 0 20px 45px rgba(8, 12, 26, 0.45);
+        --success: #7fff7f;
+        --error: #ff7f7f;
+      }
+      body {
+        margin: 0;
+        padding: 40px 32px 64px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.6rem);
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #5cd6ff;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .controls {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      button:hover {
+        transform: translateY(-2px);
+      }
+      button.primary {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      button.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: inherit;
+      }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+      }
+      .session-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .session-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .session-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      .session-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .status-running {
+        background: rgba(127, 255, 127, 0.2);
+        color: var(--success);
+      }
+      .status-stopped {
+        background: rgba(255, 127, 127, 0.2);
+        color: var(--error);
+      }
+      .session-details {
+        display: grid;
+        gap: 12px;
+      }
+      .detail {
+        display: flex;
+        justify-content: space-between;
+      }
+      .detail-label {
+        color: var(--muted);
+      }
+      .session-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+      }
+      .terminal {
+        background: #000;
+        border-radius: 12px;
+        padding: 20px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      .terminal-input {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .terminal-input input {
+        flex: 1;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: inherit;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 14px;
+      }
+      .terminal-input button {
+        padding: 12px 20px;
+      }
+      .hidden {
+        display: none;
+      }
+      .message {
+        padding: 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+      }
+      .message.success {
+        background: rgba(127, 255, 127, 0.1);
+        color: var(--success);
+        border: 1px solid var(--success);
+      }
+      .message.error {
+        background: rgba(255, 127, 127, 0.1);
+        color: var(--error);
+        border: 1px solid var(--error);
+      }
+      @media (max-width: 768px) {
+        body { padding: 24px 16px; }
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a href="/" class="back-link">← Back to overview</a>
+      <header>
+        <h1>Shell Sessions</h1>
+        <div class="controls">
+          <button id="refreshBtn" class="secondary">Refresh</button>
+          <button id="newSessionBtn" class="primary">New Session</button>
+        </div>
+      </header>
+      
+      <div id="messageContainer"></div>
+      
+      <section>
+        <h2>Active Sessions</h2>
+        <div id="sessionsContainer" class="grid">
+          <p>Loading sessions...</p>
+        </div>
+      </section>
+      
+      <section id="terminalSection" class="hidden">
+        <h2>Terminal</h2>
+        <div id="terminalOutput" class="terminal"></div>
+        <div class="terminal-input">
+          <input type="text" id="commandInput" placeholder="Enter command..." />
+          <button id="executeBtn" class="primary">Execute</button>
+        </div>
+      </section>
+    </main>
+    
+    <script>
+      // Global state
+      let currentSessionId = null;
+      let currentShell = 'bash';
+      
+      // Utility functions
+      function showMessage(text, type = 'success') {
+        const container = document.getElementById('messageContainer');
+        container.innerHTML = `<div class="message ${type}">${text}</div>`;
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 5000);
+      }
+      
+      function formatDateTime(dateString) {
+        return new Date(dateString).toLocaleString();
+      }
+      
+      // API functions
+      async function apiCall(endpoint, options = {}) {
+        const token = localStorage.getItem('gpt-terminal-token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...options.headers
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        try {
+          const response = await fetch(`/shell${endpoint}`, {
+            ...options,
+            headers
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'API call failed');
+          }
+          
+          return response.json();
+        } catch (error) {
+          showMessage('API Error: ' + error.message, 'error');
+          throw error;
+        }
+      }
+      
+      // Session management functions
+      async function loadSessions() {
+        try {
+          const data = await apiCall('/session/list');
+          renderSessions(data.sessions || []);
+        } catch (error) {
+          showMessage('Failed to load sessions: ' + error.message, 'error');
+        }
+      }
+      
+      async function startSession(shell = 'bash') {
+        try {
+          const session = await apiCall('/session/start', {
+            method: 'POST',
+            body: JSON.stringify({ shell })
+          });
+          showMessage('Session started successfully');
+          loadSessions();
+          return session;
+        } catch (error) {
+          showMessage('Failed to start session: ' + error.message, 'error');
+        }
+      }
+      
+      async function stopSession(sessionId) {
+        try {
+          await apiCall(`/session/${sessionId}/stop`, {
+            method: 'POST'
+          });
+          showMessage('Session stopped');
+          loadSessions();
+          if (currentSessionId === sessionId) {
+            document.getElementById('terminalSection').classList.add('hidden');
+            currentSessionId = null;
+          }
+        } catch (error) {
+          showMessage('Failed to stop session: ' + error.message, 'error');
+        }
+      }
+      
+      async function executeCommand(sessionId, command) {
+        try {
+          const result = await apiCall(`/session/${sessionId}/exec`, {
+            method: 'POST',
+            body: JSON.stringify({ command })
+          });
+          
+          // Display result in terminal
+          const terminal = document.getElementById('terminalOutput');
+          terminal.innerHTML += `\n$ ${command}\n`;
+          if (result.stdout) terminal.innerHTML += result.stdout;
+          if (result.stderr) terminal.innerHTML += `\n[stderr] ${result.stderr}`;
+          terminal.scrollTop = terminal.scrollHeight;
+          
+          return result;
+        } catch (error) {
+          showMessage('Failed to execute command: ' + error.message, 'error');
+        }
+      }
+      
+      async function loadSessionLogs(sessionId) {
+        try {
+          const data = await apiCall(`/session/${sessionId}/logs`);
+          const terminal = document.getElementById('terminalOutput');
+          terminal.innerHTML = '';
+          if (data.logs) {
+            data.logs.forEach(log => {
+              terminal.innerHTML += `\n$ ${log.command}\n`;
+              if (log.stdout) terminal.innerHTML += log.stdout;
+              if (log.stderr) terminal.innerHTML += `\n[stderr] ${log.stderr}`;
+            });
+          }
+          terminal.scrollTop = terminal.scrollHeight;
+        } catch (error) {
+          showMessage('Failed to load logs: ' + error.message, 'error');
+        }
+      }
+      
+      // UI rendering functions
+      function renderSessions(sessions) {
+        const container = document.getElementById('sessionsContainer');
+        
+        if (!sessions || sessions.length === 0) {
+          container.innerHTML = '<p>No active sessions. Create one to get started.</p>';
+          return;
+        }
+        
+        container.innerHTML = sessions.map(session => `
+          <div class="card session-card">
+            <div class="session-header">
+              <h3 class="session-title">${session.id}</h3>
+              <span class="session-status status-${session.status}">${session.status}</span>
+            </div>
+            <div class="session-details">
+              <div class="detail">
+                <span class="detail-label">Shell</span>
+                <span>${session.shell}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Created</span>
+                <span>${formatDateTime(session.createdAt)}</span>
+              </div>
+              <div class="detail">
+                <span class="detail-label">Last Activity</span>
+                <span>${formatDateTime(session.lastActivity)}</span>
+              </div>
+            </div>
+            <div class="session-actions">
+              <button onclick="openTerminal('${session.id}', '${session.shell}')" class="secondary">Open</button>
+              <button onclick="stopSession('${session.id}')" class="secondary">Stop</button>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      function openTerminal(sessionId, shell) {
+        currentSessionId = sessionId;
+        currentShell = shell;
+        document.getElementById('terminalSection').classList.remove('hidden');
+        document.getElementById('terminalOutput').innerHTML = `Connected to ${shell} session ${sessionId}\n`;
+        loadSessionLogs(sessionId);
+      }
+      
+      // Event handlers
+      document.getElementById('refreshBtn').addEventListener('click', loadSessions);
+      document.getElementById('newSessionBtn').addEventListener('click', () => startSession());
+      
+      document.getElementById('executeBtn').addEventListener('click', async () => {
+        const input = document.getElementById('commandInput');
+        const command = input.value.trim();
+        if (!command) return;
+        
+        input.value = '';
+        await executeCommand(currentSessionId, command);
+      });
+      
+      document.getElementById('commandInput').addEventListener('keypress', async (e) => {
+        if (e.key === 'Enter') {
+          const input = document.getElementById('commandInput');
+          const command = input.value.trim();
+          if (!command) return;
+          
+          input.value = '';
+          await executeCommand(currentSessionId, command);
+        }
+      });
+      
+      // Initialize
+      document.addEventListener('DOMContentLoaded', () => {
+        loadSessions();
+        
+        // Auto-refresh sessions every 30 seconds
+        setInterval(loadSessions, 30000);
+      });
+      
+      // Make functions available globally for inline handlers
+      window.openTerminal = openTerminal;
+      window.stopSession = stopSession;
+    </script>
+  </body>
+</html>

@@ -1,7 +1,6 @@
 import { executeFileOperation } from '../../engines/fileEngine';
 import fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
 
 jest.mock('fs/promises');
 jest.mock('../../config/convictConfig', () => ({
@@ -13,7 +12,6 @@ jest.mock('../../config/convictConfig', () => ({
 describe('File Engine', () => {
   const mockFs = fs as jest.Mocked<typeof fs>;
   const testWorkingDir = process.cwd();
-  const testFilePath = path.join(testWorkingDir, 'test.txt');
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -39,7 +37,7 @@ describe('File Engine', () => {
         path: './image.png'
       });
 
-      expect(result).toEqual({ success: true, content: binaryContent });
+      expect(result).toEqual({ success: true, content: binaryContent.toString('base64') });
       expect(mockFs.readFile).toHaveBeenCalledWith(expect.stringContaining('image.png'), 'utf8');
     });
 
@@ -99,8 +97,7 @@ describe('File Engine', () => {
       const result = await executeFileOperation({ 
         type: 'write', 
         path: './image.png', 
-        content: binaryContent,
-        encoding: null
+        content: binaryContent.toString('base64')
       });
       
       expect(result).toEqual({ success: true });
@@ -130,8 +127,7 @@ describe('File Engine', () => {
       const result = await executeFileOperation({ 
         type: 'write', 
         path: './nested/dir/test.txt', 
-        content: 'content',
-        createDirs: true
+        content: 'content'
       });
       
       expect(result).toEqual({ success: true });

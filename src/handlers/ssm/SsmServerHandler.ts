@@ -2,6 +2,7 @@ import { AbstractServerHandler } from '../AbstractServerHandler';
 import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig';
 import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
+import { SearchResult, SearchParams } from '../../types/ServerHandler';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
@@ -190,5 +191,16 @@ export class SsmServerHandler extends AbstractServerHandler {
             ssmServerDebug('SSM execute error: ' + String(e?.message || e));
             return { success: false, output: '', error: String(e?.message || e), exitCode: -1 };
         }
+    }
+
+    async searchFiles(_params: SearchParams): Promise<PaginatedResponse<SearchResult>> {
+        ssmServerDebug('File search not implemented for SSM servers');
+        // Return empty results for now - could be implemented using grep over SSM
+        return {
+            items: [],
+            total: 0,
+            limit: _params.limit || 100,
+            offset: _params.offset || 0
+        };
     }
 }

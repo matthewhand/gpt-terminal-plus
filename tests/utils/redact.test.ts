@@ -229,6 +229,29 @@ describe('redact', () => {
             const result = redact('secretBigInt', bigIntValue);
             expect(result).toContain('...');
         });
+
+        it('should redact database connection strings', () => {
+            const connStr = 'postgresql://user:pass@localhost:5432/db';
+            const result = redact('DATABASE_URL', connStr);
+            expect(result).toContain('DATABASE_URL:');
+            expect(result).toContain('...');
+            expect(result).not.toContain('pass');
+        });
+
+        it('should redact SSH private keys', () => {
+            const privateKey = '-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA...';
+            const result = redact('SSH_PRIVATE_KEY', privateKey);
+            expect(result).toContain('SSH_PRIVATE_KEY:');
+            expect(result).toContain('...');
+            expect(result).not.toContain('BEGIN RSA PRIVATE KEY');
+        });
+
+        it('should handle special characters in values', () => {
+            const specialValue = 'value!@#$%^&*()_+-={}[]|\\:;"<>?,./';
+            const result = redact('special', specialValue);
+            expect(result).toContain('special:');
+            expect(result).toContain(specialValue); // Non-sensitive key, should not be redacted
+        });
     });
 
     describe('performance', () => {

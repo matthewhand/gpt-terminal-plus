@@ -133,3 +133,7 @@ docker/*/scripts/
 docker/*/.bashrc
 *.js
 release/
+
+convict-config.json
+*config.json
+*.swp

@@ -5,15 +5,19 @@ import { fileRateLimit } from '../middlewares/rateLimit';
 import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation';
 
 // File route handlers
-import { 
-  createFile, 
-  listFiles, 
-  readFile, 
-  updateFile, 
-  amendFile, 
-  applyDiff, 
-  applyPatch, 
-  applyFuzzyPatch 
+import {
+  createFile,
+  listFiles,
+  readFile,
+  updateFile,
+  amendFile,
+  applyDiff,
+  applyPatch,
+  applyFuzzyPatch,
+  fsSearch,
+  listFileOperations,
+  toggleFileOperation,
+  bulkToggleFileOperations
 } from './file';
 
 const router = express.Router();
@@ -108,5 +112,32 @@ router.post('/patch', applyPatch);
  * Apply a fuzzy patch using diff-match-patch with optional preview and backup.
  */
 router.post('/fuzzy-patch', applyFuzzyPatch);
+
+/**
+ * POST /file/search
+ * Search for files using regex pattern with pagination support.
+ * Body: { pattern: string, path: string, caseSensitive?: boolean, page?: number, limit?: number }
+ */
+router.post('/search', fsSearch);
+
+/**
+ * GET /file/operations
+ * List all file operations and their enabled status.
+ */
+router.get('/operations', listFileOperations);
+
+/**
+ * POST /file/:operation/toggle
+ * Toggle the enabled status of a specific file operation.
+ * Body: { enabled?: boolean }
+ */
+router.post('/:operation/toggle', toggleFileOperation);
+
+/**
+ * POST /file/operations/bulk
+ * Bulk toggle multiple file operations.
+ * Body: { operations: { [operation: string]: boolean } }
+ */
+router.post('/operations/bulk', bulkToggleFileOperations);
 
 export default router;

@@ -1,16 +1,22 @@
 import { analyzeError, ErrorContext } from '../../src/llm/errorAdvisor';
-import * as llmIndex from '../../src/llm/index';
-import * as models from '../../src/common/models';
-import * as globalStateHelper from '../../src/utils/GlobalStateHelper';
+import { chat } from '../../src/llm/index';
+import { getSupportedModels } from '../../src/common/models';
+import { getSelectedModel } from '../../src/utils/GlobalStateHelper';
 
 // Mock dependencies
-jest.mock('../../src/llm/index');
-jest.mock('../../src/common/models');
-jest.mock('../../src/utils/GlobalStateHelper');
+jest.mock('../../src/llm/index', () => ({
+  chat: jest.fn(),
+}));
+jest.mock('../../src/common/models', () => ({
+  getSupportedModels: jest.fn(),
+}));
+jest.mock('../../src/utils/GlobalStateHelper', () => ({
+  getSelectedModel: jest.fn(),
+}));
 
-const mockChat = llmIndex.chat as jest.MockedFunction<typeof llmIndex.chat>;
-const mockGetSupportedModels = models.getSupportedModels as jest.MockedFunction<typeof models.getSupportedModels>;
-const mockGetSelectedModel = globalStateHelper.getSelectedModel as jest.MockedFunction<typeof globalStateHelper.getSelectedModel>;
+const mockChat = chat as jest.MockedFunction<typeof chat>;
+const mockGetSupportedModels = getSupportedModels as jest.MockedFunction<typeof getSupportedModels>;
+const mockGetSelectedModel = getSelectedModel as jest.MockedFunction<typeof getSelectedModel>;
 
 describe('Error Advisor', () => {
   let originalEnv: NodeJS.ProcessEnv;

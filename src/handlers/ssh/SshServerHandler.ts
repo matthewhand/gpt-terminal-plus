@@ -4,6 +4,7 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { SystemInfo } from '../../types/SystemInfo';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { FileReadResult } from '../../types/FileReadResult';
+import { SearchResult, SearchParams } from '../../types/ServerHandler';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
 import Debug from 'debug';
 import fs from 'fs';
@@ -163,5 +164,16 @@ export class SshServerHandler extends AbstractServerHandler {
             this.serverConfig.directory = directory;
         }
         return success;
+    }
+
+    async searchFiles(_params: SearchParams): Promise<PaginatedResponse<SearchResult>> {
+        sshServerDebug('File search not implemented for SSH servers');
+        // Return empty results for now - could be implemented using grep over SSH
+        return {
+            items: [],
+            total: 0,
+            limit: _params.limit || 100,
+            offset: _params.offset || 0
+        };
     }
 }

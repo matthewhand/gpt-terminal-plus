@@ -43,12 +43,22 @@ router.use(checkAuthToken as any);
 router.post('/op', async (req: Request, res: Response) => {
   try {
     const result = await executeFileOperation(req.body);
+
+    if (!result?.success) {
+      const message = result?.error || 'Unknown file operation error';
+      if (/not allowed/i.test(message)) {
+        return res.status(403).json({ message });
+      }
+      return res.status(400).json({ message });
+    }
+
     res.json(result);
   } catch (err: any) {
-    if (err.message.includes('not allowed')) {
-      return res.status(403).json({ message: err.message });
+    const message = err?.message || String(err);
+    if (/not allowed/i.test(message)) {
+      return res.status(403).json({ message });
     }
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ message });
   }
 });
 

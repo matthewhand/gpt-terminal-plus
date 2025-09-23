@@ -1,148 +1,179 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GPT Terminal Plus</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --accent: #22d3ee;
-      --link: #60a5fa;
-      --ok: #34d399;
-      --warn: #f59e0b;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial;
-      background: linear-gradient(180deg, #0b1022 0%, #0f172a 100%);
-      color: var(--text);
-    }
-    header {
-      padding: 2rem 1rem 1rem;
-      text-align: center;
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      letter-spacing: .3px;
-    }
-    header p {
-      margin: .5rem 0 0;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-    main {
-      max-width: 900px;
-      margin: 1rem auto 2.5rem;
-      padding: 0 1rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-    .card {
-      background: rgba(17, 24, 39, 0.7);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 1rem;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 4px 18px rgba(0,0,0,.25);
-    }
-    .card h2 {
-      margin: 0 0 .25rem;
-      font-size: 1.15rem;
-    }
-    .card p {
-      margin: 0 0 .75rem;
-      color: var(--muted);
-      font-size: .95rem;
-      line-height: 1.35rem;
-    }
-    ul.links {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: .5rem;
-    }
-    ul.links a {
-      color: var(--link);
-      text-decoration: none;
-      border-bottom: 1px dashed rgba(96,165,250,.35);
-    }
-    ul.links a:hover { color: #93c5fd; border-bottom-color: rgba(147,197,253,.55); }
-    code {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.08);
-      padding: .2rem .4rem;
-      border-radius: 6px;
-      color: #e5e7eb;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
-      font-size: .9rem;
-    }
-    footer {
-      max-width: 900px;
-      margin: 1.5rem auto 3rem;
-      padding: 0 1rem;
-      color: var(--muted);
-      font-size: .9rem;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>GPT Terminal Plus</h1>
-    <p>Static-first OpenAPI with dynamic fallback, Convict-configured server, and secure settings viewer.</p>
-  </header>
-
-  <main>
-    <section class="card">
-      <h2>API Documentation</h2>
-      <p>Deterministic artifacts are served from <code>/public</code>. Swagger UI points at the static JSON.</p>
-      <ul class="links">
-        <li><a href="/docs">Swagger UI (/docs)</a></li>
-        <li><a href="/openapi.json" rel="noopener">OpenAPI JSON (/openapi.json)</a></li>
-        <li><a href="/openapi.yaml" rel="noopener">OpenAPI YAML (/openapi.yaml)</a></li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Settings (Redacted)</h2>
-      <p>View configuration grouped by category. Secrets are masked; env-overridden values are read-only.</p>
-      <ul class="links">
-        <li><a href="/settings.html">Open Settings UI</a></li>
-        <li><a href="/docs-static/ENVIRONMENT.md" rel="noopener">Environment & Configuration Guide</a></li>
-      </ul>
-      <p style="margin-top:.75rem">
-        Provide a bearer token as: <code>Authorization: Bearer YOUR_API_TOKEN</code>.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Plugin Manifest</h2>
-      <p>Manifest is exposed for compatibility and discovery.</p>
-      <ul class="links">
-        <li><a href="/.well-known/ai-plugin.json">/.well-known/ai-plugin.json</a></li>
-      </ul>
-    </section>
-    <section class="card">
-      <h2>ChatGPT Integration</h2>
-      <p>Configure a Custom GPT to call your deployment using the OpenAPI spec.</p>
-      <ul class="links">
-        <li><a href="/docs-static/CHATGPT_configuration.md" rel="noopener">Setup Guide</a></li>
-        <li><a href="/openapi.yaml" rel="noopener">OpenAPI YAML (/openapi.yaml)</a></li>
-        <li><a href="/openapi.json" rel="noopener">OpenAPI JSON (/openapi.json)</a></li>
-      </ul>
-    </section>
-  </main>
-
-  <footer>
-    Server logs print absolute URLs at startup. If deploying behind a proxy, set <code>PUBLIC_BASE_URL</code> to ensure servers[0].url resolves correctly in OpenAPI.
-  </footer>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>GPT Terminal Plus</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 32px; background: radial-gradient(circle at top, #162146 0%, #060b1c 100%); color: #f6f7fb; }
+      main { max-width: 1180px; margin: 0 auto; }
+      h1 { margin-bottom: 12px; font-size: clamp(2rem, 3vw, 2.6rem); }
+      p.lead { margin-top: 0; max-width: 840px; line-height: 1.55; color: #c8cad3; }
+      .sections { display: grid; gap: 28px; margin-top: 32px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+      section { display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 24px 26px; background: rgba(16, 21, 43, 0.9); box-shadow: 0 20px 45px rgba(8, 12, 26, 0.45); position: relative; overflow: hidden; }
+      section h2 { margin: 0 0 6px; font-size: 1.3rem; }
+      section p { margin: 0 0 18px; color: #a7acc4; }
+      ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      li { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 18px 20px; background: rgba(9, 13, 27, 0.65); transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
+      li:hover { transform: translateY(-3px); border-color: rgba(92, 214, 255, 0.6); background: rgba(18, 35, 68, 0.82); }
+      h3 { margin: 0 0 6px; font-size: 1.05rem; }
+      a { color: inherit; text-decoration: none; display: block; height: 100%; }
+      .tag { display: inline-flex; align-items: center; font-size: 0.72rem; border-radius: 999px; padding: 2px 10px; margin-top: 8px; background: rgba(255,255,255,0.12); color: #f6f7fb; letter-spacing: 0.04em; text-transform: uppercase; }
+      .meta { margin-top: 10px; font-size: 0.83rem; color: #9aa0b8; }
+      .monitoring-visual { position: absolute; inset: auto auto 12px 12px; width: calc(100% - 24px); height: 90px; pointer-events: none; opacity: 0.65; }
+      .monitoring-visual svg { width: 100%; height: 100%; }
+      footer { margin-top: 48px; font-size: 0.8rem; color: #7f869d; }
+      @media (max-width: 768px) {
+        body { padding: 24px; }
+        section { padding: 22px 20px; }
+        ul { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>GPT Terminal Plus</h1>
+      <p class="lead">Choose a console below to explore the API surface, configure servers, or tweak safety policies. Routes flagged with "Auth required" expect a Bearer token matching <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+      <div class="sections">
+        <section>
+          <h2>Developer Tools</h2>
+          <p>Documentation and specs to help build or integrate clients.</p>
+          <ul>
+            <li>
+              <a href="/docs">
+                <h3>Swagger UI</h3>
+                <p>Interactive API explorer backed by the generated OpenAPI spec.</p>
+                <div class="meta">/docs</div>
+              </a>
+            </li>
+            <li>
+              <a href="/docs-static">
+                <h3>Static Documentation</h3>
+                <p>Rendered markdown docs shipped with the repository.</p>
+                <div class="meta">/docs-static</div>
+              </a>
+            </li>
+            <li>
+              <a href="/openapi.json">
+                <h3>OpenAPI JSON</h3>
+                <p>Raw API specification in JSON format.</p>
+                <div class="meta">/openapi.json</div>
+              </a>
+            </li>
+            <li>
+              <a href="/openapi.yaml">
+                <h3>OpenAPI YAML</h3>
+                <p>Raw API specification in YAML format.</p>
+                <div class="meta">/openapi.yaml</div>
+              </a>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2>Monitoring & Diagnostics</h2>
+          <p>Quick checks for service health, recent activity, and system status.</p>
+          <ul>
+            <li>
+              <a href="/health">
+                <h3>Health Check</h3>
+                <p>Basic liveness probe returning JSON status.</p>
+                <div class="meta">/health</div>
+              </a>
+            </li>
+            <li>
+              <a href="/health/detailed">
+                <h3>Detailed Health</h3>
+                <p>Expanded diagnostics with environment, uptime, and subsystem checks.</p>
+                <div class="meta">/health/detailed</div>
+              </a>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2>Access & Authentication</h2>
+          <p>Enter or retrieve API tokens to unlock protected consoles.</p>
+          <ul>
+            <li>
+              <a href="/login.html">
+                <h3>Login & Token Manager</h3>
+                <p>Submit bearer tokens to access protected endpoints.</p>
+                <div class="meta">/login.html</div>
+              </a>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2>Configuration & Setup</h2>
+          <p>Secure pages for provisioning servers and safety policies.</p>
+          <ul>
+            <li>
+              <a href="/settings/console">
+                <h3>Settings Console</h3>
+                <p>Themed overview of configuration groups with quick links.</p>
+                <div class="meta">/settings/console</div>
+              </a>
+            </li>
+            <li>
+              <a href="/setup">
+                <h3>Setup Console</h3>
+                <p>Configure local/SSH servers and safety policies.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/setup</div>
+              </a>
+            </li>
+            <li>
+              <a href="/setup/policy">
+                <h3>Safety Policy Editor</h3>
+                <p>Manage confirmation / deny regexes for command execution.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/setup/policy</div>
+              </a>
+            </li>
+            <li>
+              <a href="/setup/local">
+                <h3>Local Server Settings</h3>
+                <p>Manage local server connection details.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/setup/local</div>
+              </a>
+            </li>
+            <li>
+              <a href="/setup/ssh">
+                <h3>SSH Server Settings</h3>
+                <p>Manage SSH targets registered with GPT Terminal Plus.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/setup/ssh</div>
+              </a>
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2>Shell Sessions</h2>
+          <p>Interactive terminal sessions with persistent state.</p>
+          <ul>
+            <li>
+              <a href="/shell.html">
+                <h3>Shell Session Manager</h3>
+                <p>Create, manage, and interact with persistent shell sessions.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/shell.html</div>
+              </a>
+            </li>
+            <li>
+              <a href="/shell/session/list">
+                <h3>Active Sessions</h3>
+                <p>List all currently active shell sessions.</p>
+                <span class="tag">Auth required</span>
+                <div class="meta">/shell/session/list</div>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+      <footer>
+        GPT Terminal Plus - Custom GPT Actions for Terminal Operations
+      </footer>
+    </main>
+  </body>
 </html>

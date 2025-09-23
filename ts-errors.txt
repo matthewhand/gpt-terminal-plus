@@ -1,4 +1,0 @@
-src/handlers/local/LocalServerHandler.ts(36,62): error TS2554: Expected 2-3 arguments, but got 4.
-src/llm/providers/openai.ts(23,3): error TS2322: Type '{ role: "function" | "system" | "user" | "assistant" | "developer" | "tool"; content: string; }[]' is not assignable to type 'ChatCompletionMessageParam[]'.
-  Type '{ role: ChatCompletionMessageParam["role"]; content: string; }' is not assignable to type 'ChatCompletionMessageParam'.
-    Property 'name' is missing in type '{ role: ChatCompletionMessageParam["role"]; content: string; }' but required in type 'ChatCompletionFunctionMessageParam'.

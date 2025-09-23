@@ -8,7 +8,12 @@ jest.mock('../src/llm', () => {
   const original = jest.requireActual('../src/llm');
   return {
     ...original,
-    chatStream: jest.fn().mockImplementation(async function* (messages) {
+    chatStream: jest.fn().mockImplementation(async function* (request) {
+      const messages = Array.isArray(request)
+        ? request
+        : Array.isArray(request?.messages)
+          ? request.messages
+          : [];
       const content = messages[messages.length - 1]?.content || '';
       
       if (content.includes('immediate error')) {
@@ -282,4 +287,3 @@ describe('Chat Streaming Error Handling', () => {
     });
   });
 });
-

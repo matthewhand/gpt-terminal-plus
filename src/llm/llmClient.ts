@@ -1,14 +1,15 @@
 import { convictConfig } from '../config/convictConfig';
 import { ChatRequest, ChatResponse } from './types';
-import { chatWithOpenAI } from './providers/openai';
-import { chatWithOllama, OllamaConfig } from './providers/ollama';
-import { chatWithLmStudio, LmStudioConfig } from './providers/lmstudio';
+import { chatWithOpenAI, chatWithOpenAIStream } from './providers/openai';
+import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama';
+import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio';
 
 export interface LlmClient {
   provider: string;
   baseUrl?: string;
   apiKey?: string;
-  chat(options: any): Promise<any>;
+  chat(options: ChatRequest): Promise<ChatResponse>;
+  chatStream?: (options: ChatRequest) => AsyncGenerator<string>;
 }
 
 /**
@@ -36,6 +37,9 @@ export function getLlmClient(): LlmClient | null {
         apiKey,
         async chat(options: ChatRequest): Promise<ChatResponse> {
           return chatWithOpenAI(options);
+        },
+        chatStream(options: ChatRequest) {
+          return chatWithOpenAIStream(options);
         }
       };
     }
@@ -50,6 +54,9 @@ export function getLlmClient(): LlmClient | null {
         baseUrl,
         async chat(options: ChatRequest): Promise<ChatResponse> {
           return chatWithOllama(ollamaConfig, options);
+        },
+        chatStream(options: ChatRequest) {
+          return chatWithOllamaStream(ollamaConfig, options);
         }
       };
     }
@@ -64,6 +71,9 @@ export function getLlmClient(): LlmClient | null {
         baseUrl,
         async chat(options: ChatRequest): Promise<ChatResponse> {
           return chatWithLmStudio(lmStudioConfig, options);
+        },
+        chatStream(options: ChatRequest) {
+          return chatWithLmStudioStream(lmStudioConfig, options);
         }
       };
     }
@@ -102,5 +112,9 @@ export function getDefaultModel(): string {
  */
 export function isLlmEnabled(): boolean {
   const cfg = convictConfig();
-  return (cfg.get('llm.enabled') || cfg.get('execution.llm.enabled'));
+  if (!(cfg.get('llm.enabled') || cfg.get('execution.llm.enabled'))) {
+    return false;
+  }
+
+  return getLlmClient() !== null;
 }

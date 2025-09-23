@@ -4,7 +4,6 @@ import { setupApiRouter } from '../src/routes';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 import fs from 'fs';
 import path from 'path';
-import path from 'path';
 
 describe('Setup UI Interface', () => {
   let app: express.Express;

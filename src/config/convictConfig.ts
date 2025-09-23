@@ -1,8 +1,16 @@
 import convict from 'convict';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 type RedactedValue = string | number | boolean | null | string[] | number[] | boolean[] | Record<string, unknown>;
 
 let __singletonCfg: any | null = null;
+
+// Config file path for persistence - use test path during tests
+const CONFIG_FILE_PATH = process.env.NODE_ENV === 'test' 
+  ? path.join(os.tmpdir(), 'convict-config.test.json')
+  : path.join(process.cwd(), 'convict-config.json');
 
 export const convictConfig = () => {
   // In test environment, always construct a fresh instance so per-test
@@ -204,6 +212,80 @@ export const convictConfig = () => {
         format: Boolean,
         default: true,
         env: 'FILE_OPS_CONSEQUENTIAL'
+      },
+      operations: {
+        create: {
+          enabled: {
+            doc: 'Enable file create operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_CREATE_ENABLED'
+          }
+        },
+        read: {
+          enabled: {
+            doc: 'Enable file read operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_READ_ENABLED'
+          }
+        },
+        update: {
+          enabled: {
+            doc: 'Enable file update operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_UPDATE_ENABLED'
+          }
+        },
+        amend: {
+          enabled: {
+            doc: 'Enable file amend operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_AMEND_ENABLED'
+          }
+        },
+        list: {
+          enabled: {
+            doc: 'Enable file list operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_LIST_ENABLED'
+          }
+        },
+        search: {
+          enabled: {
+            doc: 'Enable file search operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_SEARCH_ENABLED'
+          }
+        },
+        patch: {
+          enabled: {
+            doc: 'Enable file patch operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_PATCH_ENABLED'
+          }
+        },
+        'fuzzy-patch': {
+          enabled: {
+            doc: 'Enable file fuzzy-patch operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_FUZZY_PATCH_ENABLED'
+          }
+        },
+        diff: {
+          enabled: {
+            doc: 'Enable file diff operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_DIFF_ENABLED'
+          }
+        }
       }
     },
     fileOps: {
@@ -345,6 +427,19 @@ export const convictConfig = () => {
       env: 'PROFILES_JSON'
     }
   });
+
+  // Load from config file if it exists (for persistence) - skip during tests
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      if (fs.existsSync(CONFIG_FILE_PATH)) {
+        const configData = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, 'utf8'));
+        cfg.load(configData);
+      }
+    } catch (error) {
+      console.warn('Failed to load config from file:', (error as Error)?.message);
+    }
+  }
+
   // Auto-detect common executors on first init (skip during tests to keep determinism)
   try {
     if (process.env.NODE_ENV !== 'test') {
@@ -410,6 +505,35 @@ export const convictConfig = () => {
   } catch {}
   return cfg;
 };
+
+/**
+* Persist the current config to disk atomically.
+* @param cfg The convict config instance to persist
+* @param filePath Optional file path to persist to (defaults to CONFIG_FILE_PATH)
+* @returns Promise that resolves when persistence is complete
+*/
+export async function persistConfig(cfg: any, filePath?: string): Promise<void> {
+ try {
+   // Use provided file path or default
+   const configFilePath = filePath || CONFIG_FILE_PATH;
+   
+   // Get the current properties
+   const configData = cfg.getProperties();
+
+   // Create directory if it doesn't exist
+   const dir = path.dirname(configFilePath);
+   if (!fs.existsSync(dir)) {
+     fs.mkdirSync(dir, { recursive: true });
+   }
+
+   // Atomic write: write to temp file then rename
+   const tempFile = configFilePath + '.tmp';
+   fs.writeFileSync(tempFile, JSON.stringify(configData, null, 2));
+   fs.renameSync(tempFile, configFilePath);
+ } catch (error) {
+   throw new Error(`Failed to persist config: ${(error as Error)?.message}`);
+ }
+}
 
 /**
  * Build a redacted view with readOnly flags based on env overrides.

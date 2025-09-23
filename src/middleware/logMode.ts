@@ -1,23 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
 
-const debug = Debug('app:logMode');
+const defaultLogger = Debug('app:logMode');
 
-export function logMode(req: Request, res: Response, next: NextFunction) {
-  let mode: string | undefined;
-  let type: string | undefined;
+export function createLogMode(logger: debug.Debugger = defaultLogger) {
+  return function logMode(req: Request, res: Response, next: NextFunction) {
+    let mode: string | undefined;
+    let type: string | undefined;
 
-  if (req.path.startsWith('/command/')) {
-    type = 'command';
-    mode = req.path.replace('/command/', '');
-  } else if (req.path.startsWith('/file/')) {
-    type = 'file';
-    mode = req.path.replace('/file/', '');
-  }
+    const path = req.path.split('?')[0];
 
-  if (type && mode) {
-    debug({ type, mode, path: req.path });
-  }
-  
-  next();
+    if (path.startsWith('/command/')) {
+      type = 'command';
+      mode = path.split('/')[2];
+    } else if (path.startsWith('/file/')) {
+      type = 'file';
+      mode = path.split('/')[2];
+    }
+
+    if (type && mode) {
+      logger(JSON.stringify({ type, mode, path: req.path }));
+    }
+    
+    next();
+  };
 }
+
+export const logMode = createLogMode();
