@@ -1,5 +1,5 @@
-import { paginate as paginateUtil } from '../src/utils/PaginationUtils';
-import { paginate as paginateHandler } from '../src/handlers/PaginationHandler';
+import { paginate as paginateUtil } from '@src/utils/PaginationUtils';
+import { paginate as paginateHandler, PaginationHandler } from '@handlers/PaginationHandler';
 
 describe('pagination helpers', () => {
   const items = Array.from({ length: 10 }, (_v, i) => i+1);
@@ -18,6 +18,31 @@ describe('pagination helpers', () => {
     expect(r.total).toBe(10);
     expect(r.limit).toBe(4);
     expect(r.offset).toBe(6);
+  });
+
+  it('utils paginate handles offsets beyond item length', () => {
+    const r = paginateUtil(items, 5, 20);
+    expect(r.items).toEqual([]);
+    expect(r.total).toBe(10);
+    expect(r.limit).toBe(5);
+    expect(r.offset).toBe(20);
+  });
+
+  it('utils paginate handles limits larger than item count', () => {
+    const r = paginateUtil(items, 20, 0);
+    expect(r.items).toEqual(items);
+    expect(r.total).toBe(10);
+    expect(r.limit).toBe(20);
+    expect(r.offset).toBe(0);
+  });
+
+  it('PaginationHandler uses default values when none provided', () => {
+    const handler = new PaginationHandler();
+    const r = handler.paginate(items);
+    expect(r.items).toEqual(items);
+    expect(r.total).toBe(10);
+    expect(r.limit).toBe(10);
+    expect(r.offset).toBe(0);
   });
 
   it('offset beyond length returns empty slice', () => {
