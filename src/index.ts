@@ -37,11 +37,11 @@ setupMiddlewares(app);
 
 /**
  * Static assets
- * - Serve public/ at /
+ * - Serve client/dist/ at /
  * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
  */
-// Serve static assets from public/
-app.use(express.static(path.resolve(__dirname, '..', 'public')));
+// Serve static assets from client/dist/
+app.use(express.static(path.resolve(__dirname, '..', 'client', 'dist')));
 // Serve documentation markdown as static files
 app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
