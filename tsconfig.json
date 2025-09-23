@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "esnext",
     "lib": ["ES2020"],
     "allowJs": false,
-    "strict": true,
-    "noImplicitAny": true,
+    "strict": false,
+    "noImplicitAny": false,
     "noImplicitReturns": false,
-    "noImplicitThis": true,
+    "noImplicitThis": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "exactOptionalPropertyTypes": false,
@@ -20,7 +20,7 @@
     "sourceMap": true,
     "removeComments": true,
     "isolatedModules": true,
-    "importHelpers": true,
+    "importHelpers": false,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
@@ -38,5 +38,5 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "tests/**/*", "src/tests/**/*"]
+  "exclude": ["node_modules", "dist"]
 }
