@@ -25,8 +25,48 @@ describe('Activity Routes', () => {
     app = makeApp();
   });
 
-  describe.skip('GET /activity/list', () => {
-    it.skip('should return sessions list', async () => {
+  describe('GET /activity/list', () => {
+    beforeEach(() => {
+      // Mock fs operations
+      jest.spyOn(fs, 'readdir').mockImplementation((path: any) => {
+        if (path.includes('data/activity')) {
+          if (path.endsWith('activity')) {
+            return Promise.resolve(['2025-01-01', '2025-01-02']);
+          } else if (path.endsWith('2025-01-01')) {
+            return Promise.resolve(['session_001', 'session_002']);
+          } else if (path.endsWith('2025-01-02')) {
+            return Promise.resolve(['session_003']);
+          } else if (path.includes('session_')) {
+            return Promise.resolve(['meta.json', '1-executeShell.json']);
+          }
+        }
+        return Promise.resolve([]);
+      });
+
+      jest.spyOn(fs, 'readFile').mockImplementation((path: any) => {
+        if (path.endsWith('meta.json')) {
+          return Promise.resolve(JSON.stringify({
+            sessionId: 'session_001',
+            startedAt: '2025-01-01T10:00:00Z',
+            user: 'testuser',
+            label: 'Test Session'
+          }));
+        } else if (path.endsWith('1-executeShell.json')) {
+          return Promise.resolve(JSON.stringify({
+            type: 'executeShell',
+            command: 'ls',
+            timestamp: '2025-01-01T10:00:00Z'
+          }));
+        }
+        return Promise.resolve('{}');
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should return sessions list', async () => {
       const response = await request(app)
         .get('/activity/list')
         .set('Authorization', `Bearer ${token}`);
@@ -35,6 +75,7 @@ describe('Activity Routes', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data).toHaveProperty('sessions');
       expect(Array.isArray(response.body.data.sessions)).toBe(true);
+      expect(response.body.data.sessions.length).toBeGreaterThan(0);
     });
 
     it('should require authentication', async () => {
@@ -44,13 +85,50 @@ describe('Activity Routes', () => {
       expect(response.status).toBe(401);
     });
 
-    it.skip('should support limit parameter', async () => {
+    it('should support limit parameter', async () => {
       const response = await request(app)
-        .get('/activity/list?limit=5')
+        .get('/activity/list?limit=1')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.sessions.length).toBeLessThanOrEqual(5);
+      expect(response.body.data.sessions.length).toBeLessThanOrEqual(1);
+    });
+
+    it('should support date parameter', async () => {
+      const response = await request(app)
+        .get('/activity/list?date=2025-01-01')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.sessions.every((s: any) => s.date === '2025-01-01')).toBe(true);
+    });
+
+    it('should support type filter', async () => {
+      const response = await request(app)
+        .get('/activity/list?type=executeShell')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.sessions.every((s: any) => s.types.includes('executeShell'))).toBe(true);
+    });
+
+    it('should handle missing activity directory', async () => {
+      jest.spyOn(fs, 'readdir').mockRejectedValue(new Error('ENOENT'));
+      const response = await request(app)
+        .get('/activity/list')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.sessions).toEqual([]);
+    });
+
+    it('should handle invalid session directories', async () => {
+      jest.spyOn(fs, 'readdir').mockResolvedValue(['invalid_dir']);
+      const response = await request(app)
+        .get('/activity/list')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
     });
   });
 

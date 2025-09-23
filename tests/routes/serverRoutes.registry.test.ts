@@ -57,4 +57,51 @@ describe('Server Routes with Registry', () => {
     const hostnames = response.body.servers.map((s: any) => s.hostname);
     expect(hostnames).toContain('localhost');
   });
+
+  it('should require authentication for server list', async () => {
+    const response = await request(app)
+      .get('/server/list');
+
+    expect(response.status).toBe(401);
+  });
+
+  describe('POST /server/set', () => {
+    it('should set selected server', async () => {
+      const response = await request(app)
+        .post('/server/set')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ hostname: 'localhost' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.selected).toBe('localhost');
+    });
+
+    it('should return 400 for missing hostname', async () => {
+      const response = await request(app)
+        .post('/server/set')
+        .set('Authorization', `Bearer ${token}`)
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('hostname is required');
+    });
+
+    it('should return 400 for empty hostname', async () => {
+      const response = await request(app)
+        .post('/server/set')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ hostname: '' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('hostname is required');
+    });
+
+    it('should require authentication for server set', async () => {
+      const response = await request(app)
+        .post('/server/set')
+        .send({ hostname: 'localhost' });
+
+      expect(response.status).toBe(401);
+    });
+  });
 });
