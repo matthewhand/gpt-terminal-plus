@@ -6,7 +6,9 @@ jest.mock('../../src/common/apiToken', () => ({
 }));
 
 jest.mock('../../src/config/convictConfig', () => ({
-  convictConfig: jest.fn()
+  convictConfig: jest.fn().mockReturnValue({
+    get: jest.fn(),
+  }),
 }));
 
 describe('checkAuthToken middleware', () => {
@@ -156,9 +158,7 @@ describe('checkAuthToken middleware', () => {
 
     it('should use overridden token from config', () => {
       const { convictConfig } = require('../../src/config/convictConfig');
-      convictConfig.mockReturnValue({
-        get: jest.fn().mockReturnValue('overridden-token')
-      });
+      (convictConfig().get as jest.Mock).mockReturnValue('overridden-token');
       mockRequest.headers = { authorization: 'Bearer overridden-token' };
 
       checkAuthToken(mockRequest as Request, mockResponse as Response, mockNext);

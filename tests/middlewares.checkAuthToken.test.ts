@@ -79,4 +79,13 @@ describe('middleware/checkAuthToken (uplifted)', () => {
     expect(resOk.status).toBe(200);
     expect(resOk.body.ok).toBe(true);
   });
+
+  it('bypasses auth for /health endpoint', async () => {
+    const healthApp = express();
+    healthApp.get('/health', checkAuthToken, (_req, res) => res.json({ ok: true }));
+
+    const res = await request(healthApp).get('/health');
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+  });
 });

@@ -66,6 +66,18 @@ describe('Shell Command Execution', () => {
       }
       additionalCheck(res);
     });
+
+    test('handles nonexistent binary with args', async () => {
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ command: 'nonexistent-binary-xyz', args: ['--help'] });
+
+      expect(res.status).toBe(200);
+      expect(res.body.result.error).toBe(true);
+      expect(res.body.result.exitCode).toBeGreaterThanOrEqual(1);
+      expect(res.body.result.stderr).toBeTruthy();
+    });
   });
 
   describe('Input Validation', () => {
@@ -208,6 +220,54 @@ describe('Shell Command Execution', () => {
 
         expect([200, 400, 403]).toContain(res.status);
       }
+    });
+  });
+
+  describe('Shell Configuration and Allow-listing', () => {
+    const originalShellAllowed = process.env.SHELL_ALLOWED;
+    const originalApiToken = process.env.API_TOKEN;
+
+    beforeAll(() => {
+      process.env.API_TOKEN = token;
+    });
+
+    afterAll(() => {
+      process.env.SHELL_ALLOWED = originalShellAllowed;
+      process.env.API_TOKEN = originalApiToken;
+    });
+
+    test('runs command in literal mode with args', async () => {
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ command: 'echo', args: ['literal-test'] });
+
+      expect(res.status).toBe(200);
+      expect(res.body.result.exitCode).toBe(0);
+      expect(res.body.result.stdout.trim()).toBe('literal-test');
+    });
+
+    test('rejects disallowed shell configuration', async () => {
+      process.env.SHELL_ALLOWED = 'bash';
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ shell: 'zsh', command: 'echo disallowed' });
+
+      expect([400, 403]).toContain(res.status);
+      expect(String(res.body?.error || '')).toMatch(/(not allowed|disabled)/i);
+    });
+
+    test('allows configured shell', async () => {
+      process.env.SHELL_ALLOWED = 'bash';
+      const res = await request(app)
+        .post('/command/execute-shell')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ shell: 'bash', command: 'echo allowed-shell' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.result.exitCode).toBe(0);
+      expect(res.body.result.stdout.trim()).toBe('allowed-shell');
     });
   });
 });

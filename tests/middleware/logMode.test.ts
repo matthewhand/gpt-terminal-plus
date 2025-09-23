@@ -1,28 +1,24 @@
 import request from 'supertest';
 import express from 'express';
-import { logMode } from '../../src/middleware/logMode';
+import { createLogMode } from '../../src/middleware/logMode';
 
 describe('logMode middleware', () => {
   let app: express.Application;
   let logs: any[] = [];
-  let originalDebugLog: any;
 
   beforeEach(() => {
     app = express();
     logs = [];
-    originalDebugLog = require('debug').log;
-    require('debug').log = (...args: any[]) => {
+    const mockLogger = (...args: any[]) => {
       logs.push(JSON.parse(args[0]));
     };
+    const logMode = createLogMode(mockLogger as any);
     app.use(logMode);
     app.get('/command/executeShell', (req, res) => res.send('ok'));
     app.get('/file/read', (req, res) => res.send('ok'));
     app.get('/health', (req, res) => res.send('ok'));
     app.post('/command/executeLlm', (req, res) => res.send('ok'));
-  });
-
-  afterEach(() => {
-    require('debug').log = originalDebugLog;
+    app.get('/command', (req, res) => res.send('ok'));
   });
 
   it('logs command mode', async () => {
