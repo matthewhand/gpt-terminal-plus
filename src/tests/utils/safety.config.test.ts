@@ -1,10 +1,10 @@
-import type { Config } from 'config';
+import type { IConfig } from 'config';
 import { evaluateCommandSafety } from '@src/utils/safety';
 
 jest.mock('config');
 
 describe('evaluateCommandSafety - config integration', () => {
-  const mockedConfig = require('config') as jest.Mocked<Config> & {
+  const mockedConfig = require('config') as jest.Mocked<IConfig> & {
     has: jest.Mock;
     get: jest.Mock;
   };

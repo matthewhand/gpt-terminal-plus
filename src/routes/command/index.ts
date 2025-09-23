@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import Debug from "debug";
 import { handleServerError } from "../../utils/handleServerError";
 import { getServerHandler } from "../../utils/getServerHandler";
-import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
-import { convictConfig } from "../../config/convictConfig";
+
+import { convictConfig, persistConfig } from "../../config/convictConfig";
 import { getExecuteTimeout } from "../../utils/timeout";
 import os from "os";
 import path from "path";
@@ -22,11 +22,11 @@ import express from "express";
 import { checkAuthToken } from "../../middlewares/checkAuthToken";
 import { listExecutors, setExecutorEnabled } from "../../utils/executors";
 import { isLlmEnabled } from "../../llm/llmClient";
-import { securityLogger, logSecurityEvent } from "../../middlewares/securityLogger";
-import { validateRequest, commonValidations } from "../../middlewares/enhancedValidation";
-import { rateLimiters } from "../../middlewares/advancedRateLimit";
-import { ApiResponse, ExecutionResult, CommandRequest, CodeRequest, LlmRequest } from "../../types/api";
-import { isValidCommand, isValidCode } from "../../utils/typeGuards";
+import { logSecurityEvent } from "../../middlewares/securityLogger";
+
+
+
+
 
 const debug = Debug("app:command");
 
@@ -999,7 +999,7 @@ executorsRouter.get('/executors', (req: Request, res: Response) => {
  * Body: { enabled: boolean }
  * Enables/disables an executor at runtime.
  */
-executorsRouter.post('/executors/:name/toggle', (req: Request, res: Response) => {
+executorsRouter.post('/executors/:name/toggle', async (req: Request, res: Response) => {
   const { name } = req.params;
   const { enabled } = req.body || {};
   if (typeof enabled !== 'boolean') {
@@ -1007,6 +1007,16 @@ executorsRouter.post('/executors/:name/toggle', (req: Request, res: Response) =>
   }
   const updated = setExecutorEnabled(name, enabled, req.app);
   if (!updated) return res.status(404).json({ message: 'executor not found' });
+
+  // Persist the change to disk
+  try {
+    const cfg = convictConfig();
+    await persistConfig(cfg);
+  } catch (error) {
+    // Log error but don't fail the request since the toggle succeeded
+    console.warn('Failed to persist executor toggle:', (error as Error)?.message);
+  }
+
   res.json({ executor: updated });
 });
 

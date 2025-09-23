@@ -47,7 +47,6 @@ app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
 // Setup API Router and additional route groups
 setupApiRouter(app);
-app.use('/shell', shellRouter);
 app.use(publicRouter);
 
 // Dynamic OpenAPI routes

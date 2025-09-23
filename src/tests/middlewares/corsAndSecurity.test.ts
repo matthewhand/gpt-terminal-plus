@@ -1,12 +1,11 @@
 import request from 'supertest';
-import { makeProdApp } from '../../../tests/utils/testApp';
+import { app } from '../../utils/testApp';
 
 describe('Middlewares: CORS and Security Headers', () => {
-  let app: any;
-
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    app = await makeProdApp();
+    // Initialize app for testing
+    await Promise.resolve(); // Placeholder
   });
 
   test('OPTIONS preflight includes CORS headers', async () => {

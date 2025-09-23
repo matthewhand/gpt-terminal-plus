@@ -1,4 +1,5 @@
 import express from 'express';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 /** --- Test harness (mocks) — used ONLY when NODE_ENV==='test' --- */
 import testCommandRouter from './commandRoutes';
@@ -13,6 +14,7 @@ import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import settingsRoutes from './settingsRoutes';
+import endpointStatusRouter from './endpointStatusRouter';
 import { configRouter, healthRouter } from './core';
 import { securityLogger } from '../middlewares/securityLogger';
 import { rateLimiters } from '../middlewares/advancedRateLimit';
@@ -61,7 +63,7 @@ export function setupApiRouter(app: express.Application): void {
 
   // ----- Other groups with correct prefixes -----
   app.use('/server', securityLogger, rateLimiters.moderate, serverRoutes);
-  app.use('/activity', securityLogger, rateLimiters.lenient, activityRoutes);
+  app.use('/activity', checkAuthToken, securityLogger, rateLimiters.lenient, activityRoutes);
   // Skip rate limiting for file routes during tests
   if (isTest) {
     app.use('/file', securityLogger, fileRoutes);
@@ -80,10 +82,17 @@ export function setupApiRouter(app: express.Application): void {
   // executors capability and toggles
   app.use('/command', executorsRouter);
 
+  // shell session routes under /shell
+  // NOTE: Shell routes are currently broken due to router mounting issues
+  // app.use('/shell', shellRoutes);
+
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);
   // model routes under /model (/, /select, /selected)
   if (modelsRoutes) app.use('/model', modelsRoutes);
+  
+  // endpoint status dashboard
+  app.use('/endpoint-status', endpointStatusRouter);
 }
 
 /** Default export kept for flexibility */

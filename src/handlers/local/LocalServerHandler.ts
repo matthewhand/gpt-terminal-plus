@@ -5,8 +5,8 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import { ListParams } from '../../types/ListParams';
 import { FileReadResult } from '../../types/FileReadResult';
+import { SearchResult, SearchParams } from '../../types/ServerHandler';
 
-import { executeCommand as executeCommandAction } from './actions/executeCommand';
 import { executeLocalCode as executeCodeAction } from './actions/executeCode';
 import { createFile as createFileAction } from './actions/createFile.local';
 import { readFile as readFileAction } from './actions/readFile.local';
@@ -159,5 +159,82 @@ export class LocalServerHandler extends AbstractServerHandler {
     const fullPath = path.join(dir, filePath);
     const data = await fs.readFile(fullPath, 'utf8');
     return data;
+  }
+
+  async searchFiles(params: SearchParams): Promise<PaginatedResponse<SearchResult>> {
+    const { pattern, path: searchPath, caseSensitive = false, limit = 100, offset = 0 } = params;
+
+    if (!pattern || typeof pattern !== 'string') {
+      throw new Error('Pattern is required and must be a string');
+    }
+
+    if (!searchPath || typeof searchPath !== 'string') {
+      throw new Error('Path is required and must be a string');
+    }
+
+    const dir = this.serverConfig.directory || process.cwd();
+    const fullSearchPath = path.resolve(dir, searchPath);
+
+    // Validate regex pattern
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, caseSensitive ? 'g' : 'gi');
+    } catch (error) {
+      throw new Error(`Invalid regex pattern: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    const results: SearchResult[] = [];
+
+    // Recursive function to search files
+    const searchInDirectory = async (currentPath: string): Promise<void> => {
+      try {
+        const entries = await fs.readdir(currentPath, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const entryPath = path.join(currentPath, entry.name);
+
+          if (entry.isDirectory()) {
+            // Skip common directories that shouldn't be searched
+            if (!['node_modules', '.git', '.vscode', 'dist', 'build'].includes(entry.name)) {
+              await searchInDirectory(entryPath);
+            }
+          } else if (entry.isFile()) {
+            try {
+              const content = await fs.readFile(entryPath, 'utf8');
+              const lines = content.split('\n');
+
+              lines.forEach((line, index) => {
+                if (regex.test(line)) {
+                  results.push({
+                    filePath: path.relative(dir, entryPath),
+                    lineNumber: index + 1,
+                    content: line.trim()
+                  });
+                }
+              });
+            } catch (error) {
+              // Skip files that can't be read (binary files, permission issues, etc.)
+              console.debug('Skipping file during search:', entryPath, error);
+            }
+          }
+        }
+      } catch (error) {
+        // Skip directories that can't be read
+        console.debug('Skipping directory during search:', currentPath, error);
+      }
+    };
+
+    await searchInDirectory(fullSearchPath);
+
+    // Apply pagination
+    const total = results.length;
+    const paginatedResults = results.slice(offset, offset + limit);
+
+    return {
+      items: paginatedResults,
+      total,
+      limit,
+      offset
+    };
   }
 }

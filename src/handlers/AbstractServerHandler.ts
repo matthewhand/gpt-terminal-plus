@@ -1,6 +1,7 @@
 import { ServerConfig } from '../types/ServerConfig';
 import { ExecutionResult } from '../types/ExecutionResult';
 import { PaginatedResponse } from '../types/PaginatedResponse';
+import { SearchResult, SearchParams } from '../types/ServerHandler';
 
 export abstract class AbstractServerHandler {
   protected serverConfig: ServerConfig;
@@ -19,4 +20,6 @@ export abstract class AbstractServerHandler {
   abstract presentWorkingDirectory(): Promise<string>;
 
   abstract changeDirectory(directory: string): Promise<boolean>;
+
+  abstract searchFiles(params: SearchParams): Promise<PaginatedResponse<SearchResult>>;
 }

@@ -2,16 +2,15 @@ import express, { Request, Response } from 'express';
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig, persistConfig } from '../config/convictConfig';
 import { stringify as yamlStringify } from 'yaml';
 import { buildSpec } from '../openapi';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { loadProfilesConfig, upsertProfile, deleteProfile, exportProfilesYaml, importProfilesYaml } from '../config/profiles';
+import { loadProfilesConfig, upsertProfile, deleteProfile } from '../config/profiles';
 import { rateLimiter } from '../middlewares/rateLimiter';
 import { getSecurityEvents } from '../middlewares/securityLogger';
 import Debug from 'debug';
 
-const debug = Debug('app:coreRoutes');
 const startTime = Date.now();
 
 // Health Routes
@@ -205,6 +204,84 @@ configRouter.get('/schema', (_req: Request, res: Response) => {
 
 configRouter.get('/override', checkAuthToken as any, (_req: Request, res: Response) => {
   try { return res.status(200).json(convictConfig().getProperties()); } catch { return res.status(200).json({}); }
+});
+
+/**
+ * POST /config/persist
+ * Persists current runtime config changes to disk
+ */
+configRouter.post('/persist', checkAuthToken as any, async (_req: Request, res: Response) => {
+  try {
+    const cfg = convictConfig();
+    await persistConfig(cfg);
+    return res.status(200).json({ success: true, message: 'Config persisted successfully' });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: (error as Error)?.message || 'Failed to persist config' });
+  }
+});
+
+/**
+ * POST /config/toggle/llm
+ * Body: { enabled: boolean }
+ * Toggles LLM execution and persists the change
+ */
+configRouter.post('/toggle/llm', checkAuthToken as any, async (req: Request, res: Response) => {
+  const { enabled } = req.body || {};
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ message: 'enabled (boolean) is required' });
+  }
+  try {
+    const cfg = convictConfig();
+    (cfg as any).set('execution.llm.enabled', enabled);
+    (cfg as any).set('llm.enabled', enabled);
+    (cfg as any).validate({ allowed: 'warn' });
+    await persistConfig(cfg);
+    return res.status(200).json({ success: true, execution: { llm: { enabled } }, llm: { enabled } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: (error as Error)?.message || 'Failed to toggle LLM' });
+  }
+});
+
+/**
+ * POST /config/toggle/files
+ * Body: { enabled: boolean }
+ * Toggles file operations and persists the change
+ */
+configRouter.post('/toggle/files', checkAuthToken as any, async (req: Request, res: Response) => {
+  const { enabled } = req.body || {};
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ message: 'enabled (boolean) is required' });
+  }
+  try {
+    const cfg = convictConfig();
+    (cfg as any).set('files.enabled', enabled);
+    (cfg as any).validate({ allowed: 'warn' });
+    await persistConfig(cfg);
+    return res.status(200).json({ success: true, files: { enabled } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: (error as Error)?.message || 'Failed to toggle file operations' });
+  }
+});
+
+/**
+ * POST /config/toggle/shell
+ * Body: { enabled: boolean }
+ * Toggles shell execution and persists the change
+ */
+configRouter.post('/toggle/shell', checkAuthToken as any, async (req: Request, res: Response) => {
+  const { enabled } = req.body || {};
+  if (typeof enabled !== 'boolean') {
+    return res.status(400).json({ message: 'enabled (boolean) is required' });
+  }
+  try {
+    const cfg = convictConfig();
+    (cfg as any).set('execution.shell.enabled', enabled);
+    (cfg as any).validate({ allowed: 'warn' });
+    await persistConfig(cfg);
+    return res.status(200).json({ success: true, execution: { shell: { enabled } } });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: (error as Error)?.message || 'Failed to toggle shell execution' });
+  }
 });
 
 // Setup Routes

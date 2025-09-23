@@ -4,14 +4,15 @@ import { getServerHandler } from "../../utils/getServerHandler";
 import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
 import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
 import { logSecurityEvent } from '../../middlewares/securityLogger';
-import { ApiResponse, FileRequest } from '../../types/api';
-import { isValidFilePath } from '../../utils/typeGuards';
 import { writeFile, readFile as fsReadFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';
+import { z } from 'zod';
+import { getSettings } from '../../settings/store';
+import { convictConfig, persistConfig } from '../../config/convictConfig';
 
 const debug = Debug('app:fileRoutes');
 const execAsync = promisify(exec);
@@ -403,4 +404,408 @@ export const applyPatch = async (req: Request, res: Response) => {
   } catch (error) {
     handleServerError(error, res, 'Error applying patch');
   }
+};
+
+/**
+* @openapi
+* /file/search:
+*   post:
+*     summary: Search for files using regex pattern
+*     description: Perform a regex search across files in a specified directory with pagination support
+*     tags:
+*       - File Operations
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - pattern
+*               - path
+*             properties:
+*               pattern:
+*                 type: string
+*                 description: Regex pattern to search for
+*                 example: "function.*test"
+*               path:
+*                 type: string
+*                 description: Directory path to search in
+*                 example: "src"
+*               caseSensitive:
+*                 type: boolean
+*                 description: Whether the search should be case sensitive
+*                 default: false
+*                 example: false
+*               page:
+*                 type: integer
+*                 description: Page number for pagination (1-based)
+*                 default: 1
+*                 minimum: 1
+*                 example: 1
+*               limit:
+*                 type: integer
+*                 description: Number of results per page
+*                 default: 100
+*                 minimum: 1
+*                 maximum: 1000
+*                 example: 50
+*     responses:
+*       200:
+*         description: Search results
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 status:
+*                   type: string
+*                   example: "success"
+*                 message:
+*                   type: string
+*                   example: "Search completed successfully"
+*                 data:
+*                   type: object
+*                   properties:
+*                     items:
+*                       type: array
+*                       items:
+*                         type: object
+*                         properties:
+*                           filePath:
+*                             type: string
+*                             description: Relative path to the file
+*                             example: "src/utils/helper.ts"
+*                           lineNumber:
+*                             type: integer
+*                             description: Line number where the match was found
+*                             example: 42
+*                           content:
+*                             type: string
+*                             description: The matched line content
+*                             example: "export function testHelper() {"
+*                     total:
+*                       type: integer
+*                       description: Total number of matches found
+*                       example: 150
+*                     limit:
+*                       type: integer
+*                       description: Number of results per page
+*                       example: 50
+*                     offset:
+*                       type: integer
+*                       description: Offset for pagination
+*                       example: 0
+*       400:
+*         description: Bad request - invalid parameters or regex
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 status:
+*                   type: string
+*                   example: "error"
+*                 message:
+*                   type: string
+*                   example: "Invalid regex pattern"
+*                 data:
+*                   type: null
+*       403:
+*         description: Forbidden - file search is disabled
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 status:
+*                   type: string
+*                   example: "error"
+*                 message:
+*                   type: string
+*                   example: "File search is disabled"
+*                 data:
+*                   type: null
+*       500:
+*         description: Internal server error
+*         content:
+*           application/json:
+*             schema:
+*               type: object
+*               properties:
+*                 status:
+*                   type: string
+*                   example: "error"
+*                 message:
+*                   type: string
+*                   example: "Internal server error"
+*                 data:
+*                   type: null
+*/
+export const fsSearch = async (req: Request, res: Response): Promise<void> => {
+ try {
+   // Check if file operations are enabled
+   const settings = getSettings();
+   if (!settings.files.enabled) {
+     res.status(403).json({
+       status: 'error',
+       message: 'File search is disabled',
+       data: null
+     });
+     return;
+   }
+
+   // Zod schema for validation
+   const searchSchema = z.object({
+     pattern: z.string().min(1, 'Pattern is required'),
+     path: z.string().min(1, 'Path is required'),
+     caseSensitive: z.boolean().optional().default(false),
+     page: z.number().int().min(1).optional().default(1),
+     limit: z.number().int().min(1).max(1000).optional().default(100)
+   });
+
+   const validationResult = searchSchema.safeParse(req.body);
+   if (!validationResult.success) {
+     res.status(400).json({
+       status: 'error',
+       message: validationResult.error.errors.map(e => e.message).join(', '),
+       data: null
+     });
+     return;
+   }
+
+   const { pattern, path: searchPath, caseSensitive, page, limit } = validationResult.data;
+
+   // Validate path input
+   const pathValidation = validateInput(searchPath, validationPatterns.safePath, 'Search path');
+   if (!pathValidation.isValid) {
+     res.status(400).json({
+       status: 'error',
+       message: pathValidation.errors.join(', '),
+       data: null
+     });
+     return;
+   }
+
+   const sanitizedPath = sanitizers.sanitizePath(pathValidation.sanitizedValue);
+
+   // Log security event
+   logSecurityEvent(req, 'FILE_SEARCH', { pattern, path: sanitizedPath, caseSensitive, page, limit });
+
+   const server = getServerHandler(req);
+   if (!server) {
+     throw new Error("Server handler not found");
+   }
+
+   // Calculate offset from page
+   const offset = (page - 1) * limit;
+
+   const searchParams = {
+     pattern,
+     path: sanitizedPath,
+     caseSensitive,
+     limit,
+     offset
+   };
+
+   const results = await server.searchFiles(searchParams);
+
+   res.status(200).json({
+     status: 'success',
+     message: 'Search completed successfully',
+     data: results
+   });
+ } catch (error) {
+   if (error instanceof Error && error.message.includes('Invalid regex pattern')) {
+     res.status(400).json({
+       status: 'error',
+       message: error.message,
+       data: null
+     });
+   } else {
+     handleServerError(error, res, 'Failed to perform file search');
+   }
+ }
+};
+
+/**
+* GET /file/operations
+* List all file operations and their enabled status
+*/
+export const listFileOperations = async (req: Request, res: Response): Promise<void> => {
+ try {
+   // Check if file operations are enabled
+   const settings = getSettings();
+   if (!settings.files.enabled) {
+     res.status(403).json({
+       status: 'error',
+       message: 'File operations are disabled',
+       data: null
+     });
+     return;
+   }
+
+   const cfg = convictConfig();
+   const operations = cfg.get('files.operations');
+
+   // Transform to array format
+   const operationsList = Object.entries(operations).map(([operation, config]: [string, any]) => ({
+     operation,
+     enabled: config.enabled
+   }));
+
+   res.status(200).json({
+     status: 'success',
+     message: 'File operations retrieved successfully',
+     data: operationsList
+   });
+ } catch (error) {
+   handleServerError(error, res, 'Failed to list file operations');
+ }
+};
+
+/**
+* POST /file/:operation/toggle
+* Toggle the enabled status of a specific file operation
+* Body: { enabled?: boolean } - if not provided, toggles current state
+*/
+export const toggleFileOperation = async (req: Request, res: Response): Promise<void> => {
+ try {
+   const { operation } = req.params;
+   const { enabled } = req.body || {};
+
+   // Check if file operations are enabled
+   const settings = getSettings();
+   if (!settings.files.enabled) {
+     res.status(403).json({
+       status: 'error',
+       message: 'File operations are disabled',
+       data: null
+     });
+     return;
+   }
+
+   const cfg = convictConfig();
+   const operations = cfg.get('files.operations');
+
+   if (!operations[operation]) {
+     res.status(400).json({
+       status: 'error',
+       message: `Invalid operation: ${operation}`,
+       data: null
+     });
+     return;
+   }
+
+   const currentEnabled = operations[operation].enabled;
+   const newEnabled = enabled !== undefined ? enabled : !currentEnabled;
+
+   cfg.set(`files.operations.${operation}.enabled`, newEnabled);
+   await persistConfig(cfg);
+
+   res.status(200).json({
+     status: 'success',
+     message: `File operation '${operation}' ${newEnabled ? 'enabled' : 'disabled'} successfully`,
+     data: {
+       operation,
+       enabled: newEnabled
+     }
+   });
+ } catch (error) {
+   handleServerError(error, res, 'Failed to toggle file operation');
+ }
+};
+
+/**
+* POST /file/operations/bulk
+* Bulk toggle multiple file operations
+* Body: { operations: { [operation: string]: boolean } }
+*/
+export const bulkToggleFileOperations = async (req: Request, res: Response): Promise<void> => {
+ try {
+   const { operations: operationsToToggle } = req.body || {};
+
+   if (!operationsToToggle || typeof operationsToToggle !== 'object') {
+     res.status(400).json({
+       status: 'error',
+       message: 'operations object is required',
+       data: null
+     });
+     return;
+   }
+
+   // Check if file operations are enabled
+   const settings = getSettings();
+   if (!settings.files.enabled) {
+     res.status(403).json({
+       status: 'error',
+       message: 'File operations are disabled',
+       data: null
+     });
+     return;
+   }
+
+   const cfg = convictConfig();
+   const currentOperations = cfg.get('files.operations');
+
+   const results: { operation: string; enabled: boolean; success: boolean; error?: string }[] = [];
+   let hasErrors = false;
+
+   for (const [operation, enabled] of Object.entries(operationsToToggle)) {
+     if (typeof enabled !== 'boolean') {
+       results.push({
+         operation,
+         enabled: false,
+         success: false,
+         error: 'enabled must be a boolean'
+       });
+       hasErrors = true;
+       continue;
+     }
+
+     if (!currentOperations[operation]) {
+       results.push({
+         operation,
+         enabled,
+         success: false,
+         error: `Invalid operation: ${operation}`
+       });
+       hasErrors = true;
+       continue;
+     }
+
+     try {
+       cfg.set(`files.operations.${operation}.enabled`, enabled);
+       results.push({
+         operation,
+         enabled,
+         success: true
+       });
+     } catch (error) {
+       results.push({
+         operation,
+         enabled,
+         success: false,
+         error: (error as Error)?.message || 'Unknown error'
+       });
+       hasErrors = true;
+     }
+   }
+
+   // Persist only if there were successful changes
+   const successfulChanges = results.filter(r => r.success);
+   if (successfulChanges.length > 0) {
+     await persistConfig(cfg);
+   }
+
+   const statusCode = hasErrors ? 207 : 200; // 207 Multi-Status for partial success
+
+   res.status(statusCode).json({
+     status: hasErrors ? 'partial' : 'success',
+     message: hasErrors ? 'Some operations failed to toggle' : 'All operations toggled successfully',
+     data: results
+   });
+ } catch (error) {
+   handleServerError(error, res, 'Failed to bulk toggle file operations');
+ }
 };

@@ -10,22 +10,19 @@ export interface ResolvedLlmConfig {
   lmstudioURL?: string;
 }
 
-const DEFAULT_PROVIDER: ResolvedLlmConfig['provider'] = 'ollama';
-const DEFAULT_MODEL = 'gpt-4o-mini';
-const DEFAULT_OLLAMA_URL = 'http://127.0.0.1:11434';
-const DEFAULT_LMSTUDIO_URL = 'http://127.0.0.1:1234';
+
+
+import { convictConfig } from '../config/convictConfig';
 
 export function getResolvedLlmConfig(): ResolvedLlmConfig {
-  const provider = (process.env.LLM_PROVIDER as any) || DEFAULT_PROVIDER;
-  const enabled = process.env.LLM_ENABLED ? process.env.LLM_ENABLED !== 'false' : true;
-  const defaultModel = process.env.LLM_DEFAULT_MODEL || DEFAULT_MODEL;
+  const config = convictConfig();
   return {
-    enabled,
-    provider,
-    defaultModel,
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_BASE_URL,
-    ollamaURL: process.env.OLLAMA_URL || DEFAULT_OLLAMA_URL,
-    lmstudioURL: process.env.LM_STUDIO_URL || DEFAULT_LMSTUDIO_URL,
+    enabled: config.get('llm.enabled'),
+    provider: config.get('llm.provider'),
+    defaultModel: config.get('llm.defaultModel'),
+    apiKey: config.get('llm.openai.apiKey'),
+    baseURL: config.get('llm.openai.baseUrl'),
+    ollamaURL: config.get('llm.ollama.baseUrl'),
+    lmstudioURL: config.get('llm.lmstudio.baseUrl'),
   };
 }

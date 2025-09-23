@@ -1,5 +1,5 @@
-import { Request } from "express";
 import { ServerHandler } from "../types/ServerHandler";
+import type { ServerRequest } from "../types/ServerRequest";
 
 /**
  * Safely gets the server handler from the request.
@@ -7,8 +7,8 @@ import { ServerHandler } from "../types/ServerHandler";
  * @returns {ServerHandler} - The server handler.
  * @throws {Error} - If the server handler is not found.
  */
-export const getServerHandler = (req: Request): ServerHandler => {
-  let server = (req as any).server as ServerHandler | undefined;
+export const getServerHandler = (req: ServerRequest): ServerHandler => {
+  const server = req.server ?? req.serverHandler;
   if (!server) {
     throw new Error("Server handler not found on request object");
   }

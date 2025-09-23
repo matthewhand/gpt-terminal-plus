@@ -6,6 +6,20 @@ import { ExecutionResult } from './ExecutionResult';
 import { FileReadResult } from './FileReadResult';
 import { ListParams } from './ListParams';
 
+export interface SearchResult {
+  filePath: string;
+  lineNumber: number;
+  content: string;
+}
+
+export interface SearchParams {
+  pattern: string;
+  path: string;
+  caseSensitive?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
 export interface ServerHandler {
   setServerConfig(serverConfig: ServerConfig): void;
   getSystemInfo(): Promise<SystemInfo>;
@@ -20,4 +34,5 @@ export interface ServerHandler {
   amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean>;
   listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
   listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
+  searchFiles(params: SearchParams): Promise<PaginatedResponse<SearchResult>>;
 }

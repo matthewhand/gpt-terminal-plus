@@ -99,11 +99,10 @@ router.post('/completions', async (req: Request, res: Response) => {
       const onClose = () => { clearInterval(hb); try { res.end(); } catch {} };
       (req as any).on?.('close', onClose);
 
-      let sentAny = false;
       try {
-        const streamSource: any = process.env.NODE_ENV === 'test' ? (chatStream as any)(safeMessages) : (chatStream as any)({ model: selectedModel, messages: safeMessages, stream: true });
+        const streamRequest = { model: selectedModel, messages: safeMessages, stream: true };
+        const streamSource: any = (chatStream as any)(streamRequest);
         for await (const delta of streamSource) {
-          sentAny = true;
           res.write('event: data\n');
           res.write('data: ' + JSON.stringify({ choices: [{ index: 0, delta: { content: String(delta) } }] }) + '\n\n');
         }

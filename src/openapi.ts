@@ -646,6 +646,168 @@ export function buildSpec(req?: Request) {
           'x-openai-isConsequential': false
         }
       },
+      '/config/persist': {
+        post: {
+          operationId: 'persistConfig',
+          summary: 'Persist current runtime config changes to disk',
+          description: 'Saves the current configuration state to convict-config.json for persistence across restarts',
+          security: [{ bearerAuth: [] as any[] }],
+          responses: {
+            200: {
+              description: 'Config persisted successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      message: { type: 'string' }
+                    },
+                    required: ['success', 'message']
+                  }
+                }
+              }
+            },
+            500: {
+              description: 'Persistence failed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      error: { type: 'string' }
+                    },
+                    required: ['success', 'error']
+                  }
+                }
+              }
+            }
+          },
+          'x-openai-isConsequential': false
+        }
+      },
+      '/config/toggle/llm': {
+        post: {
+          operationId: 'toggleLlm',
+          summary: 'Toggle LLM execution and persist the change',
+          description: 'Enables or disables LLM execution endpoints and persists the configuration',
+          security: [{ bearerAuth: [] as any[] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'LLM toggled successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      execution: { type: 'object', properties: { llm: { type: 'object', properties: { enabled: { type: 'boolean' } } } } },
+                      llm: { type: 'object', properties: { enabled: { type: 'boolean' } } }
+                    },
+                    required: ['success']
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
+          },
+          'x-openai-isConsequential': false
+        }
+      },
+      '/config/toggle/files': {
+        post: {
+          operationId: 'toggleFiles',
+          summary: 'Toggle file operations and persist the change',
+          description: 'Enables or disables file operation endpoints and persists the configuration',
+          security: [{ bearerAuth: [] as any[] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'File operations toggled successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      files: { type: 'object', properties: { enabled: { type: 'boolean' } } }
+                    },
+                    required: ['success']
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
+          },
+          'x-openai-isConsequential': false
+        }
+      },
+      '/config/toggle/shell': {
+        post: {
+          operationId: 'toggleShell',
+          summary: 'Toggle shell execution and persist the change',
+          description: 'Enables or disables shell execution endpoints and persists the configuration',
+          security: [{ bearerAuth: [] as any[] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
+          },
+          responses: {
+            200: {
+              description: 'Shell execution toggled successfully',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      execution: { type: 'object', properties: { shell: { type: 'object', properties: { enabled: { type: 'boolean' } } } } }
+                    },
+                    required: ['success']
+                  }
+                }
+              }
+            },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
+          },
+          'x-openai-isConsequential': false
+        }
+      },
     },
   };
 }

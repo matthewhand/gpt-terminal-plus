@@ -40,7 +40,7 @@ export async function executeFileOperation(op: FileOperation | string, path?: st
       if (Array.isArray(fromCfg) && fromCfg.length > 0) {
         allowedPaths = fromCfg as string[];
       }
-    } catch (error) {
+    } catch {
       // ignore and use default
     }
 

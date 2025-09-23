@@ -26,12 +26,25 @@ describe('Files Routes', () => {
 
   test('POST /files/op should handle path not allowed', async () => {
     const { executeFileOperation } = require('../../engines/fileEngine');
-    executeFileOperation.mockRejectedValue(new Error('Path not allowed'));
+    executeFileOperation.mockResolvedValue({ success: false, error: 'Path not allowed: /etc/passwd' });
 
     const res = await request(app)
       .post('/files/op')
       .send({ type: 'read', path: '/etc/passwd' });
     
     expect(res.status).toBe(403);
+    expect(res.body).toEqual({ message: 'Path not allowed: /etc/passwd' });
+  });
+
+  test('POST /files/op should handle other errors with 400', async () => {
+    const { executeFileOperation } = require('../../engines/fileEngine');
+    executeFileOperation.mockResolvedValue({ success: false, error: 'Content required for write operation' });
+
+    const res = await request(app)
+      .post('/files/op')
+      .send({ type: 'write', path: './note.txt' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ message: 'Content required for write operation' });
   });
 });

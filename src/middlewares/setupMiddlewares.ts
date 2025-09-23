@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import Debug from 'debug';
 import { errorHandler } from './errorHandler';
 import { generalRateLimit } from './rateLimit';
+import { logMode } from './logMode';
 
 const debug = Debug('app:setupMiddlewares');
 
@@ -67,6 +68,10 @@ const setupMiddlewares = (app: express.Application): void => {
 
   // Determine CORS origin based on environment variable or use defaults
   const isTest = process.env.NODE_ENV === 'test';
+  
+  // Check if private network access should be disabled
+  const disablePrivateNetwork = process.env.DISABLE_PRIVATE_NETWORK_ACCESS === 'true';
+  
   const corsOptions: cors.CorsOptions = isTest
     ? {
         origin: (_origin, cb) => cb(null, true),
@@ -77,7 +82,16 @@ const setupMiddlewares = (app: express.Application): void => {
     : {
         origin: (process.env.CORS_ORIGIN
           ? process.env.CORS_ORIGIN.split(',')
-          : ['https://chat.openai.com', 'https://chatgpt.com']) as any,
+          : disablePrivateNetwork 
+            ? ['https://chat.openai.com', 'https://chatgpt.com']
+            : [
+                'https://chat.openai.com', 
+                'https://chatgpt.com',
+                'http://localhost:5004',
+                'http://127.0.0.1:5004',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000'
+              ]) as any,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -94,6 +108,9 @@ const setupMiddlewares = (app: express.Application): void => {
   app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
   // Support raw text/yaml bodies for profiles import endpoint
   app.use(bodyParser.text({ type: ['text/*', 'application/yaml', 'application/x-yaml'], limit: '5mb' }));
+
+  // Log mode detection for debugging
+  app.use(logMode);
 
   // Error handling middleware (must be last)
   app.use(errorHandler);

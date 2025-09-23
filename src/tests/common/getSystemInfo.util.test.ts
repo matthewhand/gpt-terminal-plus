@@ -2,12 +2,12 @@ import { getSystemInfo } from '../../../src/common/getSystemInfo';
 
 describe('common/getSystemInfo (unit)', () => {
   it('throws when executionFunction is not a function', async () => {
-    // @ts-expect-error intentional misuse for runtime validation
-    await expect(getSystemInfo(null)).rejects.toThrow(
+    // Intentional misuse for runtime validation
+    await expect(getSystemInfo(null as any)).rejects.toThrow(
       'Execution function must be provided and must be a function.'
     );
-    // @ts-expect-error intentional misuse for runtime validation
-    await expect(getSystemInfo(123)).rejects.toThrow(
+    // Intentional misuse for runtime validation
+    await expect(getSystemInfo(123 as any)).rejects.toThrow(
       'Execution function must be provided and must be a function.'
     );
   });
