@@ -1,5 +1,15 @@
-import { streamChatWithInterpreter, chatWithInterpreter } from '../../src/services/interpreterClient';
-import { Readable } from 'stream';
+import { interpreterChatStream, interpreterChatOnce } from '../../src/services/interpreterClient';
+import { llmConfig } from '../../src/common/llmConfig';
+
+// Mock llmConfig with interpreter settings
+jest.mock('../../src/common/llmConfig', () => ({
+  llmConfig: {
+    interpHost: 'localhost',
+    interpPort: 8000,
+    interpOffline: true,
+    interpVerbose: false
+  }
+}));
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -8,425 +18,144 @@ const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 // Mock console.error to avoid noise in tests
 jest.spyOn(console, 'error').mockImplementation(() => {});
 
+function sseResponse(chunks: string[], ok = true, status = 200) {
+  return {
+    ok,
+    status,
+    body: new ReadableStream({
+      start(controller) {
+        for (const chunk of chunks) {
+          controller.enqueue(new TextEncoder().encode(chunk));
+        }
+        controller.close();
+      }
+    })
+  } as any;
+}
+
 describe('interpreterClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset config to defaults so per-test mutations do not leak
+    (llmConfig as any).interpHost = 'localhost';
+    (llmConfig as any).interpPort = 8000;
+    (llmConfig as any).interpOffline = true;
+    (llmConfig as any).interpVerbose = false;
   });
 
-  describe('streamChatWithInterpreter', () => {
-    it('should stream chat responses successfully', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('data: {"content": "Hello"}\n\n'));
-            controller.enqueue(new TextEncoder().encode('data: {"content": " World"}\n\n'));
-            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
+  describe('interpreterChatStream', () => {
+    it('should issue a GET SSE request to the interpreter /chat endpoint', async () => {
+      mockFetch.mockResolvedValue(sseResponse([]));
 
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
+      await interpreterChatStream('hello world');
 
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url, opts] = mockFetch.mock.calls[0];
+      expect(String(url)).toBe(
+        'http://localhost:8000/chat?message=hello+world&offline=true&verbose=false'
       );
-
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages })
+      expect(opts).toEqual({
+        method: 'GET',
+        headers: { Accept: 'text/event-stream' }
       });
-
-      expect(onChunk).toHaveBeenCalledWith({ content: 'Hello' });
-      expect(onChunk).toHaveBeenCalledWith({ content: ' World' });
-      expect(onComplete).toHaveBeenCalled();
-      expect(onError).not.toHaveBeenCalled();
     });
 
-    it('should handle network errors', async () => {
+    it('should reflect llmConfig host, port and flags in the request URL', async () => {
+      (llmConfig as any).interpHost = '10.0.0.5';
+      (llmConfig as any).interpPort = 9001;
+      (llmConfig as any).interpOffline = false;
+      (llmConfig as any).interpVerbose = true;
+      mockFetch.mockResolvedValue(sseResponse([]));
+
+      await interpreterChatStream('hi');
+
+      expect(String(mockFetch.mock.calls[0][0])).toBe(
+        'http://10.0.0.5:9001/chat?message=hi&offline=false&verbose=true'
+      );
+    });
+
+    it('should URL-encode special characters in the message', async () => {
+      mockFetch.mockResolvedValue(sseResponse([]));
+
+      await interpreterChatStream('a&b=c?');
+
+      const url = new URL(String(mockFetch.mock.calls[0][0]));
+      expect(url.searchParams.get('message')).toBe('a&b=c?');
+    });
+
+    it('should return the raw fetch response', async () => {
+      const res = sseResponse([]);
+      mockFetch.mockResolvedValue(res);
+
+      await expect(interpreterChatStream('x')).resolves.toBe(res);
+    });
+
+    it('should propagate network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onError).toHaveBeenCalledWith('Network error');
-      expect(onChunk).not.toHaveBeenCalled();
-      expect(onComplete).not.toHaveBeenCalled();
-    });
-
-    it('should handle HTTP error responses', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 500,
-        statusText: 'Internal Server Error'
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onError).toHaveBeenCalledWith('HTTP error! status: 500');
-      expect(onChunk).not.toHaveBeenCalled();
-      expect(onComplete).not.toHaveBeenCalled();
-    });
-
-    it('should handle malformed JSON in stream', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('data: {invalid json}\n\n'));
-            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onError).toHaveBeenCalledWith(expect.stringContaining('Failed to parse JSON'));
-      expect(onComplete).not.toHaveBeenCalled();
-    });
-
-    it('should handle empty stream', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onComplete).toHaveBeenCalled();
-      expect(onChunk).not.toHaveBeenCalled();
-      expect(onError).not.toHaveBeenCalled();
-    });
-
-    it('should handle stream reading errors', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.error(new Error('Stream read error'));
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onError).toHaveBeenCalledWith('Stream read error');
-      expect(onComplete).not.toHaveBeenCalled();
-    });
-
-    it('should handle multiple data chunks in single read', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode(
-              'data: {"content": "First"}\n\ndata: {"content": "Second"}\n\ndata: [DONE]\n\n'
-            ));
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onChunk).toHaveBeenCalledWith({ content: 'First' });
-      expect(onChunk).toHaveBeenCalledWith({ content: 'Second' });
-      expect(onComplete).toHaveBeenCalled();
-      expect(onError).not.toHaveBeenCalled();
-    });
-
-    it('should handle custom base URL with trailing slash', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000/',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat/stream', expect.any(Object));
+      await expect(interpreterChatStream('x')).rejects.toThrow('Network error');
     });
   });
 
-  describe('chatWithInterpreter', () => {
-    it('should return chat response successfully', async () => {
-      const mockResponse = {
-        ok: true,
-        json: jest.fn().mockResolvedValue({
-          message: { content: 'Hello from interpreter' },
-          usage: { tokens: 10 }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
+  describe('interpreterChatOnce', () => {
+    it('should accumulate data: lines and skip the [DONE] sentinel', async () => {
+      mockFetch.mockResolvedValue(sseResponse([
+        'data: Hello\n',
+        'data: World\n',
+        'data: [DONE]\n'
+      ]));
 
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const result = await chatWithInterpreter('http://localhost:8000', messages);
+      const result = await interpreterChatOnce('greet me');
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages })
-      });
-
-      expect(result).toEqual({
-        message: { content: 'Hello from interpreter' },
-        usage: { tokens: 10 }
-      });
+      expect(result).toBe('HelloWorld');
     });
 
-    it('should handle network errors', async () => {
+    it('should handle multiple data lines within a single chunk', async () => {
+      mockFetch.mockResolvedValue(sseResponse([
+        'data: First\ndata: Second\n\ndata: [DONE]\n'
+      ]));
+
+      const result = await interpreterChatOnce('hello');
+
+      expect(result).toBe('FirstSecond');
+    });
+
+    it('should ignore non-data SSE lines', async () => {
+      mockFetch.mockResolvedValue(sseResponse([
+        ': heartbeat comment\n',
+        'event: message\n',
+        'data: Payload\n'
+      ]));
+
+      const result = await interpreterChatOnce('hello');
+
+      expect(result).toBe('Payload');
+    });
+
+    it('should return an empty string for an empty stream', async () => {
+      mockFetch.mockResolvedValue(sseResponse([]));
+
+      const result = await interpreterChatOnce('hello');
+
+      expect(result).toBe('');
+    });
+
+    it('should throw on HTTP error responses', async () => {
+      mockFetch.mockResolvedValue({ ok: false, status: 500, body: null } as any);
+
+      await expect(interpreterChatOnce('hello')).rejects.toThrow('Interpreter error 500');
+    });
+
+    it('should throw when the response has no body', async () => {
+      mockFetch.mockResolvedValue({ ok: true, status: 200, body: null } as any);
+
+      await expect(interpreterChatOnce('hello')).rejects.toThrow('Interpreter error 200');
+    });
+
+    it('should propagate network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      const messages = [{ role: 'user', content: 'Hello' }];
-      
-      await expect(chatWithInterpreter('http://localhost:8000', messages))
-        .rejects.toThrow('Network error');
-    });
-
-    it('should handle HTTP error responses', async () => {
-      const mockResponse = {
-        ok: false,
-        status: 404,
-        statusText: 'Not Found'
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      
-      await expect(chatWithInterpreter('http://localhost:8000', messages))
-        .rejects.toThrow('HTTP error! status: 404');
-    });
-
-    it('should handle JSON parsing errors', async () => {
-      const mockResponse = {
-        ok: true,
-        json: jest.fn().mockRejectedValue(new Error('Invalid JSON'))
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      
-      await expect(chatWithInterpreter('http://localhost:8000', messages))
-        .rejects.toThrow('Invalid JSON');
-    });
-
-    it('should handle empty messages array', async () => {
-      const mockResponse = {
-        ok: true,
-        json: jest.fn().mockResolvedValue({ message: { content: 'Empty response' } })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const result = await chatWithInterpreter('http://localhost:8000', []);
-
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: [] })
-      });
-
-      expect(result).toEqual({ message: { content: 'Empty response' } });
-    });
-
-    it('should handle custom base URL with trailing slash', async () => {
-      const mockResponse = {
-        ok: true,
-        json: jest.fn().mockResolvedValue({ message: { content: 'Response' } })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      await chatWithInterpreter('http://localhost:8000/', messages);
-
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat', expect.any(Object));
-    });
-
-    it('should handle complex message structures', async () => {
-      const mockResponse = {
-        ok: true,
-        json: jest.fn().mockResolvedValue({ message: { content: 'Complex response' } })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const complexMessages = [
-        { role: 'system', content: 'You are a helpful assistant' },
-        { role: 'user', content: 'Hello' },
-        { role: 'assistant', content: 'Hi there!' },
-        { role: 'user', content: 'How are you?' }
-      ];
-
-      const result = await chatWithInterpreter('http://localhost:8000', complexMessages);
-
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: complexMessages })
-      });
-
-      expect(result).toEqual({ message: { content: 'Complex response' } });
-    });
-  });
-
-  describe('integration scenarios', () => {
-    it('should handle timeout scenarios', async () => {
-      // Simulate a timeout by never resolving the fetch promise
-      mockFetch.mockImplementation(() => new Promise(() => {}));
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      // Set a short timeout for testing
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout')), 100);
-      });
-
-      await expect(Promise.race([
-        streamChatWithInterpreter('http://localhost:8000', messages, onChunk, onError, onComplete),
-        timeoutPromise
-      ])).rejects.toThrow('Timeout');
-    });
-
-    it('should handle different content types in responses', async () => {
-      const mockResponse = {
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('data: {"type": "text", "content": "Hello"}\n\n'));
-            controller.enqueue(new TextEncoder().encode('data: {"type": "code", "content": "console.log()"}\n\n'));
-            controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-            controller.close();
-          }
-        })
-      };
-      mockFetch.mockResolvedValue(mockResponse as any);
-
-      const messages = [{ role: 'user', content: 'Hello' }];
-      const onChunk = jest.fn();
-      const onError = jest.fn();
-      const onComplete = jest.fn();
-
-      await streamChatWithInterpreter(
-        'http://localhost:8000',
-        messages,
-        onChunk,
-        onError,
-        onComplete
-      );
-
-      expect(onChunk).toHaveBeenCalledWith({ type: 'text', content: 'Hello' });
-      expect(onChunk).toHaveBeenCalledWith({ type: 'code', content: 'console.log()' });
-      expect(onComplete).toHaveBeenCalled();
+      await expect(interpreterChatOnce('hello')).rejects.toThrow('Network error');
     });
   });
 });

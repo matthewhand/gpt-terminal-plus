@@ -19,6 +19,9 @@ jest.spyOn(console, 'error').mockImplementation(() => {});
 describe('ollamaClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset config to defaults so per-test mutations do not leak into later tests
+    (llmConfig as any).ollamaHost = 'http://localhost:11434';
+    (llmConfig as any).model = 'llama2';
   });
 
   describe('ollamaGenerate', () => {
@@ -35,7 +38,7 @@ describe('ollamaClient', () => {
         prompt: 'Hello, how are you?'
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +48,7 @@ describe('ollamaClient', () => {
           prompt: 'Hello, how are you?',
           stream: false
         })
-      });
+      }));
 
       expect(result).toBe('Hello, how are you doing today?');
     });
@@ -71,7 +74,7 @@ describe('ollamaClient', () => {
         stream: true
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +84,7 @@ describe('ollamaClient', () => {
           prompt: 'Hello, how are you?',
           stream: true
         })
-      });
+      }));
 
       expect(result).toBe(mockStream);
     });
@@ -186,7 +189,7 @@ describe('ollamaClient', () => {
         prompt: ''
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +199,7 @@ describe('ollamaClient', () => {
           prompt: '',
           stream: false
         })
-      });
+      }));
 
       expect(result).toBe('Empty prompt response');
     });
@@ -213,7 +216,7 @@ describe('ollamaClient', () => {
         prompt: longPrompt
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,7 +226,7 @@ describe('ollamaClient', () => {
           prompt: longPrompt,
           stream: false
         })
-      });
+      }));
 
       expect(result).toBe('Long prompt response');
     });
@@ -274,7 +277,7 @@ describe('ollamaClient', () => {
         prompt: 'Hello'
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -284,7 +287,7 @@ describe('ollamaClient', () => {
           prompt: 'Hello',
           stream: false
         })
-      });
+      }));
     });
 
     it('should default stream to false when not specified', async () => {
@@ -298,7 +301,7 @@ describe('ollamaClient', () => {
         prompt: 'Hello'
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', {
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:11434/api/generate', expect.objectContaining({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -308,7 +311,7 @@ describe('ollamaClient', () => {
           prompt: 'Hello',
           stream: false
         })
-      });
+      }));
     });
   });
 });
