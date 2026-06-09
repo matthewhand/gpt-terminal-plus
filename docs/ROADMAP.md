@@ -19,15 +19,15 @@ Progress counts reflect the state of `src/` on branch `fix/listfiles-types-defau
 - [ ] Unmounted command route files (written but unreachable in prod)
   - [ ] `changeDirectory.ts` — only invoked via MCP wrapper
   - [ ] `executeFile.ts` — slated for deprecation (delegate to shell) — decide and delete or mount
-  - [ ] `executeSession.ts`
+  - [x] `executeSession.ts` — removed in dead-code cleanup (was unreferenced; session design lives in `docs/SESSION_MODE.md`)
   - [ ] `executeShell.ts` (the standalone route file; prod uses `executeCommand` under the `/command/execute-shell` path)
-- [ ] Shell sessions (0/5 endpoints — all return 501, router not mounted)
+- [ ] Shell sessions (0/5 endpoints implemented — router IS mounted at `/shell/session`, auth-gated, all return 501 to match the OpenAPI spec)
   - [ ] `POST /shell/session/start`
   - [ ] `POST /shell/session/:id/exec`
   - [ ] `POST /shell/session/:id/stop`
   - [ ] `GET /shell/session/list`
   - [ ] `GET /shell/session/:id/logs`
-  - [ ] Mount `src/routes/shell/` in `setupApiRouter` once implemented (`src/routes/shell/index.ts` currently says "Temporarily disable shell routes to fix build")
+  - [x] Mount `src/routes/shell/session.ts` in `setupApiRouter` (dead wrapper `src/routes/shell/index.ts` removed; stubs return 501 until implemented)
   - [ ] Persistent PTY/process backing store (nothing exists yet; `src/session/` is scaffolding)
 - [x] AI error analysis on failure — `analyzeError` attaches `aiAnalysis` to failed exec responses
   - [ ] Make `errorAdvisor` a silent no-op when LLM is disabled (currently always attempts analysis)

@@ -9,6 +9,7 @@ import { executeCode } from './command/executeCode';
 
 import { executeLlm } from './command/executeLlm';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+import { logMode } from '../middleware/logMode';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
@@ -18,6 +19,7 @@ import settingsRoutes from './settingsRoutes';
 import activityRoutes from './activityRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
 import publicRouter from './publicRouter';
+import shellSessionRoutes from './shell/session';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -34,6 +36,10 @@ try {
 /** Named export expected by tests */
 export function setupApiRouter(app: express.Application): void {
   const isTest = process.env.NODE_ENV === 'test';
+
+  // Mode logging middleware (documented in docs/AGENTS.md) — logs which
+  // command/file mode each incoming request targets.
+  app.use(logMode);
 
   // ----- Command endpoints -----
   if (isTest) {
@@ -62,6 +68,10 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/llm', llmConsoleRoutes);
   // public, unauthenticated endpoints (/health)
   app.use(publicRouter);
+  // persistent shell sessions: documented in the OpenAPI spec with 501
+  // responses; handlers are auth-gated stubs until Session Mode lands
+  // (see docs/SESSION_MODE.md and docs/ROADMAP.md)
+  app.use('/shell/session', shellSessionRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);
