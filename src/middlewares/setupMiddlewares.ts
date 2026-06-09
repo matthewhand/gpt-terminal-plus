@@ -14,6 +14,14 @@ const debug = Debug('app:setupMiddlewares');
 const setupMiddlewares = (app: express.Application): void => {
   debug('Setting up middlewares, with conditional /health logging suppression...');
 
+  // Minimal helmet-equivalent security headers (no extra dependency)
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+  });
+
   // HTTP request logging with optional /health suppression
   const httpLogger = morgan('combined');
   app.use((req, res, next) => {

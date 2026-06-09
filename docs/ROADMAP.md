@@ -108,15 +108,15 @@ Status: implemented Feb 2025, now outdated and non-functional in practice. Track
 
 - [x] Bearer token auth middleware (`checkAuthToken`) — `API_TOKEN` env or auto-generated at boot (printed to console)
 - [x] Token protection on `/server`, `/file`, `/settings`, `/activity`, `/llm` route groups
-- [ ] **Gap: prod `/command/*` endpoints are mounted without `checkAuthToken`** (`setupApiRouter` non-test branch) — highest-priority security fix
-- [ ] **Gap: `/chat/*` routes have no auth middleware**
+- [x] `/command/*` endpoints bearer-token protected in both prod and test mounts (`checkAuthToken` at the `/command` mount in `setupApiRouter`)
+- [x] `/chat/*` routes bearer-token protected (`checkAuthToken` at the `/chat` mount)
 - [x] Shell allowlist (`SHELL_ALLOWED`) with safe defaults; shell-escape on args
 - [x] CORS configurable via `CORS_ORIGIN` (defaults applied in `setupMiddlewares`)
 - [x] Health endpoint exempt from auth (`/health` via `publicRouter`)
 - [ ] Rate limiting (none)
 - [ ] Output redaction for secrets in command results / activity logs
 - [ ] Command allow/deny policy beyond shell selection (`/setup/policy` exists; enforcement audit needed)
-- [ ] Helmet / standard security headers
+- [x] Standard security headers (minimal helmet-equivalent in `setupMiddlewares`: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` — no new dependency)
 - [ ] Docs: threat model + token rotation guidance (`docs/ADMIN_SECURITY.md` exists; needs refresh against the gaps above)
 
 ## Packaging / deployment

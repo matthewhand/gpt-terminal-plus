@@ -49,13 +49,13 @@ describe('execute (shell) smoke', () => {
     expect(res.body?.aiAnalysis).toBeDefined();
   });
 
-  it('works without auth in test mode', async () => {
+  it('rejects requests without auth token', async () => {
     const res = await request(app)
       .post('/command/execute-shell')
       .send({ command: 'echo test' });
 
-    expect(res.status).toBe(200);
-    expect(res.body?.result?.stdout?.trim()).toBe('test');
+    expect(res.status).toBe(401);
+    expect(res.body?.error).toBe('Unauthorized');
   });
 
   it('validates command parameter', async () => {

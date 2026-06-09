@@ -9,6 +9,7 @@ import { executeCode } from './command/executeCode';
 
 import { executeLlm } from './command/executeLlm';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { logMode } from '../middleware/logMode';
 
 /** --- Shared route groups (present in repo) --- */
@@ -41,25 +42,26 @@ export function setupApiRouter(app: express.Application): void {
   // command/file mode each incoming request targets.
   app.use(logMode);
 
-  // ----- Command endpoints -----
+  // ----- Command endpoints (bearer-token protected in all modes) -----
   if (isTest) {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
-    app.use('/command', testCommandRouter);
+    app.use('/command', checkAuthToken as any, testCommandRouter);
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
-    cmd.post('/command/execute-shell', initializeServerHandler, executeCommand);
-    cmd.post('/command/execute-code', initializeServerHandler, executeCode);
-    cmd.post('/command/execute-llm', initializeServerHandler, executeLlm);
-    app.use(cmd);
+    cmd.post('/execute-shell', initializeServerHandler, executeCommand);
+    cmd.post('/execute-code', initializeServerHandler, executeCode);
+    cmd.post('/execute-llm', initializeServerHandler, executeLlm);
+    app.use('/command', checkAuthToken as any, cmd);
   }
 
   // ----- Other groups with correct prefixes -----
   app.use('/server', serverRoutes);
   app.use('/file', fileRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
-  app.use('/chat', chatRoutes);
+  // (bearer-token protected like the other API groups)
+  app.use('/chat', checkAuthToken as any, chatRoutes);
   // settings (redacted view), protected by bearer token
   app.use('/settings', settingsRoutes);
   // activity log browsing (list + session detail), protected by bearer token

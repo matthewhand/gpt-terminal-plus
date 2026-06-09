@@ -61,6 +61,7 @@ describe('Diff & Patch Integration Tests', () => {
     // Step 1: Get diff for existing file
     const diffResponse = await request(app)
       .post('/command/diff')
+      .set('Authorization', `Bearer ${token}`)
       .send({ filePath: testFile })
       .expect(200);
 
@@ -79,6 +80,7 @@ describe('Diff & Patch Integration Tests', () => {
 
     const patchResponse = await request(app)
       .post('/command/patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ 
         filePath: testFile,
         patch: validPatch
@@ -94,6 +96,7 @@ describe('Diff & Patch Integration Tests', () => {
 
     const response = await request(app)
       .post('/command/patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ 
         filePath: testFile,
         patch: invalidPatch
@@ -109,6 +112,7 @@ describe('Diff & Patch Integration Tests', () => {
   it('should return proper JSON structure for diff endpoint', async () => {
     const response = await request(app)
       .post('/command/diff')
+      .set('Authorization', `Bearer ${token}`)
       .send({ filePath: testFile })
       .expect(200);
 
@@ -123,6 +127,7 @@ describe('Diff & Patch Integration Tests', () => {
 
     const response = await request(app)
       .post('/command/patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ 
         filePath: testFile,
         patch: patch
@@ -140,6 +145,7 @@ describe('Diff & Patch Integration Tests', () => {
 
     const response = await request(app)
       .post('/command/patch')
+      .set('Authorization', `Bearer ${token}`)
       .send({ 
         filePath: testFile,
         patch: invalidPatch
@@ -170,6 +176,7 @@ describe('Diff & Patch Integration Tests', () => {
       const promises = files.map(file => 
         request(app)
           .post('/command/diff')
+      .set('Authorization', `Bearer ${token}`)
           .send({ filePath: file })
       );
 
