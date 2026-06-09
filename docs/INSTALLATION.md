@@ -99,7 +99,7 @@ Refer to the troubleshooting section in the [Fly.io Documentation](https://fly.i
 
 2. **Create a `.env` file**:
     ```sh
-    cp .env.example .env
+    cp .env.sample .env
     ```
 
 3. **Configure environment variables** in the `.env` file.

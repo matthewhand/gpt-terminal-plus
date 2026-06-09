@@ -1,7 +1,7 @@
 {
   "name": "gpt-terminal-plus",
-  "version": "latest",
-  "description": "ChatGPT terminal action for Custom GPT",
+  "version": "1.0.0-rc.1",
+  "description": "Self-hosted terminal and agent API server: shell, code, and LLM-assisted execution over local, SSH, and AWS SSM targets. Usable as a ChatGPT Custom GPT action or as an MCP server for agentic frameworks.",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
@@ -26,8 +26,30 @@
     "postbuild": "npm run openapi:generate",
     "prestart": "npm run openapi:generate"
   },
-  "keywords": [],
-  "author": "matthewhand+dot+au+at+gmail+dot+com",
+  "keywords": [
+    "terminal",
+    "shell",
+    "agent",
+    "ai",
+    "llm",
+    "chatgpt",
+    "custom-gpt",
+    "mcp",
+    "model-context-protocol",
+    "ssh",
+    "aws-ssm",
+    "remote-execution",
+    "code-execution",
+    "openapi",
+    "express",
+    "typescript",
+    "ollama",
+    "lm-studio",
+    "openai",
+    "devops",
+    "automation"
+  ],
+  "author": "Matthew Hand",
   "license": "MIT",
   "devDependencies": {
     "@eslint/eslintrc": "^3.1.0",
