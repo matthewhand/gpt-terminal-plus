@@ -249,4 +249,238 @@ paths:
                       openai.apiKey:
                         value: "*****"
                         readOnly: true
+  /activity/list:
+    get:
+      operationId: activityList
+      summary: List recent activity sessions
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: date
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format (defaults to recent days)
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 50
+          description: Limit number of sessions returned
+        - in: query
+          name: type
+          required: false
+          schema:
+            type: string
+          description: Filter by execution type
+      responses:
+        "200":
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sessions:
+                        type: array
+                        items:
+                          type: object
+  /activity/session/{date}/{id}:
+    get:
+      operationId: activitySession
+      summary: Fetch a full activity session
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date in YYYY-MM-DD format
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Session ID
+      responses:
+        "200":
+          description: Session retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      meta:
+                        type: object
+                      steps:
+                        type: array
+                        items:
+                          type: object
+        "404":
+          description: Session not found
+  /shell/session/start:
+    post:
+      operationId: shellSessionStart
+      summary: Start a new persistent shell session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shell:
+                  type: string
+                  description: The shell to use (e.g., "bash", "powershell")
+                env:
+                  type: object
+                  description: Environment variables for the session
+      responses:
+        "200":
+          description: Session started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  startedAt:
+                    type: string
+                    format: date-time
+        "501":
+          description: Not implemented
+  /shell/session/{id}/exec:
+    post:
+      operationId: shellSessionExec
+      summary: Execute command inside existing session
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+              required:
+                - command
+      responses:
+        "200":
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionResult"
+        "501":
+          description: Not implemented
+  /shell/session/{id}/stop:
+    post:
+      operationId: shellSessionStop
+      summary: Stop a persistent shell session
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the session
+      responses:
+        "200":
+          description: Session stopped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        "501":
+          description: Not implemented
+  /shell/session/list:
+    get:
+      operationId: shellSessionList
+      summary: List active shell sessions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of active sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+        "501":
+          description: Not implemented
+  /shell/session/{id}/logs:
+    get:
+      operationId: shellSessionLogs
+      summary: Fetch logs from a shell session
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the session
+        - in: query
+          name: since
+          required: false
+          schema:
+            type: string
+          description: Cursor/timestamp to fetch logs from
+      responses:
+        "200":
+          description: Session logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      type: object
+        "501":
+          description: Not implemented
 tags: []
