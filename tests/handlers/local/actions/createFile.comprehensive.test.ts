@@ -156,7 +156,8 @@ describe('createFile Action', () => {
 
       const result = await createFile('/test/file.txt', 'new content', false);
 
-      expect(mockFs.existsSync).toHaveBeenCalledWith('/test/file.txt');
+      // backup=false short-circuits before existsSync is consulted
+      expect(mockFs.existsSync).not.toHaveBeenCalled();
       expect(mockFs.promises.copyFile).not.toHaveBeenCalled();
       expect(mockFs.promises.writeFile).toHaveBeenCalledWith('/test/file.txt', 'new content');
       expect(result).toBe(true);
@@ -290,7 +291,8 @@ describe('createFile Action', () => {
 
       const result = await createFile('/var/log/app.log', 'Log entry', false);
 
-      expect(mockFs.existsSync).toHaveBeenCalledWith('/var/log/app.log');
+      // backup=false short-circuits before existsSync is consulted
+      expect(mockFs.existsSync).not.toHaveBeenCalled();
       expect(mockFs.promises.copyFile).not.toHaveBeenCalled();
       expect(mockFs.promises.writeFile).toHaveBeenCalledWith('/var/log/app.log', 'Log entry');
       expect(result).toBe(true);

@@ -86,6 +86,18 @@ export class SsmServerHandler extends AbstractServerHandler {
     }
 
     /**
+     * Retrieves the content of a file on the SSM server.
+     */
+    async getFileContent(filePath: string): Promise<string> {
+        ssmServerDebug(`Getting file content from SSM server: ${filePath}`);
+        const result = await this.executeCommand(`cat ${filePath}`);
+        if (result.error) {
+            throw new Error(result.stderr || 'Failed to get file content');
+        }
+        return result.stdout;
+    }
+
+    /**
      * Retrieves system information for the SSM server.
      */
     async getSystemInfo(): Promise<SystemInfo> {

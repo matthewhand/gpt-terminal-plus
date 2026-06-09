@@ -7,6 +7,8 @@ import { ExecutionResult } from '../../types/ExecutionResult';
 import { PaginatedResponse } from '../../types/PaginatedResponse';
 import listFilesAction from './actions/listFiles';
 import { ListParams } from '../../types/ListParams';
+import { promises as fsp } from 'fs';
+import path from 'path';
 import { exec } from 'child_process';
 import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
 import Debug from 'debug';
@@ -107,6 +109,17 @@ export class LocalServerHandler extends AbstractServerHandler {
         const result = await createLocalFile(filePath, content, backup);
         await this.runPostCommand(filePath);
         return result;
+    }
+
+    /**
+     * Retrieves the content of a file on the local server.
+     */
+    async getFileContent(filePath: string): Promise<string> {
+        if (!filePath || typeof filePath !== 'string') {
+            throw new Error('filePath is required');
+        }
+        const absPath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
+        return fsp.readFile(absPath, 'utf8');
     }
 
     /**

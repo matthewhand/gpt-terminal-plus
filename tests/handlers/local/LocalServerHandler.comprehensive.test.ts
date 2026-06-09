@@ -3,21 +3,24 @@ import { LocalServerConfig } from '../../../src/types/ServerConfig';
 import * as executeCode from '../../../src/handlers/local/actions/executeCode';
 import * as createFile from '../../../src/handlers/local/actions/createFile';
 import * as GlobalStateHelper from '../../../src/utils/GlobalStateHelper';
-import { readdir } from 'fs/promises';
+import listFilesAction from '../../../src/handlers/local/actions/listFiles';
 import { exec } from 'child_process';
 
 // Mock dependencies
 jest.mock('../../../src/handlers/local/actions/executeCode');
 jest.mock('../../../src/handlers/local/actions/createFile');
 jest.mock('../../../src/utils/GlobalStateHelper');
-jest.mock('fs/promises');
+jest.mock('../../../src/handlers/local/actions/listFiles', () => ({
+  __esModule: true,
+  default: jest.fn()
+}));
 jest.mock('child_process');
 
 const mockExecuteCode = executeCode as jest.Mocked<typeof executeCode>;
 const mockCreateFile = createFile as jest.Mocked<typeof createFile>;
 const mockGlobalStateHelper = GlobalStateHelper as jest.Mocked<typeof GlobalStateHelper>;
-const mockReaddir = readdir as jest.MockedFunction<typeof readdir>;
-const mockExec = exec as jest.MockedFunction<typeof exec>;
+const mockListFiles = listFilesAction as jest.MockedFunction<typeof listFilesAction>;
+const mockExec = exec as unknown as jest.Mock;
 
 describe('LocalServerHandler', () => {
   let localHandler: LocalServerHandler;
@@ -43,7 +46,8 @@ describe('LocalServerHandler', () => {
     it('should initialize with default values', () => {
       const minimalConfig: LocalServerConfig = {
         protocol: 'local',
-        hostname: 'test-host'
+        hostname: 'test-host',
+        code: false
       };
 
       const handler = new LocalServerHandler(minimalConfig);
@@ -78,7 +82,7 @@ describe('LocalServerHandler', () => {
       const configWithoutCode: LocalServerConfig = {
         protocol: 'local',
         hostname: 'localhost'
-      };
+      } as LocalServerConfig;
 
       const handler = new LocalServerHandler(configWithoutCode);
 
@@ -89,10 +93,8 @@ describe('LocalServerHandler', () => {
   describe('executeCommand', () => {
     it('should execute command with default parameters', async () => {
       const mockResult = {
-        success: true,
-        output: 'command output',
-        error: '',
-        exitCode: 0
+        stdout: 'command output',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -110,10 +112,8 @@ describe('LocalServerHandler', () => {
 
     it('should execute command with custom timeout', async () => {
       const mockResult = {
-        success: true,
-        output: 'command output',
-        error: '',
-        exitCode: 0
+        stdout: 'command output',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -131,10 +131,8 @@ describe('LocalServerHandler', () => {
 
     it('should execute command with custom directory', async () => {
       const mockResult = {
-        success: true,
-        output: 'directory listing',
-        error: '',
-        exitCode: 0
+        stdout: 'directory listing',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -152,10 +150,8 @@ describe('LocalServerHandler', () => {
 
     it('should execute command with all parameters', async () => {
       const mockResult = {
-        success: true,
-        output: 'full command output',
-        error: '',
-        exitCode: 0
+        stdout: 'full command output',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -183,10 +179,8 @@ describe('LocalServerHandler', () => {
   describe('executeCode', () => {
     it('should execute code with default parameters', async () => {
       const mockResult = {
-        success: true,
-        output: 'Hello World',
-        error: '',
-        exitCode: 0
+        stdout: 'Hello World',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -204,10 +198,8 @@ describe('LocalServerHandler', () => {
 
     it('should execute code with custom timeout and directory', async () => {
       const mockResult = {
-        success: true,
-        output: 'Code executed',
-        error: '',
-        exitCode: 0
+        stdout: 'Code executed',
+        stderr: ''
       };
 
       mockExecuteCode.executeLocalCode.mockResolvedValue(mockResult);
@@ -307,24 +299,36 @@ describe('LocalServerHandler', () => {
   });
 
   describe('listFiles', () => {
-    it('should list files with default parameters', async () => {
-      const mockFiles = ['file1.txt', 'file2.js', 'file3.py'];
-      mockReaddir.mockResolvedValue(mockFiles as any);
+    it('should list files with default parameters (limit 50, offset 0)', async () => {
+      const mockFiles = [
+        { name: 'file1.txt', isDirectory: false },
+        { name: 'file2.js', isDirectory: false },
+        { name: 'subdir', isDirectory: true }
+      ];
+      mockListFiles.mockResolvedValue({ files: mockFiles, total: 3 });
 
       const result = await localHandler.listFiles({ directory: '/test/dir' });
 
-      expect(mockReaddir).toHaveBeenCalledWith('/test/dir');
+      expect(mockListFiles).toHaveBeenCalledWith({
+        directory: '/test/dir',
+        limit: 50,
+        offset: 0,
+        orderBy: undefined
+      });
       expect(result).toEqual({
         items: mockFiles,
         total: 3,
-        limit: 10,
+        limit: 50,
         offset: 0
       });
     });
 
     it('should list files with custom limit and offset', async () => {
-      const mockFiles = ['a.txt', 'b.txt', 'c.txt', 'd.txt', 'e.txt'];
-      mockReaddir.mockResolvedValue(mockFiles as any);
+      const mockFiles = [
+        { name: 'b.txt', isDirectory: false },
+        { name: 'c.txt', isDirectory: false }
+      ];
+      mockListFiles.mockResolvedValue({ files: mockFiles, total: 5 });
 
       const result = await localHandler.listFiles({
         directory: '/test/dir',
@@ -332,8 +336,14 @@ describe('LocalServerHandler', () => {
         offset: 1
       });
 
+      expect(mockListFiles).toHaveBeenCalledWith({
+        directory: '/test/dir',
+        limit: 2,
+        offset: 1,
+        orderBy: undefined
+      });
       expect(result).toEqual({
-        items: ['b.txt', 'c.txt'],
+        items: mockFiles,
         total: 5,
         limit: 2,
         offset: 1
@@ -341,51 +351,44 @@ describe('LocalServerHandler', () => {
     });
 
     it('should handle empty directory', async () => {
-      mockReaddir.mockResolvedValue([] as any);
+      mockListFiles.mockResolvedValue({ files: [], total: 0 });
 
       const result = await localHandler.listFiles({ directory: '/empty/dir' });
 
       expect(result).toEqual({
         items: [],
         total: 0,
-        limit: 10,
+        limit: 50,
         offset: 0
       });
     });
 
     it('should handle directory read errors', async () => {
       const mockError = new Error('Permission denied');
-      mockReaddir.mockRejectedValue(mockError);
+      mockListFiles.mockRejectedValue(mockError);
 
       await expect(localHandler.listFiles({ directory: '/forbidden/dir' }))
         .rejects.toThrow('Failed to list files: Permission denied');
     });
 
-    it('should sort files alphabetically', async () => {
-      const mockFiles = ['z.txt', 'a.txt', 'm.txt'];
-      mockReaddir.mockResolvedValue(mockFiles as any);
-
-      const result = await localHandler.listFiles({ directory: '/test/dir' });
-
-      expect(result.items).toEqual(['a.txt', 'm.txt', 'z.txt']);
-    });
-
-    it('should handle pagination correctly', async () => {
-      const mockFiles = Array.from({ length: 25 }, (_, i) => `file${i}.txt`);
-      mockReaddir.mockResolvedValue(mockFiles as any);
+    it('should pass orderBy through to the listFiles action', async () => {
+      mockListFiles.mockResolvedValue({
+        files: [{ name: 'newest.txt', isDirectory: false }],
+        total: 1
+      });
 
       const result = await localHandler.listFiles({
         directory: '/test/dir',
-        limit: 5,
-        offset: 10
+        orderBy: 'datetime'
       });
 
-      expect(result).toEqual({
-        items: ['file10.txt', 'file11.txt', 'file12.txt', 'file13.txt', 'file14.txt'],
-        total: 25,
-        limit: 5,
-        offset: 10
+      expect(mockListFiles).toHaveBeenCalledWith({
+        directory: '/test/dir',
+        limit: 50,
+        offset: 0,
+        orderBy: 'datetime'
       });
+      expect(result.items).toEqual([{ name: 'newest.txt', isDirectory: false }]);
     });
   });
 
@@ -393,7 +396,8 @@ describe('LocalServerHandler', () => {
     it('should create file without post-command', async () => {
       const handlerWithoutPostCommand = new LocalServerHandler({
         protocol: 'local',
-        hostname: 'localhost'
+        hostname: 'localhost',
+        code: false
       });
 
       mockCreateFile.createFile.mockResolvedValue(true);
@@ -520,12 +524,13 @@ describe('LocalServerHandler', () => {
       // Setup mocks for a complete workflow
       mockCreateFile.createFile.mockResolvedValue(true);
       mockExecuteCode.executeLocalCode.mockResolvedValue({
-        success: true,
-        output: 'Workflow completed',
-        error: '',
-        exitCode: 0
+        stdout: 'Workflow completed',
+        stderr: ''
       });
-      mockReaddir.mockResolvedValue(['workflow.txt'] as any);
+      mockListFiles.mockResolvedValue({
+        files: [{ name: 'workflow.txt', isDirectory: false }],
+        total: 1
+      });
 
       // Create file
       const createResult = await localHandler.createFile('/test/workflow.txt', 'workflow content');
@@ -533,11 +538,11 @@ describe('LocalServerHandler', () => {
 
       // Execute command
       const execResult = await localHandler.executeCommand('cat /test/workflow.txt');
-      expect(execResult.success).toBe(true);
+      expect(execResult.stdout).toBe('Workflow completed');
 
       // List files
       const listResult = await localHandler.listFiles({ directory: '/test' });
-      expect(listResult.items).toContain('workflow.txt');
+      expect(listResult.items).toContainEqual({ name: 'workflow.txt', isDirectory: false });
 
       // Get system info
       const sysInfo = await localHandler.getSystemInfo();
@@ -548,7 +553,7 @@ describe('LocalServerHandler', () => {
       // Test error handling across different methods
       mockCreateFile.createFile.mockRejectedValue(new Error('Create failed'));
       mockExecuteCode.executeLocalCode.mockRejectedValue(new Error('Execute failed'));
-      mockReaddir.mockRejectedValue(new Error('List failed'));
+      mockListFiles.mockRejectedValue(new Error('List failed'));
 
       await expect(localHandler.createFile('/test/file.txt', 'content'))
         .rejects.toThrow('Create failed');

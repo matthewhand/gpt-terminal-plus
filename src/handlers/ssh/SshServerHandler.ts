@@ -95,6 +95,18 @@ export class SshServerHandler extends AbstractServerHandler {
     }
 
     /**
+     * Retrieves the content of a file on the SSH server.
+     */
+    async getFileContent(filePath: string): Promise<string> {
+        sshServerDebug(`Getting file content from SSH server: ${filePath}`);
+        const result = await this.executeCommand(`cat ${filePath}`);
+        if (result.error) {
+            throw new Error(result.stderr || 'Failed to get file content');
+        }
+        return result.stdout;
+    }
+
+    /**
      * Retrieves system information for the SSH server.
      */
     async getSystemInfo(): Promise<SystemInfo> {
