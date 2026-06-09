@@ -53,6 +53,7 @@ describe('POST /file/fuzzy-patch', () => {
 
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', 'Bearer test-token')
       .send({ filePath: testFile, oldText, newText, preview: true })
       .expect(200);
 
@@ -73,6 +74,7 @@ describe('POST /file/fuzzy-patch', () => {
 
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', 'Bearer test-token')
       .send({ filePath: testFile, oldText, newText })
       .expect(200);
 
@@ -96,6 +98,7 @@ describe('POST /file/fuzzy-patch', () => {
     const newText = 'b';
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', 'Bearer test-token')
       .send({ oldText, newText })
       .expect(400);
     expect(res.body).toHaveProperty('error');
@@ -105,6 +108,7 @@ describe('POST /file/fuzzy-patch', () => {
     const text = fs.readFileSync(testFile, 'utf-8');
     const res = await request(app)
       .post('/file/fuzzy-patch')
+      .set('Authorization', 'Bearer test-token')
       .send({ filePath: testFile, oldText: text, newText: text })
       .expect(400);
     expect(res.body).toHaveProperty('error');

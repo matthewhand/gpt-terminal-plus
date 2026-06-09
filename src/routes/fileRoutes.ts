@@ -1,9 +1,9 @@
 import express from 'express';
 import { createFile } from './file/createFile';
+import { readFile } from './file/readFile';
 import { applyFuzzyPatch } from './file/fuzzyPatch';
 
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import fs from 'fs';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 const router = express.Router();
@@ -15,19 +15,13 @@ const localHandler = new LocalServerHandler({ protocol: 'local', hostname: 'loca
  * Route to create or replace a file.
  * @route POST /file/create
  */
-router.post('/create', (req, res) => {
-  const { directory } = req.body;
+router.post('/create', createFile);
 
-  try {
-    if (!fs.existsSync(directory)) {
-      fs.mkdirSync(directory, { recursive: true });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: 'Failed to create directory.', error: (error as Error).message });
-  }
-
-  createFile(req, res);
-});
+/**
+ * Route to read a file (optionally a line range).
+ * @route POST /file/read
+ */
+router.post('/read', readFile);
 
 /**
  * Route to list files in a directory.
