@@ -2,6 +2,9 @@ import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
 import fs from 'fs';
 
+/** Real handler used for engine-specific execute-llm requests (e.g. interpreter CLI) */
+import { executeLlm as realExecuteLlm } from './command/executeLlm';
+
 const router = Router();
 
 // --- logging (tests assert on this exact shape)
@@ -26,6 +29,7 @@ function sseWrite(res: Response, event: string, data: any) {
 const handleExecute = (req: Request, res: Response) => {
   logReq('/command/execute-shell', req.body);
   const cmd: string = String(req.body?.command ?? '');
+  const shell: string = String(req.body?.shell ?? '');
 
   let exitCode = 0, stdout = '', stderr = '';
 
@@ -33,6 +37,13 @@ const handleExecute = (req: Request, res: Response) => {
     stdout = cmd.replace(/^\s*echo\s+/, '').trim();
   } else if (/^\s*exit\s+(\d+)/.test(cmd)) {
     exitCode = Number(cmd.match(/^\s*exit\s+(\d+)/)![1]);
+  } else if (['python', 'python3'].includes(shell)) {
+    const m = cmd.match(/^\s*print\((['"])(.*)\1\)\s*$/);
+    if (m) {
+      stdout = m[2];
+    } else {
+      exitCode = 1; stderr = 'mock python runtime error';
+    }
   } else {
     exitCode = 1; stderr = 'unsupported command in test harness';
   }
@@ -60,22 +71,33 @@ const handleExecuteCode = (req: Request, res: Response) => {
     exitCode = Number(code.match(/^\s*exit\s+(\d+)/)![1]);
   } else if (language === 'bash' && /^\s*echo\s+/.test(code)) {
     stdout = code.replace(/^\s*echo\s+/, '').trim();
+  } else if (['node', 'nodejs'].includes(language) && /console\.log\(/.test(code)) {
+    stdout = 'node-ok';
+  } else if (language === 'typescript' && /console\.log\(/.test(code)) {
+    stdout = 'tsnode-ok';
   } else {
     exitCode = 1; stderr = `mock ${language} runtime error`;
   }
 
   const result = { stdout, stderr, exitCode, error: exitCode !== 0 };
   const aiAnalysis = exitCode !== 0 ? { text: 'Mock analysis: code failed.' } : undefined;
-  res.status(200).json({ result, aiAnalysis });
+  const interpreter = language === 'typescript' ? 'ts-node' : (language === 'nodejs' ? 'node' : language);
+  res.status(200).json({ result, aiAnalysis, language, interpreter });
 };
 
 
 
 const handleExecuteLlm = (req: Request, res: Response) => {
   logReq('/command/execute-llm', req.body);
-  const { instructions = '', dryRun = false, stream = false } = (req.body ?? {}) as {
-    instructions?: string; dryRun?: boolean; stream?: boolean;
+  const { instructions = '', dryRun = false, stream = false, engine = '' } = (req.body ?? {}) as {
+    instructions?: string; dryRun?: boolean; stream?: boolean; engine?: string;
   };
+
+  // Engine-specific requests (interpreter CLI) run through the real handler so
+  // tests can mock child_process.spawn and exercise the actual branch.
+  if (engine === 'llm:interpreter' || engine === 'interpreter') {
+    return realExecuteLlm(req, res);
+  }
 
   const plan = makePlan(String(instructions));
 
@@ -125,6 +147,45 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 router.post('/execute-shell', handleExecute);
 router.post('/execute-code', handleExecuteCode);
 router.post('/execute-llm', handleExecuteLlm);
+
+// Diff and patch endpoints
+router.post('/diff', (req: Request, res: Response) => {
+  logReq('/command/diff', req.body);
+  const { filePath } = req.body ?? {};
+
+  if (!filePath) {
+    return res.status(400).json({ error: 'filePath is required' });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+
+  // Mock unified diff output
+  const diff = `--- a/${filePath}\n+++ b/${filePath}\n@@ -1,3 +1,3 @@\n line1\n-old content\n+new content\n line3`;
+  res.json({ diff });
+});
+
+router.post('/patch', (req: Request, res: Response) => {
+  logReq('/command/patch', req.body);
+  const { filePath, patch } = req.body ?? {};
+
+  if (!filePath || !patch) {
+    return res.status(400).json({ error: 'filePath and patch are required' });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+
+  // Mock patch application - check for invalid patch format
+  if (String(patch).includes('invalid')) {
+    return res.json({ ok: false, error: 'Invalid patch format' });
+  }
+
+  // Mock successful patch application
+  res.json({ ok: true });
+});
 
 export default router;
 
