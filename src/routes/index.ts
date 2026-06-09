@@ -8,6 +8,7 @@ import { executeCommand } from './command/executeCommand';
 import { executeCode } from './command/executeCode';
 
 import { executeLlm } from './command/executeLlm';
+import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
@@ -42,9 +43,9 @@ export function setupApiRouter(app: express.Application): void {
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
-    cmd.post('/command/execute-shell', executeCommand);
-    cmd.post('/command/execute-code', executeCode);
-    cmd.post('/command/execute-llm', executeLlm);
+    cmd.post('/command/execute-shell', initializeServerHandler, executeCommand);
+    cmd.post('/command/execute-code', initializeServerHandler, executeCode);
+    cmd.post('/command/execute-llm', initializeServerHandler, executeLlm);
     app.use(cmd);
   }
 
