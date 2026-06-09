@@ -53,9 +53,13 @@ export class SSHConnectionManager {
 
         stream.on('data', (data: Buffer) => {
           stdout += data.toString();
-        }).stderr.on('data', (data: Buffer) => {
+        });
+
+        stream.stderr.on('data', (data: Buffer) => {
           stderr += data.toString();
-        }).on('close', (code: number) => {
+        });
+
+        stream.on('close', (code: number) => {
           if (code === 0) {
             resolve({ stdout, stderr });
           } else {
