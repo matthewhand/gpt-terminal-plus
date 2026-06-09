@@ -14,6 +14,9 @@ import serverRoutes from './serverRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
 import settingsRoutes from './settingsRoutes';
+import activityRoutes from './activityRoutes';
+import llmConsoleRoutes from './llmConsoleRoutes';
+import publicRouter from './publicRouter';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -52,6 +55,12 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/chat', chatRoutes);
   // settings (redacted view), protected by bearer token
   app.use('/settings', settingsRoutes);
+  // activity log browsing (list + session detail), protected by bearer token
+  app.use('/activity', activityRoutes);
+  // LLM console UI + query endpoints (/llm/console, /llm/query), protected by bearer token
+  app.use('/llm', llmConsoleRoutes);
+  // public, unauthenticated endpoints (/health)
+  app.use(publicRouter);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);
