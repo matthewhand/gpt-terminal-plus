@@ -1,12 +1,13 @@
-import { Client, ConnectConfig } from 'ssh2';
+import { Client } from 'ssh2';
 import SFTPClient from 'ssh2-sftp-client';
+type SSHConnectConfig = { host: string; port?: number; username: string; privateKey?: Buffer | string };
 
 class SSHUnifiedCommandExecutor {
     private sshClient: Client;
     private sftpClient: SFTPClient;
-    private readonly config: ConnectConfig;
+    private readonly config: SSHConnectConfig;
 
-    constructor(config: ConnectConfig) {
+    constructor(config: SSHConnectConfig) {
         this.config = config;
         this.sshClient = new Client();
         this.sftpClient = new SFTPClient();
@@ -42,7 +43,8 @@ class SSHUnifiedCommandExecutor {
     }
 
     public async transferFile(localPath: string, remotePath: string): Promise<void> {
-        await this.sftpClient.connect(this.config);
+        // Cast config to any to satisfy ssh2-sftp-client's ConnectOptions type which depends on ssh2 types
+        await (this.sftpClient as any).connect(this.config as any);
         await this.sftpClient.put(localPath, remotePath);
         await this.sftpClient.end();
     }

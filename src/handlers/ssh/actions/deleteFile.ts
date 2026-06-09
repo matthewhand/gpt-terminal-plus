@@ -36,7 +36,7 @@ export async function deleteFile(sshClient: Client, remotePath: string): Promise
           debug(error);
           reject(new Error(error));
         }
-      }).stderr.on('data', (data) => {
+      }).stderr.on('data', (data: Buffer) => {
         const error = `STDERR: ${data.toString()}`;
         debug(error);
         reject(new Error(error));

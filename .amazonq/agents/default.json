@@ -1,6 +1,5 @@
 {
-  "name": "default-agent",
-  "version": "1.0.0",
+  "name": "q_ide_default",
   "description": "Default agent configuration",
   "mcpServers": {},
   "tools": [
@@ -36,11 +35,16 @@
       ]
     }
   },
-  "includedFiles": [
-    "AmazonQ.md",
-    "README.md",
-    ".amazonq/rules/**/*.md"
+  "resources": [
+    "file://AmazonQ.md",
+    "file://README.md",
+    "file://.amazonq/rules/**/*.md"
   ],
-  "resources": [],
-  "promptHooks": []
+  "prompt": "",
+  "toolAliases": {},
+  "hooks": {
+    "agentSpawn": [],
+    "userPromptSubmit": []
+  },
+  "useLegacyMcpJson": true
 }

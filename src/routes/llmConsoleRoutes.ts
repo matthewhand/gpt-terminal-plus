@@ -16,12 +16,13 @@ router.use(checkAuthToken as any);
 router.get('/console', (req: Request, res: Response) => {
   try {
     const cfg = convictConfig();
-    const llmEnabled = cfg.get('execution.llm.enabled');
+    const provider = (cfg as any).get('llm.provider') as string;
+    const llmEnabled = !!(provider && provider.length > 0);
     
-    // Check if LLM Console feature is enabled in settings
+    // Check if LLM Console feature is enabled in settings (optional group)
     let llmConsoleEnabled = false;
     try {
-      llmConsoleEnabled = cfg.get('features.llmConsole');
+      llmConsoleEnabled = Boolean((cfg as any).get('features.llmConsole'));
     } catch {
       // Feature not configured, default to false
     }
@@ -53,7 +54,8 @@ router.get('/console', (req: Request, res: Response) => {
 router.post('/query', async (req: Request, res: Response) => {
   try {
     const cfg = convictConfig();
-    const llmEnabled = cfg.get('execution.llm.enabled');
+    const provider = (cfg as any).get('llm.provider') as string;
+    const llmEnabled = !!(provider && provider.length > 0);
     
     if (!llmEnabled) {
       return res.status(404).json({

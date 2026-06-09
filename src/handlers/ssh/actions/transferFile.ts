@@ -23,7 +23,7 @@ export async function transferFile(client: Client, config: ServerConfig, localPa
             }
 
             if (direction === 'upload') {
-                sftp.fastPut(localPath, remotePath, (err) => {
+                (sftp as any).fastPut(localPath, remotePath, (err: any) => {
                     if (err) {
                         debug(`File upload error: ${err.message}`);
                         return reject(new Error(`File upload error: ${err.message}`));
@@ -31,7 +31,7 @@ export async function transferFile(client: Client, config: ServerConfig, localPa
                     resolve();
                 });
             } else {
-                sftp.fastGet(remotePath, localPath, (err) => {
+                (sftp as any).fastGet(remotePath, localPath, (err: any) => {
                     if (err) {
                         debug(`File download error: ${err.message}`);
                         return reject(new Error(`File download error: ${err.message}`));
