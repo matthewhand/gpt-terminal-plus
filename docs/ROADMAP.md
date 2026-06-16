@@ -5,6 +5,7 @@ that used to live in `TODO.md` (now a thin pointer here).
 
 Legend: `[x]` done and tested · `[ ]` not done · *(partial)* noted inline.
 Progress counts reflect the state of `src/` on branch `fix/listfiles-types-defaults`.
+This branch completed: listFiles types/defaults + settings schema tests (explicitly attributed); pathSafety + selected server handler reuse for /file/* (list/create/read/fuzzy + 501/400 dispatch); MCP Streamable HTTP (mcpServer.ts + transport removal of SSE); valid MCP tool names + real handler results + file ops exposure + server_set + mcpStreamableHttp.test.ts integration; LLM setup panel (/setup + /setup/llm with toggle/dropdown/fields/save/test-conn + setup.llm.test.ts); CI workflow + tests; command/chat bearer auth + security headers.
 
 ---
 
@@ -55,14 +56,17 @@ Progress counts reflect the state of `src/` on branch `fix/listfiles-types-defau
   - [x] `GET /file/list` — defaults `directory` to `.`, pagination (`limit`/`offset`), `orderBy` filename|datetime
   - [x] `POST /file/fuzzy-patch` — `applyFilePatch` via diff-match-patch, with `preview` dry-run, rejects when no hunks apply
 - [x] listFiles types/defaults finished + settings schema tests (branch `fix/listfiles-types-defaults`)
+  (ListParams + toInt/defaults in src/routes/file/listFiles.ts; schema/store tests via setup.llm.test.ts + related)
 - [ ] Unmounted file route files (written but not wired into `fileRoutes.ts`)
   - [ ] `amendFile.ts`
   - [ ] `updateFile.ts` (or formally deprecate in favor of fuzzy patch)
   - [ ] `applyDiff.ts` / `applyPatch.ts` / `diff.ts` / `patch.ts` — overlapping patch implementations; consolidate on fuzzy patch, delete the rest
   - [ ] `setPostCommand.ts`
-  - [ ] `listFiles.ts` (route file shadowed by the inline handler in `fileRoutes.ts`)
-- [ ] Path safety — normalize with `path.resolve`, reject traversal outside a configured root
-- [ ] Handle symlink/stat errors gracefully in directory listings
+  - [x] `listFiles.ts` (now imported + mounted in fileRoutes.ts; logic uses getServerHandler + pathSafety)
+- [x] Path safety — normalize with `path.resolve`, reject traversal outside a configured root
+  (src/utils/pathSafety.ts: getWorkingRoot/FILE_OPS_ROOT, resolveSafePath, escapesRelativeRoot; enforced in file/* routes for local/remote; full tests in pathSafety.test.ts + selectedHandler.test.ts)
+- [x] Handle symlink/stat errors gracefully in directory listings
+  (src/handlers/local/actions/listFiles.ts: lstat/stat catches; continues with isDirectory:false)
 - [ ] Repo hygiene: delete stray backups (`src/routes/index.ts.bak.*`, `settingsRoutes.tsn`, `file/createFile.ts.bak`)
 
 ## LLM providers
@@ -86,23 +90,22 @@ Progress counts reflect the state of `src/` on branch `fix/listfiles-types-defau
 - [x] Setup UI routes (`/setup`, `/setup/policy`, `/setup/local`, `/setup/ssh`)
 - [x] Settings API (`/settings` redacted view, token-protected) + settings page
 - [x] User guide with Playwright screenshot pipeline (`npm run docs:screenshots`, `docs/USER_GUIDE.md`)
-- [ ] Setup → LLM panel: enable toggle, provider dropdown, per-provider fields
-  - [ ] "Test connection" button (pings `/model` or noop chat) with success/error feedback
-  - [ ] Auto-hide chat/stream/advisor UI when LLM disabled
+- [x] Setup → LLM panel: enable toggle, provider dropdown (none/ollama/lmstudio/openai), per-provider fields + Save/Test connection (/chat/models) with feedback + redaction. Persisted via SettingsStore (setupRoutes.ts + /setup/llm); /settings reflects for auto-hide; UI links from llm-console.html/dashboard.html. Full tests in setup.llm.test.ts.
 - [ ] Settings panel MVP: server/target CRUD with `allowedTokens`, provider health checks ("ping provider", "list models")
 - [ ] Stretch: runtime config editing (env-overridden fields shown read-only)
 
 ## MCP integration
 
 Status: implemented Feb 2025, now outdated and non-functional in practice. Tracked as the modernization workstream.
+**Update (branch `fix/listfiles-types-defaults` work):** Streamable HTTP transport, spec-valid tool names (no `/`), real results (no fake res), server_set impl, file ops tools (create_file/read_file/list_files/fuzzy_patch_file), and integration test with current MCP SDK client now complete.
 
 - [x] Opt-in bootstrap (`USE_MCP=true` in `src/index.ts`) registering tools from `src/modules/mcpTools.ts`
-- [ ] Upgrade `@modelcontextprotocol/sdk` from `^1.4.1` and migrate **SSE transport → Streamable HTTP** (SSE is deprecated)
-- [ ] Fix invalid tool names — names like `command/execute` contain `/`, violating the spec pattern `^[a-zA-Z0-9_-]{1,64}$` (rename e.g. `command_execute`)
-- [ ] Fix tool handlers — they call Express handlers with fake `{} as any` res objects, so tool results never propagate back to the MCP client; refactor to call handler/service functions directly and return real `content`
-- [ ] Replace the `server/set` placeholder tool with a real implementation
-- [ ] Expose file ops (read/list/fuzzy-patch) as MCP tools, not just command/model tools
-- [ ] Integration test with a current MCP client (target: 2026 agentic frameworks — Hermes/NemoClaw)
+- [x] Upgrade `@modelcontextprotocol/sdk` from `^1.4.1` and migrate **SSE transport → Streamable HTTP** (src/modules/mcpServer.ts: StreamableHTTPServerTransport, POST/GET/DELETE /mcp, mcp-session-id sessions; index.ts wiring; no more /mcp/messages).
+- [x] Fix invalid tool names — names like `command/execute` contain `/`, violating the spec pattern `^[a-zA-Z0-9_-]{1,64}$` (mcpTools.ts: execute_command etc.; mcpStreamableHttp.test.ts asserts names + /^[a-zA-Z0-9_-]{1,64}$/).
+- [x] Fix tool handlers — they call Express handlers with fake `{} as any` res objects, so tool results never propagate back to the MCP client; refactor to call handler/service functions directly and return real `content` (callRouteHandler captures real json/status from express handlers like executeLlm/fuzzyPatch; direct currentHandler() for others; real content returned).
+- [x] Replace the `server/set` placeholder tool with a real implementation (real "server_set" tool using ServerManager/GlobalState + optional systemInfo).
+- [x] Expose file ops (read/list/fuzzy-patch) as MCP tools, not just command/model tools (create_file, read_file, list_files, fuzzy_patch_file + listFiles dispatch in mcpTools.ts).
+- [x] Integration test with a current MCP client (target: 2026 agentic frameworks — Hermes/NemoClaw) (tests/mcpStreamableHttp.test.ts: real Client + StreamableHTTPClientTransport; auth, tool list, execute_command/list_files/read_file roundtrips).
 
 ## Security / auth
 
@@ -130,16 +133,18 @@ Status: implemented Feb 2025, now outdated and non-functional in practice. Track
 - [ ] Publish pipeline: npm package and/or Docker Hub image, release notes, tags (none exist)
 - [ ] README refresh: current status, LLM optional (how to enable + test), link to this roadmap and the user guide
 - [ ] Note `executeFile` deprecation in docs once decided
-- [ ] CI: run jest suite on push (no workflow currently enforces the green baseline)
+- [x] CI: run jest suite on push (.github/workflows/ci.yml: matrix [20.x,22.x], npm ci, check-types, test before build, build, openapi:lint, lint non-blocking; tests/ci.workflows.test.ts validates triggers/matrix/steps/order).
 - [ ] Prune doc sprawl in `docs/` (40+ files, several stale session logs) into a curated set
 
 ---
 
 ## Suggested order of attack (FOSS release push)
 
-1. Security gaps: auth on `/command/*` and `/chat/*`.
-2. Route-layer server reuse: `/file/*` must respect the selected SSH/SSM handler.
-3. MCP modernization (SDK upgrade, Streamable HTTP, valid tool names, real results).
-4. Mount-or-delete pass over orphaned route files; remove `.bak` debris.
+1. Security gaps: auth on `/command/*` and `/chat/*`. — (largely addressed in branch work + prior commits)
+2. Route-layer server reuse: `/file/*` must respect the selected SSH/SSM handler. — **Addressed** (initializeServerHandler + getServerHandler + pathSafety dispatch in fileRoutes + list/create/read/fuzzy; 501s + tests; fuzzy remains local-only).
+3. MCP modernization (SDK upgrade, Streamable HTTP, valid tool names, real results, file tools, server_set, integration test) — **largely complete on this branch** (mcpServer.ts + mcpTools.ts + mcpStreamableHttp.test.ts); remaining E2E with 2026 frameworks.
+4. Mount-or-delete pass over orphaned route files; remove `.bak` debris. (listFiles.ts route now mounted; many others remain).
 5. Version + README + publish pipeline.
 6. Shell sessions (largest net-new feature; keep as post-release milestone if needed).
+
+Post-branch: sync README/API/AGENTS/ENVIRONMENT/CONFIG/docs for Streamable MCP (/mcp not /mcp/messages), LLM Setup UI at /setup (toggle/provider/fields/test-conn), path safety + FILE_OPS_ROOT, CI, and version.
