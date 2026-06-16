@@ -57,7 +57,10 @@
         <h2 style="margin-bottom: 1rem; color: #4CAF50;">Execution Sessions</h2>
         <div id="session-list" class="loading">Loading sessions...</div>
         
-        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #444;">
+        <div id="ask-llm-panel" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #444;">
+            <div id="llm-disabled-note" style="display: none; color: #f44336; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                LLM execution is disabled. Enable it in <a href="/setup" style="color: #2196F3;">Setup &rarr; LLM</a>.
+            </div>
             <h3 style="margin-bottom: 0.5rem; color: #2196F3;">Ask LLM</h3>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <input type="text" id="llm-prompt" placeholder="Ask about execution logs..." 
@@ -200,8 +203,34 @@
             container.innerHTML = html;
         }
 
+        // Auto-hide the chat UI when /settings reports LLM disabled.
+        async function checkLlmEnabled() {
+            try {
+                let token = '';
+                try {
+                    const usp = new URLSearchParams(location.search);
+                    token = usp.get('token') || localStorage.getItem('settings_api_token') || '';
+                } catch {}
+                const response = await fetch('/settings', {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                if (!response.ok) return; // can't tell — leave the UI as-is
+                const payload = await response.json();
+                const settings = payload.settings || payload;
+                const enabled = settings.llm?.enabled?.value === true;
+                if (!enabled) {
+                    const panel = document.getElementById('ask-llm-panel');
+                    panel.style.opacity = '0.5';
+                    document.getElementById('llm-prompt').disabled = true;
+                    panel.querySelector('button').disabled = true;
+                    document.getElementById('llm-disabled-note').style.display = 'block';
+                }
+            } catch { /* network error — leave the UI as-is */ }
+        }
+
         // Load sessions on page load
         loadSessions();
+        checkLlmEnabled();
         
         // Auto-refresh every 30 seconds
         setInterval(loadSessions, 30000);

@@ -71,33 +71,45 @@
     </div>
 
     <script>
+        function getApiToken() {
+            try {
+                const usp = new URLSearchParams(location.search);
+                if (usp.has('token')) return usp.get('token');
+            } catch {}
+            return localStorage.getItem('settings_api_token') || '';
+        }
+
         async function loadFeatures() {
             const grid = document.getElementById('features-grid');
-            
+
             try {
                 // Try to load settings to check feature flags
-                const response = await fetch('/settings');
+                const token = getApiToken();
+                const response = await fetch('/settings', {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
                 let settings = {};
-                
+
                 if (response.ok) {
-                    settings = await response.json();
+                    const payload = await response.json();
+                    // GET /settings wraps groups as { settings: {...} }
+                    settings = payload.settings || payload;
                 }
-                
+
                 // Render feature cards
                 grid.innerHTML = renderFeatureCards(settings);
-                
+
             } catch (error) {
                 grid.innerHTML = `<div class="error">Failed to load features: ${error.message}</div>`;
             }
         }
-        
+
         function renderFeatureCards(settings) {
             const cards = [];
-            
-            // LLM Console Card
-            const llmEnabled = settings.llm?.enabled?.value || false;
-            const llmConsoleEnabled = settings.features?.llmConsole?.value || false;
-            const canUseLLMConsole = llmEnabled && llmConsoleEnabled;
+
+            // LLM Console Card — greyed out when /settings reports LLM disabled
+            const llmEnabled = settings.llm?.enabled?.value === true;
+            const canUseLLMConsole = llmEnabled;
             
             cards.push(`
                 <div class="feature-card ${canUseLLMConsole ? '' : 'disabled'}">
@@ -106,7 +118,7 @@
                     <a href="/llm/console" class="cta ${canUseLLMConsole ? '' : 'disabled'}">
                         ${canUseLLMConsole ? 'Launch Console →' : 'Enable in Settings'}
                     </a>
-                    ${!canUseLLMConsole ? '<p style="font-size: 0.8rem; color: #f44336; margin-top: 0.5rem;">Requires LLM execution and LLM Console feature to be enabled</p>' : ''}
+                    ${!canUseLLMConsole ? '<p style="font-size: 0.8rem; color: #f44336; margin-top: 0.5rem;">Requires LLM execution to be enabled (Setup &rarr; LLM)</p>' : ''}
                 </div>
             `);
             
