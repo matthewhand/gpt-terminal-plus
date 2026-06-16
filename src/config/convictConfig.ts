@@ -200,7 +200,19 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
     return typeof schemaNode.env === 'string' ? schemaNode.env : undefined;
   };
 
-  const schema = (cfg as any).getSchema();
+  // convict's getSchema() nests children under `_cvtProperties`; normalize to
+  // the `properties` shape this function navigates (keeps env/doc attrs intact).
+  const normalizeSchema = (node: any): any => {
+    if (!node || typeof node !== 'object') return node;
+    const children = node._cvtProperties ?? node.properties;
+    if (!children) return node;
+    const out: any = { ...node, properties: {} };
+    for (const [key, child] of Object.entries(children)) {
+      out.properties[key] = normalizeSchema(child);
+    }
+    return out;
+  };
+  const schema = normalizeSchema((cfg as any).getSchema());
   const result: Record<string, Record<string, { value: RedactedValue; readOnly: boolean }>> = {};
 
   const assign = (group: string, key: string, value: RedactedValue, envName?: string) => {
@@ -234,6 +246,16 @@ export function getRedactedSettings(): Record<string, Record<string, { value: Re
   assign('security', 'confirmCommandRegex', (cfg as any).get('security.confirmCommandRegex'), envOf(schema.properties.security.properties.confirmCommandRegex));
 
   // llm group
+  // "enabled" comes from the runtime settings store (config/settings.json +
+  // LLM_ENABLED env), which the Setup UI writes via POST /setup/llm. The WebUI
+  // (dashboard, llm-console) reads this flag to auto-hide LLM features.
+  try {
+    // Lazy require to avoid a module-load cycle (llmConfig -> settings store).
+    const { getLlmConfig } = require('../common/llmConfig');
+    assign('llm', 'enabled', !!getLlmConfig().enabled, 'LLM_ENABLED');
+  } catch {
+    assign('llm', 'enabled', false, 'LLM_ENABLED');
+  }
   assign('llm', 'provider', (cfg as any).get('llm.provider'), envOf(schema.properties.llm.properties.provider));
   assign('llm', 'openai.baseUrl', (cfg as any).get('llm.openai.baseUrl'), envOf(schema.properties.llm.properties.openai.properties.baseUrl));
   assign('llm', 'openai.apiKey', (cfg as any).get('llm.openai.apiKey'), envOf(schema.properties.llm.properties.openai.properties.apiKey));
