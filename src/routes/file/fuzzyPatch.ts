@@ -3,17 +3,21 @@ import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
 import { writeFile } from 'fs/promises';
 import fs from 'fs';
 import Debug from 'debug';
+import { getServerHandler, isLocalServerHandler } from '../../utils/getServerHandler';
+import { resolveSafePath } from '../../utils/pathSafety';
 
 const debug = Debug('app:fuzzyPatch');
 
 /**
- * Apply a fuzzy patch to a file using diff-match-patch
+ * Apply a fuzzy patch to a file using diff-match-patch.
+ * Local-only: fuzzy patching reads/writes the local filesystem, so remote
+ * targets (ssh/ssm) receive a 501 rather than silently patching local files.
  * @route POST /file/fuzzy-patch
  */
 export const applyFuzzyPatch = async (req: Request, res: Response) => {
-  const { filePath, oldText, newText, preview = false } = req.body;
+  const { filePath: requestedPath, oldText, newText, preview = false } = req.body;
 
-  if (!filePath || typeof filePath !== 'string') {
+  if (!requestedPath || typeof requestedPath !== 'string') {
     return res.status(400).json({ error: 'filePath is required' });
   }
 
@@ -25,6 +29,22 @@ export const applyFuzzyPatch = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'newText is required' });
   }
 
+  const handler = getServerHandler(req);
+  if (!isLocalServerHandler(handler)) {
+    return res.status(501).json({
+      success: false,
+      error: 'fuzzy-patch is not supported for the selected server handler; select the local server for this operation',
+    });
+  }
+
+  const filePath = resolveSafePath(requestedPath);
+  if (!filePath) {
+    return res.status(400).json({
+      success: false,
+      error: `filePath resolves outside the working root: ${requestedPath}`,
+    });
+  }
+
   // Check if file exists
   if (!fs.existsSync(filePath)) {
     return res.status(400).json({
@@ -34,9 +54,6 @@ export const applyFuzzyPatch = async (req: Request, res: Response) => {
   }
 
   try {
-    if (!fs.existsSync(filePath)) {
-      return res.status(400).json({ success: false, error: `File not found: ${filePath}` });
-    }
 
     // Preview: apply without writing and return patched text
     if (preview) {
