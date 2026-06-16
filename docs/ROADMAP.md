@@ -41,7 +41,7 @@ This branch completed: listFiles types/defaults + settings schema tests (explici
   - [ ] End-to-end verification against a real SSH host (unit-tested only)
 - [ ] SSM handler *(partial)* (`src/handlers/ssm/`)
   - [x] executeCommand, create/update/amend file, listFiles, system info, temp-script + retry helpers
-  - [ ] `SsmServerImplementation.ts.bak` — dead backup file to remove or restore
+  - [x] `SsmServerImplementation.ts.bak` — dead backup file removed (repo hygiene pass on branch `fix/listfiles-types-defaults`)
   - [ ] End-to-end verification against real AWS SSM
 - [x] Server selection — `/server/list|set|register|remove`, `setSelectedServerMiddleware`, `initializeServerHandler`
 - [ ] Route-layer reuse of selected server *(partial — key gap)*
@@ -67,7 +67,7 @@ This branch completed: listFiles types/defaults + settings schema tests (explici
   (src/utils/pathSafety.ts: getWorkingRoot/FILE_OPS_ROOT, resolveSafePath, escapesRelativeRoot; enforced in file/* routes for local/remote; full tests in pathSafety.test.ts + selectedHandler.test.ts)
 - [x] Handle symlink/stat errors gracefully in directory listings
   (src/handlers/local/actions/listFiles.ts: lstat/stat catches; continues with isDirectory:false)
-- [ ] Repo hygiene: delete stray backups (`src/routes/index.ts.bak.*`, `settingsRoutes.tsn`, `file/createFile.ts.bak`)
+- [x] Repo hygiene: delete stray backups (`src/routes/index.ts.bak.*`, `settingsRoutes.tsn`, `file/createFile.ts.bak`, `SsmServerImplementation.ts.bak`) — cleaned on branch `fix/listfiles-types-defaults`
 
 ## LLM providers
 
