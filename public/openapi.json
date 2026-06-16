@@ -337,26 +337,7 @@
                       "type": "object",
                       "properties": {
                         "value": {
-                          "oneOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "boolean"
-                            },
-                            {
-                              "type": "object"
-                            },
-                            {
-                              "type": "array"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
+                          "description": "The redacted setting value (any JSON type, null when unset)"
                         },
                         "readOnly": {
                           "type": "boolean"
