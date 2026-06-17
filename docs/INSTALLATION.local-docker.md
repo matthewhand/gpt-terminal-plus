@@ -11,13 +11,13 @@ This guide provides instructions for setting up the project using Docker locally
 
 1. **Clone the repository**:
     ```sh
-    git clone https://github.com/your-repo/gpt-terminal-plus.git
+    git clone https://github.com/matthewhand/gpt-terminal-plus.git
     cd gpt-terminal-plus
     ```
 
 2. **Create a `.env` file**:
     ```sh
-    cp .env.example .env
+    cp .env.sample .env
     ```
 
 3. **Configure environment variables** in the `.env` file:

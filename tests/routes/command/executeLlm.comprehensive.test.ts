@@ -105,6 +105,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
             role: 'assistant',
@@ -145,6 +146,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: { role: 'assistant', content: '{"commands":[]}' }
         }]
@@ -188,6 +190,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'ollama',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: { role: 'assistant', content: '{"commands":[]}' }
         }]
@@ -231,6 +234,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: { role: 'assistant', content: '{"commands":[]}' }
         }]
@@ -265,6 +269,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0, message: { role: 'assistant', content: '{"commands":[]}' } }]
       });
 
@@ -317,8 +322,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"ls -la","explain":"List all files"}]}'
           }
         }]
@@ -345,6 +352,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: { role: 'assistant', content: 'invalid json response' }
         }]
@@ -366,8 +374,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"rm -rf /","explain":"Delete everything"}]}'
           }
         }]
@@ -394,8 +404,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"sudo apt install package","explain":"Install package"}]}'
           }
         }]
@@ -425,8 +437,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"sudo apt install package","explain":"Install package"}]}'
           }
         }]
@@ -455,8 +469,10 @@ describe('ExecuteLlm Handler', () => {
     beforeEach(() => {
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"echo hello","explain":"Say hello"}]}'
           }
         }]
@@ -508,8 +524,10 @@ describe('ExecuteLlm Handler', () => {
     it('should stop execution on first failure', async () => {
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"echo first","explain":"First"},{"cmd":"echo second","explain":"Second"}]}'
           }
         }]
@@ -545,8 +563,8 @@ describe('ExecuteLlm Handler', () => {
       });
 
       mockErrorAdvisor.analyzeError.mockResolvedValue({
-        analysis: 'Command not found error',
-        suggestions: ['Check if command is installed']
+        model: 'gpt-4',
+        text: 'Command not found error: check if the command is installed'
       });
 
       await executeLlm(mockRequest as Request, mockResponse as Response);
@@ -570,8 +588,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"echo test","explain":"Test command"}]}'
           }
         }]
@@ -677,8 +697,10 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: {
+            role: 'assistant' as const,
             content: '{"commands":[{"cmd":"echo test","explain":"Test"}]}'
           }
         }]
@@ -706,6 +728,7 @@ describe('ExecuteLlm Handler', () => {
 
       mockLlm.chatForServer.mockResolvedValue({
         provider: 'openai',
+        model: 'gpt-4',
         choices: [{ index: 0,
           message: { role: 'assistant', content: '{"commands":[]}' }
         }]

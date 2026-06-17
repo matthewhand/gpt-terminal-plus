@@ -60,6 +60,7 @@ describe('Command Diff & Patch Endpoints', () => {
     it('should return diff when file exists', async () => {
       const response = await request(app)
         .post('/command/diff')
+        .set('Authorization', `Bearer ${token}`)
         .send({ filePath: testFile });
 
       expect(response.status).toBe(200);
@@ -74,6 +75,7 @@ describe('Command Diff & Patch Endpoints', () => {
       
       const response = await request(app)
         .post('/command/diff')
+        .set('Authorization', `Bearer ${token}`)
         .send({ filePath: nonExistentFile });
 
       expect(response.status).toBe(404);
@@ -83,6 +85,7 @@ describe('Command Diff & Patch Endpoints', () => {
     it('should return 400 when filePath is missing', async () => {
       const response = await request(app)
         .post('/command/diff')
+        .set('Authorization', `Bearer ${token}`)
         .send({});
 
       expect(response.status).toBe(400);
@@ -102,6 +105,7 @@ describe('Command Diff & Patch Endpoints', () => {
 
       const response = await request(app)
         .post('/command/patch')
+        .set('Authorization', `Bearer ${token}`)
         .send({ 
           filePath: testFile,
           patch: validPatch
@@ -116,6 +120,7 @@ describe('Command Diff & Patch Endpoints', () => {
 
       const response = await request(app)
         .post('/command/patch')
+        .set('Authorization', `Bearer ${token}`)
         .send({ 
           filePath: testFile,
           patch: invalidPatch
@@ -134,6 +139,7 @@ describe('Command Diff & Patch Endpoints', () => {
 
       const response = await request(app)
         .post('/command/patch')
+        .set('Authorization', `Bearer ${token}`)
         .send({ 
           filePath: nonExistentFile,
           patch: validPatch
@@ -146,6 +152,7 @@ describe('Command Diff & Patch Endpoints', () => {
     it('should return 400 when filePath is missing', async () => {
       const response = await request(app)
         .post('/command/patch')
+        .set('Authorization', `Bearer ${token}`)
         .send({ patch: 'some patch' });
 
       expect(response.status).toBe(400);
@@ -155,6 +162,7 @@ describe('Command Diff & Patch Endpoints', () => {
     it('should return 400 when patch is missing', async () => {
       const response = await request(app)
         .post('/command/patch')
+        .set('Authorization', `Bearer ${token}`)
         .send({ filePath: testFile });
 
       expect(response.status).toBe(400);

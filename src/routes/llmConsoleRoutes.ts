@@ -10,18 +10,41 @@ const router = express.Router();
 router.use(checkAuthToken as any);
 
 /**
+ * Resolve the configured LLM provider.
+ * Prefers convict (env-driven), falls back to node-config (NODE_CONFIG_DIR JSON),
+ * which is how the rest of the app (src/llm) reads provider settings.
+ */
+function getLlmProvider(): string {
+  try {
+    const cfg = convictConfig();
+    const provider = (cfg as any).get('llm.provider') as string;
+    if (provider && provider.length > 0) return provider;
+  } catch { /* fall through */ }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const nodeConfig = require('config');
+    if (nodeConfig.has('llm.provider')) {
+      const provider = nodeConfig.get('llm.provider') as string;
+      if (provider && provider.length > 0) return provider;
+    }
+  } catch { /* not configured */ }
+  return '';
+}
+
+/**
  * GET /llm/console
  * Serves the LLM Console UI if LLM is enabled
  */
 router.get('/console', (req: Request, res: Response) => {
   try {
     const cfg = convictConfig();
-    const llmEnabled = cfg.get('execution.llm.enabled');
-    
-    // Check if LLM Console feature is enabled in settings
+    const provider = getLlmProvider();
+    const llmEnabled = !!(provider && provider.length > 0);
+
+    // Check if LLM Console feature is enabled in settings (optional group)
     let llmConsoleEnabled = false;
     try {
-      llmConsoleEnabled = cfg.get('features.llmConsole');
+      llmConsoleEnabled = Boolean((cfg as any).get('features.llmConsole'));
     } catch {
       // Feature not configured, default to false
     }
@@ -52,9 +75,9 @@ router.get('/console', (req: Request, res: Response) => {
  */
 router.post('/query', async (req: Request, res: Response) => {
   try {
-    const cfg = convictConfig();
-    const llmEnabled = cfg.get('execution.llm.enabled');
-    
+    const provider = getLlmProvider();
+    const llmEnabled = !!(provider && provider.length > 0);
+
     if (!llmEnabled) {
       return res.status(404).json({
         status: 'error',

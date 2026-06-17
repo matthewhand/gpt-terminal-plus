@@ -24,8 +24,6 @@ import { registerServersFromConfig } from './bootstrap/serverLoader';
 import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown';
 
 import './modules/ngrok';
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
 export const app = express();
 
@@ -66,20 +64,11 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
 
   // (duplicate OpenAPI/Swagger mounts removed)
 
- if (process.env.USE_MCP === "true") {
-  const { registerMcpTools } = require("./modules/mcpTools");
-  const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
-  
-  // Register all MCP tools that wrap Express routes
-  registerMcpTools(mcpServer);
-
-  // Set up SSE endpoint for MCP communication
-  app.get("/mcp/messages", async (req, res) => {
-    const transport = new SSEServerTransport("/mcp/messages", res);
-    await mcpServer.connect(transport);
-  });
-
-  console.log("MCP server initialized with SSE transport at /mcp/messages");
+// MCP server (opt-in). The deprecated SSE transport at /mcp/messages was
+// removed; the MCP endpoint now uses Streamable HTTP at POST/GET/DELETE /mcp.
+if (process.env.USE_MCP === "true") {
+  const { setupMcpServer } = require("./modules/mcpServer");
+  setupMcpServer(app);
 }
 
 // Configuration directory and file path

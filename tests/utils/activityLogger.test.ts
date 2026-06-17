@@ -14,15 +14,12 @@ jest.mock('path', () => ({
 describe('activityLogger', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset Date.now mock
-    jest.spyOn(Date, 'now').mockReturnValue(1640995200000); // 2022-01-01 00:00:00 UTC
-    // Mock Date constructor for consistent timestamps
-    jest.spyOn(global, 'Date').mockImplementation(() => ({
-      toISOString: () => '2022-01-01T00:00:00.000Z'
-    }) as any);
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2022-01-01T00:00:00.000Z'));
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.restoreAllMocks();
   });
 

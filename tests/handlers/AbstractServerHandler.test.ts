@@ -66,7 +66,7 @@ class DummyHandler extends AbstractServerHandler {
         return Promise.resolve(true);
     }
 
-    listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: string }): Promise<PaginatedResponse<string>> {
+    listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
         return Promise.resolve({
             items: [],
             limit: params.limit ?? 0,
