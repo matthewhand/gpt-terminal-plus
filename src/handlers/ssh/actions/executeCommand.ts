@@ -13,7 +13,7 @@ const debug = Debug('app:executeCommand');
  * @param options - Optional execution options.
  * @returns A promise that resolves to the command's stdout, stderr, and timeout status.
  */
-export async function executeCommand(client: Client, config: SshHostConfig, command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean }> {
+export async function executeCommand(client: Client, config: SshHostConfig, command: string, options: { cwd?: string, timeout?: number } = {}): Promise<{ stdout: string; stderr: string; timeout?: boolean; truncated?: boolean; terminated?: boolean }> {
     // Validate inputs
     if (!client || !(client instanceof Client)) {
         const errorMessage = 'SSH client must be provided and must be an instance of Client.';
@@ -49,9 +49,12 @@ export async function executeCommand(client: Client, config: SshHostConfig, comm
     return new Promise((resolve, reject) => {
         let stdout = '';
         let stderr = '';
+        let truncated = false;
+        let terminated = false;
+        const maxOut = (() => { try { return require('../../../config/convictConfig').convictConfig().get('limits.maxOutputChars') as number; } catch { return 200000; } })();
         const execTimeout = setTimeout(() => {
             debug('Timeout reached for command: ' + escapedCommand);
-            resolve({ stdout, stderr, timeout: true });
+            resolve({ stdout, stderr, timeout: true, truncated, terminated });
         }, timeout);
 
         client.exec(execCommand, (err, stream) => {
@@ -61,12 +64,21 @@ export async function executeCommand(client: Client, config: SshHostConfig, comm
                 return reject(new Error('Execution error: ' + err.message));
             }
 
+            const checkLimit = () => {
+                if (stdout.length + stderr.length > maxOut && !terminated) {
+                  try { stream.close(); } catch {}
+                  truncated = true;
+                  terminated = true;
+                }
+            };
             stream.on('data', (data: Buffer) => {
                 stdout += data.toString();
+                checkLimit();
             });
 
             stream.stderr.on('data', (data: Buffer) => {
                 stderr += data.toString();
+                checkLimit();
             });
 
             stream.on('close', (code: number) => {
@@ -76,7 +88,7 @@ export async function executeCommand(client: Client, config: SshHostConfig, comm
                 } else {
                     debug('Execution failed for command: ' + escapedCommand + ', Exit Code: ' + code);
                 }
-                resolve({ stdout, stderr, timeout: false });
+                resolve({ stdout, stderr, timeout: false, truncated, terminated });
             });
         });
     });

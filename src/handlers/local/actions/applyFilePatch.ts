@@ -1,8 +1,6 @@
 import fs from "fs";
 import { diff_match_patch } from "diff-match-patch";
 
-const dmp = new diff_match_patch();
-
 export interface ApplyFilePatchOptions {
   filePath: string;
   oldText: string;
@@ -26,22 +24,38 @@ export function applyFilePatch(
 
   const current = fs.readFileSync(filePath, "utf-8");
 
-  // Diff + patch generation
-  const diffs = dmp.diff_main(oldText, newText);
-  dmp.diff_cleanupSemantic(diffs);
-  const patches = dmp.patch_make(oldText, newText, diffs);
+  // Use diff-match-patch for fuzzy matching to apply hunks even if file drifted
+  const dmp = new diff_match_patch();
+  
+  // Create patches from oldText to newText
+  const patches = dmp.patch_make(oldText, newText);
+  
+  if (patches.length === 0) {
+    return { success: false, error: "Patch could not be applied" };
+  }
 
-  // Apply patches fuzzily to current file
-  const [patched, results] = dmp.patch_apply(patches, current);
-
-  if (results.every((r: boolean) => !r)) {
+  // Apply patches to current file content with fuzzy matching
+  const [patchedText, results] = dmp.patch_apply(patches, current);
+  
+  // Check if any hunks were successfully applied
+  const appliedCount = results.filter(Boolean).length;
+  if (appliedCount === 0) {
     return { success: false, error: "Patch could not be applied" };
   }
 
   if (preview) {
-    return { success: true, patchedText: patched, results };
+    return { 
+      success: true, 
+      patchedText, 
+      results,
+      error: appliedCount < results.length ? `Only ${appliedCount}/${results.length} hunks applied` : undefined
+    };
   }
 
-  fs.writeFileSync(filePath, patched, "utf-8");
-  return { success: true, results };
+  fs.writeFileSync(filePath, patchedText, "utf-8");
+  return { 
+    success: true, 
+    results,
+    error: appliedCount < results.length ? `Only ${appliedCount}/${results.length} hunks applied` : undefined
+  };
 }

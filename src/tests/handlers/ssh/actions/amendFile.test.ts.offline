@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { amendFile } from '../../../../src/handlers/ssh/actions/amendFile';
+import { amendFile } from '../../../../src/handlers/ssh/actions/amendFile.ssh';
 import { presentWorkingDirectory } from '../../../../src/utils/GlobalStateHelper';
 import { escapeSpecialChars } from '../../../../src/common/escapeSpecialChars';
 

@@ -5,8 +5,10 @@ describe('Error Handler Middleware', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     mockRequest = {
       method: 'GET',
       url: '/test',
@@ -19,6 +21,10 @@ describe('Error Handler Middleware', () => {
     };
 
     mockNext = jest.fn();
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('validation errors', () => {
@@ -121,6 +127,7 @@ describe('Error Handler Middleware', () => {
         message: 'Something went wrong',
         type: 'server_error'
       });
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
 
     it('should handle errors without message', () => {
@@ -145,6 +152,33 @@ describe('Error Handler Middleware', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Custom error',
         type: 'server_error'
+      });
+    });
+  });
+
+  describe('parser errors', () => {
+    it('should handle body-parser entity.parse.failed with 400', () => {
+      const error: any = new Error('Failed to parse JSON');
+      (error as any).type = 'entity.parse.failed';
+
+      errorHandler(error, mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Bad Request',
+        type: 'validation'
+      });
+    });
+
+    it('should handle SyntaxError from express.json with 400', () => {
+      const error = new SyntaxError('Unexpected token o in JSON');
+
+      errorHandler(error as any, mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Bad Request',
+        type: 'validation'
       });
     });
   });

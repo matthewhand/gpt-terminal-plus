@@ -11,17 +11,24 @@ jobs:
     name: Build .exe for Windows
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
       - name: Install dependencies
-        run: npm ci
+        run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
       - name: Build Windows binaries
-        run: npm run pkg:win
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-win-x64,node18-win-arm64 --out-path release
+      - name: List release files
+        run: dir release
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-binaries
           path: release/
@@ -31,41 +38,84 @@ jobs:
     name: Build .app for macOS
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
       - name: Install dependencies
-        run: npm ci
+        run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
       - name: Build macOS binary
-        run: npm run pkg:osx
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-macos-x64 --output release/gpt-terminal-plus-macos-x64
+      - name: List release files
+        run: ls -la release/
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-binary
+          path: release/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build binaries for Linux
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install --production=false
+      - name: Debug pkg availability
+        run: npx @yao-pkg/pkg --version
+      - name: Build Linux binaries
+        run: |
+          npm run build
+          npx @yao-pkg/pkg . --targets node18-linux-x64,node18-linux-arm64 --out-path release
+      - name: List release files
+        run: ls -la release/
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
           path: release/
 
   upload-release:
     runs-on: ubuntu-latest
     name: Upload to GitHub Release
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos, build-linux]
+    if: success()
     steps:
       - name: Download windows artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: windows-binaries
           path: release/windows
       - name: Download macos artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: macos-binary
           path: release/macos
+      - name: Download linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: release/linux
+      - name: List all files
+        run: find release -type f
       - name: Upload binaries to GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             release/windows/*
             release/macos/*
+            release/linux/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -10,6 +10,8 @@ coverage/
 .nyc_output/
 data/
 *.backup.*
+*.bak
+.sessions.json
 
 # nyc test coverage
 .nyc_output/
@@ -130,3 +132,8 @@ docker/*/scripts/
 # Allow for customisation of the container on per app basis
 docker/*/.bashrc
 *.js
+release/
+
+convict-config.json
+*config.json
+*.swp

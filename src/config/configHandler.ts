@@ -22,6 +22,9 @@ export const generateDefaultConfig = (): object => {
   debug('Generating default configuration');
   return {
     default: true,
+    // Basic identity defaults
+    protocol: 'local',
+    hostname: 'localhost',
     port: 5005,
     local: {
       code: true,

@@ -1,0 +1,100 @@
+import fs from 'fs/promises';
+import * as pathModule from 'path';
+import { convictConfig } from '../config/convictConfig';
+
+export interface FileOperation {
+  type: 'read' | 'write' | 'delete' | 'list' | 'mkdir';
+  path: string;
+  content?: string;
+  recursive?: boolean;
+}
+
+export async function executeFileOperation(op: FileOperation | string, path?: string, content?: string): Promise<any> {
+  let operation: FileOperation;
+
+  if (typeof op === 'string') {
+    // Legacy positional args: executeFileOperation(type, path, content?)
+    operation = { type: op as any, path: path || '', content };
+  } else {
+    // New object form
+    operation = op;
+  }
+
+  try {
+    // Validate operation type early to surface clear errors regardless of config mocking
+    const validTypes = new Set(['read', 'write', 'delete', 'list', 'mkdir']);
+    if (!validTypes.has(operation.type)) {
+      return { success: false, error: `Unknown file operation: ${operation.type}` };
+    }
+
+    // Validate path parameter
+    if (!operation.path || operation.path.trim() === '') {
+      return { success: false, error: 'Path is required' };
+    }
+
+    // Read allowed paths safely; fall back to CWD if schema key not present or config mocked
+    let allowedPaths: string[] = [process.cwd()];
+    try {
+      const cfg = convictConfig();
+      const fromCfg = (cfg as any)?.get?.('fileOps.allowedPaths');
+      if (Array.isArray(fromCfg) && fromCfg.length > 0) {
+        allowedPaths = fromCfg as string[];
+      }
+    } catch {
+      // ignore and use default
+    }
+
+    // During tests, also allow OS temp directory
+    if (process.env.NODE_ENV === 'test') {
+      const os = require('os');
+      allowedPaths.push(os.tmpdir());
+    }
+
+    // Security check
+    const resolvedPath = pathModule.resolve(operation.path!);
+    const isAllowed = allowedPaths.some((allowed: string) => {
+      const resolvedAllowed = pathModule.resolve(allowed);
+      return resolvedPath.startsWith(resolvedAllowed);
+    });
+
+    if (!isAllowed) {
+      return { success: false, error: `Path not allowed: ${operation.path}` };
+    }
+    switch (operation.type) {
+      case 'read':
+        const content = await fs.readFile(resolvedPath, 'utf8');
+        return { success: true, content };
+
+      case 'write':
+        if (operation.content === undefined) {
+          return { success: false, error: 'Content required for write operation' };
+        }
+        // Ensure directory exists
+        const dirPath = pathModule.dirname(resolvedPath);
+        await fs.mkdir(dirPath, { recursive: true });
+        await fs.writeFile(resolvedPath, operation.content);
+        return { success: true };
+
+      case 'delete':
+        await fs.unlink(resolvedPath);
+        return { success: true };
+
+      case 'list':
+        const entries = await fs.readdir(resolvedPath, { withFileTypes: true });
+        const files = entries.map(entry => ({
+          name: entry.name,
+          isDirectory: entry.isDirectory(),
+        }));
+        return { success: true, files };
+
+      case 'mkdir':
+        await fs.mkdir(resolvedPath, { recursive: operation.recursive });
+        return { success: true };
+
+      default:
+        return { success: false, error: `Unknown file operation: ${operation.type}` };
+    }
+  } catch (error: any) {
+    return { success: false, error: error.message || String(error) };
+  }
+}

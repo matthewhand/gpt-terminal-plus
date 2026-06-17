@@ -1,0 +1,35 @@
+# profiles.example.yaml
+profiles:
+  - name: gpt-terminal-plus
+    # workingDir: "."    # implied default
+
+    shell:
+      default: bash
+      allowed:
+        - bash
+        - zsh
+
+    code:
+      languages:
+        - python
+        - typescript
+
+    file:
+      enabled: true
+      # future parameters:
+      maxReadSize: 1048576   # 1 MB
+      maxWriteSize: 1048576  # 1 MB
+
+    llm:
+      engine: ollama
+      model: gpt-oss:20b
+      assist:
+        enabled: true        # toggle LLM assistance
+        on: failed           # values: failed | all
+
+    session:
+      enabled: true
+      maxInputChars: 1000000    # 1 MB
+      maxOutputChars: 2000000   # 2 MB
+      maxDuration: 3600         # 1h
+      maxIdle: 600              # 10m

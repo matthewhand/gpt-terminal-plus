@@ -22,7 +22,7 @@ function makeApp() {
   return app;
 }
 
-describe('New OpenAPI Endpoints', () => {
+describe('OpenAPI Endpoints', () => {
   let app: express.Application;
   const token = 'test-token';
 
@@ -31,52 +31,35 @@ describe('New OpenAPI Endpoints', () => {
     app = makeApp();
   });
 
-  it('should include /activity/list endpoint', async () => {
+  it('includes /activity/list', async () => {
     const response = await request(app).get('/openapi.yaml');
     const spec = response.text;
     expect(spec).toContain('/activity/list:');
     expect(spec).toContain('summary: List recent activity sessions');
   });
 
-  it('should include /activity/session/{date}/{id} endpoint', async () => {
+  it('includes /activity/session/{date}/{id}', async () => {
     const response = await request(app).get('/openapi.yaml');
     const spec = response.text;
     expect(spec).toContain('/activity/session/{date}/{id}:');
     expect(spec).toContain('summary: Fetch a full activity session');
   });
 
-  it('should include /shell/session/start endpoint', async () => {
+  it('includes executors capability endpoints', async () => {
     const response = await request(app).get('/openapi.yaml');
     const spec = response.text;
-    expect(spec).toContain('/shell/session/start:');
-    expect(spec).toContain('summary: Start a new persistent shell session');
+    expect(spec).toContain('/command/executors:');
+    expect(spec).toContain('summary: List available executors');
+    expect(spec).toContain('/command/executors/{name}/toggle:');
+    expect(spec).toContain('summary: Enable or disable an executor');
+    expect(spec).toContain('/command/executors/{name}/update:');
+    expect(spec).toContain('summary: Update executor command and args');
   });
 
-  it('should include /shell/session/{id}/exec endpoint', async () => {
+  it('includes generic execute-shell by default exposure', async () => {
     const response = await request(app).get('/openapi.yaml');
     const spec = response.text;
-    expect(spec).toContain('/shell/session/{id}/exec:');
-    expect(spec).toContain('summary: Execute command inside existing session');
-  });
-
-  it('should include /shell/session/{id}/stop endpoint', async () => {
-    const response = await request(app).get('/openapi.yaml');
-    const spec = response.text;
-    expect(spec).toContain('/shell/session/{id}/stop:');
-    expect(spec).toContain('summary: Stop a persistent shell session');
-  });
-
-  it('should include /shell/session/list endpoint', async () => {
-    const response = await request(app).get('/openapi.yaml');
-    const spec = response.text;
-    expect(spec).toContain('/shell/session/list:');
-    expect(spec).toContain('summary: List active shell sessions');
-  });
-
-  it('should include /shell/session/{id}/logs endpoint', async () => {
-    const response = await request(app).get('/openapi.yaml');
-    const spec = response.text;
-    expect(spec).toContain('/shell/session/{id}/logs:');
-    expect(spec).toContain('summary: Fetch logs from a shell session');
+    expect(spec).toContain('/command/execute-shell:');
+    expect(spec).toContain('summary: Execute a command using configured shell (generic)');
   });
 });

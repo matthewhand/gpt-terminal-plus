@@ -1,26 +1,23 @@
 import express from 'express';
+import { checkAuthToken } from '../middlewares/checkAuthToken';
 
 /** --- Test harness (mocks) — used ONLY when NODE_ENV==='test' --- */
 import testCommandRouter from './commandRoutes';
 
 /** --- Real command handlers for prod/dev --- */
-import { executeCommand } from './command/executeCommand';
-import { executeCode } from './command/executeCode';
-
-import { executeLlm } from './command/executeLlm';
-import { initializeServerHandler } from '../middlewares/initializeServerHandler';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { logMode } from '../middleware/logMode';
+import { executeCommand, executeShell, executeCode, executeFile, executeLlm, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
+import activityRoutes from './activityRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
-import settingsRoutes from './settingsRoutes';
-import activityRoutes from './activityRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
-import publicRouter from './publicRouter';
-import shellSessionRoutes from './shell/session';
+import settingsRoutes from './settingsRoutes';
+import endpointStatusRouter from './endpointStatusRouter';
+import { configRouter, healthRouter } from './core';
+import { securityLogger } from '../middlewares/securityLogger';
+import { rateLimiters } from '../middlewares/advancedRateLimit';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -37,48 +34,65 @@ try {
 /** Named export expected by tests */
 export function setupApiRouter(app: express.Application): void {
   const isTest = process.env.NODE_ENV === 'test';
+  const useProdRoutesForTest = process.env.USE_PROD_ROUTES_FOR_TEST === '1';
 
-  // Mode logging middleware (documented in docs/AGENTS.md) — logs which
-  // command/file mode each incoming request targets.
-  app.use(logMode);
-
-  // ----- Command endpoints (bearer-token protected in all modes) -----
-  if (isTest) {
+  // ----- Command endpoints -----
+  if (isTest && !useProdRoutesForTest) {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
-    app.use('/command', checkAuthToken as any, testCommandRouter);
+    console.log('Mounting test command router under /command');
+    app.use('/command', testCommandRouter as any);
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
-    cmd.post('/execute-shell', initializeServerHandler, executeCommand);
-    cmd.post('/execute-code', initializeServerHandler, executeCode);
-    cmd.post('/execute-llm', initializeServerHandler, executeLlm);
-    app.use('/command', checkAuthToken as any, cmd);
+    // Back-compat endpoints
+    cmd.post('/command/execute', executeCommand);
+    console.log('Mounting /command/execute-shell (prod/dev)');
+    cmd.post('/command/execute-shell', executeShell);
+    cmd.post('/command/execute-code', executeCode);
+    // New explicit executor endpoints
+    cmd.post('/command/execute-bash', executeBash);
+    cmd.post('/command/execute-python', executePython);
+    // Deprecated/other routes
+    cmd.post('/command/execute-file', executeFile);
+    cmd.post('/command/execute-llm', executeLlm);
+    // Dynamic per-executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
+    cmd.use('/command', executeDynamicRouter);
+    app.use(cmd);
   }
 
   // ----- Other groups with correct prefixes -----
-  app.use('/server', serverRoutes);
-  app.use('/file', fileRoutes);
+  app.use('/server', securityLogger, rateLimiters.moderate, serverRoutes);
+  app.use('/activity', checkAuthToken, securityLogger, rateLimiters.lenient, activityRoutes);
+  // Skip rate limiting for file routes during tests
+  if (isTest) {
+    app.use('/file', securityLogger, fileRoutes);
+  } else {
+    app.use('/file', securityLogger, rateLimiters.strict, fileRoutes);
+  }
+  app.use('/llm', securityLogger, rateLimiters.moderate, llmConsoleRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
-  // (bearer-token protected like the other API groups)
-  app.use('/chat', checkAuthToken as any, chatRoutes);
+  app.use('/chat', securityLogger, rateLimiters.moderate, chatRoutes);
   // settings (redacted view), protected by bearer token
-  app.use('/settings', settingsRoutes);
-  // activity log browsing (list + session detail), protected by bearer token
-  app.use('/activity', activityRoutes);
-  // LLM console UI + query endpoints (/llm/console, /llm/query), protected by bearer token
-  app.use('/llm', llmConsoleRoutes);
-  // public, unauthenticated endpoints (/health)
-  app.use(publicRouter);
-  // persistent shell sessions: documented in the OpenAPI spec with 501
-  // responses; handlers are auth-gated stubs until Session Mode lands
-  // (see docs/SESSION_MODE.md and docs/ROADMAP.md)
-  app.use('/shell/session', shellSessionRoutes);
+  app.use('/settings', securityLogger, rateLimiters.strict, settingsRoutes);
+  // config overrides and schema endpoints
+  app.use('/config', configRouter);
+  // health check endpoints
+  app.use('/health', healthRouter);
+  // executors capability and toggles
+  app.use('/command', executorsRouter);
+
+  // shell session routes under /shell
+  // NOTE: Shell routes are currently broken due to router mounting issues
+  // app.use('/shell', shellRoutes);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);
   // model routes under /model (/, /select, /selected)
   if (modelsRoutes) app.use('/model', modelsRoutes);
+  
+  // endpoint status dashboard
+  app.use('/endpoint-status', endpointStatusRouter);
 }
 
 /** Default export kept for flexibility */

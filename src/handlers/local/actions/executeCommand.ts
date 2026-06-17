@@ -1,12 +1,17 @@
-import { exec, execFile } from 'child_process';
+// child_process is required lazily to honor Jest mocks in some tests
+import { convictConfig } from '../../../config/convictConfig';
 import debug from 'debug';
 
 const executeCommandDebug = debug('app:executeCommand');
 
 // Configuration loaded from environment variables
-const DEFAULT_TIMEOUT = parseInt(process.env.DEFAULT_TIMEOUT || '0', 10);
+const LOCAL_TIMEOUT = parseInt(process.env.LOCAL_TIMEOUT ?? process.env.DEFAULT_TIMEOUT ?? '0', 10);
 const DEFAULT_SHELL = process.env.DEFAULT_SHELL || '/bin/bash';
-const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
+const MAX_OUTPUT_CHARS = parseInt(process.env.MAX_OUTPUT_CHARS || '', 10) || (() => {
+  try { return convictConfig().get('limits.maxOutputChars'); } catch { return 200000; }
+})();
+// Read USE_EXECFILE dynamically at call time so tests can toggle it
+const shouldUseExecFile = (): boolean => process.env.USE_EXECFILE === 'true';
 
 /**
  * Executes a shell command using either `exec` or `execFile`, depending on the configuration.
@@ -16,15 +21,15 @@ const USE_EXECFILE = process.env.USE_EXECFILE === 'true';
  * @param {number} [timeout=DEFAULT_TIMEOUT] - Optional timeout in milliseconds for command execution.
  * @param {string} [directory='.'] - The working directory from which the command will be executed.
  * @param {string} [shell=DEFAULT_SHELL] - The shell environment to use. Defaults to `/bin/bash`.
- * @returns {Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }>} - A promise that resolves with the command's output.
+ * @returns {Promise<ExecutionResult>} - A promise that resolves with the command's output.
  * @throws {Error} If command execution fails or if inputs are invalid.
  */
 export async function executeCommand(
   command: string,
-  timeout: number = DEFAULT_TIMEOUT,
+  timeout: number = LOCAL_TIMEOUT,
   directory: string = '.',
   shell: string = DEFAULT_SHELL
-): Promise<{ stdout: string; stderr: string; presentWorkingDirectory: string }> {
+): Promise<any> {
   // Input validation
   if (!command || typeof command !== 'string') {
     throw new Error('A valid command string must be provided.');
@@ -44,57 +49,51 @@ export async function executeCommand(
   executeCommandDebug(`Using shell: ${shell}`);
   executeCommandDebug(`Working directory: ${directory}`);
   executeCommandDebug(`Timeout: ${timeout}`);
-  executeCommandDebug(`Using execFile: ${USE_EXECFILE}`);
+  const useExecFile = shouldUseExecFile();
+  executeCommandDebug(`Using execFile: ${useExecFile}`);
 
-  let commandToExecute: string;
   let args: string[] = [];
 
-  // Determine how to prepare the command based on whether execFile is used
-  if (USE_EXECFILE) {
-    // For execFile, split the command into arguments manually
-    const parts = command.split(' ');
-    commandToExecute = parts.shift()!; // The first part becomes the command
-    args = parts; // Remaining parts are arguments
-    executeCommandDebug(`Prepared command for execFile: ${commandToExecute} with args: ${args.join(' ')}`);
-  } else {
-    // For exec, pass the command directly to the shell
-    commandToExecute = `${shell} -c '${command.replace(/'/g, "'\\''")}'`;
-    executeCommandDebug(`Prepared command for exec: ${commandToExecute}`);
-  }
+  // Resolve timeout with per-backend default if undefined or invalid
+  const resolvedTimeout = (typeof timeout === 'number' && timeout >= 0) ? timeout : LOCAL_TIMEOUT;
 
   // Execution options setup
-  const execOptions = {
+  const execOptions: any = {
     cwd: directory,
-    timeout: timeout || 0, // Default to no timeout if not specified
+    timeout: resolvedTimeout || 0, // Default to no timeout if not specified
     shell: shell,
     env: { ...process.env }, // Pass current environment variables
   };
+  // Enforce output ceiling via maxBuffer (stdout and stderr independently)
+  execOptions.maxBuffer = Math.max(1024 * 64, Number(MAX_OUTPUT_CHARS));
   executeCommandDebug(`Execution options: ${JSON.stringify(execOptions)}`);
 
   // Execute the command and return the result
   return new Promise((resolve, reject) => {
-    if (USE_EXECFILE) {
-      execFile(commandToExecute, args, execOptions, (error, stdout, stderr) => {
-        const outStr = typeof stdout === 'string' ? stdout : String(stdout ?? '');
-        const errStr = typeof stderr === 'string' ? stderr : String(stderr ?? '');
-        executeCommandDebug(`Command executed with execFile. stdout: ${outStr}, stderr: ${errStr}`);
+    const { exec, execFile } = require('child_process');
+    if (useExecFile) {
+      execFile(command, args, execOptions, (error: any, stdout: string, stderr: string) => {
+        executeCommandDebug(`Command executed with execFile. stdout: ${stdout}, stderr: ${stderr}`);
         if (error) {
           executeCommandDebug(`Error during command execution with execFile: ${error.message}`);
-          reject({ stdout: outStr, stderr: errStr, presentWorkingDirectory: execOptions.cwd as string });
+          const out = String(stdout || '');
+          const err = String(stderr || '');
+          // In error cases, some tests expect a rejected promise with a slim shape
+          return reject({ stdout: out, stderr: err, presentWorkingDirectory: directory });
         } else {
-          resolve({ stdout: outStr, stderr: errStr, presentWorkingDirectory: execOptions.cwd as string });
+          resolve({ stdout, stderr, presentWorkingDirectory: directory });
         }
       });
     } else {
-      exec(commandToExecute, execOptions as any, (error, stdout, stderr) => {
-        const outStr = typeof stdout === 'string' ? stdout : String(stdout ?? '');
-        const errStr = typeof stderr === 'string' ? stderr : String(stderr ?? '');
-        executeCommandDebug(`Command executed with exec. stdout: ${outStr}, stderr: ${errStr}`);
+      exec(command, execOptions, (error: any, stdout: string, stderr: string) => {
+        executeCommandDebug(`Command executed with exec. stdout: ${stdout}, stderr: ${stderr}`);
         if (error) {
           executeCommandDebug(`Error during command execution with exec: ${error.message}`);
-          reject({ stdout: outStr, stderr: errStr, presentWorkingDirectory: execOptions.cwd as string });
+          const out = String(stdout || '');
+          const err = String(stderr || '');
+          return reject({ stdout: out, stderr: err, presentWorkingDirectory: directory });
         } else {
-          resolve({ stdout: outStr, stderr: errStr, presentWorkingDirectory: execOptions.cwd as string });
+          resolve({ stdout, stderr, presentWorkingDirectory: directory });
         }
       });
     }

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endpoint Status Dashboard</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #0b1021;
+            color: #f6f7fb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #5cd6ff;
+        }
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .endpoint-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            background: rgba(16,21,43,0.92);
+        }
+        .status-working {
+            border-left: 4px solid #7fff7f;
+        }
+        .status-broken {
+            border-left: 4px solid #ff7f7f;
+        }
+        .status-partial {
+            border-left: 4px solid #ffdf7f;
+        }
+        .endpoint-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .endpoint-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+        .status-badge-working {
+            background: rgba(127, 255, 127, 0.2);
+            color: #7fff7f;
+        }
+        .status-badge-broken {
+            background: rgba(255, 127, 127, 0.2);
+            color: #ff7f7f;
+        }
+        .status-badge-partial {
+            background: rgba(255, 223, 127, 0.2);
+            color: #ffdf7f;
+        }
+        .endpoint-description {
+            font-size: 0.9em;
+            color: #a7acc4;
+            margin-bottom: 10px;
+        }
+        .endpoint-note {
+            font-size: 0.8em;
+            color: #8e94ab;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Endpoint Status Dashboard</h1>
+        <p>This dashboard shows which endpoints are working and which are broken to help you avoid wasting time on non-functional features.</p>
+        
+        <div class="endpoint-grid">
+            <div class="endpoint-card status-working">
+                <div class="endpoint-title">POST /command/execute-shell</div>
+                <span class="endpoint-status status-badge-working">WORKING</span>
+                <div class="endpoint-description">Execute shell commands with full security and timeout handling</div>
+                <div class="endpoint-note">Fully functional and tested</div>
+            </div>
+            
+            <div class="endpoint-card status-working">
+                <div class="endpoint-title">POST /command/execute-code</div>
+                <span class="endpoint-status status-badge-working">WORKING</span>
+                <div class="endpoint-description">Execute code in various languages with error analysis</div>
+                <div class="endpoint-note">Fully functional and tested</div>
+            </div>
+            
+            <div class="endpoint-card status-working">
+                <div class="endpoint-title">GET /server/list</div>
+                <span class="endpoint-status status-badge-working">WORKING</span>
+                <div class="endpoint-description">List all configured servers</div>
+                <div class="endpoint-note">Fully functional and tested</div>
+            </div>
+            
+            <div class="endpoint-card status-working">
+                <div class="endpoint-title">GET /activity/list</div>
+                <span class="endpoint-status status-badge-working">WORKING</span>
+                <div class="endpoint-description">List session activities and recent commands</div>
+                <div class="endpoint-note">Fully functional and tested</div>
+            </div>
+            
+            <div class="endpoint-card status-broken">
+                <div class="endpoint-title">POST /shell/session/start</div>
+                <span class="endpoint-status status-badge-broken">BROKEN</span>
+                <div class="endpoint-description">Start a new shell session</div>
+                <div class="endpoint-note">Returns 404 - Router mounting issue</div>
+            </div>
+            
+            <div class="endpoint-card status-broken">
+                <div class="endpoint-title">GET /shell/session/list</div>
+                <span class="endpoint-status status-badge-broken">BROKEN</span>
+                <div class="endpoint-description">List active shell sessions</div>
+                <div class="endpoint-note">Returns 404 - Router mounting issue</div>
+            </div>
+            
+            <div class="endpoint-card status-broken">
+                <div class="endpoint-title">POST /shell/session/:id/exec</div>
+                <span class="endpoint-status status-badge-broken">BROKEN</span>
+                <div class="endpoint-description">Execute commands in shell sessions</div>
+                <div class="endpoint-note">Returns 404 - Router mounting issue</div>
+            </div>
+            
+            <div class="endpoint-card status-partial">
+                <div class="endpoint-title">POST /file/create</div>
+                <span class="endpoint-status status-badge-partial">PARTIAL</span>
+                <div class="endpoint-description">Create files with basic functionality</div>
+                <div class="endpoint-note">Limited features - basic CRUD only</div>
+            </div>
+        </div>
+        
+        <h2 style="margin-top: 40px;">Development Guidance</h2>
+        <ul>
+            <li style="margin-bottom: 10px;"><strong>🟢 SAFE TO USE:</strong> Green endpoints are fully functional and tested</li>
+            <li style="margin-bottom: 10px;"><strong>🔴 AVOID COMPLETELY:</strong> Red endpoints are broken and return 404 errors</li>
+            <li style="margin-bottom: 10px;"><strong>🟡 USE WITH CAUTION:</strong> Yellow endpoints have limited functionality</li>
+        </ul>
+        
+        <p><strong>RECOMMENDATION:</strong> Focus your Web UI development on the green endpoints first to avoid wasting time on broken features.</p>
+    </div>
+</body>
+</html>

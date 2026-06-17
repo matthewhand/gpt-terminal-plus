@@ -1,37 +1,68 @@
-import { llmConfig } from '../common/llmConfig';
-
-export function interpreterChatStream(message: string) {
-  const base = `http://${llmConfig.interpHost}:${llmConfig.interpPort}`;
-  const url = new URL(`${base}/chat`);
-  url.searchParams.set('message', message);
-  url.searchParams.set('offline', llmConfig.interpOffline.toString());
-  url.searchParams.set('verbose', llmConfig.interpVerbose.toString());
-  return fetch(url, {
-    method: 'GET',
-    headers: { Accept: 'text/event-stream' },
-  });
+function normalizeBase(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, '');
 }
 
-export async function interpreterChatOnce(message: string) {
-  const res = await interpreterChatStream(message);
-  if (!res.ok || !res.body) throw new Error(`Interpreter error ${res.status}`);
+export async function streamChatWithInterpreter(
+  baseUrl: string,
+  messages: Array<{ role: string; content: unknown }>,
+  onChunk: (data: any) => void,
+  onError?: (error: string) => void,
+  onComplete?: () => void
+): Promise<void> {
+  try {
+    const url = `${normalizeBase(baseUrl)}/chat/stream`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+    });
 
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let acc = '';
+    if (!res.ok || !res.body) {
+      const msg = `HTTP error! status: ${res.status}`;
+      onError?.(msg);
+      return;
+    }
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      const m = line.match(/^data:\s*(.*)$/);
-      if (m) {
-        const payload = m[1].trim();
-        if (payload === '[DONE]') continue;
-        acc += payload;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let errored = false;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          onChunk(JSON.parse(payload));
+        } catch (err: any) {
+          errored = true;
+          onError?.(`Failed to parse JSON: ${err?.message ?? 'Invalid JSON'}`);
+        }
       }
     }
+    if (!errored) onComplete?.();
+  } catch (err: any) {
+    // Network/stream error
+    onError?.(err?.message ?? 'Unknown error');
   }
-  return acc;
+}
+
+export async function chatWithInterpreter(
+  baseUrl: string,
+  messages: Array<{ role: string; content: unknown }>
+): Promise<any> {
+  const url = `${normalizeBase(baseUrl)}/chat`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
 }

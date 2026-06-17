@@ -28,7 +28,7 @@ export const activityTools: ActivityTool[] = [
       try {
         const sessions = await fs.readdir(dateDir);
         return JSON.stringify(sessions.filter(s => s.startsWith('session_')));
-      } catch (error) {
+      } catch {
         return JSON.stringify([]);
       }
     }

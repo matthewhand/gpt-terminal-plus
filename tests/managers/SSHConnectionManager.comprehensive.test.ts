@@ -453,4 +453,21 @@ describe('SSH Connection Manager', () => {
         .rejects.toThrow('ENOENT: no such file or directory');
     });
   });
+
+  describe('convenience methods', () => {
+    it('createConnection should return the client', () => {
+      const client = sshManager.createConnection();
+      expect(client).toBe(mockClient);
+    });
+
+    it('closeConnection should call disconnect', () => {
+      sshManager.closeConnection();
+      expect(mockClient.end).toHaveBeenCalled();
+    });
+
+    it('getConnection should return the client', () => {
+      const client = sshManager.getConnection();
+      expect(client).toBe(mockClient);
+    });
+  });
 });

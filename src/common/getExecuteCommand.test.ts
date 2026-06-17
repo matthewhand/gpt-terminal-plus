@@ -25,6 +25,22 @@ describe('getExecuteCommand', () => {
     expect(result).toBe(expectedCommand);
   });
 
+  test('should quote paths with spaces for bash', () => {
+    const shell = 'bash';
+    const filePath = '/path/with spaces/my script.sh';
+    const expectedCommand = 'bash "/path/with spaces/my script.sh"';
+    const result = getExecuteCommand(shell, filePath);
+    expect(result).toBe(expectedCommand);
+  });
+
+  test('should quote paths with spaces for powershell', () => {
+    const shell = 'powershell';
+    const filePath = 'C:\\Program Files\\Scripts\\script.ps1';
+    const expectedCommand = 'Powershell -File "C:\\Program Files\\Scripts\\script.ps1"';
+    const result = getExecuteCommand(shell, filePath);
+    expect(result).toBe(expectedCommand);
+  });
+
   test('should throw error if shell is not provided', () => {
     const filePath = '/path/to/script.sh';
     expect(() => getExecuteCommand('', filePath)).toThrow('Shell must be provided and must be a string.');

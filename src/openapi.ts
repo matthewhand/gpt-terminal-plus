@@ -1,7 +1,136 @@
 import express, { Request } from 'express';
 import { stringify as yamlStringify } from 'yaml';
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';
+// import path from 'path';
+import { convictConfig } from './config/convictConfig';
+import { listExecutors } from './utils/executors';
+
+function buildExecutorPaths(cfg: any) {
+  const execMode = (cfg as any).get('executors.exposureMode') as string;
+  const includeGeneric = execMode === 'generic' || execMode === 'both';
+  const includeSpecific = execMode === 'specific' || execMode === 'both';
+  const paths: Record<string, any> = {};
+  if (includeGeneric) {
+    paths['/command/execute-shell'] = {
+      post: {
+        operationId: 'executeShell',
+        summary: 'Execute a command using configured shell (generic)',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { command: { type: 'string' }, args: { type: 'array', items: { type: 'string' } }, shell: { type: 'string' } },
+                required: ['command'],
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Execution complete',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    result: { $ref: '#/components/schemas/ExecutionResult' },
+                    aiAnalysis: { type: 'object' },
+                  },
+                  required: ['result'],
+                },
+              },
+            },
+          },
+        },
+        security: [{ bearerAuth: [] as any[] }],
+      },
+    };
+  }
+  if (includeSpecific) {
+    const execs = listExecutors();
+    for (const ex of execs) {
+      const pathKey = `/command/execute-${ex.name}`;
+      if (ex.kind === 'shell') {
+        paths[pathKey] = {
+          post: {
+            operationId: `execute_${ex.name}`,
+            summary: `Execute a ${ex.name} command`,
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { command: { type: 'string' }, args: { type: 'array', items: { type: 'string' } } },
+                    required: ['command'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'Execution complete',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        result: { $ref: '#/components/schemas/ExecutionResult' },
+                        aiAnalysis: { type: 'object' },
+                      },
+                      required: ['result'],
+                    },
+                  },
+                },
+              },
+            },
+            security: [{ bearerAuth: [] as any[] }],
+          },
+        };
+      } else {
+        paths[pathKey] = {
+          post: {
+            operationId: `execute_${ex.name}`,
+            summary: `Execute a ${ex.name} snippet`,
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: { code: { type: 'string' }, timeoutMs: { type: 'integer' } },
+                    required: ['code'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'Execution complete',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        result: { $ref: '#/components/schemas/ExecutionResult' },
+                        aiAnalysis: { type: 'object' },
+                      },
+                      required: ['result'],
+                    },
+                  },
+                },
+              },
+            },
+            security: [{ bearerAuth: [] as any[] }],
+          },
+        };
+      }
+    }
+  }
+  return paths;
+}
 
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
 export function getPublicBaseUrl(req?: Request): string {
@@ -20,19 +149,13 @@ export function getPublicBaseUrl(req?: Request): string {
   return `${protocol}://${host}:${port}`;
 }
 
-/** Attempt to read a static OpenAPI artifact from public/, else return null. */
-function readPublicFileIfExists(filename: 'openapi.json' | 'openapi.yaml'): string | null {
-  try {
-    const filePath = path.resolve(process.cwd(), 'public', filename);
-    return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : null;
-  } catch {
-    return null;
-  }
-}
+// Note: runtime spec is built below; static public OpenAPI file loading removed as unused
 
 /** Build the OpenAPI object; derive servers[] from the actual request unless PUBLIC_BASE_URL is set. */
-function buildSpec(req?: Request) {
+export function buildSpec(req?: Request) {
   const baseUrl = getPublicBaseUrl(req);
+  const cfg = convictConfig();
+  const filesConsequential = (cfg as any).get('files.consequential'); // Get files.consequential from config
 
   return {
     openapi: '3.0.3',
@@ -84,122 +207,91 @@ function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
-      '/command/execute': {
-        post: {
-          operationId: 'executeCommand',
-          summary: 'Execute using first available mode',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: { command: { type: 'string' } },
-                  required: ['command'],
-                },
-              },
-            },
-          },
+      ...buildExecutorPaths(cfg),
+      
+      '/command/executors': {
+        get: {
+          operationId: 'listExecutors',
+          summary: 'List available executors (bash, python, etc.)',
           responses: {
             200: {
-              description: 'Execution complete',
+              description: 'OK',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
+                      executors: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            name: { type: 'string' },
+                            enabled: { type: 'boolean' },
+                            cmd: { type: 'string' },
+                            args: { type: 'array', items: { type: 'string' } },
+                            kind: { type: 'string', enum: ['shell','code'] }
+                          }
+                        }
+                      }
                     },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
+                    required: ['executors']
+                  }
+                }
+              }
+            }
           },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
-      '/command/execute-code': {
+      '/command/executors/{name}/toggle': {
         post: {
-          operationId: 'executeCode',
-          summary: 'Execute a code snippet',
+          operationId: 'toggleExecutor',
+          summary: 'Enable or disable an executor',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
           requestBody: {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    language: { type: 'string' },
-                    code: { type: 'string' },
-                    timeoutMs: { type: 'integer' },
-                  },
-                  required: ['language', 'code'],
-                },
-              },
-            },
+                schema: { type: 'object', properties: { enabled: { type: 'boolean' } }, required: ['enabled'] }
+              }
+            }
           },
-          responses: {
-            200: {
-              description: 'Execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
-                    },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
-          },
+          responses: { 200: { description: 'OK' }, 404: { description: 'Not found' }, 400: { description: 'Bad request' } },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
-      '/command/execute-file': {
+      '/command/executors/{name}/test': {
         post: {
-          operationId: 'executeFile',
-          summary: 'Execute a file present on the server/target (deprecated)',
-          deprecated: true,
+          operationId: 'testExecutor',
+          summary: 'Run a lightweight version command to validate executor',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
+          responses: { 200: { description: 'OK' }, 404: { description: 'Not found' }, 409: { description: 'Disabled' } },
+          security: [{ bearerAuth: [] as any[] }],
+        }
+      },
+      '/command/executors/{name}/update': {
+        post: {
+          operationId: 'updateExecutor',
+          summary: 'Update executor command and args',
+          parameters: [
+            { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
+          ],
           requestBody: {
             required: true,
             content: {
               'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    filename: { type: 'string' },
-                    directory: { type: 'string' },
-                    timeoutMs: { type: 'integer' },
-                  },
-                  required: ['filename'],
-                },
-              },
-            },
+                schema: { type: 'object', properties: { cmd: { type: 'string' }, args: { type: 'array', items: { type: 'string' } } } }
+              }
+            }
           },
-          responses: {
-            200: {
-              description: 'Execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      result: { $ref: '#/components/schemas/ExecutionResult' },
-                      aiAnalysis: { type: 'object' },
-                    },
-                    required: ['result'],
-                  },
-                },
-              },
-            },
-          },
+          responses: { 200: { description: 'OK' }, 400: { description: 'Bad request' } },
           security: [{ bearerAuth: [] as any[] }],
-        },
+        }
       },
       '/command/execute-llm': {
         post: {
@@ -240,47 +332,238 @@ function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
-      '/activity/list': {
-        get: {
-          operationId: 'activityList',
-          summary: 'List recent activity sessions',
-          parameters: [
-            {
-              in: 'query',
-              name: 'date',
-              required: false,
-              schema: { type: 'string', format: 'date' },
-              description: 'Date in YYYY-MM-DD format (defaults to recent days)',
+
+      /** ----- File operation endpoints ----- */
+      '/file/create': {
+        post: {
+          operationId: 'fileCreate',
+          summary: 'Create or replace a file on the active server',
+          'x-openai-isConsequential': filesConsequential,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filePath: { type: 'string' },
+                    content: { type: 'string' },
+                    backup: { type: 'boolean', default: true },
+                  },
+                  required: ['filePath'],
+                },
+              },
             },
-            {
-              in: 'query',
-              name: 'limit',
-              required: false,
-              schema: { type: 'integer', default: 50 },
-              description: 'Limit number of sessions returned',
+          },
+          responses: {
+            200: { description: 'File created' },
+            400: { description: 'Bad request' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/file/list': {
+        post: {
+          operationId: 'fileList',
+          summary: 'List files in a directory on the active server',
+          requestBody: {
+            required: false,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    directory: { type: 'string' },
+                    limit: { type: 'number' },
+                    offset: { type: 'number' },
+                    orderBy: { type: 'string', enum: ['datetime', 'filename'] },
+                    recursive: { type: 'boolean' },
+                    typeFilter: { type: 'string', enum: ['files', 'folders'] },
+                  },
+                },
+              },
             },
-            {
-              in: 'query',
-              name: 'type',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Filter by execution type',
-            },
-          ],
+          },
           responses: {
             200: {
-              description: 'Sessions retrieved successfully',
+              description: 'OK',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      status: { type: 'string' },
-                      message: { type: 'string' },
-                      data: {
+                      files: {
                         type: 'object',
                         properties: {
-                          sessions: { type: 'array', items: { type: 'object' } },
+                          items: { type: 'array', items: { type: 'object' } },
+                          total: { type: 'integer' },
+                          limit: { type: 'integer' },
+                          offset: { type: 'integer' },
+                        },
+                        required: ['items', 'total', 'limit', 'offset'],
+                      },
+                    },
+                    required: ['files'],
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+        get: {
+          operationId: 'fileListGet',
+          summary: 'List files (GET shim)',
+          security: [{ bearerAuth: [] as any[] }],
+          parameters: [
+            { in: 'query', name: 'directory', schema: { type: 'string' } },
+          ],
+          responses: { 200: { description: 'OK' } },
+        },
+      },
+      '/file/update': {
+        post: {
+          operationId: 'fileUpdate',
+          summary: 'Regex replace within a file',
+          'x-openai-isConsequential': filesConsequential,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filePath: { type: 'string' },
+                    pattern: { type: 'string' },
+                    replacement: { type: 'string' },
+                    backup: { type: 'boolean', default: true },
+                    multiline: { type: 'boolean', default: false },
+                  },
+                  required: ['filePath', 'pattern', 'replacement'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: 'Updated' },
+            400: { description: 'Bad request' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/file/amend': {
+        post: {
+          operationId: 'fileAmend',
+          summary: 'Append content to a file',
+          'x-openai-isConsequential': filesConsequential,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filePath: { type: 'string' },
+                    content: { type: 'string' },
+                    backup: { type: 'boolean', default: true },
+                  },
+                  required: ['filePath', 'content'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: 'Amended' },
+            400: { description: 'Bad request' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/file/diff': {
+        post: {
+          operationId: 'fileApplyDiff',
+          summary: 'Apply a unified diff using git apply',
+          description: 'Validates with `git apply --check`, then applies with `git apply`. Currently supported only for the local server handler.',
+          'x-openai-isConsequential': filesConsequential,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    diff: { type: 'string' },
+                    dryRun: { type: 'boolean', default: false },
+                    whitespaceNowarn: { type: 'boolean', default: true },
+                  },
+                  required: ['diff'],
+                },
+              },
+            },
+          },
+          responses: { 200: { description: 'Applied' }, 400: { description: 'Validation failed' } },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/file/patch': {
+        post: {
+          operationId: 'fileApplyPatch',
+          summary: 'Apply a structured patch via git apply',
+          description: 'Generates a minimal unified diff for the target file and applies it with git apply. Currently supported only for the local server handler.',
+          'x-openai-isConsequential': filesConsequential,
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filePath: { type: 'string' },
+                    search: { type: 'string' },
+                    oldText: { type: 'string' },
+                    replace: { type: 'string' },
+                    all: { type: 'boolean', default: false },
+                    startLine: { type: 'integer' },
+                    endLine: { type: 'integer' },
+                    dryRun: { type: 'boolean', default: false },
+                    whitespaceNowarn: { type: 'boolean', default: true },
+                  },
+                  required: ['filePath', 'replace'],
+                },
+              },
+            },
+          },
+          responses: { 200: { description: 'Applied' }, 400: { description: 'Validation failed' } },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      '/activity/list': {
+        get: {
+          operationId: 'activityList',
+          summary: 'List recent activity sessions',
+          parameters: [
+            { name: 'date', in: 'query', required: false, schema: { type: 'string', format: 'YYYY-MM-DD' } },
+            { name: 'limit', in: 'query', required: false, schema: { type: 'integer', default: 50 } },
+            { name: 'type', in: 'query', required: false, schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Success response',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      sessions: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            date: { type: 'string' },
+                            id: { type: 'string' },
+                            steps: { type: 'integer' },
+                            startedAt: { type: 'string' },
+                          },
                         },
                       },
                     },
@@ -297,216 +580,233 @@ function buildSpec(req?: Request) {
           operationId: 'activitySession',
           summary: 'Fetch a full activity session',
           parameters: [
-            {
-              in: 'path',
-              name: 'date',
-              required: true,
-              schema: { type: 'string', format: 'date' },
-              description: 'Date in YYYY-MM-DD format',
-            },
-            {
-              in: 'path',
-              name: 'id',
-              required: true,
-              schema: { type: 'string' },
-              description: 'Session ID',
-            },
+            { name: 'date', in: 'path', required: true, schema: { type: 'string', format: 'YYYY-MM-DD' } },
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
           ],
           responses: {
             200: {
-              description: 'Session retrieved successfully',
+              description: 'Success response',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      status: { type: 'string' },
-                      message: { type: 'string' },
-                      data: {
+                      meta: { type: 'object', properties: { sessionId: { type: 'string' }, startedAt: { type: 'string' } } },
+                      steps: { type: 'array', items: { type: 'object' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
+      
+      '/settings': {
+        get: {
+          operationId: 'getSettings',
+          summary: 'Get redacted configuration settings',
+          description: 'Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.',
+          security: [{ bearerAuth: [] as any[] }],
+          responses: {
+            200: {
+              description: 'Redacted settings grouped by category',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    additionalProperties: {
+                      type: 'object',
+                      description: 'Settings group (e.g., server, security, llm)',
+                      additionalProperties: {
                         type: 'object',
                         properties: {
-                          meta: { type: 'object' },
-                          steps: { type: 'array', items: { type: 'object' } },
+                          value: {
+                            anyOf: [
+                              { type: 'string' },
+                              { type: 'number' },
+                              { type: 'boolean' },
+                              { type: 'object' },
+                              { type: 'array' },
+                              { type: 'null' }
+                            ]
+                          },
+                          readOnly: { type: 'boolean' }
                         },
-                      },
-                    },
-                  },
-                },
-              },
+                        required: ['value', 'readOnly']
+                      }
+                    }
+                  }
+                }
+              }
             },
-            404: { description: 'Session not found' },
+            400: { description: 'Bad request' }
           },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+          'x-openai-isConsequential': false
+        }
       },
-      '/shell/session/start': {
+      '/config/persist': {
         post: {
-          operationId: 'shellSessionStart',
-          summary: 'Start a new persistent shell session',
-          requestBody: {
-            required: false,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    shell: { type: 'string', description: 'The shell to use (e.g., "bash", "powershell")' },
-                    env: { type: 'object', description: 'Environment variables for the session' },
-                  },
-                },
-              },
-            },
-          },
+          operationId: 'persistConfig',
+          summary: 'Persist current runtime config changes to disk',
+          description: 'Saves the current configuration state to convict-config.json for persistence across restarts',
+          security: [{ bearerAuth: [] as any[] }],
           responses: {
             200: {
-              description: 'Session started successfully',
+              description: 'Config persisted successfully',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      id: { type: 'string' },
-                      startedAt: { type: 'string', format: 'date-time' },
+                      success: { type: 'boolean' },
+                      message: { type: 'string' }
                     },
-                  },
-                },
-              },
+                    required: ['success', 'message']
+                  }
+                }
+              }
             },
-            501: { description: 'Not implemented' },
+            500: {
+              description: 'Persistence failed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      error: { type: 'string' }
+                    },
+                    required: ['success', 'error']
+                  }
+                }
+              }
+            }
           },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+          'x-openai-isConsequential': false
+        }
       },
-      '/shell/session/{id}/exec': {
+      '/config/toggle/llm': {
         post: {
-          operationId: 'shellSessionExec',
-          summary: 'Execute command inside existing session',
-          parameters: [
-            {
-              in: 'path',
-              name: 'id',
-              required: true,
-              schema: { type: 'string' },
-              description: 'The ID of the session',
-            },
-          ],
+          operationId: 'toggleLlm',
+          summary: 'Toggle LLM execution and persist the change',
+          description: 'Enables or disables LLM execution endpoints and persists the configuration',
+          security: [{ bearerAuth: [] as any[] }],
           requestBody: {
             required: true,
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
-                  properties: { command: { type: 'string' } },
-                  required: ['command'],
-                },
-              },
-            },
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
           },
           responses: {
             200: {
-              description: 'Command executed successfully',
+              description: 'LLM toggled successfully',
               content: {
                 'application/json': {
-                  schema: { $ref: '#/components/schemas/ExecutionResult' },
-                },
-              },
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean' },
+                      execution: { type: 'object', properties: { llm: { type: 'object', properties: { enabled: { type: 'boolean' } } } } },
+                      llm: { type: 'object', properties: { enabled: { type: 'boolean' } } }
+                    },
+                    required: ['success']
+                  }
+                }
+              }
             },
-            501: { description: 'Not implemented' },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
           },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+          'x-openai-isConsequential': false
+        }
       },
-      '/shell/session/{id}/stop': {
+      '/config/toggle/files': {
         post: {
-          operationId: 'shellSessionStop',
-          summary: 'Stop a persistent shell session',
-          parameters: [
-            {
-              in: 'path',
-              name: 'id',
-              required: true,
-              schema: { type: 'string' },
-              description: 'The ID of the session',
-            },
-          ],
-          responses: {
-            200: {
-              description: 'Session stopped successfully',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: { success: { type: 'boolean' } },
-                  },
-                },
-              },
-            },
-            501: { description: 'Not implemented' },
-          },
+          operationId: 'toggleFiles',
+          summary: 'Toggle file operations and persist the change',
+          description: 'Enables or disables file operation endpoints and persists the configuration',
           security: [{ bearerAuth: [] as any[] }],
-        },
-      },
-      '/shell/session/list': {
-        get: {
-          operationId: 'shellSessionList',
-          summary: 'List active shell sessions',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
+          },
           responses: {
             200: {
-              description: 'List of active sessions',
+              description: 'File operations toggled successfully',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      sessions: { type: 'array', items: { type: 'object' } },
+                      success: { type: 'boolean' },
+                      files: { type: 'object', properties: { enabled: { type: 'boolean' } } }
                     },
-                  },
-                },
-              },
+                    required: ['success']
+                  }
+                }
+              }
             },
-            501: { description: 'Not implemented' },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
           },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+          'x-openai-isConsequential': false
+        }
       },
-      '/shell/session/{id}/logs': {
-        get: {
-          operationId: 'shellSessionLogs',
-          summary: 'Fetch logs from a shell session',
-          parameters: [
-            {
-              in: 'path',
-              name: 'id',
-              required: true,
-              schema: { type: 'string' },
-              description: 'The ID of the session',
-            },
-            {
-              in: 'query',
-              name: 'since',
-              required: false,
-              schema: { type: 'string' },
-              description: 'Cursor/timestamp to fetch logs from',
-            },
-          ],
+      '/config/toggle/shell': {
+        post: {
+          operationId: 'toggleShell',
+          summary: 'Toggle shell execution and persist the change',
+          description: 'Enables or disables shell execution endpoints and persists the configuration',
+          security: [{ bearerAuth: [] as any[] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { enabled: { type: 'boolean' } },
+                  required: ['enabled']
+                }
+              }
+            }
+          },
           responses: {
             200: {
-              description: 'Session logs',
+              description: 'Shell execution toggled successfully',
               content: {
                 'application/json': {
                   schema: {
                     type: 'object',
                     properties: {
-                      logs: { type: 'array', items: { type: 'object' } },
+                      success: { type: 'boolean' },
+                      execution: { type: 'object', properties: { shell: { type: 'object', properties: { enabled: { type: 'boolean' } } } } }
                     },
-                  },
-                },
-              },
+                    required: ['success']
+                  }
+                }
+              }
             },
-            501: { description: 'Not implemented' },
+            400: { description: 'Bad request - enabled boolean required' },
+            500: { description: 'Toggle failed' }
           },
-          security: [{ bearerAuth: [] as any[] }],
-        },
+          'x-openai-isConsequential': false
+        }
       },
     },
   };
@@ -515,24 +815,19 @@ function buildSpec(req?: Request) {
 /** Register dynamic OpenAPI routes. */
 export function registerOpenAPIRoutes(app: express.Application): void {
   app.get('/openapi.json', (req, res) => {
-    const staticJson = readPublicFileIfExists('openapi.json');
-    if (staticJson) {
-      try {
-        return res.json(JSON.parse(staticJson));
-      } catch {
-        // fall through to dynamic builder if static file is invalid
-      }
-    }
+    // Always serve dynamic spec to ensure freshness in tests and dev
     res.json(buildSpec(req));
   });
 
   app.get('/openapi.yaml', (req, res) => {
-    const staticYaml = readPublicFileIfExists('openapi.yaml');
-    if (staticYaml) {
-      return res.type('application/yaml').send(staticYaml);
-    }
     const yaml = yamlStringify(buildSpec(req));
     res.type('application/yaml').send(yaml);
+  });
+
+  // Lightweight Swagger UI fallback for environments that don't mount swagger-ui-express
+  app.get('/docs', (_req, res) => {
+    const html = `<!doctype html><html><head><title>Swagger UI</title></head><body><h1>swagger</h1><p>See <a href="/openapi.json">/openapi.json</a></p></body></html>`;
+    res.status(200).type('text/html').send(html);
   });
 }
 

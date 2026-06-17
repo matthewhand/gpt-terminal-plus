@@ -1,10 +1,71 @@
 import convict from 'convict';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 type RedactedValue = string | number | boolean | null | string[] | number[] | boolean[] | Record<string, unknown>;
 
+let __singletonCfg: any | null = null;
+
+// Config file path for persistence - use test path during tests
+const CONFIG_FILE_PATH = process.env.NODE_ENV === 'test' 
+  ? path.join(os.tmpdir(), 'convict-config.test.json')
+  : path.join(process.cwd(), 'convict-config.json');
+
 export const convictConfig = () => {
+  // In test environment, always construct a fresh instance so per-test
+  // environment variable changes are reflected. Cache only outside tests.
+  const useCache = process.env.NODE_ENV !== 'test';
+  if (useCache && __singletonCfg) return __singletonCfg;
   // Schema with env mappings and defaults
-  return convict({
+  const cfg = convict({
+    // Execution circuit breakers and limits
+    limits: {
+      maxInputChars: {
+        doc: 'Maximum input size for commands (characters)',
+        format: 'nat',
+        default: 10000,
+        env: 'MAX_INPUT_CHARS'
+      },
+      maxOutputChars: {
+        doc: 'Maximum combined stdout+stderr size returned (characters)',
+        format: 'nat',
+        default: 200000,
+        env: 'MAX_OUTPUT_CHARS'
+      },
+      maxSessionDurationSec: {
+        doc: 'Maximum lifetime for a shell session (seconds)',
+        format: 'nat',
+        default: 7200,
+        env: 'MAX_SESSION_DURATION_SEC'
+      },
+      maxSessionIdleSec: {
+        doc: 'Maximum idle time for a shell session (seconds)',
+        format: 'nat',
+        default: 600,
+        env: 'MAX_SESSION_IDLE_SEC'
+      },
+      maxLlmCostUsd: {
+        doc: 'Maximum cumulative LLM cost (USD) before blocking',
+        format: Number,
+        default: 0,
+        env: 'MAX_LLM_COST_USD'
+      },
+      allowTruncation: {
+        doc: 'Allow truncation of outputs when exceeding limits',
+        format: Boolean,
+        default: true,
+        env: 'ALLOW_TRUNCATION'
+      }
+    },
+    shell: {
+      defaultShell: {
+        doc: 'Default shell used for WebSocket and session endpoints',
+        format: String,
+        default: 'bash',
+        env: 'DEFAULT_SHELL'
+      }
+    },
     server: {
       port: {
         doc: 'Port the HTTP server listens on',
@@ -73,6 +134,168 @@ export const convictConfig = () => {
         env: 'PUBLIC_HOST'
       }
     },
+    // Feature flags and execution toggles
+    execution: {
+      shell: {
+        enabled: {
+          doc: 'Enable shell execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'LOCALHOST_ENABLED'
+        }
+      },
+      llm: {
+        enabled: {
+          doc: 'Enable LLM execution endpoints',
+          format: Boolean,
+          default: true,
+          env: 'LLM_ENABLED'
+        }
+      }
+    },
+    // Configurable executors/runtimes
+    executors: {
+      exposureMode: {
+        doc: 'Which execution endpoints to expose in OpenAPI: generic (execute-shell), specific (execute-<name>), both, or none',
+        format: ['generic','specific','both','none'],
+        default: 'generic',
+        env: 'EXEC_EXPOSURE_MODE'
+      },
+      bash: {
+        enabled: { doc: 'Enable bash executor', format: Boolean, default: true, env: 'EXEC_BASH_ENABLED' },
+        cmd: { doc: 'Command to run bash', format: String, default: 'bash', env: 'EXEC_BASH_CMD' },
+        args: { doc: 'Default args for bash', format: Array, default: [] as any[], env: 'EXEC_BASH_ARGS' },
+        timeoutMs: { doc: 'Timeout for bash commands', format: 'nat', default: 0, env: 'EXEC_BASH_TIMEOUT_MS' }
+      },
+      zsh: {
+        enabled: { doc: 'Enable zsh executor', format: Boolean, default: false, env: 'EXEC_ZSH_ENABLED' },
+        cmd: { doc: 'Command to run zsh', format: String, default: 'zsh', env: 'EXEC_ZSH_CMD' },
+        args: { doc: 'Default args for zsh', format: Array, default: [] as any[], env: 'EXEC_ZSH_ARGS' },
+        timeoutMs: { doc: 'Timeout for zsh commands', format: 'nat', default: 0, env: 'EXEC_ZSH_TIMEOUT_MS' }
+      },
+      powershell: {
+        enabled: { doc: 'Enable PowerShell executor', format: Boolean, default: false, env: 'EXEC_POWERSHELL_ENABLED' },
+        cmd: { doc: 'Command to run PowerShell (pwsh or powershell)', format: String, default: 'pwsh', env: 'EXEC_POWERSHELL_CMD' },
+        args: { doc: 'Default args for PowerShell', format: Array, default: ['-NoLogo','-NonInteractive','-Command'] as any[], env: 'EXEC_POWERSHELL_ARGS' },
+        timeoutMs: { doc: 'Timeout for PowerShell commands', format: 'nat', default: 0, env: 'EXEC_POWERSHELL_TIMEOUT_MS' }
+      },
+      python: {
+        enabled: { doc: 'Enable python executor', format: Boolean, default: true, env: 'EXEC_PYTHON_ENABLED' },
+        cmd: { doc: 'Python interpreter', format: String, default: 'python3', env: 'EXEC_PYTHON_CMD' },
+        args: { doc: 'Default args for python', format: Array, default: [] as any[], env: 'EXEC_PYTHON_ARGS' },
+        timeoutMs: { doc: 'Timeout for Python code execution', format: 'nat', default: 0, env: 'EXEC_PYTHON_TIMEOUT_MS' }
+      },
+      typescript: {
+        enabled: { doc: 'Enable TypeScript executor', format: Boolean, default: false, env: 'EXEC_TS_ENABLED' },
+        cmd: { doc: 'TypeScript runner', format: String, default: 'npx', env: 'EXEC_TS_CMD' },
+        args: { doc: 'Default args for TS runner', format: Array, default: ['-y','ts-node@latest','-T'] as any[], env: 'EXEC_TS_ARGS' },
+        timeoutMs: { doc: 'Timeout for TS code execution', format: 'nat', default: 0, env: 'EXEC_TS_TIMEOUT_MS' }
+      }
+    },
+    features: {
+      llmConsole: {
+        doc: 'Enable LLM Console UI and APIs',
+        format: Boolean,
+        default: false,
+        env: 'LLM_CONSOLE_ENABLED'
+      }
+    },
+    files: {
+      enabled: {
+        doc: 'Enable file operation endpoints',
+        format: Boolean,
+        default: true,
+        env: 'FILE_OPS_ENABLED'
+      },
+      consequential: {
+        doc: 'Mark file routes as consequential in OpenAI/OpenAPI metadata',
+        format: Boolean,
+        default: true,
+        env: 'FILE_OPS_CONSEQUENTIAL'
+      },
+      operations: {
+        create: {
+          enabled: {
+            doc: 'Enable file create operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_CREATE_ENABLED'
+          }
+        },
+        read: {
+          enabled: {
+            doc: 'Enable file read operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_READ_ENABLED'
+          }
+        },
+        update: {
+          enabled: {
+            doc: 'Enable file update operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_UPDATE_ENABLED'
+          }
+        },
+        amend: {
+          enabled: {
+            doc: 'Enable file amend operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_AMEND_ENABLED'
+          }
+        },
+        list: {
+          enabled: {
+            doc: 'Enable file list operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_LIST_ENABLED'
+          }
+        },
+        search: {
+          enabled: {
+            doc: 'Enable file search operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_SEARCH_ENABLED'
+          }
+        },
+        patch: {
+          enabled: {
+            doc: 'Enable file patch operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_PATCH_ENABLED'
+          }
+        },
+        'fuzzy-patch': {
+          enabled: {
+            doc: 'Enable file fuzzy-patch operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_FUZZY_PATCH_ENABLED'
+          }
+        },
+        diff: {
+          enabled: {
+            doc: 'Enable file diff operation',
+            format: Boolean,
+            default: true,
+            env: 'FILE_OPS_DIFF_ENABLED'
+          }
+        }
+      }
+    },
+    fileOps: {
+      allowedPaths: {
+        doc: 'List of allowed paths for file operations',
+        format: Array,
+        default: [process.cwd()],
+        env: 'FILE_OPS_ALLOWED_PATHS'
+      }
+    },
     security: {
       apiToken: {
         doc: 'Bearer API token; generated at runtime if not set',
@@ -95,11 +318,23 @@ export const convictConfig = () => {
       }
     },
     llm: {
+      enabled: {
+        doc: 'Enable LLM functionality',
+        format: Boolean,
+        default: false,
+        env: 'LLM_ENABLED'
+      },
       provider: {
         doc: 'Selected AI provider',
         format: ['openai', 'ollama', 'lmstudio', 'open-interpreter', 'auto', ''],
         default: '',
-        env: 'AI_PROVIDER'
+        env: 'LLM_PROVIDER'
+      },
+      defaultModel: {
+        doc: 'Default model to use',
+        format: String,
+        default: '',
+        env: 'LLM_DEFAULT_MODEL'
       },
       openai: {
         baseUrl: {
@@ -121,7 +356,7 @@ export const convictConfig = () => {
           doc: 'Ollama base URL',
           format: String,
           default: '',
-          env: 'OLLAMA_BASE_URL'
+          env: 'OLLAMA_URL'
         }
       },
       lmstudio: {
@@ -129,7 +364,7 @@ export const convictConfig = () => {
           doc: 'LM Studio base URL',
           format: String,
           default: '',
-          env: 'LMSTUDIO_BASE_URL'
+          env: 'LM_STUDIO_URL'
         }
       },
       // Compatibility with src/common/llmConfig.ts environment knobs
@@ -177,9 +412,128 @@ export const convictConfig = () => {
           env: 'INTERPRETER_VERBOSE'
         }
       }
+    },
+    // Optional profiles/settings exposed by configRoutes
+    activeProfile: {
+      doc: 'Active profile name (if any)',
+      format: String,
+      default: '',
+      env: 'ACTIVE_PROFILE'
+    },
+    profiles: {
+      doc: 'Profiles array (opaque structure – managed by profiles.ts)',
+      format: Array,
+      default: [] as any[],
+      env: 'PROFILES_JSON'
     }
   });
+
+  // Load from config file if it exists (for persistence) - skip during tests
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      if (fs.existsSync(CONFIG_FILE_PATH)) {
+        const configData = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, 'utf8'));
+        cfg.load(configData);
+      }
+    } catch (error) {
+      console.warn('Failed to load config from file:', (error as Error)?.message);
+    }
+  }
+
+  // Auto-detect common executors on first init (skip during tests to keep determinism)
+  try {
+    if (process.env.NODE_ENV !== 'test') {
+      const { detectSystemExecutors } = require('../utils/executorDetect');
+      const detected = detectSystemExecutors();
+
+      // Helper to only set when env var not explicitly provided
+      const ensure = (envName: string | undefined, setFn: () => void) => {
+        if (!envName || process.env[envName] === undefined) setFn();
+      };
+      const schema = (cfg as any).getSchema();
+      const envOf = (path: string): string | undefined => {
+        const segs = path.split('.');
+        let node: any = schema.properties;
+        for (const s of segs) {
+          node = node?.[s] || node?.properties?.[s];
+        }
+        return node?.env;
+      };
+
+      // bash
+      ensure(envOf('executors.bash.enabled'), () => (cfg as any).set('executors.bash.enabled', !!detected.bash?.available));
+      if (detected.bash?.cmd) ensure(envOf('executors.bash.cmd'), () => (cfg as any).set('executors.bash.cmd', detected.bash.cmd));
+      // zsh
+      if (detected.zsh?.available) ensure(envOf('executors.zsh.enabled'), () => (cfg as any).set('executors.zsh.enabled', true));
+      if (detected.zsh?.cmd) ensure(envOf('executors.zsh.cmd'), () => (cfg as any).set('executors.zsh.cmd', detected.zsh.cmd));
+      // powershell (prefer pwsh)
+      if (detected.pwsh?.available || detected.powershell?.available) {
+        ensure(envOf('executors.powershell.enabled'), () => (cfg as any).set('executors.powershell.enabled', true));
+        const psCmd = detected.pwsh?.cmd || detected.powershell?.cmd || 'pwsh';
+        ensure(envOf('executors.powershell.cmd'), () => (cfg as any).set('executors.powershell.cmd', psCmd));
+      }
+      // python (prefer python3)
+      if (detected.python3?.available || detected.python?.available) {
+        ensure(envOf('executors.python.cmd'), () => (cfg as any).set('executors.python.cmd', detected.python3?.cmd || detected.python?.cmd || 'python3'));
+        // keep enabled default true unless explicitly disabled
+      }
+    }
+  } catch (e) {
+    // Detection failures should never crash boot
+    console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
+  }
+  if (useCache) __singletonCfg = cfg;
+
+  // Env var compatibility shims for tests and legacy names
+  // Prefer explicit envs if provided; otherwise support aliases.
+  try {
+    // Provider alias: AI_PROVIDER -> llm.provider
+    const existingProvider = (cfg as any).get('llm.provider');
+    if ((!existingProvider || existingProvider === '') && process.env.AI_PROVIDER) {
+      (cfg as any).set('llm.provider', process.env.AI_PROVIDER);
+    }
+    // Ollama URL alias: OLLAMA_BASE_URL -> llm.ollama.baseUrl
+    const existingOllama = (cfg as any).get('llm.ollama.baseUrl');
+    if ((!existingOllama || existingOllama === '') && process.env.OLLAMA_BASE_URL) {
+      (cfg as any).set('llm.ollama.baseUrl', process.env.OLLAMA_BASE_URL);
+    }
+    // LM Studio URL alias: LMSTUDIO_BASE_URL -> llm.lmstudio.baseUrl
+    const existingLm = (cfg as any).get('llm.lmstudio.baseUrl');
+    if ((!existingLm || existingLm === '') && process.env.LMSTUDIO_BASE_URL) {
+      (cfg as any).set('llm.lmstudio.baseUrl', process.env.LMSTUDIO_BASE_URL);
+    }
+  } catch {}
+  return cfg;
 };
+
+/**
+* Persist the current config to disk atomically.
+* @param cfg The convict config instance to persist
+* @param filePath Optional file path to persist to (defaults to CONFIG_FILE_PATH)
+* @returns Promise that resolves when persistence is complete
+*/
+export async function persistConfig(cfg: any, filePath?: string): Promise<void> {
+ try {
+   // Use provided file path or default
+   const configFilePath = filePath || CONFIG_FILE_PATH;
+   
+   // Get the current properties
+   const configData = cfg.getProperties();
+
+   // Create directory if it doesn't exist
+   const dir = path.dirname(configFilePath);
+   if (!fs.existsSync(dir)) {
+     fs.mkdirSync(dir, { recursive: true });
+   }
+
+   // Atomic write: write to temp file then rename
+   const tempFile = configFilePath + '.tmp';
+   fs.writeFileSync(tempFile, JSON.stringify(configData, null, 2));
+   fs.renameSync(tempFile, configFilePath);
+ } catch (error) {
+   throw new Error(`Failed to persist config: ${(error as Error)?.message}`);
+ }
+}
 
 /**
  * Build a redacted view with readOnly flags based on env overrides.

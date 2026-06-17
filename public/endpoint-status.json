@@ -1,0 +1,28 @@
+{
+  "endpointStatus": {
+    "working": [
+      "/command/execute-shell",
+      "/command/execute-code", 
+      "/server/list",
+      "/activity/list",
+      "/health",
+      "/health/detailed",
+      "/settings"
+    ],
+    "broken": [
+      "/shell/session/start",
+      "/shell/session/list", 
+      "/shell/session/*/exec",
+      "/shell/session/*/logs",
+      "/shell/session/*/stop"
+    ],
+    "partial": [
+      "/file/create",
+      "/file/read",
+      "/file/update",
+      "/file/delete"
+    ]
+  },
+  "recommendation": "Focus Web UI development on working endpoints first. Avoid broken endpoints completely as they return 404 errors.",
+  "lastUpdated": "2025-09-20"
+}

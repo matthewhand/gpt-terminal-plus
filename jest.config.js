@@ -1,9 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  transform: {
-    '^.+\\.tsx?$': 'ts-jest',
-  },
   moduleNameMapper: {
     '^@src/(.*)$': '<rootDir>/src/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
@@ -14,7 +11,6 @@ module.exports = {
     '^@modules/(.*)$': '<rootDir>/src/modules/$1',
     '^@routes/(.*)$': '<rootDir>/src/routes/$1',
     '^@tests/(.*)$': '<rootDir>/tests/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1',
-  },
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+    '^@types/(.*)$': '<rootDir>/src/types/$1'
+  }
 };

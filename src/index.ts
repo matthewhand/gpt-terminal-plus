@@ -12,12 +12,16 @@ import express from "express";
 import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
+import shellRouter from './routes/shell';
+import publicRouter from './routes/publicRouter';
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
 
 import { validateEnvironmentVariables } from './utils/envValidation';
 import setupMiddlewares from './middlewares/setupMiddlewares';
 import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
+import { registerServersFromConfig } from './bootstrap/serverLoader';
+import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown';
 
 import './modules/ngrok';
 
@@ -29,18 +33,36 @@ validateEnvironmentVariables();
 // Setup middlewares
 setupMiddlewares(app);
 
+/**
+ * Static assets
+ * - Serve public/ at /
+ * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
+ */
 // Serve static assets from public/
 app.use(express.static(path.resolve(__dirname, '..', 'public')));
+// Serve documentation markdown as static files
+app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
-// Setup API Router
+// Setup API Router and additional route groups
 setupApiRouter(app);
+app.use(publicRouter);
 
+// Dynamic OpenAPI routes
+registerOpenApiRoutes(app);
 
-  // Dynamic OpenAPI routes
-  registerOpenApiRoutes(app);
+// Enhanced Swagger UI at /docs
+const swaggerOptions: any = {
+  swaggerUrl: '/openapi.json',
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customCssUrl: '/swagger-theme.css',
+  customJs: '/theme.js',
+  customSiteTitle: 'GPT Terminal Plus API',
+  customfavIcon: '/favicon.ico'
+};
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
 
-  // Swagger UI at /docs, static-first pointing to /openapi.json
-  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, { swaggerUrl: '/openapi.json', explorer: true }));
+  // (duplicate OpenAPI/Swagger mounts removed)
 
 // MCP server (opt-in). The deprecated SSE transport at /mcp/messages was
 // removed; the MCP endpoint now uses Streamable HTTP at POST/GET/DELETE /mcp.
@@ -57,6 +79,8 @@ const configFilePath = path.join(configDir, "production.json");
  * Main function to initialize the application.
  */
 const main = async (): Promise<void> => {
+  // Load servers from config into memory registry
+  registerServersFromConfig();
   // Ensure the configuration directory exists
   console.debug("Checking if configuration directory exists at:", configDir);
   if (!fs.existsSync(configDir)) {
@@ -124,32 +148,20 @@ const main = async (): Promise<void> => {
       console.log(`Server running on ${protocol}://localhost:${port}`);
       console.log(`OpenAPI (JSON): ${protocol}://localhost:${port}/openapi.json`);
       console.log(`OpenAPI (YAML): ${protocol}://localhost:${port}/openapi.yaml`);
-      console.log(`OpenAPI YAML: ${protocol}://localhost:${port}/openapi.yaml`);
       console.log(`Plugin manifest: ${protocol}://localhost:${port}/.well-known/ai-plugin.json`);
-      console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);});
-
-    // Graceful shutdown handling
-    process.on("SIGINT", () => shutdown(server));
-    process.on("SIGTERM", () => shutdown(server));
-  };
-
-  /**
-   * Shutdown the server gracefully.
-   * @param server - The server instance to shutdown.
-   */
-  const shutdown = (server: http.Server | https.Server): void => {
-    console.log("Shutting down server...");
-    server.close(() => {
-      console.log("Server closed.");
-      process.exit(1);
+      console.log(`Docs (SwaggerUI): ${protocol}://localhost:${port}/docs`);
+      console.log(`Health check: ${protocol}://localhost:${port}/health`);
+      console.log(`Detailed health: ${protocol}://localhost:${port}/health/detailed`);
     });
 
-    // Force server shutdown after a timeout
-    setTimeout(() => {
-      console.error("Forcing server shutdown...");
-      process.exit(2);
-    }, 10001); // 10-second timeout
+    // Setup graceful shutdown handling
+    setupGracefulShutdown({
+      server,
+      timeout: 30000, // 30 seconds
+      onShutdown: createShutdownHandler()
+    });
   };
+
 
   if (process.env.USE_SERVERLESS === "true") {
     try {

@@ -1,29 +1,78 @@
 export interface GlobalState {
-  selectedServer: string;
+  selectedServer: any;
   presentWorkingDirectory: string;
   selectedModel: string;
 }
 
-// Maintain a stable singleton reference
-const state: GlobalState = {
-  selectedServer: '',
-  presentWorkingDirectory: '',
-  selectedModel: '',
-};
+let state: GlobalState | null = null;
 
 export function getGlobalState(): GlobalState {
+  if (!state) {
+    state = {
+      selectedServer: '',
+      presentWorkingDirectory: '',
+      selectedModel: '',
+    };
+    
+    // Auto-select default localhost server if none selected (skip in tests)
+    if (process.env.NODE_ENV !== 'test' && !state.selectedServer) {
+      initializeDefaultServer();
+    }
+  }
   return state;
 }
 
-export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {
-  state.selectedServer = '';
-  state.presentWorkingDirectory = '';
-  state.selectedModel = '';
-  if (init) {
-    if (init.selectedServer !== undefined) state.selectedServer = init.selectedServer as string;
-    if (init.presentWorkingDirectory !== undefined) state.presentWorkingDirectory = init.presentWorkingDirectory as string;
-    if (init.selectedModel !== undefined) state.selectedModel = init.selectedModel as string;
+function initializeDefaultServer(): void {
+  try {
+    // Try to get registered servers first
+    const { listRegisteredServers } = require('../managers/serverRegistry');
+    const registeredServers = listRegisteredServers();
+    
+    // Look for localhost server with current working directory
+    let defaultServer = registeredServers.find((s: any) => 
+      s.hostname === 'localhost' && 
+      s.protocol === 'local' &&
+      (s.directory === '.' || s.directory === process.cwd() || !s.directory)
+    );
+    
+    // If not found, look for any localhost server
+    if (!defaultServer) {
+      defaultServer = registeredServers.find((s: any) => 
+        s.hostname === 'localhost' && s.protocol === 'local'
+      );
+    }
+    
+    // If still not found, create a default localhost server
+    if (!defaultServer) {
+      const { ServerManager } = require('../managers/ServerManager');
+      defaultServer = ServerManager.getDefaultLocalServerConfig();
+      
+      // Register it in memory
+      const { registerServerInMemory } = require('../managers/serverRegistry');
+      registerServerInMemory({
+        ...defaultServer,
+        registeredAt: new Date().toISOString(),
+        modes: ['shell', 'code'],
+        directory: '.'
+      });
+    }
+    
+    if (defaultServer && state) {
+      state.selectedServer = defaultServer.hostname;
+      console.log(`🚀 Auto-selected default server: ${defaultServer.hostname}`);
+    }
+  } catch (error) {
+    console.warn('Failed to initialize default server:', error);
   }
+}
+
+export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {
+  state = {
+    selectedServer: '',
+    presentWorkingDirectory: '',
+    selectedModel: '',
+    ...init,
+  };
 }
 
 /** Legacy-style accessors used throughout the code/tests */
@@ -57,9 +106,18 @@ export function getCurrentServerHandler() {
 }
 
 export function clearGlobalState() {
-  state.selectedServer = '';
-  state.presentWorkingDirectory = '';
-  state.selectedModel = '';
+  if (state) {
+    // Reset in-place to preserve singleton identity for references held by callers/tests
+    state.selectedServer = '' as any;
+    state.presentWorkingDirectory = '';
+    state.selectedModel = '';
+  } else {
+    state = {
+      selectedServer: '',
+      presentWorkingDirectory: '',
+      selectedModel: '',
+    };
+  }
 }
 
 export default {

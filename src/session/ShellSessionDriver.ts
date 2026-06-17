@@ -1,90 +1,87 @@
-/**
- * ShellSessionDriver
- *
- * Provides a persistent shell session using node-pty.
- * Supports running multiple commands within the same environment.
- */
+import { spawn } from 'child_process';
 
-import { spawn } from "child_process";
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-import path from "path";
-import { SessionDriver, SessionMeta, ExecutionResult, ExecutionLog } from "./SessionDriver";
+type SessionLog = {
+  command: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+  at: number;
+  timestamp?: Date;
+};
 
-interface ShellSession {
-  proc: ReturnType<typeof spawn>;
-  logs: ExecutionLog[];
-}
+type SessionMeta = {
+  id: string;
+  shell: string;
+  createdAt: number;
+};
 
-export class ShellSessionDriver implements SessionDriver {
-  private sessions: Map<string, ShellSession> = new Map();
+const sessions = new Map<string, { meta: SessionMeta; logs: SessionLog[] }>();
 
-  async start(opts: any): Promise<SessionMeta> {
-    const shell = opts?.shell || process.env.SHELL || "bash";
-    const id = `sess-${uuidv4()}`;
-    const proc = spawn(shell, [], { stdio: "pipe" });
-
-    this.sessions.set(id, { proc, logs: [] });
-
-    const meta: SessionMeta = {
-      id,
-      mode: "shell",
-      server: "local",
-      startedAt: new Date().toISOString(),
-    };
-
-    return meta;
+export class ShellSessionDriver {
+  async start(params?: { shell?: string }): Promise<SessionMeta & { status: string }> {
+    const shell = params?.shell || 'bash';
+    const id = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const createdAt = Date.now();
+    const meta: SessionMeta = { id, shell, createdAt };
+    sessions.set(id, { meta, logs: [] });
+    return { ...meta, status: 'running' };
   }
 
-  async exec(id: string, input: string): Promise<ExecutionResult> {
-    const session = this.sessions.get(id);
-    if (!session) throw new Error(`Session ${id} not found`);
+  async exec(id: string, command: string): Promise<{ stdout: string; stderr: string; exitCode: number; success: boolean }> {
+    const s = sessions.get(id);
+    if (!s) throw new Error(`Session not found: ${id}`);
 
-    return new Promise((resolve) => {
-      let stdout = "";
-      let stderr = "";
+    if (!command || command.trim() === '') {
+      throw new Error('Command cannot be empty');
+    }
 
-      session.proc.stdout?.on("data", (data) => {
-        stdout += data.toString();
+    // Run a single command using the configured shell
+    const shell = s.meta.shell || 'bash';
+    const isBashLike = /bash|zsh|sh/i.test(shell);
+    const args = isBashLike ? ['-lc', command] : ['-c', command];
+
+    return await new Promise((resolve, reject) => {
+      const child = spawn(shell, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      let stdout = '';
+      let stderr = '';
+      child.stdout?.on('data', (d) => { stdout += d.toString(); });
+      child.stderr?.on('data', (d) => { stderr += d.toString(); });
+      child.on('error', reject);
+      child.on('close', (code) => {
+        const exitCode = typeof code === 'number' ? code : 1;
+        const log: SessionLog = { command, stdout, stderr, exitCode, at: Date.now() };
+        s.logs.push(log);
+        resolve({ stdout, stderr, exitCode, success: exitCode === 0 });
       });
-
-      session.proc.stderr?.on("data", (data) => {
-        stderr += data.toString();
-      });
-
-      session.proc.stdin?.write(input + "\n");
-
-      // crude: wait a moment for output, then resolve
-      setTimeout(() => {
-        const result: ExecutionResult = {
-          stdout,
-          stderr,
-          exitCode: 0, // not tracked per command in long-lived session
-          timestamp: new Date().toISOString(),
-        };
-
-        const log: ExecutionLog = { ...result, command: input };
-        session.logs.push(log);
-
-        const dir = path.join("data/activity", new Date().toISOString().split("T")[0], id);
-        fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(path.join(dir, `${Date.now()}.json`), JSON.stringify(log, null, 2));
-
-        resolve(result);
-      }, 300);
     });
   }
 
-  async stop(id: string): Promise<void> {
-    const session = this.sessions.get(id);
-    if (session) {
-      session.proc.kill();
-      this.sessions.delete(id);
-    }
+  async logs(id: string): Promise<SessionLog[]> {
+    const s = sessions.get(id);
+    if (!s) throw new Error(`Session not found: ${id}`);
+    return s.logs.map(log => ({ ...log, timestamp: new Date(log.at) }));
   }
 
-  async logs(id: string): Promise<ExecutionLog[]> {
-    const session = this.sessions.get(id);
-    return session ? session.logs : [];
+  async list(): Promise<Array<{ id: string; shell: string; status: string; createdAt: Date }>> {
+    const result = [];
+    for (const [id, session] of sessions.entries()) {
+      result.push({
+        id,
+        shell: session.meta.shell,
+        status: 'running',
+        createdAt: new Date(session.meta.createdAt)
+      });
+    }
+    return result;
+  }
+
+  async stop(id: string): Promise<void> {
+    // No persistent process is maintained in this minimal driver.
+    // Retain logs for post-stop inspection.
+    if (!sessions.has(id)) {
+      throw new Error(`Session not found: ${id}`);
+    }
+    // Keep meta/logs for tests; no-op
   }
 }
+

@@ -23,16 +23,20 @@ export const getExecuteCommand = (shell: string, filePath: string): string => {
 
   debug("Generating execute command for shell: " + shell + ", filePath: " + filePath);
 
+  // Quote the file path if it contains spaces or common special characters
+  const needsQuoting = /[\s()&|;<>]/.test(filePath);
+  const safePath = needsQuoting ? `"${filePath}"` : filePath;
+
   let command: string;
   switch (shell.toLowerCase()) {
     case "powershell":
-      command = "Powershell -File " + filePath;
+      command = "Powershell -File " + safePath;
       break;
     case "python":
-      command = "python " + filePath;
+      command = "python " + safePath;
       break;
     default:
-      command = "bash " + filePath;
+      command = "bash " + safePath;
       break;
   }
 

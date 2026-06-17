@@ -1,0 +1,7 @@
+name: TODO
+version: 0.0.1
+schema: v1
+prompts:
+  - name: Finish prompt
+    description: Finish prompt
+    prompt: finish that. then do 1 more like it. and when that is done pls review TODO.md. implement as planned, building upon previous attempts

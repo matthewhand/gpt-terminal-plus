@@ -1,1 +1,0 @@
-const mondaySdk = require('monday-sdk-js'); const monday = mondaySdk(); monday.setToken(process.env.MONDAY_TOKEN); const query = 'query { boards(ids: [2809374317]) { groups { id title } } }'; monday.api(query).then(res => { console.log(res.data.boards[0].groups); }).catch(err => { console.error('Failed to fetch groups:', err); });

@@ -46,6 +46,7 @@ export async function getSystemInfo(client: Client, shell: string, scriptPath: s
             let stderr = '';
 
             stream.on('close', (code: number, signal: string) => {
+                debug('Command completed with code:', code, 'stdout:', stdout, 'stderr:', stderr);
                 if (code !== 0) {
                     debug('Command failed with code ' + code + ', signal ' + signal + ', stderr: ' + stderr);
                     reject(new Error('Command failed with code ' + code + ', signal ' + signal + ', stderr: ' + stderr));

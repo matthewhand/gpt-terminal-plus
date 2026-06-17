@@ -5,7 +5,7 @@
 import { expect } from 'chai';
 import fs from 'fs';
 import sinon from 'sinon';
-import { updateFile } from '@src/handlers/local/actions/updateFile';
+import { updateFile } from '@src/handlers/local/actions/updateFile.local';
 
 describe('updateFile', () => {
   let readFileSyncStub: sinon.SinonStub;

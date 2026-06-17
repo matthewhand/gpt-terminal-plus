@@ -3,10 +3,10 @@
  * This includes mock implementations to validate server responses and error scenarios.
  */
 
-import { createFile } from '@src/routes/file/createFile';
-import { updateFile } from '@src/routes/file/updateFile';
-import { amendFile } from '@src/routes/file/amendFile';
-import { listFiles } from '@src/routes/file/listFiles';
+import { createFile } from '@src/routes/file/createFile.route';
+import { updateFile } from '@src/routes/file/updateFile.route';
+import { amendFile } from '@src/routes/file/amendFile.route';
+import { listFiles } from '@src/routes/file/listFiles.route';
 import fs from 'fs';
 
 jest.mock('fs');

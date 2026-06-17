@@ -1,7 +1,24 @@
+
 import { PaginatedResponse } from './PaginatedResponse';
 import { SystemInfo } from './SystemInfo';
 import { ServerConfig } from './ServerConfig';
 import { ExecutionResult } from './ExecutionResult';
+import { FileReadResult } from './FileReadResult';
+import { ListParams } from './ListParams';
+
+export interface SearchResult {
+  filePath: string;
+  lineNumber: number;
+  content: string;
+}
+
+export interface SearchParams {
+  pattern: string;
+  path: string;
+  caseSensitive?: boolean;
+  limit?: number;
+  offset?: number;
+}
 
 export interface ServerHandler {
   setServerConfig(serverConfig: ServerConfig): void;
@@ -12,7 +29,10 @@ export interface ServerHandler {
   executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult>;
   executeFile(filename: string, directory?: string, timeout?: number): Promise<ExecutionResult>;
   createFile(filePath: string, content: string, backup: boolean): Promise<boolean>;
-  updateFile(filePath: string, pattern: string, replacement: string, multiline: boolean): Promise<boolean>;
-  amendFile(filePath: string, content: string, backup: boolean): Promise<boolean>;
-  listFiles(params: { directory: string, limit?: number, offset?: number, orderBy?: 'datetime' | 'filename' }): Promise<PaginatedResponse<{ name: string, isDirectory: boolean }>>;
+  readFile(filePath: string, options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<FileReadResult>;
+  updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean>;
+  amendFile(filePath: string, content: string, options?: { backup?: boolean }): Promise<boolean>;
+  listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
+  listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>>;
+  searchFiles(params: SearchParams): Promise<PaginatedResponse<SearchResult>>;
 }
