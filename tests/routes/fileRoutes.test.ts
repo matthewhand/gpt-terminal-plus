@@ -40,6 +40,10 @@ describe('File Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('middleware application', () => {

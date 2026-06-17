@@ -23,7 +23,9 @@ jest.mock('../../src/middlewares/rateLimit', () => ({
   fileRateLimit: jest.fn(),
   advancedRateLimit: { rateLimiters: { moderate: jest.fn(), lenient: jest.fn(), strict: jest.fn() } }
 }));
-jest.mock('../../src/middlewares/logMode', () => jest.fn(() => (req: any, res: any, next: any) => next()));
+jest.mock('../../src/middlewares/logMode', () => ({
+  logMode: jest.fn((req: any, res: any, next: any) => next())
+}));
 
 describe('setupMiddlewares', () => {
   let app: express.Application;
@@ -166,6 +168,7 @@ describe('setupMiddlewares', () => {
       });
 
       it('should use private network defaults when DISABLE_PRIVATE_NETWORK_ACCESS=true', () => {
+        delete process.env.CORS_ORIGIN;
         process.env.DISABLE_PRIVATE_NETWORK_ACCESS = 'true';
         const cors = require('cors');
         setupMiddlewares(app);
@@ -196,10 +199,11 @@ describe('setupMiddlewares', () => {
 
   describe('log mode', () => {
     it('should apply log mode middleware', () => {
-      const logMode = require('../../src/middlewares/logMode');
+      const logModeMod = require('../../src/middlewares/logMode');
       setupMiddlewares(app);
 
-      expect(logMode).toHaveBeenCalled();
+      // logMode is passed to app.use (registered, invoked later on requests)
+      expect(useSpy).toHaveBeenCalledWith(logModeMod.logMode);
     });
   });
 

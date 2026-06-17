@@ -21,51 +21,45 @@ describe('Command Safety Evaluation', () => {
   describe('Environment Pattern Configuration', () => {
     it('should use custom deny patterns from environment', () => {
       process.env.DENY_COMMAND_REGEX = 'danger|malicious';
-      
-      const safeCommand = evaluateCommandSafety('echo hello');
-      expect(safeCommand.hardDeny).toBe(false);
-      expect(safeCommand.needsConfirm).toBe(false);
-      
-      const dangerousCommand = evaluateCommandSafety('do danger things');
-      expect(dangerousCommand.hardDeny).toBe(true);
-      expect(dangerousCommand.needsConfirm).toBe(false);
-      
-      const maliciousCommand = evaluateCommandSafety('run malicious script');
-      expect(maliciousCommand.hardDeny).toBe(true);
-      expect(maliciousCommand.needsConfirm).toBe(false);
+      const cases = [
+        { cmd: 'echo hello', hardDeny: false, needsConfirm: false },
+        { cmd: 'do danger things', hardDeny: true, needsConfirm: false },
+        { cmd: 'run malicious script', hardDeny: true, needsConfirm: false },
+      ];
+      cases.forEach(({ cmd, hardDeny, needsConfirm }) => {
+        const result = evaluateCommandSafety(cmd);
+        expect(result.hardDeny).toBe(hardDeny);
+        expect(result.needsConfirm).toBe(needsConfirm);
+      });
     });
 
     it('should use custom confirm patterns from environment', () => {
       process.env.CONFIRM_COMMAND_REGEX = 'rm\\s+-rf|sudo\\s+';
-      
-      const safeCommand = evaluateCommandSafety('ls -la');
-      expect(safeCommand.hardDeny).toBe(false);
-      expect(safeCommand.needsConfirm).toBe(false);
-      
-      const rmCommand = evaluateCommandSafety('rm -rf /tmp/demo');
-      expect(rmCommand.hardDeny).toBe(false);
-      expect(rmCommand.needsConfirm).toBe(true);
-      
-      const sudoCommand = evaluateCommandSafety('sudo apt update');
-      expect(sudoCommand.hardDeny).toBe(false);
-      expect(sudoCommand.needsConfirm).toBe(true);
+      const cases = [
+        { cmd: 'ls -la', hardDeny: false, needsConfirm: false },
+        { cmd: 'rm -rf /tmp/demo', hardDeny: false, needsConfirm: true },
+        { cmd: 'sudo apt update', hardDeny: false, needsConfirm: true },
+      ];
+      cases.forEach(({ cmd, hardDeny, needsConfirm }) => {
+        const result = evaluateCommandSafety(cmd);
+        expect(result.hardDeny).toBe(hardDeny);
+        expect(result.needsConfirm).toBe(needsConfirm);
+      });
     });
 
     it('should handle both deny and confirm patterns together', () => {
       process.env.DENY_COMMAND_REGEX = 'format\\s+c:|del\\s+/s';
       process.env.CONFIRM_COMMAND_REGEX = 'rm\\s+-rf|sudo\\s+';
-      
-      const safeCommand = evaluateCommandSafety('echo test');
-      expect(safeCommand.hardDeny).toBe(false);
-      expect(safeCommand.needsConfirm).toBe(false);
-      
-      const confirmCommand = evaluateCommandSafety('rm -rf /tmp');
-      expect(confirmCommand.hardDeny).toBe(false);
-      expect(confirmCommand.needsConfirm).toBe(true);
-      
-      const denyCommand = evaluateCommandSafety('format c:');
-      expect(denyCommand.hardDeny).toBe(true);
-      expect(denyCommand.needsConfirm).toBe(false);
+      const cases = [
+        { cmd: 'echo test', hardDeny: false, needsConfirm: false },
+        { cmd: 'rm -rf /tmp', hardDeny: false, needsConfirm: true },
+        { cmd: 'format c:', hardDeny: true, needsConfirm: false },
+      ];
+      cases.forEach(({ cmd, hardDeny, needsConfirm }) => {
+        const result = evaluateCommandSafety(cmd);
+        expect(result.hardDeny).toBe(hardDeny);
+        expect(result.needsConfirm).toBe(needsConfirm);
+      });
     });
   });
 
@@ -98,6 +92,7 @@ describe('Command Safety Evaluation', () => {
         const result = evaluateCommandSafety(command);
         // Should either deny or require confirmation based on default patterns
         expect(result.hardDeny || result.needsConfirm).toBe(true);
+        expect(Array.isArray(result.reasons)).toBe(true);
       });
     });
   });

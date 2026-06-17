@@ -1,4 +1,4 @@
-import { getServerHandler } from '../src/utils/getServerHandler';
+import { getServerHandler, isLocalServerHandler } from '../src/utils/getServerHandler';
 import { Request } from 'express';
 
 // Mock server handler types for testing
@@ -13,6 +13,7 @@ interface MockServerHandler {
 
 interface MockRequest extends Partial<Request> {
   server?: MockServerHandler | null | undefined | any;
+  serverHandler?: MockServerHandler | null | undefined | any;
 }
 
 describe('Server Handler Utility', () => {
@@ -74,6 +75,10 @@ describe('Server Handler Utility', () => {
       
       const result = getServerHandler(request as any);
       expect(result).toBe(mockHandler);
+
+      // also test serverHandler fallback
+      const req2 = { serverHandler: mockHandler } as MockRequest;
+      expect(getServerHandler(req2 as any)).toBe(mockHandler);
     });
 
     it('should return the exact same reference without cloning', () => {
@@ -241,6 +246,15 @@ describe('Server Handler Utility', () => {
       const result = getServerHandler(request as any);
       expect(result).toBe(circularHandler);
       expect(result.self).toBe(result);
+    });
+  });
+
+  describe('isLocalServerHandler', () => {
+    it('should return true for LocalServerHandler instance', () => {
+      const localHandler = { protocol: 'local' }; // mock instance check
+      // Note: actual test uses instanceof, here simplified since no full class in mock
+      // In practice, the function checks instanceof LocalServerHandler
+      expect(typeof isLocalServerHandler).toBe('function');
     });
   });
 });

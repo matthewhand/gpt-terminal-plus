@@ -38,6 +38,10 @@ describe('initializeServerHandler middleware', () => {
     mockNext = jest.fn();
 
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = jest.requireActual('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('test environment', () => {

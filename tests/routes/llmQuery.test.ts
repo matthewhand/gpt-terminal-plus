@@ -1,26 +1,19 @@
 import request from 'supertest';
-import express, { Router } from 'express';
-import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
-import * as routesMod from '../../src/routes';
-
-function makeApp() {
-  const app = express();
-  setupMiddlewares(app);
-
-  const anyRoutes: any = routesMod as any;
-  if (typeof anyRoutes.setupApiRouter === 'function') {
-    anyRoutes.setupApiRouter(app);
-  }
-  return app;
-}
+import express from 'express';
+import { getOrGenerateApiToken } from '../../src/common/apiToken';
+import { makeTestApp } from '../utils/testApp';
 
 describe('LLM Query Routes', () => {
   let app: express.Application;
   const token = 'test-token';
+  process.env.API_TOKEN = token;
+  getOrGenerateApiToken();
+  process.env.LLM_PROVIDER = 'ollama';  // ensure llmEnabled=true so /llm/query and /llm/console don't 404 in tests
 
   beforeAll(() => {
     process.env.API_TOKEN = token;
-    app = makeApp();
+    process.env.LLM_PROVIDER = 'ollama';  // ensure llmEnabled=true so /llm/query and /llm/console don't 404 in tests
+    app = makeTestApp();
   });
 
   describe('POST /llm/query', () => {
@@ -51,6 +44,7 @@ describe('LLM Query Routes', () => {
         });
 
       expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized');
     });
 
     it('should require prompt parameter', async () => {
@@ -102,6 +96,7 @@ describe('LLM Query Routes', () => {
         .get('/llm/console');
 
       expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized');
     });
   });
 });

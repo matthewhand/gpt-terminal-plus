@@ -21,7 +21,6 @@ function getLlmProvider(): string {
     if (provider && provider.length > 0) return provider;
   } catch { /* fall through */ }
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const nodeConfig = require('config');
     if (nodeConfig.has('llm.provider')) {
       const provider = nodeConfig.get('llm.provider') as string;
@@ -39,7 +38,7 @@ router.get('/console', (req: Request, res: Response) => {
   try {
     const cfg = convictConfig();
     const provider = getLlmProvider();
-    const llmEnabled = !!(provider && provider.length > 0);
+    const llmEnabled = !!(provider && provider.length > 0) || process.env.LLM_ENABLED === 'true' || process.env.LLM_ENABLED === '1';
 
     // Check if LLM Console feature is enabled in settings (optional group)
     let llmConsoleEnabled = false;
@@ -47,6 +46,9 @@ router.get('/console', (req: Request, res: Response) => {
       llmConsoleEnabled = Boolean((cfg as any).get('features.llmConsole'));
     } catch {
       // Feature not configured, default to false
+    }
+    if (!llmConsoleEnabled) {
+      llmConsoleEnabled = process.env.LLM_CONSOLE_ENABLED === 'true' || process.env.LLM_CONSOLE_ENABLED === '1';
     }
     
     if (!llmEnabled || !llmConsoleEnabled) {
@@ -76,7 +78,7 @@ router.get('/console', (req: Request, res: Response) => {
 router.post('/query', async (req: Request, res: Response) => {
   try {
     const provider = getLlmProvider();
-    const llmEnabled = !!(provider && provider.length > 0);
+    const llmEnabled = !!(provider && provider.length > 0) || process.env.LLM_ENABLED === 'true' || process.env.LLM_ENABLED === '1';
 
     if (!llmEnabled) {
       return res.status(404).json({

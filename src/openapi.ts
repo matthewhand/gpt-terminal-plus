@@ -132,6 +132,8 @@ function buildExecutorPaths(cfg: any) {
   return paths;
 }
 
+export { buildExecutorPaths };
+
 /** Public base URL for OpenAPI `servers` — prefers env, else request, else fallbacks. */
 export function getPublicBaseUrl(req?: Request): string {
   const envUrl = process.env.PUBLIC_BASE_URL;

@@ -77,7 +77,8 @@ export function _resetGlobalStateForTests(init?: Partial<GlobalState>) {
 
 /** Legacy-style accessors used throughout the code/tests */
 export function getSelectedServer() {
-  return getGlobalState().selectedServer;
+  const s = getGlobalState().selectedServer;
+  return s || 'local';
 }
 export function setSelectedServer(s: any) {
   getGlobalState().selectedServer = s;

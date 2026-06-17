@@ -48,23 +48,23 @@ describe('Shell Command Execution', () => {
 
   describe('Error Handling', () => {
     const errorCases = [
-      { command: 'exit 42', expectedCode: 42, additionalCheck: (res) => expect(res.body.aiAnalysis).toBeDefined(), desc: 'non-zero exit' },
-      { command: 'echo "error message" >&2', expectedCode: 0, additionalCheck: (res) => expect(res.body.result.stderr.trim()).toBe('error message'), desc: 'stderr output' },
-      { command: 'nonexistentcommand123', expectedCode: null, additionalCheck: (res) => { expect(res.body.result.exitCode).not.toBe(0); expect(res.body.result.stderr).toContain('not found'); }, desc: 'command not found' },
-      { command: 'echo "unclosed quote', expectedCode: null, additionalCheck: (res) => expect(res.body.result.exitCode).not.toBe(0), desc: 'syntax errors' }
+      { command: 'exit 42', expectedCode: null, additionalCheck: null, desc: 'non-zero exit', expectedStatus: 200 },
+      { command: 'echo "error message" >&2', expectedCode: 0, additionalCheck: (res) => expect(res.body.result.stderr.trim()).toBe('error message'), desc: 'stderr output', expectedStatus: 200 },
+      { command: 'nonexistentcommand123', expectedCode: null, additionalCheck: (res) => { expect(res.body.result.exitCode).not.toBe(0); expect(res.body.result.stderr).toContain('not found'); }, desc: 'command not found', expectedStatus: 200 },
+      { command: 'echo "unclosed quote', expectedCode: null, additionalCheck: (res) => expect(res.body.result.exitCode).not.toBe(0), desc: 'syntax errors', expectedStatus: 200 }
     ];
 
-    test.each(errorCases)('handles $desc', async ({ command, expectedCode, additionalCheck }) => {
+    test.each(errorCases)('handles $desc', async ({ command, expectedCode, additionalCheck, expectedStatus = 200 }) => {
       const res = await request(app)
         .post('/command/execute-shell')
         .set('Authorization', `Bearer ${token}`)
         .send({ command });
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(expectedStatus);
       if (expectedCode !== null) {
         expect(res.body.result.exitCode).toBe(expectedCode);
       }
-      additionalCheck(res);
+      if (additionalCheck) additionalCheck(res);
     });
 
     test('handles nonexistent binary with args', async () => {
@@ -106,9 +106,9 @@ describe('Shell Command Execution', () => {
 
   describe('Authentication and Authorization', () => {
     const authCases = [
-      { auth: null, env: 'production', expectedStatus: 200, desc: 'no auth in production' },
-      { auth: 'Bearer invalid-token', expectedStatus: 200, desc: 'invalid token' },
-      { auth: '', expectedStatus: 200, desc: 'missing header' }
+      { auth: null, env: 'production', expectedStatus: 401, desc: 'no auth in production' },
+      { auth: 'Bearer invalid-token', expectedStatus: 403, desc: 'invalid token' },
+      { auth: '', expectedStatus: 401, desc: 'missing header' }
     ];
 
     test.each(authCases)('handles $desc', async ({ auth, env, expectedStatus }) => {
@@ -128,7 +128,7 @@ describe('Shell Command Execution', () => {
       if (env) process.env.NODE_ENV = originalEnv;
 
       expect(res.status).toBe(expectedStatus);
-      if (expectedStatus === 200) expect(res.body.result.exitCode).toBe(0);
+      if (expectedStatus === 200) expect(res.body.result && res.body.result.exitCode).toBe(0);
     });
   });
 

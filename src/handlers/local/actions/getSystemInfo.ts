@@ -46,7 +46,7 @@ export async function getSystemInfo(): Promise<SystemInfo> {
     } catch {/* fall back to os */}
 
     const info: SystemInfo = {
-      type: 'linux',
+      type: 'LocalServer',
       platform: os.platform(),
       architecture: os.arch(),
       totalMemory: os.totalmem(),

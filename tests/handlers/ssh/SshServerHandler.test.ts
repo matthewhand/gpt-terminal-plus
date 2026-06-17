@@ -92,8 +92,8 @@ describe('SshServerHandler', () => {
         stderr: { on: jest.fn() }
       };
       mockStream.on.mockImplementation((event: string, cb: Function) => {
-        if (event === 'close') cb(0);
         if (event === 'data') cb(Buffer.from('output'));
+        if (event === 'close') setImmediate(() => cb(0));
         return mockStream;
       });
       mockStream.stderr.on.mockImplementation((event: string, cb: Function) => {
@@ -186,8 +186,8 @@ describe('SshServerHandler', () => {
         stderr: { on: jest.fn() }
       };
       mockStream.on.mockImplementation((event: string, cb: Function) => {
-        if (event === 'close') cb(0);
         if (event === 'data') cb(Buffer.from('file content'));
+        if (event === 'close') setImmediate(() => cb(0));
         return mockStream;
       });
       mockStream.stderr.on.mockReturnValue(mockStream);
@@ -222,8 +222,8 @@ describe('SshServerHandler', () => {
         stderr: { on: jest.fn() }
       };
       mockStream.on.mockImplementation((event: string, cb: Function) => {
-        if (event === 'close') cb(1);
         if (event === 'data') cb(Buffer.from(''));
+        if (event === 'close') setImmediate(() => cb(1));
         return mockStream;
       });
       mockStream.stderr.on.mockImplementation((event: string, cb: Function) => {
@@ -308,8 +308,8 @@ describe('SshServerHandler', () => {
         stderr: { on: jest.fn() }
       };
       mockStream.on.mockImplementation((event: string, cb: Function) => {
-        if (event === 'close') cb(0);
         if (event === 'data') cb(Buffer.from('content'));
+        if (event === 'close') setImmediate(() => cb(0));
         return mockStream;
       });
       mockStream.stderr.on.mockReturnValue(mockStream);

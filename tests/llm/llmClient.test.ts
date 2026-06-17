@@ -33,6 +33,10 @@ describe('llmClient.isLlmEnabled', () => {
     process.env.LLM_ENABLED = 'true';
     process.env.LLM_PROVIDER = 'ollama';
     process.env.OLLAMA_URL = 'http://localhost:11434';
+    try {
+      const { SettingsStore } = require('../../src/settings/store');
+      SettingsStore.set({ llm: { enabled: true, provider: 'ollama', ollamaURL: 'http://localhost:11434' } });
+    } catch {}
 
     jest.resetModules();
     const { isLlmEnabled } = require('../../src/llm/llmClient');

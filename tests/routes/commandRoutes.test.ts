@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
 import * as routesMod from '../../src/routes';
+import { getOrGenerateApiToken } from '../../src/common/apiToken';
 
 function makeApp() {
   const app = express();
@@ -17,11 +18,17 @@ function makeApp() {
 describe('Command Routes', () => {
   let app: express.Application;
   const token = 'test-token';
+  // ensure generator sees our token and auth checks will match
+  process.env.API_TOKEN = token;
+  getOrGenerateApiToken();
 
   beforeAll(() => {
     process.env.NODE_ENV = 'test';
     process.env.API_TOKEN = token;
     app = makeApp();
+    // ensure file exists for diff/patch tests (post-safety fs checks in mock route)
+    const fs = require('fs');
+    fs.writeFileSync('/tmp/test.txt', 'line1\nold content\nline3\n');
   });
 
   describe('POST /command/execute-llm', () => {

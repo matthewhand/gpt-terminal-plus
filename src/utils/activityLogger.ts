@@ -35,7 +35,7 @@ export async function logSessionStep(event: string, payload: LogPayload, session
   // Ensure base dir and session dir
   try {
     await fs.mkdir(baseDir, { recursive: true });
-  } catch (e) {
+  } catch (e: any) {
     // Surface mkdir error (tests expect rejection)
     throw e;
   }
@@ -81,7 +81,7 @@ export async function logSessionStep(event: string, payload: LogPayload, session
     if (indices.length > 0) {
       nextIndex = Math.max(...indices) + 1;
     }
-  } catch (e) {
+  } catch (e: any) {
     // Surface readdir errors when directory cannot be read
     throw e;
   }
@@ -97,7 +97,7 @@ export async function logSessionStep(event: string, payload: LogPayload, session
 
   try {
     await fs.writeFile(stepPath, JSON.stringify(entry, null, 2));
-  } catch (e) {
+  } catch (e: any) {
     // Surface write errors
     throw e;
   }

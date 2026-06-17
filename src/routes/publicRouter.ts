@@ -16,9 +16,8 @@ publicRouter.get('/login', (_req, res) => {
  * Handle login form submission
  */
 publicRouter.post('/login', (req, res) => {
-  const { token } = req.body;
   const authHeader = req.headers['authorization'];
-  const providedToken = authHeader && authHeader.split(' ')[1];
+  const providedToken = (authHeader && authHeader.split(' ')[1]) || (req.body && req.body.token);
 
   // Validate token
   if (!providedToken) {

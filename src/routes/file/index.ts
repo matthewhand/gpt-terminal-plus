@@ -510,7 +510,8 @@ export const applyPatch = async (req: Request, res: Response) => {
 *                   type: string
 *                   example: "Invalid regex pattern"
 *                 data:
-*                   type: null
+*                   nullable: true
+*                   type: object
 *       403:
 *         description: Forbidden - file search is disabled
 *         content:
@@ -525,7 +526,8 @@ export const applyPatch = async (req: Request, res: Response) => {
 *                   type: string
 *                   example: "File search is disabled"
 *                 data:
-*                   type: null
+*                   nullable: true
+*                   type: object
 *       500:
 *         description: Internal server error
 *         content:
@@ -540,7 +542,8 @@ export const applyPatch = async (req: Request, res: Response) => {
 *                   type: string
 *                   example: "Internal server error"
 *                 data:
-*                   type: null
+*                   nullable: true
+*                   type: object
 */
 export const fsSearch = async (req: Request, res: Response): Promise<void> => {
  try {

@@ -83,12 +83,15 @@ describe('SettingsSchema', () => {
     ).toThrow();
   });
 
-  it('enforces valid llm.provider enum and rejects invalid values', () => {
-    const good = SettingsSchema.safeParse({ llm: { provider: 'ollama', enabled: true } });
-    expect(good.success).toBe(true);
-
-    const bad = SettingsSchema.safeParse({ llm: { provider: 'invalid-provider' as any } });
-    expect(bad.success).toBe(false);
+  it.each([
+    ['ollama', true],
+    ['openai', true],
+    ['none', true],
+    ['invalid-provider', false],
+  ])('enforces valid llm.provider %s (success=%s)', (provider, expectedSuccess) => {
+    const res = SettingsSchema.safeParse({ llm: { provider } });
+    expect(res.success).toBe(expectedSuccess);
+    expect(typeof res.success).toBe('boolean'); // type assert
   });
 });
 
@@ -97,17 +100,22 @@ it('should generate unique random auth tokens and passwords', () => {
   const parsed1 = SettingsSchema.parse({});
   const parsed2 = SettingsSchema.parse({});
   expect(parsed1.auth.apiToken).not.toBe(parsed2.auth.apiToken);
-  expect(parsed1.auth.adminPassword).not.toBe(parsed2.adminPassword);
+  expect(parsed1.auth.adminPassword).not.toBe(parsed2.auth.adminPassword);
   expect(parsed1.auth.apiToken).toMatch(/^gtp-token-/);
   expect(parsed1.auth.adminPassword).toMatch(/^admin-/);
 });
 
-it('should validate llm provider enum values', () => {
-  const validProviders = ['none', 'openai', 'ollama', 'lmstudio', 'litellm'];
-  validProviders.forEach(provider => {
-    const parsed = SettingsSchema.safeParse({ llm: { provider } });
-    expect(parsed.success).toBe(true);
-  });
+it.each([
+  ['none'],
+  ['openai'],
+  ['ollama'],
+  ['lmstudio'],
+  ['litellm'],
+])('should validate llm provider enum value %s', (provider) => {
+  const parsed = SettingsSchema.safeParse({ llm: { provider } });
+  expect(parsed.success).toBe(true);
+  expect(typeof parsed.success).toBe('boolean'); // type assert
+  expect(parsed.error).toBeUndefined(); // error assert combo
 });
 
 it('should reject invalid llm provider', () => {

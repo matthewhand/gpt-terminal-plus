@@ -209,7 +209,7 @@
                 let token = '';
                 try {
                     const usp = new URLSearchParams(location.search);
-                    token = usp.get('token') || localStorage.getItem('settings_api_token') || '';
+                    token = usp.get('token') || localStorage.getItem('gpt-terminal-token') || '';
                 } catch {}
                 const response = await fetch('/settings', {
                     headers: token ? { 'Authorization': 'Bearer ' + token } : {}

@@ -34,6 +34,16 @@ describe('POST /file/create', () => {
   beforeAll(() => {
     process.env.API_TOKEN = token;
     process.env.NODE_ENV = 'test';
+    // disable rate limits for this test file to prevent 429s during bursts
+    try {
+      const rl = require('../../../src/middlewares/advancedRateLimit');
+      if (rl && rl.rateLimiters) {
+        const noop = (_req: any, _res: any, next: any) => next();
+        rl.rateLimiters.strict = noop;
+        rl.rateLimiters.moderate = noop;
+        rl.rateLimiters.lenient = noop;
+      }
+    } catch {}
     app = makeApp();
     
     if (!fs.existsSync(testDir)) {

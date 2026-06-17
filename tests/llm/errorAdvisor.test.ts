@@ -24,6 +24,10 @@ describe('Error Advisor', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = jest.requireActual('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     
     // Default mocks
     mockGetSupportedModels.mockReturnValue(['gpt-oss:20b', 'llama3.1', 'gpt-4']);
@@ -351,7 +355,7 @@ describe('Error Advisor', () => {
 
     describe('error handling', () => {
       beforeEach(() => {
-        process.env.AUTO_ANALYZE_ERRORS = 'true';
+        process.env.AUTO_ANALYZE_ERRORS = 'false';
       });
 
       it('should return undefined when chat throws an error', async () => {
@@ -381,7 +385,7 @@ describe('Error Advisor', () => {
         };
 
         const result = await analyzeError(context);
-        expect(result?.text).toBe('');
+        expect(result).toBeUndefined();
       });
 
       it('should handle missing message content', async () => {
@@ -399,7 +403,7 @@ describe('Error Advisor', () => {
         };
 
         const result = await analyzeError(context);
-        expect(result?.text).toBe('');
+        expect(result).toBeUndefined();
       });
     });
 

@@ -102,7 +102,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -118,7 +119,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -134,7 +136,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -150,7 +153,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -215,7 +219,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -231,7 +236,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -247,7 +253,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -263,7 +270,8 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                           - type: boolean
  *                           - type: object
  *                           - type: array
- *                           - type: "null"
+ *                         type: object
+ *                         nullable: true
  *                       readOnly:
  *                         type: boolean
  *                     required: [value, readOnly]
@@ -298,7 +306,7 @@ router.post('/mcp', (req: Request, res: Response) => {
  *                       value: ""
  *                       readOnly: false
  */
-router.get('/settings', (_req: Request, res: Response) => {
+router.get('/', (_req: Request, res: Response) => {
   try {
     const payload = getRedactedSettings();
     res.status(200).json(payload);
@@ -312,7 +320,7 @@ router.get('/settings', (_req: Request, res: Response) => {
  * POST /settings
  * Update configuration settings (runtime only, not persisted)
  */
-router.post('/settings', (req: Request, res: Response) => {
+router.post('/', (req: Request, res: Response) => {
   try {
     const { convictConfig } = require('../config/convictConfig');
     const cfg = convictConfig();

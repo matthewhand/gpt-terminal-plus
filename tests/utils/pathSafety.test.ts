@@ -56,27 +56,22 @@ describe('pathSafety', () => {
   });
 
   describe('escapesRelativeRoot', () => {
-    it('allows plain relative paths', () => {
-      expect(escapesRelativeRoot('sub/file.txt')).toBe(false);
-      expect(escapesRelativeRoot('./sub/file.txt')).toBe(false);
-    });
-
-    it('allows internal up-and-back navigation', () => {
-      expect(escapesRelativeRoot('sub/../other/file.txt')).toBe(false);
-    });
-
-    it('rejects climbing above the root', () => {
-      expect(escapesRelativeRoot('..')).toBe(true);
-      expect(escapesRelativeRoot('../file.txt')).toBe(true);
-      expect(escapesRelativeRoot('sub/../../file.txt')).toBe(true);
-    });
-
-    it('rejects backslash traversal', () => {
-      expect(escapesRelativeRoot('..\\file.txt')).toBe(true);
-    });
-
-    it('rejects empty input', () => {
-      expect(escapesRelativeRoot('')).toBe(true);
+    it.each([
+      ['sub/file.txt', false],
+      ['./sub/file.txt', false],
+      ['sub/../other/file.txt', false],
+      ['..', true],
+      ['../file.txt', true],
+      ['sub/../../file.txt', true],
+      ['..\\file.txt', true],
+      ['', true],
+    ])('returns expected for %s', (input, expected) => {
+      const result = escapesRelativeRoot(input);
+      expect(result).toBe(expected);
+      expect(typeof result).toBe('boolean'); // type assert
+      if (expected) {
+        expect(result && (input.includes('..') || input === '')).toBe(true); // combo assert
+      }
     });
   });
 });

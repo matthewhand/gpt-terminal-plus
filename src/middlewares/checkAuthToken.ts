@@ -58,8 +58,8 @@ export const checkAuthToken = (req: Request, res: Response, next: NextFunction):
   const disablePrivateNetwork = process.env.DISABLE_PRIVATE_NETWORK_ACCESS === 'true';
   const isPrivate = isPrivateNetwork(req.ip || '');
   
-  // Allow private network access without token in development mode
-  if (isPrivate && !disablePrivateNetwork && process.env.NODE_ENV !== 'production') {
+  // Allow private network access without token in development mode (strict in test so auth tests can assert 401)
+  if (isPrivate && !disablePrivateNetwork && process.env.NODE_ENV === 'development') {
     debug('Allowing private network access without token in development mode');
     return next();
   }

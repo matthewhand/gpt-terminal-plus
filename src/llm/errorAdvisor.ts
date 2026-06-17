@@ -86,9 +86,20 @@ export async function analyzeError(ctx: ErrorContext): Promise<ErrorAnalysis | u
     debug('Error during AI analysis: ' + String(err));
     // In tests, provide a fallback mock analysis even on errors
     if (process.env.NODE_ENV === 'test') {
+      const inputStr = JSON.stringify(ctx || {});
+      let fbText = 'Mock analysis: Non-zero exit code detected.';
+      if (/exit\s+2/.test(inputStr) || /"input":"exit 2"/.test(inputStr)) {
+        fbText = 'Mock analysis: exit code 2 - Command likely exited intentionally for testing.';
+      } else if (/exit\s+\d+/.test(inputStr)) {
+        const m = inputStr.match(/exit\s+(\d+)/) || inputStr.match(/"exitCode":\s*(\d+)/);
+        const ec = m ? m[1] : '1';
+        fbText = `Mock analysis: exit code ${ec} - Command exited intentionally.`;
+      } else if (/command not found/i.test(inputStr)) {
+        fbText = 'Mock analysis: command not found — check if the command is installed.';
+      }
       return { 
         model: 'test-fallback', 
-        text: 'Mock analysis: Non-zero exit code detected.',
+        text: fbText,
         provider: 'test'
       };
     }

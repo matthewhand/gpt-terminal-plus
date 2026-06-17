@@ -10,17 +10,19 @@ const debug = Debug("app:ssmUtils");
  */
 export const retryOperation = async (operation: Function, retries: number, waitTime: number) => {
   let attempt = 0;
-  while (attempt < retries) {
+  while (true) {
     try {
       return await operation();
     } catch (error) {
-      if (attempt >= retries - 1) {
+      attempt++;
+      if (attempt >= (retries || 1)) {
         debug("Operation failed after " + retries + " attempts.");
         throw error;
       }
-      attempt++;
       debug("Attempt " + (attempt + 1) + "/" + retries + ": Operation failed, retrying in " + waitTime + "ms...", error);
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      const effectiveWait = process.env.NODE_ENV === 'test' ? 0 : waitTime;
+      const delayPromise = effectiveWait === 0 ? Promise.resolve() : new Promise(resolve => setTimeout(resolve, effectiveWait));
+      await delayPromise;
     }
   }
 };

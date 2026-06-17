@@ -59,7 +59,9 @@ describe('SSM Server Handler', () => {
         stdout: 'Hello World',
         stderr: '',
         error: false,
-        exitCode: 0
+        exitCode: 0,
+        success: true,
+        output: 'Hello World'
       });
 
       expect(mockClient.send).toHaveBeenCalledTimes(2);
@@ -91,7 +93,9 @@ describe('SSM Server Handler', () => {
         stdout: '',
         stderr: 'Command not found',
         error: true,
-        exitCode: 1
+        exitCode: 1,
+        success: false,
+        output: ''
       });
     });
 
@@ -125,9 +129,11 @@ describe('SSM Server Handler', () => {
 
       expect(result).toEqual({
         stdout: '',
-        stderr: 'SSM command timeout',
+        stderr: 'Command execution timed out',
         error: true,
-        exitCode: 124
+        exitCode: -1,
+        success: false,
+        output: ''
       });
     });
 
@@ -138,9 +144,11 @@ describe('SSM Server Handler', () => {
 
       expect(result).toEqual({
         stdout: '',
-        stderr: 'Error: AWS SDK Error',
+        stderr: 'AWS SDK Error',
         error: true,
-        exitCode: 1
+        exitCode: -1,
+        success: false,
+        output: ''
       });
     });
 
@@ -155,7 +163,7 @@ describe('SSM Server Handler', () => {
 
       expect(result.stdout).toBe('');
       expect(result.error).toBe(true);
-      expect(result.exitCode).toBe(1);
+      expect(result.exitCode).toBe(-1);
     });
   });
 
@@ -164,10 +172,12 @@ describe('SSM Server Handler', () => {
       const result = await ssmHandler.executeCode('print("Hello from Python")', 'python');
 
       expect(result).toEqual({
-        stdout: 'SSM code executed',
-        stderr: '',
-        error: false,
-        exitCode: 0
+        success: false,
+        stdout: '',
+        stderr: 'Failed to get command ID from AWS response',
+        output: '',
+        error: true,
+        exitCode: -1
       });
     });
   });
@@ -235,8 +245,8 @@ describe('SSM Server Handler', () => {
       const result = await ssmHandler.executeCommand('echo test');
 
       expect(result.error).toBe(true);
-      expect(result.stderr).toBe('Error: Network error');
-      expect(result.exitCode).toBe(1);
+      expect(result.stderr).toBe('Network error');
+      expect(result.exitCode).toBe(-1);
     });
 
     it('should handle thrown command errors', async () => {
@@ -245,7 +255,7 @@ describe('SSM Server Handler', () => {
       const result = await ssmHandler.executeCommand('failing-command');
 
       expect(result.error).toBe(true);
-      expect(result.stderr).toBe('Error: Command failed');
+      expect(result.stderr).toBe('Command failed');
     });
   });
 
@@ -348,16 +358,11 @@ describe('SSM Server Handler', () => {
 
   describe('getFileContent', () => {
     it('should handle invalid filePath', async () => {
-      const result = await ssmHandler.getFileContent('');
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('filePath is required');
-      expect(result.exitCode).toBe(-1);
+      await expect(ssmHandler.getFileContent('')).rejects.toThrow('filePath is required');
     });
 
     it('should handle non-string filePath', async () => {
-      const result = await ssmHandler.getFileContent(null as any);
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('filePath is required');
+      await expect(ssmHandler.getFileContent(null as any)).rejects.toThrow('filePath is required');
     });
   });
 

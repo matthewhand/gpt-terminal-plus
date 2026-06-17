@@ -12,6 +12,10 @@ describe("Model Management API - Enhanced", () => {
     process.env.NODE_CONFIG_DIR = 'config/test';
     process.env.LLM_ENABLED = 'true';
     token = getOrGenerateApiToken();
+    try {
+      const { SettingsStore } = require('../src/settings/store');
+      SettingsStore.set({ llm: { enabled: true, provider: 'ollama', ollamaURL: 'http://localhost:11434' } });
+    } catch {}
     app = express();
     app.use(express.json());
     setupApiRouter(app);

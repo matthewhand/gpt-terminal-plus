@@ -1,20 +1,8 @@
 import request from 'supertest';
 import express from 'express';
-import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
-import * as routesMod from '../../src/routes';
 import fs from 'fs';
 import path from 'path';
-
-function makeApp() {
-  const app = express();
-  setupMiddlewares(app);
-
-  const anyRoutes: any = routesMod as any;
-  if (typeof anyRoutes.setupApiRouter === 'function') {
-    anyRoutes.setupApiRouter(app);
-  }
-  return app;
-}
+import { makeTestApp } from '../utils/testApp';
 
 describe('Setup Routes', () => {
   let app: express.Application;
@@ -23,7 +11,7 @@ describe('Setup Routes', () => {
   beforeAll(() => {
     process.env.API_TOKEN = token;
     process.env.NODE_CONFIG_DIR = 'config/test';
-    app = makeApp();
+    app = makeTestApp();
   });
 
   beforeEach(() => {
@@ -50,6 +38,7 @@ describe('Setup Routes', () => {
         .get('/setup');
 
       expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized');
     });
   });
 
@@ -110,6 +99,7 @@ describe('Setup Routes', () => {
         .send({ confirmRegex: '', denyRegex: '' });
 
       expect(response.status).toBe(302);
+      expect(response.headers.location).toBe('/setup/policy');
     });
   });
 

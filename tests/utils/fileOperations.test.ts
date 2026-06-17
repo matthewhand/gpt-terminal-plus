@@ -11,109 +11,38 @@ describe('fileOperations', () => {
   });
 
   describe('areFileOperationsEnabled', () => {
-    it('should return true when files.enabled is true', () => {
-      mockConfig.get.mockReturnValue(true);
-      
+    it.each([
+      [true, true, 'truthy'],
+      [false, false, 'explicit'],
+      [undefined, true, 'undefined'],
+      [null, true, 'null'],
+      ['true', true, 'truthy string'],
+      [1, true, 'non-zero number'],
+      [0, false, 'zero'],
+      ['', false, 'empty string'],
+    ])('returns %s for %s input (%s)', (value, expected, desc) => {
+      mockConfig.get.mockReturnValue(value);
+
       const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
+
+      expect(result).toBe(expected);
+      expect(typeof result).toBe('boolean'); // type assert
       expect(mockConfig.get).toHaveBeenCalledWith('files.enabled');
+      const v = validateFileOperations();
+      expect(v.allowed).toBe(result); // combo assert: validate matches enabled
     });
 
-    it('should return false when files.enabled is false', () => {
-      mockConfig.get.mockReturnValue(false);
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(false);
-      expect(mockConfig.get).toHaveBeenCalledWith('files.enabled');
-    });
+    it.each([
+      ['Error', () => { throw new Error('Config not found'); }],
+      ['string error', () => { throw 'String error'; }],
+      ['TypeError', () => { throw new TypeError('Cannot read property of undefined'); }],
+    ])('returns true on %s throw', (desc, impl) => {
+      mockConfig.get.mockImplementation(impl);
 
-    it('should return false when files.enabled is explicitly false', () => {
-      mockConfig.get.mockReturnValue(false);
-      
       const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(false);
-    });
 
-    it('should return true when files.enabled is undefined', () => {
-      mockConfig.get.mockReturnValue(undefined);
-      
-      const result = areFileOperationsEnabled();
-      
       expect(result).toBe(true);
-    });
-
-    it('should return true when files.enabled is null', () => {
-      mockConfig.get.mockReturnValue(null);
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
-    });
-
-    it('should return true when files.enabled is truthy string', () => {
-      mockConfig.get.mockReturnValue('true');
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
-    });
-
-    it('should return true when files.enabled is non-zero number', () => {
-      mockConfig.get.mockReturnValue(1);
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
-    });
-
-    it('should return false when files.enabled is zero', () => {
-      mockConfig.get.mockReturnValue(0);
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(false);
-    });
-
-    it('should return false when files.enabled is empty string', () => {
-      mockConfig.get.mockReturnValue('');
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(false);
-    });
-
-    it('should return true when config.get throws an error', () => {
-      mockConfig.get.mockImplementation(() => {
-        throw new Error('Config not found');
-      });
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
-      expect(mockConfig.get).toHaveBeenCalledWith('files.enabled');
-    });
-
-    it('should return true when config.get throws any type of error', () => {
-      mockConfig.get.mockImplementation(() => {
-        throw 'String error';
-      });
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
-    });
-
-    it('should return true when config module is completely unavailable', () => {
-      mockConfig.get.mockImplementation(() => {
-        throw new TypeError('Cannot read property of undefined');
-      });
-      
-      const result = areFileOperationsEnabled();
-      
-      expect(result).toBe(true);
+      expect(typeof result).toBe('boolean'); // type assert
     });
   });
 

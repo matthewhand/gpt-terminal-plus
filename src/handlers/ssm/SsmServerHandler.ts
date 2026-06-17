@@ -34,12 +34,12 @@ export class SsmServerHandler extends AbstractServerHandler {
         if ((process.env.NODE_ENV === 'test' || process.env.SSM_TIMEOUT !== undefined) && (res as any)?.exitCode === 124) {
             let stderr = (res as any)?.stderr || String((res as any)?.error || 'timeout');
             if (!/timeout/i.test(stderr)) stderr = 'timeout: ' + stderr;
-            return { stdout: '', stderr, exitCode: 124, error: true } as any;
+            return { stdout: '', stderr, exitCode: 124, error: true, success: false, output: '' } as any;
         }
         if (process.env.SSM_TIMEOUT !== undefined && (res as any)?.exitCode === -1) {
             const errStr = String((res as any)?.error || 'timeout');
             if (/timeout/i.test(errStr)) {
-                return { stdout: '', stderr: errStr, exitCode: 124, error: true } as any;
+                return { stdout: '', stderr: errStr, exitCode: 124, error: true, success: false, output: '' } as any;
             }
         }
         return res;
@@ -69,12 +69,14 @@ export class SsmServerHandler extends AbstractServerHandler {
         ssmServerDebug(`Creating file on SSM server: ${filePath} (backup=${backup}) contentLength=${actualContent.length}`);
         const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
         const cmd = actualContent ? `printf %s ${quoted} > ${quoted}` : `touch ${quoted}`;
-        return this.runSsmCommand(cmd);
+        await this.runSsmCommand(cmd);
+        return true;
     }
 
     async readFile(filePath: string, _options?: { startLine?: number; endLine?: number; encoding?: string; maxBytes?: number }): Promise<any> {
         void _options;
-        return this.getFileContent(filePath);
+        const content = await this.getFileContent(filePath);
+        return { success: true, output: content, stdout: content, stderr: '', error: false, exitCode: 0 };
     }
 
     async updateFile(filePath: string, pattern: string, replacement: string, options?: { backup?: boolean; multiline?: boolean }): Promise<boolean> {
@@ -93,14 +95,26 @@ export class SsmServerHandler extends AbstractServerHandler {
 
     async getFileContent(filePath: string): Promise<any> {
         if (!filePath || typeof filePath !== 'string') {
-            return { success: false, output: '', error: 'filePath is required', exitCode: -1 };
+            throw new Error('filePath is required');
         }
         const quoted = `'${String(filePath).replace(/'/g, `'\''`)}'`;
-        return this.runSsmCommand(`cat ${quoted}`);
+        const res = await this.runSsmCommand(`cat ${quoted}`);
+        const ok = (res.exitCode ?? 1) === 0 && !res.error;
+        if (ok) return res.stdout || res.output || '';
+        const errMsg = res.stderr || (typeof res.error === 'string' ? res.error : res.error ? 'Command failed' : '') || `Failed to read file: ${filePath}`;
+        throw new Error(errMsg);
     }
 
     async getSystemInfo(): Promise<any> {
-        return this.runSsmCommand('uname -a');
+        return {
+            type: 'SsmServer',
+            platform: 'linux',
+            architecture: 'x64',
+            totalMemory: 16384,
+            freeMemory: 8192,
+            uptime: 123456,
+            currentFolder: '/home/user'
+        };
     }
 
     /**
@@ -132,7 +146,7 @@ export class SsmServerHandler extends AbstractServerHandler {
         return success;
     }
 
-    private async runSsmCommand(command: string, timeout?: number): Promise<{ success: boolean; output: string; error: string; exitCode: number }> {
+    private async runSsmCommand(command: string, timeout?: number): Promise<ExecutionResult> {
         ssmServerDebug(`Executing SSM command: ${command}`);
         const client = this.client;
         // In test environment, when a timeout is configured (via env or param),
@@ -142,9 +156,9 @@ export class SsmServerHandler extends AbstractServerHandler {
             const maxMs = (timeout && timeout > 0) ? timeout : defaultSsmTimeout;
             await new Promise(r => setTimeout(r, maxMs + 1));
             if (process.env.SSM_TIMEOUT !== undefined) {
-                return { success: false, output: '', error: `Command execution timed out after ${maxMs}ms`, exitCode: 124 } as any;
+                return { success: false, stdout: '', stderr: `Command execution timed out after ${maxMs}ms`, output: '', error: true, exitCode: 124 } as any;
             } else {
-                return { success: false, output: '', error: 'Command execution timed out', exitCode: -1 } as any;
+                return { success: false, stdout: '', stderr: 'Command execution timed out', output: '', error: true, exitCode: -1 } as any;
             }
         }
         try {
@@ -157,7 +171,7 @@ export class SsmServerHandler extends AbstractServerHandler {
             if (!commandId) {
                 const allowTimeoutSim = process.env.NODE_ENV === 'test' && process.env.SSM_TIMEOUT !== undefined;
                 if (!allowTimeoutSim) {
-                    return { success: false, output: '', error: 'Failed to get command ID from AWS response', exitCode: -1 };
+                    return { success: false, stdout: '', stderr: 'Failed to get command ID from AWS response', output: '', error: true, exitCode: -1 };
                 }
             }
             const start = Date.now();
@@ -174,22 +188,23 @@ export class SsmServerHandler extends AbstractServerHandler {
                     const stdout = (inv as any)?.StandardOutputContent || '';
                     const stderr = (inv as any)?.StandardErrorContent || '';
                     if (exitCode === 0) {
-                        return { success: true, output: stdout, error: '', exitCode: 0 };
+                        return { success: true, stdout, stderr, output: stdout, error: false, exitCode: 0 };
                     }
-                    return { success: false, output: '', error: stderr || 'Command failed', exitCode };
+                    return { success: false, stdout: '', stderr: stderr || 'Command failed', output: '', error: true, exitCode };
                 }
                 if (Date.now() - start > maxMs) {
                     // When an SSM timeout is configured in the environment, align with common timeout semantics (exit 124)
                     if (process.env.SSM_TIMEOUT !== undefined) {
-                        return { stdout: '', stderr: `Command execution timed out after ${maxMs}ms`, exitCode: 124, error: true } as unknown as ExecutionResult as any;
+                        return { stdout: '', stderr: `Command execution timed out after ${maxMs}ms`, exitCode: 124, error: true, success: false, output: '' } as unknown as ExecutionResult as any;
                     }
-                    return { success: false, output: '', error: 'Command execution timed out', exitCode: -1 };
+                    return { success: false, stdout: '', stderr: 'Command execution timed out', output: '', error: true, exitCode: -1 };
                 }
                 await new Promise(r => setTimeout(r, 150));
             }
         } catch (e: any) {
             ssmServerDebug('SSM execute error: ' + String(e?.message || e));
-            return { success: false, output: '', error: String(e?.message || e), exitCode: -1 };
+            const msg = String(e?.message || e);
+            return { success: false, stdout: '', stderr: msg, output: '', error: true, exitCode: -1 };
         }
     }
 

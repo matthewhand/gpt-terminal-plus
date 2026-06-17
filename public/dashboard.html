@@ -76,7 +76,7 @@
                 const usp = new URLSearchParams(location.search);
                 if (usp.has('token')) return usp.get('token');
             } catch {}
-            return localStorage.getItem('settings_api_token') || '';
+            return localStorage.getItem('gpt-terminal-token') || '';
         }
 
         async function loadFeatures() {
@@ -137,6 +137,15 @@
                     <h3>Server Settings</h3>
                     <p>Configure execution modes, LLM providers, and feature toggles. View current configuration in a redacted format.</p>
                     <a href="/settings.html" class="cta">Open Settings →</a>
+                </div>
+            `);
+
+            // Shell Card (basic, always shown for now; could condition on execution.shell)
+            cards.push(`
+                <div class="feature-card">
+                    <h3>Shell / Sessions</h3>
+                    <p>Start and manage interactive shell sessions over WebSocket.</p>
+                    <a href="/shell.html" class="cta">Open Shell →</a>
                 </div>
             `);
             

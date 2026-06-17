@@ -428,16 +428,14 @@ export const convictConfig = () => {
     }
   });
 
-  // Load from config file if it exists (for persistence) - skip during tests
-  if (process.env.NODE_ENV !== 'test') {
-    try {
-      if (fs.existsSync(CONFIG_FILE_PATH)) {
-        const configData = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, 'utf8'));
-        cfg.load(configData);
-      }
-    } catch (error) {
-      console.warn('Failed to load config from file:', (error as Error)?.message);
+  // Load from config file if it exists (for persistence) - always attempt (test uses isolated tmp path)
+  try {
+    if (fs.existsSync(CONFIG_FILE_PATH)) {
+      const configData = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, 'utf8'));
+      cfg.load(configData);
     }
+  } catch (error) {
+    console.warn('Failed to load config from file:', (error as Error)?.message);
   }
 
   // Auto-detect common executors on first init (skip during tests to keep determinism)
@@ -478,7 +476,7 @@ export const convictConfig = () => {
         // keep enabled default true unless explicitly disabled
       }
     }
-  } catch (e) {
+  } catch (e: any) {
     // Detection failures should never crash boot
     console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
   }

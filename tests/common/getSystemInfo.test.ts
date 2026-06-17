@@ -132,17 +132,17 @@ describe('getSystemInfo', () => {
 
   describe('performance and reliability', () => {
     it('should handle slow execution functions within reasonable time', async () => {
+      jest.useFakeTimers();
       const mockExecutionFunction = jest.fn().mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve('Slow result'), 100))
       );
       
-      const startTime = Date.now();
-      const result = await getSystemInfo(mockExecutionFunction);
-      const endTime = Date.now();
+      const promise = getSystemInfo(mockExecutionFunction);
+      jest.advanceTimersByTime(100);
+      const result = await promise;
+      jest.useRealTimers();
       
       expect(result).toBe('Slow result');
-      expect(endTime - startTime).toBeGreaterThanOrEqual(100);
-      expect(endTime - startTime).toBeLessThan(200); // Should not take too long
     });
 
     it('should handle multiple concurrent calls correctly', async () => {

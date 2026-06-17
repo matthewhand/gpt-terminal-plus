@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { convictConfig } from '../config/convictConfig';
+import { SettingsStore } from '../settings/store';
 
 const router = express.Router();
 
@@ -15,8 +16,8 @@ router.get('/policy', (req: Request, res: Response) => {
   // Read from config schema (security.*) or persisted test config
   let confirmRegex = '';
   let denyRegex = '';
-  try { confirmRegex = (cfg as any).get('security.confirmCommandRegex') || ''; } catch {}
-  try { denyRegex = (cfg as any).get('security.denyCommandRegex') || ''; } catch {}
+  try { confirmRegex = (cfg as any).get('security.confirmCommandRegex') || ''; } catch (e) { e; }
+  try { denyRegex = (cfg as any).get('security.denyCommandRegex') || ''; } catch (e) { e; }
   try {
     const path = require('path');
     const fs = require('fs');
@@ -29,7 +30,7 @@ router.get('/policy', (req: Request, res: Response) => {
         if (typeof raw.safety.denyRegex === 'string') denyRegex = raw.safety.denyRegex;
       }
     }
-  } catch {}
+  } catch (e) { e; }
 
   const html = `
 <!DOCTYPE html>
@@ -79,13 +80,14 @@ router.post('/policy', (req: Request, res: Response) => {
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-    } catch { cfg = {}; }
+    } catch (e) { e; cfg = {}; }
     if (!cfg.safety) cfg.safety = {};
     if (typeof confirmRegex === 'string') cfg.safety.confirmRegex = confirmRegex;
     if (typeof denyRegex === 'string') cfg.safety.denyRegex = denyRegex;
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-  } catch {
+  } catch (e) {
+    e;
     // ignore persistence errors in tests
   }
   // Either redirect (UI) or 200 JSON; keep redirect for simplicity
@@ -108,6 +110,21 @@ router.get('/', (req: Request, res: Response) => {
 </head>
 <body>
     <h1>Setup UI</h1>
+    <div class="card" id="llm-panel">
+      <h2>LLM</h2>
+      <label>Enabled <input type="checkbox" id="llm-enabled" /></label>
+      <select id="llm-provider">
+        <option value="none">none</option>
+        <option value="ollama">ollama</option>
+        <option value="lmstudio">lmstudio</option>
+        <option value="openai">openai</option>
+      </select>
+      <button id="llm-test-btn">Test</button>
+      <a href="/chat/models">/chat/models</a>
+      <div id="fields-ollama"></div>
+      <div id="fields-lmstudio"></div>
+      <div id="fields-openai"></div>
+    </div>
     <div class="card">
       <form method="GET" action="/setup/policy">
         <label for="quick">Quick Search</label>
@@ -168,7 +185,8 @@ router.post('/local', (req: Request, res: Response) => {
         const schemeOk = u.protocol === 'http:' || u.protocol === 'https:';
         const hostOk = typeof u.hostname === 'string' && u.hostname.trim().length > 0;
         if (!schemeOk || !hostOk) return res.status(422).send('Invalid baseUrl');
-      } catch {
+      } catch (e) {
+        e;
         return res.status(422).send('Invalid baseUrl');
       }
     }
@@ -179,7 +197,7 @@ router.post('/local', (req: Request, res: Response) => {
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-    } catch { cfg = {}; }
+    } catch (e) { e; cfg = {}; }
     cfg.local = { ...(cfg.local || {}), hostname };
     if (provider || baseUrl) {
       cfg.llm = cfg.llm || {};
@@ -189,7 +207,8 @@ router.post('/local', (req: Request, res: Response) => {
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
     return res.status(200).send('Local configuration saved');
-  } catch {
+  } catch (e) {
+    e;
     return res.status(500).send('Failed to save local configuration');
   }
 });
@@ -256,7 +275,7 @@ router.post('/ssh', (req: Request, res: Response) => {
         if (!cfg.ssh) cfg.ssh = { hosts: [] };
         if (!Array.isArray(cfg.ssh.hosts)) cfg.ssh.hosts = [];
       }
-    } catch { /* fallback to empty */ }
+    } catch (e) { e; /* fallback to empty */ }
 
     const entry = {
       name: hostname,
@@ -280,14 +299,76 @@ router.post('/ssh', (req: Request, res: Response) => {
       // Ensure directory
       fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
       fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    } catch {
+    } catch (e) {
+      e;
       return res.status(500).send('Failed to persist SSH config');
     }
 
     // Respond OK
     return res.status(200).send('SSH configuration saved');
   } catch (e) {
+    e;
     return res.status(500).send('Internal error');
+  }
+});
+
+/**
+ * GET /setup/llm - current LLM settings (for tests and UI)
+ */
+router.get('/llm', (_req: Request, res: Response) => {
+  const llm = SettingsStore.get().llm || { enabled: false, provider: 'none' };
+  const redacted = { ...llm, apiKey: llm.apiKey ? '*****' : '' };
+  res.status(200).json({ llm: redacted });
+});
+
+/**
+ * POST /setup/llm - persist LLM settings, support redaction ignore, update store + cfg
+ */
+router.post('/llm', (req: Request, res: Response) => {
+  try {
+    const body = req.body || {};
+    const current = SettingsStore.get().llm || {} as any;
+
+    const next: any = { ...current };
+
+    if (typeof body.enabled === 'boolean') next.enabled = body.enabled;
+    if (typeof body.provider === 'string') {
+      const p = body.provider;
+      if (!['none','ollama','lmstudio','openai'].includes(p)) {
+        return res.status(400).json({ error: `Unknown provider: ${p}` });
+      }
+      next.provider = p;
+    }
+    if (typeof body.defaultModel === 'string') next.defaultModel = body.defaultModel;
+    if (typeof body.ollamaURL === 'string') next.ollamaURL = body.ollamaURL;
+    if (typeof body.baseURL === 'string') next.baseURL = body.baseURL;
+    // apiKey: ignore placeholder
+    if (typeof body.apiKey === 'string' && body.apiKey !== '*****') {
+      next.apiKey = body.apiKey;
+    }
+
+    const updated = SettingsStore.set({ llm: next });
+
+    // Also sync to convictConfig for isLlmEnabled etc.
+    try {
+      const cfg = convictConfig();
+      cfg.set('llm.enabled', !!updated.llm?.enabled);
+      if (updated.llm?.provider) cfg.set('llm.provider', updated.llm.provider);
+      if (updated.llm?.defaultModel) cfg.set('llm.defaultModel', updated.llm.defaultModel);
+      if (updated.llm?.baseURL || updated.llm?.ollamaURL) {
+        const base = updated.llm.baseURL || updated.llm.ollamaURL;
+        if (updated.llm.provider === 'ollama') cfg.set('llm.ollama.baseUrl', base);
+        if (updated.llm.provider === 'openai' || updated.llm.baseURL) cfg.set('llm.openai.baseUrl', updated.llm.baseURL || base);
+      }
+      if (updated.llm?.apiKey && updated.llm.apiKey !== '*****') {
+        cfg.set('llm.openai.apiKey', updated.llm.apiKey);
+      }
+    } catch (e) { e; }
+
+    const respLlm = { ...updated.llm, apiKey: updated.llm?.apiKey ? '*****' : '' };
+    return res.status(200).json({ ok: true, llm: respLlm });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message || 'Failed to save llm' });
   }
 });
 
