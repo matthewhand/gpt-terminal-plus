@@ -98,7 +98,7 @@ const listFiles = async ({
     if (safeOrderBy === 'datetime') {
       allFiles.sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
     } else {
-      allFiles.sort((a, b) => a.name.localeCompare(b.name));
+      allFiles.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
     }
 
     const totalFiles = allFiles.length;

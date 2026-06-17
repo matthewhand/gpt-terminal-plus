@@ -18,7 +18,7 @@ export const registerMcpTools = (server: McpServer) => {
     "command/change-directory",
     {
       directory: z.string()
-    },
+    } as any,
     async ({ directory }: { directory: string }) => {
       const result = await changeDirectory({ body: { directory } } as any, {} as any);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
@@ -31,7 +31,7 @@ export const registerMcpTools = (server: McpServer) => {
     {
       command: z.string(),
       shell: z.enum(["powershell", "bash"]).default("bash")
-    },
+    } as any,
     async ({ command, shell }: { command: string, shell: "powershell" | "bash" }) => {
       const result = await executeCommand({ body: { command, shell } } as any, {} as any);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
@@ -44,7 +44,7 @@ export const registerMcpTools = (server: McpServer) => {
     {
       code: z.string(),
       language: z.enum(["python", "typescript"])
-    },
+    } as any,
     async ({ code, language }: { code: string, language: "python" | "typescript" }) => {
       const result = await executeCode({ body: { code, language } } as any, {} as any);
       return { content: [{ type: "text", text: JSON.stringify(result) }] };
@@ -94,7 +94,7 @@ export const registerMcpTools = (server: McpServer) => {
       orderBy: z.enum(["datetime", "filename"]).optional(),
       recursive: z.boolean().optional(),
       typeFilter: z.enum(["files", "folders"]).optional()
-    },
+    } as any,
     async ({ directory, limit, offset, orderBy, recursive, typeFilter }: { directory: string; limit?: number; offset?: number; orderBy?: "datetime" | "filename"; recursive?: boolean; typeFilter?: 'files' | 'folders' }) => {
       const localHandler = new LocalServerHandler({ protocol: "local", hostname: "localhost", code: false });
       const params = { directory, limit, offset, orderBy, recursive, typeFilter };
@@ -111,7 +111,7 @@ export const registerMcpTools = (server: McpServer) => {
     {
       server: z.string(),
       getSystemInfo: z.boolean().optional()
-    },
+    } as any,
     async ({ server: serverName, getSystemInfo }: { server: string; getSystemInfo?: boolean }) => {
       // Placeholder for server setting logic.
       // This should mimic the behavior of the /server/set endpoint in serverRoutes.ts.
