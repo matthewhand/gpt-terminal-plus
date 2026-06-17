@@ -3,32 +3,38 @@ import path from 'node:path';
 import { SettingsSchema, type Settings } from './schema';
 
 const DEFAULTS: Settings = SettingsSchema.parse({});
-const SETTINGS_FILE =
-  process.env.GTP_SETTINGS_PATH ||
-  path.resolve(process.cwd(), 'config', 'settings.json');
-
-const IN_TEST = process.env.NODE_ENV === 'test';
 
 let _settings: Settings = DEFAULTS;
 let _loaded = false;
 let _saveDebounce: NodeJS.Timeout | null = null;
 
+function getSettingsFile(): string {
+  return process.env.GTP_SETTINGS_PATH ||
+    path.resolve(process.cwd(), 'config', 'settings.json');
+}
+
+function isTestMode(): boolean {
+  return process.env.NODE_ENV === 'test';
+}
+
 function ensureLoaded() {
   if (_loaded) return;
-  if (IN_TEST) {
+  if (isTestMode()) {
     _settings = DEFAULTS;
     _loaded = true;
     return;
   }
   try {
-    const text = fs.readFileSync(SETTINGS_FILE, 'utf8');
+    const file = getSettingsFile();
+    const text = fs.readFileSync(file, 'utf8');
     const json = JSON.parse(text);
     _settings = SettingsSchema.parse(json);
   } catch {
     _settings = DEFAULTS;
     try {
-      fs.mkdirSync(path.dirname(SETTINGS_FILE), { recursive: true });
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(_settings, null, 2), 'utf8');
+      const file = getSettingsFile();
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(_settings, null, 2), 'utf8');
     } catch {
       /* ignore */
     }
@@ -38,12 +44,13 @@ function ensureLoaded() {
 }
 
 function scheduleSave() {
-  if (IN_TEST) return;
+  if (isTestMode()) return;
   if (_saveDebounce) clearTimeout(_saveDebounce);
   _saveDebounce = setTimeout(() => {
     try {
-      fs.mkdirSync(path.dirname(SETTINGS_FILE), { recursive: true });
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(_settings, null, 2), 'utf8');
+      const file = getSettingsFile();
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(_settings, null, 2), 'utf8');
     } catch {
       /* ignore */
     }
@@ -109,4 +116,14 @@ export const SettingsStore = {
 
 export function getSettings(): Settings {
   return SettingsStore.get();
+}
+
+// Test helper to reset internal state so tests with env mutation + mocks work deterministically
+export function __resetSettingsForTest(): void {
+  _loaded = false;
+  _settings = DEFAULTS;
+  if (_saveDebounce) {
+    clearTimeout(_saveDebounce);
+    _saveDebounce = null;
+  }
 }

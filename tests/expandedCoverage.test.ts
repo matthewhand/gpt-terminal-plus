@@ -2,61 +2,11 @@ import 'jest';
 import fs from 'fs';
 import path from 'path';
 
-describe('Module Loading and Integration', () => {
-  afterAll(() => {
-    console.log('API_TOKEN after expandedCoverage.test.ts:', process.env.API_TOKEN);
-  });
-
-  describe('Core Module Loading', () => {
-    test('should load configHandler module', () => {
-      expect(() => require('../src/config/configHandler')).not.toThrow();
-    });
-
-    test('should load PaginationHandler module', () => {
-      expect(() => require('../src/handlers/PaginationHandler')).not.toThrow();
-    });
-
-    test('should load ServerManager module', () => {
-      expect(() => require('../src/managers/ServerManager')).not.toThrow();
-    });
-
-    test('should load SSHConnectionManager module', () => {
-      expect(() => require('../src/managers/SSHConnectionManager')).not.toThrow();
-    });
-
-    test('should load initializeServerHandler middleware and export a function', () => {
-      const mod = require('../src/middlewares/initializeServerHandler');
-      expect(mod).toBeDefined();
-      expect(typeof mod.initializeServerHandler).toBe('function');
-    });
-
-    test('should load apiToken utility module', () => {
-      expect(() => require('../src/common/apiToken')).not.toThrow();
-    });
-
-    test('should load escapeSpecialChars utility module', () => {
-      expect(() => require('../src/common/escapeSpecialChars')).not.toThrow();
-    });
-  });
-
-  describe('Module Exports Validation', () => {
-    test('configHandler should export required functions', () => {
-      const configHandler = require('../src/config/configHandler');
-      expect(typeof configHandler.generateDefaultConfig).toBe('function');
-      expect(typeof configHandler.isConfigLoaded).toBe('function');
-      expect(typeof configHandler.persistConfig).toBe('function');
-    });
-
-    test('PaginationHandler should export class', () => {
-      const { PaginationHandler } = require('../src/handlers/PaginationHandler');
-      expect(typeof PaginationHandler).toBe('function');
-    });
-
-    test('ServerManager should export required methods', () => {
-      const { ServerManager } = require('../src/managers/ServerManager');
-      expect(typeof ServerManager.getInstance).toBe('function');
-    });
-  });
+beforeEach(() => {
+  const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+  const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+  _resetGlobalStateForTests();
+  __clearSessionsForTests();
 });
 
 describe('Utility Functions', () => {

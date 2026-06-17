@@ -245,14 +245,14 @@ describe('LocalServerHandler.listFiles integration', () => {
   });
 
   describe('sorting and ordering', () => {
-    it.skip('should support orderBy parameter', async () => {
+    it('should support orderBy parameter', async () => {
       const res = await handler.listFiles({
         directory: tmpRoot,
         orderBy: 'filename'
       });
       
       const itemNames = res.items.map(item => item.name);
-      const sortedNames = [...itemNames].sort();
+      const sortedNames = [...itemNames].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       
       expect(itemNames).toEqual(sortedNames);
     });

@@ -29,11 +29,9 @@ export async function createFile(filePath: string, content: string, backup: bool
 
   // If file exists and backup requested, copy to .bak
   try {
-    if (fs.existsSync(targetPath)) {
-      if (backup) {
-        await fs.promises.copyFile(targetPath, `${targetPath}.bak`);
-        debug(`📦 Backup created: ${targetPath}.bak`);
-      }
+    if (backup && fs.existsSync(targetPath)) {
+      await fs.promises.copyFile(targetPath, `${targetPath}.bak`);
+      debug(`📦 Backup created: ${targetPath}.bak`);
     }
   } catch (e: any) {
     const cause = e instanceof Error ? e.message : (typeof e === 'string' ? e : String(e));

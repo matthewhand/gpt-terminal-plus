@@ -14,14 +14,16 @@ export const generalRateLimit = rateLimit({
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  handler: (req: Request, res: Response, next: NextFunction) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handler: (req: Request, res: Response, _next: NextFunction) => {
     debug('Rate limit exceeded for IP: %s, path: %s', req.ip, req.path);
     res.status(429).json({
       error: 'Too many requests from this IP, please try again later.',
       retryAfter: Math.ceil((15 * 60 * 1000) / 1000) // seconds
     });
   },
-  skip: (req: Request, res: Response) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  skip: (req: Request, _res: Response) => {
     // Skip rate limiting for health checks and during tests
     return req.path === '/health' || req.path === '/' || process.env.NODE_ENV === 'test' || Boolean(req.headers['user-agent']?.includes('supertest')) || req.path.startsWith('/file/');
   }
@@ -37,7 +39,8 @@ export const strictRateLimit = rateLimit({
   message: 'Too many sensitive requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response, next: NextFunction) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handler: (req: Request, res: Response, _next: NextFunction) => {
     debug('Strict rate limit exceeded for IP: %s, path: %s', req.ip, req.path);
     res.status(429).json({
       error: 'Too many sensitive requests from this IP, please try again later.',
@@ -56,7 +59,8 @@ export const chatRateLimit = rateLimit({
   message: 'Too many chat requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response, next: NextFunction) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handler: (req: Request, res: Response, _next: NextFunction) => {
     debug('Chat rate limit exceeded for IP: %s, path: %s', req.ip, req.path);
     res.status(429).json({
       error: 'Too many chat requests from this IP, please try again later.',
@@ -75,7 +79,8 @@ export const fileRateLimit = rateLimit({
   message: 'Too many file operations from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  handler: (req: Request, res: Response, next: NextFunction) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handler: (req: Request, res: Response, _next: NextFunction) => {
     debug('File rate limit exceeded for IP: %s, path: %s', req.ip, req.path);
     res.status(429).json({
       error: 'Too many file operations from this IP, please try again later.',

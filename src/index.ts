@@ -12,7 +12,7 @@ import express from "express";
 import config from "config";
 // import bodyParser from "body-parser";
 import { setupApiRouter } from "./routes/index";
-import shellRouter from './routes/shell';
+// shellRouter mounted via routes/index
 import publicRouter from './routes/publicRouter';
 import { registerOpenApiRoutes } from "./openapi";
 import swaggerUi from "swagger-ui-express";
@@ -23,52 +23,64 @@ import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/c
 import { registerServersFromConfig } from './bootstrap/serverLoader';
 import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown';
 
-import './modules/ngrok';
-
 export const app = express();
 
-// Validate environment variables
-validateEnvironmentVariables();
-
-// Setup middlewares
-setupMiddlewares(app);
-
 /**
- * Static assets
- * - Serve public/ at /
- * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
+ * Bootstrap the Express app by applying former top-level side effects.
+ * This includes: ngrok import, validateEnvironmentVariables, setupMiddlewares,
+ * static app.use, setupApiRouter (and immediately following router/openapi/swagger/mcp
+ * setup to keep app configuration atomic).
+ *
+ * Call explicitly (e.g. before main or in test setup) rather than on module import.
+ * This addresses top-level side effects while keeping `app` export.
  */
-// Serve static assets from public/
-app.use(express.static(path.resolve(__dirname, '..', 'public')));
-// Serve documentation markdown as static files
-app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
+export function bootstrap(): void {
+  // Defer ngrok side-effect import (was `import './modules/ngrok';` at top level)
+  require('./modules/ngrok');
 
-// Setup API Router and additional route groups
-setupApiRouter(app);
-app.use(publicRouter);
+  // Validate environment variables
+  validateEnvironmentVariables();
 
-// Dynamic OpenAPI routes
-registerOpenApiRoutes(app);
+  // Setup middlewares
+  setupMiddlewares(app);
 
-// Enhanced Swagger UI at /docs
-const swaggerOptions: any = {
-  swaggerUrl: '/openapi.json',
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customCssUrl: '/swagger-theme.css',
-  customJs: '/theme.js',
-  customSiteTitle: 'GPT Terminal Plus API',
-  customfavIcon: '/favicon.ico'
-};
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
+  /**
+   * Static assets
+   * - Serve public/ at /
+   * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
+   */
+  // Serve static assets from public/
+  app.use(express.static(path.resolve(__dirname, '..', 'public')));
+  // Serve documentation markdown as static files
+  app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 
-  // (duplicate OpenAPI/Swagger mounts removed)
+  // Setup API Router and additional route groups
+  setupApiRouter(app);
+  app.use(publicRouter);
 
-// MCP server (opt-in). The deprecated SSE transport at /mcp/messages was
-// removed; the MCP endpoint now uses Streamable HTTP at POST/GET/DELETE /mcp.
-if (process.env.USE_MCP === "true") {
-  const { setupMcpServer } = require("./modules/mcpServer");
-  setupMcpServer(app);
+  // Dynamic OpenAPI routes
+  registerOpenApiRoutes(app);
+
+  // Enhanced Swagger UI at /docs
+  const swaggerOptions: any = {
+    swaggerUrl: '/openapi.json',
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customCssUrl: '/swagger-theme.css',
+    customJs: '/theme.js',
+    customSiteTitle: 'GPT Terminal Plus API',
+    customfavIcon: '/favicon.ico'
+  };
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
+
+    // (duplicate OpenAPI/Swagger mounts removed)
+
+  // MCP server (opt-in). The deprecated SSE transport at /mcp/messages was
+  // removed; the MCP endpoint now uses Streamable HTTP at POST/GET/DELETE /mcp.
+  if (process.env.USE_MCP === "true") {
+    const { setupMcpServer } = require("./modules/mcpServer");
+    setupMcpServer(app);
+  }
 }
 
 // Configuration directory and file path
@@ -181,6 +193,7 @@ export const start = main;
 
 // Only auto-start when executed directly
 if (require.main === module) {
+  bootstrap(); // explicit call to run wrapped top-level setups
   main().catch((err) => {
     console.error("Fatal startup error:", err);
     process.exit(1);

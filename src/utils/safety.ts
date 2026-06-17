@@ -23,7 +23,7 @@ function parsePatternsFromStringList(val?: string, defaults: RegExp[] = []): Reg
     if (!val) return defaults;
     const parts = val.split(',').map(s => s.trim()).filter(Boolean);
     return parts.map(p => new RegExp(p, 'i'));
-  } catch (e) {
+  } catch (e: any) {
     debug('Failed to parse patterns: ' + String(e));
     return defaults;
   }
@@ -57,7 +57,7 @@ export function evaluateCommandSafety(cmd: string): SafetyDecision {
         const s = Array.isArray(r) ? r.join(',') : String(r);
         confirm = parsePatternsFromStringList(s, DEFAULT_CONFIRM_PATTERNS);
       }
-    } catch (e) {
+    } catch (e: any) {
       debug('Config safety parse error: ' + String(e));
     }
   }

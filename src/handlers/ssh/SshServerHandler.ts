@@ -68,7 +68,8 @@ export class SshServerHandler extends AbstractServerHandler {
                 });
             }).on('error', (e: unknown) => {
                 sshServerDebug('SSH conn error: ' + String(e));
-                finalize({ stdout: '', stderr: String(e), error: true, exitCode: 1, success: false });
+                const errMsg = (e as any)?.message || String(e);
+                finalize({ stdout: '', stderr: errMsg, error: true, exitCode: 1, success: false });
             }).connect(opts);
 
             if (timeout && timeout > 0) {
@@ -85,7 +86,7 @@ export class SshServerHandler extends AbstractServerHandler {
 
     async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH code: ${code} in language: ${language} (timeout=${timeout ?? 'none'}, dir=${directory ?? 'cwd'})`);
-        return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0 };
+        return { stdout: 'SSH code executed', stderr: '', error: false, exitCode: 0, success: true };
     }
 
     async createFile(filePath: string, content?: string, backup: boolean = true): Promise<boolean> {

@@ -4,6 +4,11 @@ import setupMiddlewares from '../src/middlewares/setupMiddlewares';
 import { setupApiRouter } from '../src/routes';
 import { getOrGenerateApiToken } from '../src/common/apiToken';
 
+jest.mock('../src/llm', () => ({
+  chat: jest.fn().mockResolvedValue({ choices: [{ message: { role: 'assistant', content: 'mocked response' } }] }),
+  chatStream: jest.fn(),
+}));
+
 function makeTestApp() {
   const app = express();
   setupMiddlewares(app);
@@ -14,12 +19,15 @@ function makeTestApp() {
 function makeProdApp() {
   jest.resetModules();
   const prevEnv = process.env.NODE_ENV;
+  const prevDisable = process.env.DISABLE_PRIVATE_NETWORK_ACCESS;
   process.env.NODE_ENV = 'development';
+  process.env.DISABLE_PRIVATE_NETWORK_ACCESS = 'true';
   const routesMod = require('../src/routes');
   const app = express();
   setupMiddlewares(app);
   routesMod.setupApiRouter(app);
   process.env.NODE_ENV = prevEnv;
+  process.env.DISABLE_PRIVATE_NETWORK_ACCESS = prevDisable;
   return app;
 }
 

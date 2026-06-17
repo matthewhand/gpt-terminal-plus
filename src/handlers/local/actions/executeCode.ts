@@ -67,7 +67,12 @@ export async function executeLocalCode(
     const cb = (error: any, stdout: string, stderr: string) => {
       if (error) {
         const message = error?.message || String(error || 'unknown error');
-        reject(new Error(`Failed to execute code: ${message}`));
+        const execErr: any = new Error(`Failed to execute code: ${message}`);
+        execErr.stdout = stdout || '';
+        execErr.stderr = stderr || '';
+        execErr.exitCode = typeof error?.code === 'number' ? error.code : 1;
+        execErr.code = execErr.exitCode;
+        reject(execErr);
       } else {
         // Return only stdout/stderr (other fields optional and omitted for test expectations)
         resolve({ stdout, stderr });

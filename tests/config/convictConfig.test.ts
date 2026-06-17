@@ -132,6 +132,8 @@ describe('Convict Configuration', () => {
       
       config.set('server.httpsEnabled', true);
       expect(config.get('server.httpsEnabled')).toBe(true);
+      config.set('server.httpsEnabled', false);
+      expect(config.get('server.httpsEnabled')).toBe(false);
     });
 
     it('should validate configuration', () => {
@@ -166,13 +168,19 @@ describe('Convict Configuration', () => {
     });
 
     it('should handle boolean environment variables correctly', () => {
-      process.env.HTTPS_ENABLED = 'false';
-      process.env.DISABLE_HEALTH_LOG = 'false';
-
-      const config = convictConfig();
-
-      expect(config.get('server.httpsEnabled')).toBe(false);
-      expect(config.get('server.disableHealthLog')).toBe(false);
+      const boolCases = [
+        { https: 'true', disable: 'true', expHttps: true, expDisable: true },
+        { https: 'false', disable: 'false', expHttps: false, expDisable: false },
+      ];
+      boolCases.forEach(({ https, disable, expHttps, expDisable }) => {
+        process.env.HTTPS_ENABLED = https;
+        process.env.DISABLE_HEALTH_LOG = disable;
+        const config = convictConfig();
+        expect(config.get('server.httpsEnabled')).toBe(expHttps);
+        expect(config.get('server.disableHealthLog')).toBe(expDisable);
+        // also cover type and combo
+        expect(typeof config.get('server.httpsEnabled')).toBe('boolean');
+      });
     });
 
     it('should handle numeric environment variables', () => {
@@ -214,7 +222,7 @@ describe('Convict Configuration', () => {
   });
 
   describe('persistence functionality', () => {
-    const configPath = path.join(os.tmpdir(), 'convict-config.json');
+    const configPath = path.join(os.tmpdir(), 'convict-config.test.json');
 
     afterEach(() => {
       if (fs.existsSync(configPath)) {
@@ -238,23 +246,23 @@ describe('Convict Configuration', () => {
       });
 
       it('should create directory if it does not exist', async () => {
-        // Remove the file and ensure directory doesn't exist
-        if (fs.existsSync(configPath)) {
-          fs.unlinkSync(configPath);
-        }
-        const dir = path.dirname(configPath);
-        if (fs.existsSync(dir)) {
-          fs.rmSync(dir, { recursive: true, force: true });
-        }
+        // Use a nested subdir under tmp that we control and can clean
+        const uniqueDir = path.join(os.tmpdir(), 'gpt-convict-create-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+        const deepConfigPath = path.join(uniqueDir, 'subdir', 'convict-config.json');
 
         const config = convictConfig();
         config.set('server.port', 8888);
 
-        await persistConfig(config, configPath);
+        await persistConfig(config, deepConfigPath);
 
-        expect(fs.existsSync(configPath)).toBe(true);
-        const persistedData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        expect(fs.existsSync(deepConfigPath)).toBe(true);
+        const persistedData = JSON.parse(fs.readFileSync(deepConfigPath, 'utf8'));
         expect(persistedData.server.port).toBe(8888);
+
+        // cleanup controlled dir
+        if (fs.existsSync(uniqueDir)) {
+          fs.rmSync(uniqueDir, { recursive: true, force: true });
+        }
       });
 
       it('should handle atomic writes using temp file', async () => {
@@ -394,6 +402,16 @@ describe('Convict Configuration', () => {
 });
 
 describe('getRedactedSettings', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it('should return redacted view with readOnly for env overrides', () => {
     process.env.PORT = '8080';
     process.env.API_TOKEN = 'secret';

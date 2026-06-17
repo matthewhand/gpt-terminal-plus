@@ -85,3 +85,8 @@ export class ShellSessionDriver {
   }
 }
 
+/** Test helper to reset shared session state between tests (not for prod use) */
+export function __clearSessionsForTests() {
+  sessions.clear();
+}
+

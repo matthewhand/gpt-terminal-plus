@@ -29,6 +29,10 @@ describe('ExecuteLlm Handler', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = jest.requireActual('../../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
 
     mockRequest = {
       body: {},

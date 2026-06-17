@@ -8,7 +8,7 @@ const debug = Debug("app:ssmUtils");
  * @param {string} content - The content to check against.
  * @returns {string} - A unique delimiter.
  */
-const generateUniqueDelimiter = (content: string): string => {
+export const generateUniqueDelimiter = (content: string): string => {
   let delimiter = "EOF";
   while (content.includes(delimiter)) {
     delimiter = "EOF_" + Math.random().toString(36).substring(2, 8);
@@ -43,13 +43,17 @@ export const createFile = async (
   
   debug("Creating file with command: " + command);
   
-  const result = await ssmClient.send(new SendCommandCommand({
-    InstanceIds: [instanceId],
-    DocumentName: "AWS-RunShellScript",
-    Parameters: {
-      commands: [command],
-    },
-  }));
-  
-  return !!result.Command;
+  try {
+    const result = await ssmClient.send(new SendCommandCommand({
+      InstanceIds: [instanceId],
+      DocumentName: "AWS-RunShellScript",
+      Parameters: {
+        commands: [command],
+      },
+    }));
+    return !!result.Command;
+  } catch (e) {
+    debug("Create file error: " + e);
+    return false;
+  }
 };

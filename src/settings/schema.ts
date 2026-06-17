@@ -35,20 +35,18 @@ export const ExecuteLlmSchema = z.object({
 export const SettingsSchema = z.object({
   server: z
     .object({
-      port: z.number().default(5004),
+      port: z.number().int().min(1).max(65535).default(5004),
       host: z.string().default('0.0.0.0'),
       publicBaseUrl: z.string().optional(),
     })
     .default({}),
   auth: z
     .object({
-      apiToken: z.string().default(
-        'gtp-token-' + Math.random().toString(36).substring(2)
-      ),
+      apiToken: z.string().default(() => 'gtp-token-' + Math.random().toString(36).substring(2)),
       adminUsername: z.string().default('admin'),
       adminPassword: z
         .string()
-        .default('admin-' + Math.random().toString(36).substring(2)),
+        .default(() => 'admin-' + Math.random().toString(36).substring(2)),
     })
     .default({}),
   app: z

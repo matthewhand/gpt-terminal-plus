@@ -123,15 +123,16 @@ describe('Setup LLM panel', () => {
         .send({ enabled: true });
       let res = await request(app).get('/settings').set('Authorization', `Bearer ${token}`);
       expect(res.status).toBe(200);
-      expect(res.body.settings.llm.enabled.value).toBe(true);
+      // actual shape from getRedactedSettings is groups directly under body (llm.enabled.value)
+      expect(res.body.llm && res.body.llm.enabled && res.body.llm.enabled.value).toBe(true);
 
       await request(app)
         .post('/setup/llm')
         .set('Authorization', `Bearer ${token}`)
         .send({ enabled: false });
       res = await request(app).get('/settings').set('Authorization', `Bearer ${token}`);
-      expect(res.body.settings.llm.enabled.value).toBe(false);
-      expect(res.body.settings.llm.enabled.readOnly).toBe(false);
+      expect(res.body.llm && res.body.llm.enabled && res.body.llm.enabled.value).toBe(false);
+      expect(res.body.llm && res.body.llm.enabled && res.body.llm.enabled.readOnly).toBe(false);
     });
   });
 });

@@ -1,8 +1,8 @@
 import fs from 'fs';
 
-import Debug from 'debug';
+import createDebug from 'debug';
 
-const debug = Debug('app:configHandler');
+const debug = createDebug('app:configHandler');
 
 /**
  * Checks if the configuration file exists.

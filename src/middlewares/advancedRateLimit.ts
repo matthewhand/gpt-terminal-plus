@@ -75,20 +75,22 @@ export function advancedRateLimit(config: RateLimitConfig) {
 }
 
 // Predefined rate limiters
+const isTest = process.env.NODE_ENV === 'test';
+const noop = (_req: any, _res: any, next: any) => next();
 export const rateLimiters = {
-  strict: advancedRateLimit({
-    windowMs: process.env.NODE_ENV === 'test' ? 1000 : 15 * 60 * 1000, // 1 second for tests, 15 minutes for production
-    maxRequests: process.env.NODE_ENV === 'test' ? 10000 : 100, // 10000 for tests, 100 for production
+  strict: isTest ? noop : advancedRateLimit({
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 100,
     skipSuccessfulRequests: false,
     skipFailedRequests: false
   }),
   
-  moderate: advancedRateLimit({
+  moderate: isTest ? noop : advancedRateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 500
   }),
   
-  lenient: advancedRateLimit({
+  lenient: isTest ? noop : advancedRateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 1000
   }),

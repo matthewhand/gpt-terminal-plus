@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
 import * as routesMod from '../../src/routes';
+import { getOrGenerateApiToken } from '../../src/common/apiToken';
 
 jest.mock('../../src/llm', () => ({
   chat: jest.fn(),
@@ -31,6 +32,8 @@ function makeApp() {
 describe('Chat Routes', () => {
   let app: express.Application;
   const token = 'test-token';
+  process.env.API_TOKEN = token;
+  getOrGenerateApiToken();
 
   beforeAll(() => {
     process.env.API_TOKEN = token;
@@ -39,6 +42,10 @@ describe('Chat Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('POST /chat/completions', () => {
@@ -252,7 +259,7 @@ describe('Chat Routes', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.provider.provider).toBe('ollama');
+      expect(response.body.provider).toBe('ollama');
       expect(response.body.endpoints.ollama).toBe('http://localhost:11434');
     });
 
@@ -264,7 +271,7 @@ describe('Chat Routes', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.provider.provider).toBe('openai');
+      expect(response.body.provider).toBe('openai');
     });
   });
 });

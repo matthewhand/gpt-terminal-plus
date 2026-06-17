@@ -95,7 +95,7 @@ describe('setupApiRouter', () => {
 
     it('should mount activity routes with security logger and lenient rate limiting', () => {
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/activity', expect.any(Function), expect.any(Function), expect.any(Function));
+      expect(useSpy).toHaveBeenCalledWith('/activity', expect.any(Function), expect.any(Function), expect.any(Function), expect.any(Function));
     });
 
     it('should mount chat routes with security logger and moderate rate limiting', () => {
@@ -131,18 +131,13 @@ describe('setupApiRouter', () => {
 
   describe('optional routes', () => {
     it('should mount setup routes if available', () => {
-      // Mock require to return setup routes
-      const mockSetupRoutes = jest.fn();
-      jest.doMock('../../src/routes/setupRoutes', () => mockSetupRoutes, { virtual: true });
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/setup', mockSetupRoutes);
+      expect(useSpy).toHaveBeenCalledWith('/setup', expect.any(Function));
     });
 
     it('should mount model routes if available', () => {
-      const mockModelRoutes = jest.fn();
-      jest.doMock('../../src/routes/modelRoutes', () => mockModelRoutes, { virtual: true });
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/model', mockModelRoutes);
+      expect(useSpy).toHaveBeenCalledWith('/model', expect.any(Function));
     });
 
     it('should mount endpoint status router', () => {

@@ -15,11 +15,9 @@ router.use(checkAuthToken as any);
  * Returns supported models and the currently selected model.
  */
 router.get('/', (_req: Request, res: Response) => {
-  if (!isLlmEnabled()) {
-    return res.status(200).json({ supported: [], selected: '' });
-  }
+  // Always advertise supported models (LLM enabled affects execution/selection, not discovery)
   const supported = getSupportedModels();
-  const selected = getSelectedModel();
+  const selected = isLlmEnabled() ? getSelectedModel() : '';
   debug('Returning supported and selected models');
   res.status(200).json({ supported, selected });
 });
@@ -29,10 +27,7 @@ router.get('/', (_req: Request, res: Response) => {
  * Returns the currently selected model only.
  */
 router.get('/selected', (_req: Request, res: Response) => {
-  if (!isLlmEnabled()) {
-    return res.status(200).json({ selected: '' });
-  }
-  const selected = getSelectedModel();
+  const selected = isLlmEnabled() ? getSelectedModel() : '';
   debug('Returning selected model: ' + selected);
   res.status(200).json({ selected });
 });

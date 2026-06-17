@@ -44,25 +44,15 @@ describe('Safety Utils - Comprehensive Tests', () => {
     });
 
     describe('default confirm patterns', () => {
-      it('should require confirmation for dangerous rm commands', () => {
-        const result = evaluateCommandSafety('rm -rf /home/user');
+      it.each([
+        ['rm -rf /home/user', 'rm'],
+        ['mkfs.ext4 /dev/sda1', 'mkfs'],
+        ['dd if=test of=/dev/sda', 'dd'],
+      ])('should require confirmation for %s (pattern %s)', (cmd, pat) => {
+        const result = evaluateCommandSafety(cmd);
         expect(result.hardDeny).toBe(false);
         expect(result.needsConfirm).toBe(true);
-        expect(result.reasons.some(r => r.includes('rm'))).toBe(true);
-      });
-
-      it('should require confirmation for mkfs commands', () => {
-        const result = evaluateCommandSafety('mkfs.ext4 /dev/sda1');
-        expect(result.hardDeny).toBe(false);
-        expect(result.needsConfirm).toBe(true);
-        expect(result.reasons.some(r => r.includes('mkfs'))).toBe(true);
-      });
-
-      it('should require confirmation for dd commands with space before if=', () => {
-        const result = evaluateCommandSafety('dd if=test of=/dev/sda');
-        expect(result.hardDeny).toBe(false);
-        expect(result.needsConfirm).toBe(true);
-        expect(result.reasons.some(r => r.includes('dd'))).toBe(true);
+        expect(result.reasons.some(r => r.includes(pat))).toBe(true);
       });
 
       it('should not require confirmation for dd commands without proper spacing', () => {
@@ -71,18 +61,14 @@ describe('Safety Utils - Comprehensive Tests', () => {
         expect(result.needsConfirm).toBe(false);
       });
 
-      it('should require confirmation for shutdown commands', () => {
-        const result = evaluateCommandSafety('shutdown -h now');
+      it.each([
+        ['shutdown -h now', 'shutdown'],
+        ['reboot', 'reboot'],
+      ])('should require confirmation for %s (pattern %s)', (cmd, pat) => {
+        const result = evaluateCommandSafety(cmd);
         expect(result.hardDeny).toBe(false);
         expect(result.needsConfirm).toBe(true);
-        expect(result.reasons.some(r => r.includes('shutdown'))).toBe(true);
-      });
-
-      it('should require confirmation for reboot commands', () => {
-        const result = evaluateCommandSafety('reboot');
-        expect(result.hardDeny).toBe(false);
-        expect(result.needsConfirm).toBe(true);
-        expect(result.reasons.some(r => r.includes('reboot'))).toBe(true);
+        expect(result.reasons.some(r => r.includes(pat))).toBe(true);
       });
 
       it('should require confirmation for userdel commands', () => {
@@ -229,6 +215,7 @@ describe('Safety Utils - Comprehensive Tests', () => {
         expect(result.hardDeny).toBe(false);
         expect(result.needsConfirm).toBe(false);
         expect(result.reasons).toHaveLength(0);
+        expect(result.hardDeny && result.needsConfirm).toBe(false); // combo
       });
 
       it('should handle whitespace-only commands', () => {

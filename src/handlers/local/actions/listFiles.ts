@@ -31,7 +31,7 @@ const listFiles = ({
       if (!stat.isDirectory()) {
         return reject(new Error(`Not a directory: ${resolvedDir}`));
       }
-    } catch (e) {
+    } catch {
       return reject(new Error(`Directory does not exist: ${resolvedDir}`));
     }
 

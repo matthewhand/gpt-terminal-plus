@@ -1,15 +1,19 @@
 import request from 'supertest';
 import { makeProdApp } from './utils/testApp';
+import { getOrGenerateApiToken } from '../src/common/apiToken';
 
 // This suite validates input-size circuit breakers for /command/execute-shell
 // in a deterministic way. It does not rely on optional route wiring flags.
 
 describe('Circuit Breakers: execute-shell input limits', () => {
   let app: any;
+  let token: string;
 
   beforeAll(async () => {
     process.env.USE_PROD_ROUTES_FOR_TEST = '1';
+    // makeProdApp now handles token + config setup for auth in shared prod routes
     app = await makeProdApp();
+    token = getOrGenerateApiToken();
   });
 
   afterAll(() => {
@@ -23,6 +27,7 @@ describe('Circuit Breakers: execute-shell input limits', () => {
 
     const res = await request(app)
       .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
       .send({ command: `echo ${huge}` });
     expect(res.status).toBe(413);
     expect(res.body).toMatchObject({ error: 'Input exceeded limit', truncated: true });
@@ -37,6 +42,7 @@ describe('Circuit Breakers: execute-shell input limits', () => {
 
     const res = await request(app)
       .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
       .send({ command: `echo ${huge}` });
     // Expect success because input is truncated and executed
     expect(res.status).toBe(200);

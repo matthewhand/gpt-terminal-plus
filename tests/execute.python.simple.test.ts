@@ -223,20 +223,20 @@ describe('Python Code Execution', () => {
     test('executes echo via execute-bash endpoint', async () => {
       const res = await request(app)
         .post('/command/execute-bash')
-        .set('authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${token}`)
         .send({ command: 'echo hello' });
       expect(res.status).toBe(200);
-      expect(res.body.result.stdout).toBe('hello\n');
+      expect(res.body.result.stdout.trim()).toBe('hello');
     });
 
     test('executes code via execute-python endpoint', async () => {
       const res = await request(app)
         .post('/command/execute-python')
-        .set('authorization', 'Bearer test-token')
+        .set('Authorization', `Bearer ${token}`)
         .send({ code: 'print("ping")' });
       expect(res.status).toBe(200);
       expect(res.body.result.exitCode).toBe(0);
-      expect(res.body.result.stdout).toBe('ping\n');
+      expect(res.body.result.stdout.trim()).toBe('ping');
     });
   });
 

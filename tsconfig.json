@@ -2,7 +2,8 @@
   "compilerOptions": {
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "target": "ES2020",
-    "module": "esnext",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "lib": ["ES2020"],
     "allowJs": false,
     "strict": false,

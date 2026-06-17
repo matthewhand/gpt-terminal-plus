@@ -9,11 +9,10 @@ export type ServerDescriptor = {
   allowedTokens?: string[];
 };
 
-const CONFIG_PATH =
-  process.env.SERVERS_CONFIG_PATH ||
-  path.join(process.cwd(), 'config', 'servers.json');
-
 function loadAll(): ServerDescriptor[] {
+  const CONFIG_PATH =
+    process.env.SERVERS_CONFIG_PATH ||
+    path.join(process.cwd(), 'config', 'servers.json');
   try {
     if (fs.existsSync(CONFIG_PATH)) {
       const raw = fs.readFileSync(CONFIG_PATH, 'utf8');

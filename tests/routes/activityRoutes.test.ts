@@ -1,20 +1,8 @@
 import request from 'supertest';
-import express, { Router } from 'express';
+import express from 'express';
 import fs from 'fs';
 import path from 'path';
-import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
-import * as routesMod from '../../src/routes';
-
-function makeApp() {
-  const app = express();
-  setupMiddlewares(app);
-
-  const anyRoutes: any = routesMod as any;
-  if (typeof anyRoutes.setupApiRouter === 'function') {
-    anyRoutes.setupApiRouter(app);
-  }
-  return app;
-}
+import { makeTestApp } from '../utils/testApp';
 
 describe('Activity Routes', () => {
   let app: express.Application;
@@ -22,7 +10,7 @@ describe('Activity Routes', () => {
 
   beforeAll(() => {
     process.env.API_TOKEN = token;
-    app = makeApp();
+    app = makeTestApp();
   });
 
   describe('GET /activity/list', () => {
@@ -74,7 +62,7 @@ describe('Activity Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('success');
       expect(response.body.data).toHaveProperty('sessions');
-      expect(Array.isArray(response.body.data.sessions)).toBe(true);
+      expect(response.body.data.sessions).toEqual(expect.any(Array));
       expect(response.body.data.sessions.length).toBeGreaterThan(0);
     });
 
@@ -83,6 +71,7 @@ describe('Activity Routes', () => {
         .get('/activity/list');
 
       expect(response.status).toBe(401);
+      expect(response.body.error).toBe('Unauthorized');
     });
 
     it('should support limit parameter', async () => {
@@ -113,7 +102,8 @@ describe('Activity Routes', () => {
     });
 
     it('should handle missing activity directory', async () => {
-      jest.spyOn(fs, 'readdir').mockRejectedValue(new Error('ENOENT'));
+      const fsp: any = require('fs/promises');
+      jest.spyOn(fsp, 'readdir').mockRejectedValue(new Error('ENOENT'));
       const response = await request(app)
         .get('/activity/list')
         .set('Authorization', `Bearer ${token}`);
@@ -129,6 +119,8 @@ describe('Activity Routes', () => {
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
+      expect(response.body.status).toBe('success');
+      expect(Array.isArray(response.body.data.sessions)).toBe(true);
     });
   });
 

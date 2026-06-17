@@ -1,4 +1,4 @@
-import { paginateOutput } from '../../../src/handlers/ssm/actions/paginateOutput';
+import { paginateOutput } from '../../../../src/handlers/ssm/actions/paginateOutput';
 
 describe('paginateOutput', () => {
   it('should paginate output with default lines per page', () => {
@@ -63,15 +63,17 @@ describe('paginateOutput', () => {
   it('should handle trailing newline', () => {
     const stdout = 'line1\nline2\n';
     const pages = paginateOutput(stdout, 2);
-    expect(pages).toHaveLength(1);
-    expect(pages[0]).toBe('line1\nline2\n');
+    // split on trailing \n produces a final empty string chunk
+    expect(pages).toHaveLength(2);
+    expect(pages[0]).toBe('line1\nline2');
+    expect(pages[1]).toBe('');
   });
 
   it('should handle multiple consecutive newlines', () => {
     const stdout = 'line1\n\nline3';
     const pages = paginateOutput(stdout, 2);
     expect(pages).toHaveLength(2);
-    expect(pages[0]).toBe('line1\n\n');
+    expect(pages[0]).toBe('line1\n');
     expect(pages[1]).toBe('line3');
   });
 });

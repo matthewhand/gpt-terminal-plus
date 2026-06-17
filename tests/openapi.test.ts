@@ -96,8 +96,9 @@ describe('openapi.ts - OpenAPI Spec and Routes', () => {
     });
 
     it('should fallback to request protocol if no forwarded proto', () => {
-      mockReq.headers['x-forwarded-proto'] = undefined;
+      mockReq.headers = { 'x-forwarded-proto': undefined as any };
       mockReq.protocol = 'https';
+      (mockReq.get as jest.Mock).mockReturnValue('example.com:8080');
       const url = openapi.getPublicBaseUrl(mockReq);
       expect(url).toBe('https://example.com:8080');
     });
@@ -218,7 +219,7 @@ describe('openapi.ts - OpenAPI Spec and Routes', () => {
       openapi.registerOpenAPIRoutes(mockApp);
       expect(mockApp.get).toHaveBeenCalledWith('/openapi.yaml', expect.any(Function));
       const handler = mockApp.get.mock.calls.find(call => call[0] === '/openapi.yaml')[1];
-      const res = { type: jest.fn(), send: jest.fn() };
+      const res = { type: jest.fn().mockReturnThis(), send: jest.fn() };
       handler(mockReq, res);
       expect(yaml.stringify).toHaveBeenCalledWith(expect.objectContaining({ openapi: '3.0.3' }));
       expect(res.type).toHaveBeenCalledWith('application/yaml');

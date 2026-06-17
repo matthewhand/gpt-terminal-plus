@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { makeProdApp } from './utils/testApp';
+import { getOrGenerateApiToken } from '../src/common/apiToken';
 
 // Only run these end-to-end prod-route tests when explicitly enabled.
 // They exercise real middleware + route ordering and may be environment-sensitive.
@@ -7,10 +8,14 @@ const run = describe; // Enable circuit breaker tests
 
 run('Circuit Breakers (prod routes)', () => {
   let app: any;
+  let token: string;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.USE_PROD_ROUTES_FOR_TEST = '1';
+    // makeProdApp now robustly sets up token/config for shared auth in prod-like apps
+    app = await makeProdApp();
+    token = getOrGenerateApiToken();
   });
 
   afterEach(() => {
@@ -27,6 +32,7 @@ run('Circuit Breakers (prod routes)', () => {
     const huge = 'x'.repeat(5000);
     const res = await request(app)
       .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
       .send({ command: `echo ${huge}` });
 
     expect(res.status).toBe(413);
@@ -46,6 +52,7 @@ run('Circuit Breakers (prod routes)', () => {
     const huge = 'y'.repeat(5000);
     const res = await request(app)
       .post('/command/execute-shell')
+      .set('Authorization', `Bearer ${token}`)
       .send({ command: `printf "${huge}"` });
 
     // Should execute successfully with truncated command applied server-side

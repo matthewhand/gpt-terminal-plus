@@ -28,37 +28,7 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
     const cwd = directory || getPresentWorkingDirectory() || this.serverConfig.directory || process.cwd();
-    const childProc = require('child_process');
-    const spawn = childProc.spawn as (cmd: string, args: string[], opts: any) => any;
-    const shell = '/bin/bash';
-    const args = ['-lc', command];
-    const opts = { cwd, env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] };
-    return await new Promise<ExecutionResult>((resolve) => {
-      const child = spawn(shell, args, opts);
-      let stdout = '';
-      let stderr = '';
-      child.stdout?.on('data', (d: any) => { stdout += String(d || ''); });
-      child.stderr?.on('data', (d: any) => { stderr += String(d || ''); });
-      let settled = false;
-      let t: any;
-      if (typeof timeout === 'number' && timeout > 0) {
-        t = setTimeout(() => {
-          try { child.kill('SIGKILL'); } catch {}
-          if (!settled) {
-            settled = true;
-            resolve({ stdout, stderr: (stderr || '') + '\n[timeout]', exitCode: 124, error: true, truncated: false, terminated: true } as any);
-          }
-        }, timeout);
-      }
-      child.on('close', (code: number) => {
-        if (t) clearTimeout(t);
-        if (!settled) {
-          settled = true;
-          const exitCode = typeof code === 'number' ? code : 0;
-          resolve({ stdout, stderr, exitCode, error: exitCode !== 0 } as any);
-        }
-      });
-    });
+    return await executeCodeAction(command, 'bash', timeout, cwd);
   }
 
   async executeCode(code: string, language: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
@@ -92,7 +62,7 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async listFiles(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {
     const directory = params.directory ?? '.';
-    const limit = typeof params.limit === 'number' ? params.limit : undefined;
+    const limit = typeof params.limit === 'number' ? params.limit : 50;
     const offset = typeof params.offset === 'number' ? params.offset : 0;
     // Normalize orderBy to handle both 'name' and 'filename'
     const orderBy = (params.orderBy === 'name' as any ? 'filename' : params.orderBy) ?? 'filename';
@@ -102,7 +72,7 @@ export class LocalServerHandler extends AbstractServerHandler {
     // Delegate to the action to keep behavior consistent with other tests
     const { files, total } = await listFilesAction({ directory, limit, offset, orderBy, recursive, typeFilter });
     const items = files.map(f => ({ name: f.name, isDirectory: f.isDirectory }));
-    return { items, total, limit: limit ?? total, offset };
+    return { items, total, limit, offset };
   }
 
   async listFilesWithDefaults(params: ListParams): Promise<PaginatedResponse<{ name: string; isDirectory: boolean }>> {

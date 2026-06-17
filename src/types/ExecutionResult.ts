@@ -1,9 +1,10 @@
 export interface ExecutionResult {
   stdout: string;
   stderr: string;
-  error?: boolean;
+  error?: boolean | string;
   success?: boolean;
   exitCode?: number;
   truncated?: boolean;
   terminated?: boolean;
+  output?: string;
 }

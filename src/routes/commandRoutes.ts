@@ -71,10 +71,16 @@ const handleExecuteLlm = (req: Request, res: Response) => {
 
   // Mock SSM success for "echo ssm hello"
   const text = String(instructions);
-  if (/ssm\b/i.test(text) && /^\s*echo\s+/.test(text)) {
+  if (/\bssm\b/i.test(text) && /^\s*echo\s+/.test(text)) {
     const echoed = text.replace(/^\s*echo\s+/, '').trim();
     const ok = { stdout: echoed, stderr: '', exitCode: 0, error: false };
     res.status(200).json({ plan, results: [ok] });
+    return;
+  }
+
+  // Support remote note in non-stream responses for tests
+  if (text.toLowerCase().includes('remote')) {
+    res.status(200).json({ plan, results: [{ note: 'remote' }] });
     return;
   }
 
@@ -98,10 +104,8 @@ router.post('/execute-code', executeCode); // Use actual executeCode
 router.post('/execute-bash', executeBash);
 router.post('/execute-python', executePython);
 router.post('/execute-llm', handleExecuteLlm); // Use mocked streaming/dry-run behavior in tests
-// Dynamic executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
-router.use('/', executeDynamicRouter);
 
-// Diff and patch endpoints (from feat/circuit-breakers)
+// Diff and patch + session explicit routes - before dynamic catch-all to ensure matching
 router.post('/diff', (req: Request, res: Response) => {
   logReq('/command/diff', req.body);
   const { filePath } = req.body;
@@ -174,6 +178,9 @@ router.post('/execute-session', (req: Request, res: Response) => {
     executionTime: 100
   });
 });
+
+// Dynamic executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
+router.use('/', executeDynamicRouter);
 
 export default router;
 

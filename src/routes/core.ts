@@ -9,7 +9,7 @@ import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { loadProfilesConfig, upsertProfile, deleteProfile } from '../config/profiles';
 import { rateLimiter } from '../middlewares/rateLimiter';
 import { getSecurityEvents } from '../middlewares/securityLogger';
-import Debug from 'debug';
+// Debug not currently used; remove if no logging added
 
 const startTime = Date.now();
 

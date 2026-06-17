@@ -193,9 +193,9 @@ describe('Type Definitions', () => {
 
   describe('Barrel Exports from src/types.ts', () => {
     it('should re-export ServerConfig type correctly', () => {
-      const { ServerConfig } = require('@src/types');
-      expect(typeof ServerConfig).toBe('function'); // Type constructor
-      const config: ServerConfig = {
+      const typesMod = require('@src/types');
+      expect(typesMod).toBeDefined();
+      const config: import('@src/types').ServerConfig = {
         hostname: 'test',
         protocol: 'local',
         llm: { provider: 'test', baseUrl: 'http://test' }
@@ -204,33 +204,32 @@ describe('Type Definitions', () => {
     });
 
     it('should re-export CommandRequest and ExecutionResult types', () => {
-      const { CommandRequest, ExecutionResult } = require('@src/types');
-      expect(typeof CommandRequest).toBe('function');
-      expect(typeof ExecutionResult).toBe('function');
+      const typesMod = require('@src/types');
+      expect(typesMod).toBeDefined();
       
-      const request: CommandRequest = { command: 'test' };
-      const result: ExecutionResult = { success: true, stdout: '', stderr: '', exitCode: 0, error: false };
+      const request: import('@src/types').CommandRequest = { command: 'test' };
+      const result: import('@src/types').ExecutionResult = { success: true, stdout: '', stderr: '', exitCode: 0, error: false };
       expect(request).toBeDefined();
       expect(result).toBeDefined();
     });
 
     it('should re-export Chat types without errors', () => {
-      const { ChatMessage, ChatRequest, ChatResponse } = require('@src/types');
-      expect(typeof ChatMessage).toBe('function');
-      expect(typeof ChatRequest).toBe('function');
-      expect(typeof ChatResponse).toBe('function');
+      const typesMod = require('@src/types');
+      expect(typesMod).toBeDefined();
+      const msg: import('@src/types').ChatMessage = { role: 'user', content: 'hi' };
+      expect(msg).toBeDefined();
     });
 
     it('should re-export FileOperation type', () => {
-      const { FileOperation } = require('@src/types');
-      expect(typeof FileOperation).toBe('function');
-      const op: FileOperation = { type: 'read', path: '/test' };
+      const typesMod = require('@src/types');
+      expect(typesMod).toBeDefined();
+      const op: import('@src/types').FileOperation = { type: 'read', path: '/test' };
       expect(op).toBeDefined();
     });
 
     it('should re-export SystemInfo type', () => {
-      const { SystemInfo } = require('@src/types');
-      expect(typeof SystemInfo).toBe('function');
+      const typesMod = require('@src/types');
+      expect(typesMod).toBeDefined();
     });
   });
 });

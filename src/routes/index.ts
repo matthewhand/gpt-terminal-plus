@@ -13,11 +13,13 @@ import activityRoutes from './activityRoutes';
 import fileRoutes from './fileRoutes';
 import chatRoutes from './chatRoutes';
 import llmConsoleRoutes from './llmConsoleRoutes';
+import llmRoutes from './llm';
 import settingsRoutes from './settingsRoutes';
 import endpointStatusRouter from './endpointStatusRouter';
 import { configRouter, healthRouter } from './core';
 import { securityLogger } from '../middlewares/securityLogger';
 import { rateLimiters } from '../middlewares/advancedRateLimit';
+import shellRouter from './shell';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -25,11 +27,11 @@ let modelsRoutes: express.Router | null = null;
 try {
   const mod = require('./setupRoutes');
   setupRoutes = mod?.default ?? mod ?? null;
-} catch { /* optional */ }
+} catch (e) { e; /* optional */ }
 try {
   const mod = require('./modelRoutes');
   modelsRoutes = mod?.default ?? mod ?? null;
-} catch { /* optional */ }
+} catch (e) { e; /* optional */ }
 
 /** Named export expected by tests */
 export function setupApiRouter(app: express.Application): void {
@@ -41,10 +43,11 @@ export function setupApiRouter(app: express.Application): void {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
     console.log('Mounting test command router under /command');
-    app.use('/command', testCommandRouter as any);
+    app.use('/command', checkAuthToken as any, testCommandRouter as any);
   } else {
     // Real command handlers for prod/dev
     const cmd = express.Router();
+    cmd.use(checkAuthToken as any);
     // Back-compat endpoints
     cmd.post('/command/execute', executeCommand);
     console.log('Mounting /command/execute-shell (prod/dev)');
@@ -73,6 +76,9 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/llm', securityLogger, rateLimiters.moderate, llmConsoleRoutes);
   // mount chat APIs under /chat so tests hit /chat/completions, /chat/models, /chat/providers
   app.use('/chat', securityLogger, rateLimiters.moderate, chatRoutes);
+  // llm plan (for tests) and console/query under /llm ; mount plan first so /plan matches before console router's unmatched falls to 404
+  app.use('/llm', llmRoutes);
+  app.use('/llm', securityLogger, rateLimiters.moderate, llmConsoleRoutes);
   // settings (redacted view), protected by bearer token
   app.use('/settings', securityLogger, rateLimiters.strict, settingsRoutes);
   // config overrides and schema endpoints
@@ -83,8 +89,7 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/command', executorsRouter);
 
   // shell session routes under /shell
-  // NOTE: Shell routes are currently broken due to router mounting issues
-  // app.use('/shell', shellRoutes);
+  app.use('/shell', shellRouter);
 
   // setup UI under /setup (/, /policy, /local, /ssh relative to /setup)
   if (setupRoutes)  app.use('/setup', setupRoutes);

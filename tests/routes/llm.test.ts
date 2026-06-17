@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import setupMiddlewares from '../../src/middlewares/setupMiddlewares';
 import * as routesMod from '../../src/routes';
+import { getOrGenerateApiToken } from '../../src/common/apiToken';
 
 jest.mock('../../src/engines/llmEngine', () => ({
   planCommand: jest.fn()
@@ -21,6 +22,8 @@ function makeApp() {
 describe('LLM Routes', () => {
   let app: express.Application;
   const token = 'test-token';
+  process.env.API_TOKEN = token;
+  getOrGenerateApiToken();
 
   beforeAll(() => {
     process.env.API_TOKEN = token;
@@ -29,6 +32,10 @@ describe('LLM Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('POST /llm/plan', () => {

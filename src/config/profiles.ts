@@ -56,12 +56,17 @@ const DEFAULTS = {
   }
 };
 
-const CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, '..', '..', 'config');
-const PRIMARY_PATH = path.join(CONFIG_DIR, 'profiles.yaml');
-const FALLBACK_SIMPLE_PATH = path.join(CONFIG_DIR, 'profiles.simple.yaml');
-const FALLBACK_EXAMPLE_PATH = path.join(CONFIG_DIR, 'profiles.example.yaml');
+function getConfigPaths() {
+  const dir = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, '..', '..', 'config');
+  const base = dir.endsWith('/') ? dir.slice(0, -1) : dir;
+  return {
+    primary: `${base}/profiles.yaml`,
+    simple: `${base}/profiles.simple.yaml`,
+    example: `${base}/profiles.example.yaml`,
+  };
+}
 
-function readYamlIfExists(filePath: string): unknown | null {
+export function readYamlIfExists(filePath: string): unknown | null {
   try {
     if (!fs.existsSync(filePath)) return null;
     const raw = fs.readFileSync(filePath, 'utf8');
@@ -72,7 +77,7 @@ function readYamlIfExists(filePath: string): unknown | null {
   }
 }
 
-function coerceToProfilesFile(obj: unknown): ProfilesFile | null {
+export function coerceToProfilesFile(obj: unknown): ProfilesFile | null {
   if (!obj || typeof obj !== 'object') return null;
   const anyObj: any = obj;
   if (Array.isArray(anyObj)) {
@@ -85,7 +90,7 @@ function coerceToProfilesFile(obj: unknown): ProfilesFile | null {
   return null;
 }
 
-function normalizeProfile(p: any): Profile | null {
+export function normalizeProfile(p: any): Profile | null {
   if (!p || typeof p !== 'object') return null;
   if (!p.name || typeof p.name !== 'string' || !p.name.trim()) return null;
 
@@ -130,7 +135,7 @@ function normalizeProfile(p: any): Profile | null {
   return profile;
 }
 
-function normalizeProfilesFile(data: ProfilesFile | null): ProfilesFile {
+export function normalizeProfilesFile(data: ProfilesFile | null): ProfilesFile {
   const input = data?.profiles ?? [];
   const out: Profile[] = [];
   for (const p of input) {
@@ -144,7 +149,8 @@ function normalizeProfilesFile(data: ProfilesFile | null): ProfilesFile {
  * Load profiles.yaml (or fallbacks) from config directory and normalize with defaults.
  */
 export function loadProfilesConfig(): ProfilesFile {
-  const candidates = [PRIMARY_PATH, FALLBACK_SIMPLE_PATH, FALLBACK_EXAMPLE_PATH];
+  const p = getConfigPaths();
+  const candidates = [p.primary, p.simple, p.example];
   let parsed: ProfilesFile | null = null;
 
   for (const fp of candidates) {
@@ -164,12 +170,14 @@ export function loadProfilesConfig(): ProfilesFile {
 /**
  * Save the provided profiles to profiles.yaml in the config directory.
  */
-export function saveProfilesConfig(config: ProfilesFile, targetPath: string = PRIMARY_PATH): void {
-  const dir = path.dirname(targetPath);
+export function saveProfilesConfig(config: ProfilesFile, targetPath?: string): void {
+  const p = getConfigPaths();
+  const actualTarget = targetPath || p.primary;
+  const dir = path.dirname(actualTarget);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const normalized = normalizeProfilesFile(config);
   const yaml = yamlStringify(normalized, { indent: 2 });
-  fs.writeFileSync(targetPath, yaml, 'utf8');
+  fs.writeFileSync(actualTarget, yaml, 'utf8');
 }
 
 /**

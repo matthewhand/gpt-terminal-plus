@@ -2,7 +2,7 @@ import express from 'express';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { initializeServerHandler } from '../middlewares/initializeServerHandler';
 import { fileRateLimit } from '../middlewares/rateLimit';
-import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation';
+// Note: inputValidation helpers available but not used in current handlers (kept for future)
 
 // File route handlers
 import {

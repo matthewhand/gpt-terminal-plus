@@ -51,7 +51,9 @@ router.post('/completions', async (req: Request, res: Response) => {
     const selectedModel = model || getSelectedModel();
     debug('Generating chat completion with model: ' + selectedModel);
 
-    if (stream === true || (typeof stream !== 'boolean' && String(req.headers['accept']||'').includes('text/event-stream'))) {
+    const acceptWantsStream = String(req.headers['accept'] || '').includes('text/event-stream');
+    const hasStreamField = Object.prototype.hasOwnProperty.call((req.body || {}), 'stream');
+    if (stream === true || (!hasStreamField && acceptWantsStream)) {
       if (typeof stream !== 'boolean') {
         return res.status(400).json({ message: 'Invalid stream parameter' });
       }
