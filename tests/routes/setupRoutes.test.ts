@@ -20,6 +20,10 @@ describe('Setup Routes', () => {
     if (fs.existsSync(cfgPath)) {
       fs.unlinkSync(cfgPath);
     }
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('GET /setup', () => {

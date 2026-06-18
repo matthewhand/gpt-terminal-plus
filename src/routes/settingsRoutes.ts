@@ -9,8 +9,8 @@ const router = express.Router();
 // Secure settings endpoints with bearer token auth
 router.use(checkAuthToken as any);
 
-// MCP Tools configuration
-let mcpConfig = {
+// MCP Tools configuration (module state; resettable for tests to avoid pollution)
+const defaultMcpConfig = {
   enabled: true,
   tools: {
     'command/change-directory': true,
@@ -26,6 +26,7 @@ let mcpConfig = {
     'command/execute-llm': true
   }
 };
+let mcpConfig = { ...defaultMcpConfig };
 
 /**
  * GET /settings/mcp
@@ -643,5 +644,10 @@ router.get('/mcp/ui', (_req: Request, res: Response) => {
 
   res.type('html').send(html);
 });
+
+/** Reset MCP config to defaults. For tests only to prevent cross-test pollution. */
+export function _resetMcpConfigForTests() {
+  mcpConfig = { ...defaultMcpConfig };
+}
 
 export default router;

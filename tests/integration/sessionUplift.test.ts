@@ -22,8 +22,16 @@ function makeApp() {
 
 // Integration test for session-based execution flow using mocked test router
 describe('Session Uplift Integration', () => {
-  const app = makeApp();
+  let app;
   const token = getOrGenerateApiToken();
+
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
+    app = makeApp();
+  });
 
   it('returns a plan in dry-run mode', async () => {
     const res = await request(app)

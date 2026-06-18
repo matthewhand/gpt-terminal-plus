@@ -24,8 +24,19 @@ describe('LLM Console Feature Toggle', () => {
   const token = 'test-token';
 
   beforeAll(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.API_TOKEN = token;
     app = makeApp();
+  });
+
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   describe('GET /llm/console with feature toggle', () => {

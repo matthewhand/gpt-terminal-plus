@@ -20,8 +20,16 @@ function makeApp() {
 }
 
 describe('Server Management API', () => {
-  const app = makeApp();
+  let app;
   const token = getOrGenerateApiToken();
+
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
+    app = makeApp();
+  });
 
   describe('Server Listing', () => {
     it('returns server list with proper structure', async () => {

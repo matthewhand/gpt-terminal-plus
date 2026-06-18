@@ -8,6 +8,10 @@ describe('Activity Tools', () => {
   const testSessionDir = path.join(testDir, testSession);
 
   beforeAll(async () => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     // Create test activity data
     await fs.mkdir(testSessionDir, { recursive: true });
     await fs.writeFile(
@@ -24,7 +28,7 @@ describe('Activity Tools', () => {
     // Clean up test data
     try {
       await fs.rm(testSessionDir, { recursive: true, force: true });
-    } catch {}
+    } catch (e) { e; }
   });
 
   describe('getToolDefinitions', () => {

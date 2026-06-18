@@ -11,7 +11,11 @@ describe('Server Registration System', () => {
   let token: string;
   const testConfigPath = path.join(process.cwd(), 'config', 'servers.json');
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     token = getOrGenerateApiToken();
@@ -23,7 +27,7 @@ describe('Server Registration System', () => {
   afterEach(async () => {
     try {
       await unlink(testConfigPath);
-    } catch {}
+    } catch { /* ignore */ }
   });
 
   describe('Server Registration', () => {

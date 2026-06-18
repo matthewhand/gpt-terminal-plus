@@ -8,7 +8,11 @@ describe('Setup LLM panel', () => {
   let app: express.Express;
   let token: string;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     delete process.env.LLM_ENABLED;

@@ -26,7 +26,11 @@ describe('OpenAPI Endpoints', () => {
   let app: express.Application;
   const token = 'test-token';
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.API_TOKEN = token;
     app = makeApp();
   });

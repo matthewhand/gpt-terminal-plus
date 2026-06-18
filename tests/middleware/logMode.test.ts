@@ -9,6 +9,10 @@ describe('logMode middleware', () => {
   beforeEach(() => {
     app = express();
     logs = [];
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     const mockLogger = (...args: any[]) => {
       logs.push(JSON.parse(args[0]));
     };

@@ -22,7 +22,11 @@ describe('Command Routes', () => {
   process.env.API_TOKEN = token;
   getOrGenerateApiToken();
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.API_TOKEN = token;
     app = makeApp();

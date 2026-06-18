@@ -24,7 +24,11 @@ describe('Server Routes with Registry', () => {
   let app: express.Application;
   const token = 'test-token';
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.API_TOKEN = token;
     // Load servers from config into registry
     registerServersFromConfig();

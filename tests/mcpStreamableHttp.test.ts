@@ -26,6 +26,10 @@ describe("MCP Streamable HTTP endpoint", () => {
   let tmpDir: string;
 
   beforeAll(async () => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-test-"));
     fs.writeFileSync(path.join(tmpDir, "hello.txt"), "hello mcp\n");
 
@@ -48,7 +52,7 @@ describe("MCP Streamable HTTP endpoint", () => {
   }, 30000);
 
   afterAll(async () => {
-    try { await client?.close(); } catch { /* ignore */ }
+    try { await client?.close(); } catch (e) { e; /* ignore */ }
     await new Promise<void>((resolve) => httpServer?.close(() => resolve()));
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });

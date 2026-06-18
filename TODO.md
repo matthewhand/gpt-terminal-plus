@@ -6,8 +6,10 @@ active next actions.
 
 ## Active
 
-- [ ] Add `checkAuthToken` to prod `/command/*` and `/chat/*` routes (security gap — see Roadmap → Security/auth)
-- [ ] Make `/file/*` routes use the selected server handler instead of a hard-coded `LocalServerHandler`
-- [ ] MCP modernization: upgrade SDK, SSE → Streamable HTTP, rename slash tool names, return real tool results (see Roadmap → MCP integration)
-- [ ] Mount-or-delete pass: orphaned route files in `src/routes/file/` and `src/routes/command/`, stray `.bak`/`.tsn` files
-- [ ] Set a real semver in `package.json` (currently `"latest"`) and refresh README before publishing
+- [ ] Add/verify `checkAuthToken` consistently on all prod `/command/*` and `/chat/*` (some mounting paths may still have gaps)
+- [x] (in progress) Make `/file/*` routes use the selected server handler instead of hard-coded local fs (createFile + readFile updated to always delegate; other file routes and safety to follow in small steps)
+- [ ] MCP modernization: upgrade SDK, SSE → Streamable HTTP, rename slash tool names, return real tool results
+- [ ] Mount-or-delete pass + stray file cleanup in routes/
+- [ ] Semver + README refresh for publish
+
+See docs/VISION.md for overall honest assessment and docs/archived/ for legacy architecture notes.

@@ -26,6 +26,13 @@ describe('Setup UI Interface', () => {
     }
   });
 
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
+  });
+
   afterAll(() => {
     // Restore original config
     if (originalConfig) {

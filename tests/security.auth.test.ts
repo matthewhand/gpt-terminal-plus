@@ -35,7 +35,11 @@ describe('auth on command and chat routes', () => {
   let app: express.Express;
   let token: string;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     token = getOrGenerateApiToken();
     app = makeTestApp();

@@ -38,6 +38,10 @@ describe('Diff & Patch Integration Tests', () => {
   });
 
   beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     // Create test file with deterministic content
     const content = 'function hello() {\n  console.log("old message");\n}\n';
     fs.writeFileSync(testFile, content);

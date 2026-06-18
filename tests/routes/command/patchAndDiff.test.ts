@@ -12,7 +12,15 @@ function makeApp() {
 }
 
 describe('/command/diff and /command/patch', () => {
-  const app = makeApp();
+  let app;
+
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
+    app = makeApp();
+  });
 
   it('returns 400 for missing filePath on diff', async () => {
     const res = await request(app)

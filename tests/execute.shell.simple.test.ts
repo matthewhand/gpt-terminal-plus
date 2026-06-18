@@ -22,8 +22,16 @@ function makeApp() {
 }
 
 describe('Shell Command Execution', () => {
-  const app = makeApp();
+  let app;
   const token = getOrGenerateApiToken();
+
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
+    app = makeApp();
+  });
 
   describe('Basic Command Execution', () => {
     const basicCases = [

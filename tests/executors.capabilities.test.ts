@@ -17,6 +17,10 @@ describe('Executor Capabilities Management', () => {
   let app: express.Application;
 
   beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     app = makeApp();
   });
 

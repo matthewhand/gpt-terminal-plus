@@ -53,6 +53,10 @@ describe('Setup UI SSH Configuration', () => {
   });
 
   beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     app = express();
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));

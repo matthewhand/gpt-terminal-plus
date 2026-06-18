@@ -1,5 +1,7 @@
 # GPT Terminal Plus - Implementation Complete
 
+> **Note**: This is historical. See [docs/VISION.md](docs/VISION.md) for current vision + honest built vs remaining assessment, and docs/archived/ for older architecture notes.
+
 ## ✅ Completed Features
 
 ### 1. Circuit Breakers for Full Auto Mode

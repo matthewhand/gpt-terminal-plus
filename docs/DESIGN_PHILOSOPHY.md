@@ -1,5 +1,7 @@
 # Design Philosophy
 
+> **Historical note**: Some sections below describe earlier container-focused thinking. The current implementation uses abstract `ServerHandler` (local + SSH + SSM) with optional Docker setups documented separately. See [VISION.md](./VISION.md) for current state.
+
 The design philosophy of GPT Terminal Plus focuses on providing a secure, isolated, and efficient environment for executing system CLI utilities via HTTP endpoints.
 
 ## Key Principles

@@ -10,16 +10,18 @@ describe('Admin Server Management', () => {
   let app: express.Express;
   let token: string;
   
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     token = getOrGenerateApiToken();
     app = express();
     app.use(express.json());
     setupApiRouter(app);
-  });
 
-  beforeEach(() => {
     const dataDir = path.dirname(testServersPath);
     if (!existsSync(dataDir)) {
       require('fs').mkdirSync(dataDir, { recursive: true });
@@ -39,7 +41,7 @@ describe('Admin Server Management', () => {
       if (existsSync(realConfigPath)) {
         unlinkSync(realConfigPath);
       }
-    } catch {}
+    } catch (e) { e; }
   });
 
   describe('File-based Server Storage', () => {

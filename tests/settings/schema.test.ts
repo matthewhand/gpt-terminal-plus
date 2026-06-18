@@ -1,9 +1,7 @@
-import { z } from 'zod';
 import {
   SettingsSchema,
   ExecuteShellSchema,
   ExecuteCodeSchema,
-  ExecuteLlmSchema,
 } from '../../src/settings/schema';
 
 describe('SettingsSchema', () => {
@@ -14,11 +12,9 @@ describe('SettingsSchema', () => {
     expect(parsed.server.port).toBe(5004);
     expect(parsed.server.host).toBe('0.0.0.0');
 
-    // auth defaults (randomized but with stable prefixes/types)
-    expect(typeof parsed.auth.apiToken).toBe('string');
     expect(parsed.auth.apiToken).toMatch(/^gtp-token-/);
     expect(parsed.auth.adminUsername).toBe('admin');
-    expect(typeof parsed.auth.adminPassword).toBe('string');
+    expect(parsed.auth.adminPassword).toMatch(/^admin-/);
 
     // app defaults
     expect(Array.isArray(parsed.app.corsOrigins)).toBe(true);
@@ -91,72 +87,55 @@ describe('SettingsSchema', () => {
   ])('enforces valid llm.provider %s (success=%s)', (provider, expectedSuccess) => {
     const res = SettingsSchema.safeParse({ llm: { provider } });
     expect(res.success).toBe(expectedSuccess);
-    expect(typeof res.success).toBe('boolean'); // type assert
+  });
+
+  it('generates unique random auth tokens and passwords on each parse', () => {
+    const parsed1 = SettingsSchema.parse({});
+    const parsed2 = SettingsSchema.parse({});
+    expect(parsed1.auth.apiToken).not.toBe(parsed2.auth.apiToken);
+    expect(parsed1.auth.adminPassword).not.toBe(parsed2.auth.adminPassword);
+    expect(parsed1.auth.apiToken).toMatch(/^gtp-token-/);
+    expect(parsed1.auth.adminPassword).toMatch(/^admin-/);
+  });
+
+  it('parses full settings with nested overrides and specific file/llm flags', () => {
+    const input = {
+      server: { port: 3000, host: 'localhost' },
+      auth: { adminUsername: 'user' },
+      app: { corsOrigins: ['https://example.com'] },
+      execution: {
+        shell: { local: { timeoutMs: 30000 } },
+        code: { languages: ['js'] },
+        llm: { providersAllowed: ['ollama'] }
+      },
+      files: { enabled: false, fsRead: true },
+      llm: { provider: 'ollama', enabled: true, ollamaURL: 'http://localhost:11434' }
+    };
+    const parsed = SettingsSchema.parse(input);
+    expect(parsed.server.port).toBe(3000);
+    expect(parsed.app.corsOrigins).toEqual(['https://example.com']);
+    expect(parsed.execution.shell.local.timeoutMs).toBe(30000);
+    expect(parsed.execution.code.languages).toEqual(['js']);
+    expect(parsed.llm.provider).toBe('ollama');
+    expect(parsed.llm.ollamaURL).toBe('http://localhost:11434');
+    expect(parsed.files.enabled).toBe(false);
+    expect(parsed.files.fsRead).toBe(true);
+  });
+
+  it('rejects invalid port and invalid llm provider with path info', () => {
+    const invalidPort = SettingsSchema.safeParse({ server: { port: 'invalid' } });
+    expect(invalidPort.success).toBe(false);
+    expect(invalidPort.error!.errors[0].path).toEqual(['server', 'port']);
+
+    const outOfRange = SettingsSchema.safeParse({ server: { port: 70000 } });
+    expect(outOfRange.success).toBe(false);
+
+    const badLlm = SettingsSchema.safeParse({ llm: { provider: 'invalid' } });
+    expect(badLlm.success).toBe(false);
+    expect(badLlm.error!.errors[0].path).toEqual(['llm', 'provider']);
   });
 });
 
 
-it('should generate unique random auth tokens and passwords', () => {
-  const parsed1 = SettingsSchema.parse({});
-  const parsed2 = SettingsSchema.parse({});
-  expect(parsed1.auth.apiToken).not.toBe(parsed2.auth.apiToken);
-  expect(parsed1.auth.adminPassword).not.toBe(parsed2.auth.adminPassword);
-  expect(parsed1.auth.apiToken).toMatch(/^gtp-token-/);
-  expect(parsed1.auth.adminPassword).toMatch(/^admin-/);
-});
 
-it.each([
-  ['none'],
-  ['openai'],
-  ['ollama'],
-  ['lmstudio'],
-  ['litellm'],
-])('should validate llm provider enum value %s', (provider) => {
-  const parsed = SettingsSchema.safeParse({ llm: { provider } });
-  expect(parsed.success).toBe(true);
-  expect(typeof parsed.success).toBe('boolean'); // type assert
-  expect(parsed.error).toBeUndefined(); // error assert combo
-});
 
-it('should reject invalid llm provider', () => {
-  const parsed = SettingsSchema.safeParse({ llm: { provider: 'invalid' } });
-  expect(parsed.success).toBe(false);
-  expect(parsed.error.errors[0].path).toEqual([ 'llm', 'provider' ]);
-});
-
-it('should parse full settings with nested overrides', () => {
-  const input = {
-    server: { port: 3000, host: 'localhost' },
-    auth: { adminUsername: 'user' },
-    app: { corsOrigins: ['https://example.com'] },
-    execution: {
-      shell: { local: { timeoutMs: 30000 } },
-      code: { languages: ['js'] },
-      llm: { providersAllowed: ['ollama'] }
-    },
-    files: { enabled: false },
-    llm: { provider: 'ollama', enabled: true, ollamaURL: 'http://localhost:11434' }
-  };
-  const parsed = SettingsSchema.parse(input);
-  expect(parsed.server.port).toBe(3000);
-  expect(parsed.app.corsOrigins).toEqual(['https://example.com']);
-  expect(parsed.execution.shell.local.timeoutMs).toBe(30000);
-  expect(parsed.execution.code.languages).toEqual(['js']);
-  expect(parsed.llm.provider).toBe('ollama');
-  expect(parsed.llm.ollamaURL).toBe('http://localhost:11434');
-});
-
-it('should reject invalid port (non-number or out of range)', () => {
-  const invalid = SettingsSchema.safeParse({ server: { port: 'invalid' } });
-  expect(invalid.success).toBe(false);
-  expect(invalid.error.errors[0].path).toEqual([ 'server', 'port' ]);
-
-  const outOfRange = SettingsSchema.safeParse({ server: { port: 70000 } });
-  expect(outOfRange.success).toBe(false); // Assuming port format is 'port' which is 0-65535
-});
-
-it('should validate file ops enabled', () => {
-  const parsed = SettingsSchema.parse({ files: { enabled: false, fsRead: true } });
-  expect(parsed.files.enabled).toBe(false);
-  expect(parsed.files.fsRead).toBe(true);
-});

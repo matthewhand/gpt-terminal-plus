@@ -3,6 +3,10 @@ describe('llmClient.isLlmEnabled', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     delete process.env.LLM_ENABLED;
     delete process.env.LLM_PROVIDER;
@@ -36,7 +40,7 @@ describe('llmClient.isLlmEnabled', () => {
     try {
       const { SettingsStore } = require('../../src/settings/store');
       SettingsStore.set({ llm: { enabled: true, provider: 'ollama', ollamaURL: 'http://localhost:11434' } });
-    } catch {}
+    } catch (e) { e; }
 
     jest.resetModules();
     const { isLlmEnabled } = require('../../src/llm/llmClient');

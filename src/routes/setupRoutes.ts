@@ -16,8 +16,8 @@ router.get('/policy', (req: Request, res: Response) => {
   // Read from config schema (security.*) or persisted test config
   let confirmRegex = '';
   let denyRegex = '';
-  try { confirmRegex = (cfg as any).get('security.confirmCommandRegex') || ''; } catch (e) { e; }
-  try { denyRegex = (cfg as any).get('security.denyCommandRegex') || ''; } catch (e) { e; }
+  try { confirmRegex = (cfg as any).get('security.confirmCommandRegex') || ''; } catch { /* ignore */ }
+  try { denyRegex = (cfg as any).get('security.denyCommandRegex') || ''; } catch { /* ignore */ }
   try {
     const path = require('path');
     const fs = require('fs');
@@ -30,7 +30,7 @@ router.get('/policy', (req: Request, res: Response) => {
         if (typeof raw.safety.denyRegex === 'string') denyRegex = raw.safety.denyRegex;
       }
     }
-  } catch (e) { e; }
+  } catch { /* ignore */ }
 
   const html = `
 <!DOCTYPE html>
@@ -80,14 +80,13 @@ router.post('/policy', (req: Request, res: Response) => {
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-    } catch (e) { e; cfg = {}; }
+    } catch { /* ignore */ cfg = {}; }
     if (!cfg.safety) cfg.safety = {};
     if (typeof confirmRegex === 'string') cfg.safety.confirmRegex = confirmRegex;
     if (typeof denyRegex === 'string') cfg.safety.denyRegex = denyRegex;
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-  } catch (e) {
-    e;
+  } catch {
     // ignore persistence errors in tests
   }
   // Either redirect (UI) or 200 JSON; keep redirect for simplicity
@@ -185,8 +184,7 @@ router.post('/local', (req: Request, res: Response) => {
         const schemeOk = u.protocol === 'http:' || u.protocol === 'https:';
         const hostOk = typeof u.hostname === 'string' && u.hostname.trim().length > 0;
         if (!schemeOk || !hostOk) return res.status(422).send('Invalid baseUrl');
-      } catch (e) {
-        e;
+      } catch {
         return res.status(422).send('Invalid baseUrl');
       }
     }
@@ -197,7 +195,7 @@ router.post('/local', (req: Request, res: Response) => {
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-    } catch (e) { e; cfg = {}; }
+    } catch { /* ignore */ cfg = {}; }
     cfg.local = { ...(cfg.local || {}), hostname };
     if (provider || baseUrl) {
       cfg.llm = cfg.llm || {};
@@ -207,8 +205,7 @@ router.post('/local', (req: Request, res: Response) => {
     fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
     fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
     return res.status(200).send('Local configuration saved');
-  } catch (e) {
-    e;
+  } catch {
     return res.status(500).send('Failed to save local configuration');
   }
 });
@@ -275,7 +272,7 @@ router.post('/ssh', (req: Request, res: Response) => {
         if (!cfg.ssh) cfg.ssh = { hosts: [] };
         if (!Array.isArray(cfg.ssh.hosts)) cfg.ssh.hosts = [];
       }
-    } catch (e) { e; /* fallback to empty */ }
+    } catch { /* fallback to empty */ }
 
     const entry = {
       name: hostname,
@@ -299,15 +296,13 @@ router.post('/ssh', (req: Request, res: Response) => {
       // Ensure directory
       fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
       fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
-    } catch (e) {
-      e;
+    } catch {
       return res.status(500).send('Failed to persist SSH config');
     }
 
     // Respond OK
     return res.status(200).send('SSH configuration saved');
-  } catch (e) {
-    e;
+  } catch {
     return res.status(500).send('Internal error');
   }
 });
@@ -363,7 +358,7 @@ router.post('/llm', (req: Request, res: Response) => {
       if (updated.llm?.apiKey && updated.llm.apiKey !== '*****') {
         cfg.set('llm.openai.apiKey', updated.llm.apiKey);
       }
-    } catch (e) { e; }
+    } catch { /* ignore */ }
 
     const respLlm = { ...updated.llm, apiKey: updated.llm?.apiKey ? '*****' : '' };
     return res.status(200).json({ ok: true, llm: respLlm });

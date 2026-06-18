@@ -38,6 +38,13 @@ export async function makeProdApp() {
     throw new Error('routes module did not export a router setup function');
   }
 
+  // Reset mutable route-level state (e.g. mcpConfig) for test isolation
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const settingsMod = require('../../src/routes/settingsRoutes');
+    if (typeof settingsMod._resetMcpConfigForTests === 'function') settingsMod._resetMcpConfigForTests();
+  } catch { /* ignore if not present */ }
+
   return app;
 }
 
@@ -61,5 +68,13 @@ export function makeTestApp() {
     routesMod.default(app);
   }
   // silent fallback for minimal cases; some tests mount manually
+
+  // Reset mutable route-level state (e.g. mcpConfig) for test isolation
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const settingsMod = require('../../src/routes/settingsRoutes');
+    if (typeof settingsMod._resetMcpConfigForTests === 'function') settingsMod._resetMcpConfigForTests();
+  } catch { /* ignore if not present */ }
+
   return app;
 }

@@ -43,7 +43,7 @@ describe('POST /file/create', () => {
         rl.rateLimiters.moderate = noop;
         rl.rateLimiters.lenient = noop;
       }
-    } catch {}
+    } catch (e) { e; }
     app = makeApp();
     
     if (!fs.existsSync(testDir)) {

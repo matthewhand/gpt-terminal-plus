@@ -8,6 +8,10 @@ describe("Model Management API - Enhanced", () => {
   let token: string;
 
   beforeAll(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     process.env.LLM_ENABLED = 'true';
@@ -15,7 +19,7 @@ describe("Model Management API - Enhanced", () => {
     try {
       const { SettingsStore } = require('../src/settings/store');
       SettingsStore.set({ llm: { enabled: true, provider: 'ollama', ollamaURL: 'http://localhost:11434' } });
-    } catch {}
+    } catch { /* ignore */ }
     app = express();
     app.use(express.json());
     setupApiRouter(app);

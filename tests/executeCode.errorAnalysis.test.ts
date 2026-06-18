@@ -72,6 +72,10 @@ describe('execute-code error analysis', () => {
   });
 
   beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     app = express();
     app.use(express.json());
     setupApiRouter(app);

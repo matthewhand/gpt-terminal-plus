@@ -40,6 +40,10 @@ describe('execute-file endpoint deprecation and removal', () => {
   });
 
   beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     app = makeApp();
   });
 

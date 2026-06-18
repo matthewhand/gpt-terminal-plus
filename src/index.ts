@@ -1,7 +1,4 @@
 // import "module-alias/register";
-import dotenv from "dotenv";
-dotenv.config();
-
 import fs from "fs";
 import path from "path";
 import http from "http";
@@ -35,6 +32,10 @@ export const app = express();
  * This addresses top-level side effects while keeping `app` export.
  */
 export function bootstrap(): void {
+  // Load .env (was top level, now inside bootstrap to reduce side effects on import)
+  const dotenv = require('dotenv');
+  dotenv.config();
+
   // Defer ngrok side-effect import (was `import './modules/ngrok';` at top level)
   require('./modules/ngrok');
 

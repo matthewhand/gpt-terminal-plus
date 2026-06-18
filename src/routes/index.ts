@@ -21,28 +21,27 @@ import { securityLogger } from '../middlewares/securityLogger';
 import { rateLimiters } from '../middlewares/advancedRateLimit';
 import shellRouter from './shell';
 
-/** Optional route groups (exist in this repo tree used by tests) */
-let setupRoutes: express.Router | null = null;
-let modelsRoutes: express.Router | null = null;
-try {
-  const mod = require('./setupRoutes');
-  setupRoutes = mod?.default ?? mod ?? null;
-} catch (e) { e; /* optional */ }
-try {
-  const mod = require('./modelRoutes');
-  modelsRoutes = mod?.default ?? mod ?? null;
-} catch (e) { e; /* optional */ }
-
 /** Named export expected by tests */
 export function setupApiRouter(app: express.Application): void {
   const isTest = process.env.NODE_ENV === 'test';
   const useProdRoutesForTest = process.env.USE_PROD_ROUTES_FOR_TEST === '1';
 
+  /** Optional route groups (exist in this repo tree used by tests) - loaded on demand to avoid top-level side effects on import */
+  let setupRoutes: express.Router | null = null;
+  let modelsRoutes: express.Router | null = null;
+  try {
+    const mod = require('./setupRoutes');
+    setupRoutes = mod?.default ?? mod ?? null;
+  } catch { /* optional */ }
+  try {
+    const mod = require('./modelRoutes');
+    modelsRoutes = mod?.default ?? mod ?? null;
+  } catch { /* optional */ }
+
   // ----- Command endpoints -----
   if (isTest && !useProdRoutesForTest) {
     // Jest wants the mocked /command/* behavior
     // commandRoutes defines '/execute', '/execute-code', etc — mount under '/command'
-    console.log('Mounting test command router under /command');
     app.use('/command', checkAuthToken as any, testCommandRouter as any);
   } else {
     // Real command handlers for prod/dev
@@ -50,7 +49,6 @@ export function setupApiRouter(app: express.Application): void {
     cmd.use(checkAuthToken as any);
     // Back-compat endpoints
     cmd.post('/command/execute', executeCommand);
-    console.log('Mounting /command/execute-shell (prod/dev)');
     cmd.post('/command/execute-shell', executeShell);
     cmd.post('/command/execute-code', executeCode);
     // New explicit executor endpoints
@@ -85,8 +83,8 @@ export function setupApiRouter(app: express.Application): void {
   app.use('/config', configRouter);
   // health check endpoints
   app.use('/health', healthRouter);
-  // executors capability and toggles
-  app.use('/command', executorsRouter);
+  // executors capability and toggles (ensure auth in prod path)
+  app.use('/command', checkAuthToken as any, executorsRouter);
 
   // shell session routes under /shell
   app.use('/shell', shellRouter);

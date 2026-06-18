@@ -43,6 +43,10 @@ describe('setupApiRouter', () => {
     app = express();
     useSpy = jest.spyOn(app, 'use');
     jest.clearAllMocks();
+    const { _resetGlobalStateForTests } = require('../../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
   });
 
   afterEach(() => {
@@ -56,7 +60,7 @@ describe('setupApiRouter', () => {
 
     it('should mount test command router under /command when NODE_ENV=test', () => {
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function));
+      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function), expect.any(Function));
     });
 
     it('should mount file routes without strict rate limiting in test mode', () => {
@@ -74,7 +78,7 @@ describe('setupApiRouter', () => {
 
     it('should mount production command routes', () => {
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function));
+      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function), expect.any(Function));
     });
 
     it('should mount file routes with strict rate limiting in production', () => {
@@ -125,7 +129,7 @@ describe('setupApiRouter', () => {
 
     it('should mount executors router under /command', () => {
       setupApiRouter(app);
-      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function));
+      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function), expect.any(Function));
     });
   });
 
@@ -155,7 +159,7 @@ describe('setupApiRouter', () => {
     it('should use production routes when USE_PROD_ROUTES_FOR_TEST=1', () => {
       setupApiRouter(app);
       // Should mount production command routes instead of test router
-      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function));
+      expect(useSpy).toHaveBeenCalledWith('/command', expect.any(Function), expect.any(Function));
     });
   });
 });

@@ -7,7 +7,11 @@ describe("Model Management API", () => {
   let app: express.Express;
   let token: string;
 
-  beforeAll(() => {
+  beforeEach(() => {
+    const { _resetGlobalStateForTests } = require('../src/utils/GlobalStateHelper');
+    const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
+    _resetGlobalStateForTests();
+    __clearSessionsForTests();
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     process.env.LLM_ENABLED = 'true';
@@ -15,32 +19,25 @@ describe("Model Management API", () => {
     try {
       const { SettingsStore } = require('../src/settings/store');
       SettingsStore.set({ llm: { enabled: true, provider: 'ollama', ollamaURL: 'http://localhost:11434' } });
-    } catch {}
+    } catch { /* ignore */ }
     app = express();
     app.use(express.json());
     setupApiRouter(app);
   });
 
   describe("Model Listing", () => {
-    it("lists supported models with metadata", async () => {
+    it("lists supported models with metadata and structure", async () => {
       const res = await request(app)
         .get("/model")
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(res.body.supported)).toBe(true);
-      expect(res.body.supported).toContain("gpt-oss:20b");
-      expect(typeof res.body.selected).toBe("string");
-      expect(res.body.supported.length).toBeGreaterThan(0);
-    });
-
-    it("validates model list structure", async () => {
-      const res = await request(app)
-        .get("/model")
-        .set("Authorization", `Bearer ${token}`);
-
       expect(res.body).toHaveProperty('supported');
       expect(res.body).toHaveProperty('selected');
+      expect(Array.isArray(res.body.supported)).toBe(true);
+      expect(res.body.supported.length).toBeGreaterThan(0);
+      expect(res.body.supported).toContain("gpt-oss:20b");
+      expect(typeof res.body.selected).toBe("string");
       expect(res.body.supported.every((model: string) => typeof model === 'string')).toBe(true);
     });
 

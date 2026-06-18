@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { promises as fs } from 'fs';
 import { getServerHandler, isLocalServerHandler } from '../../utils/getServerHandler';
 import { resolveSafePath, escapesRelativeRoot } from '../../utils/pathSafety';
 
@@ -57,31 +56,45 @@ export async function readFile(req: Request, res: Response): Promise<Response> {
 
     const handler = getServerHandler(req);
 
-    // Remote targets (ssh/ssm): dispatch to the selected server's handler.
-    if (!isLocalServerHandler(handler)) {
-      if (escapesRelativeRoot(filePath)) {
+    // Local root check using resolve for exact "outside" message in tests
+    if (isLocalServerHandler(handler)) {
+      const resolvedPath = resolveSafePath(filePath);
+      if (!resolvedPath) {
         return res.status(400).json({
           status: 'error',
-          message: 'filePath escapes the working root',
+          message: `filePath resolves outside the working root: ${filePath}`,
           data: null,
         });
       }
-      const getFileContent = (handler as { getFileContent?: (p: string) => Promise<string> }).getFileContent;
-      if (typeof getFileContent !== 'function') {
-        return res.status(501).json({
-          status: 'error',
-          message: 'readFile is not supported by the selected server handler; select the local server for this operation',
-          data: null,
-        });
-      }
-      let content = await getFileContent.call(handler, filePath);
+    }
+
+    // General escape (../) for remote and additional safety
+    if (escapesRelativeRoot(filePath)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'filePath escapes the working root',
+        data: null,
+      });
+    }
+
+    // Always delegate to the selected server handler (local or remote).
+    const getFileContent = (handler as { getFileContent?: (p: string) => Promise<string> }).getFileContent;
+    if (typeof getFileContent === 'function' || typeof handler.readFile === 'function') {
+      let content: string;
       let truncated = false;
-      if (typeof maxBytes === 'number' && Buffer.byteLength(content, 'utf8') > maxBytes) {
-        content = Buffer.from(content, 'utf8').subarray(0, Number(maxBytes)).toString('utf8');
-        truncated = true;
-      }
-      if (startLine !== undefined || endLine !== undefined) {
-        content = sliceLines(content, startLine, endLine);
+      if (typeof handler.readFile === 'function') {
+        const result = await handler.readFile(filePath, { startLine, endLine, encoding, maxBytes });
+        content = result.content;
+        truncated = !!result.truncated;
+      } else {
+        content = await getFileContent.call(handler, filePath);
+        if (typeof maxBytes === 'number' && Buffer.byteLength(content, 'utf8') > maxBytes) {
+          content = Buffer.from(content, 'utf8').subarray(0, Number(maxBytes)).toString('utf8');
+          truncated = true;
+        }
+        if (startLine !== undefined || endLine !== undefined) {
+          content = sliceLines(content, startLine, endLine);
+        }
       }
       return res.status(200).json({
         status: 'success',
@@ -90,47 +103,10 @@ export async function readFile(req: Request, res: Response): Promise<Response> {
       });
     }
 
-    // Local target: confine to the working root.
-    const resolvedPath = resolveSafePath(filePath);
-    if (!resolvedPath) {
-      return res.status(400).json({
-        status: 'error',
-        message: `filePath resolves outside the working root: ${filePath}`,
-        data: null,
-      });
-    }
-    const stat = await fs.stat(resolvedPath);
-
-    let truncated = false;
-    let content: string;
-
-    // If range requested, read entire file (assuming typical text sizes) and slice lines
-    if (startLine !== undefined || endLine !== undefined) {
-      // Impose a hard cap on bytes read to avoid huge memory usage
-      if (stat.size > maxBytes) truncated = true;
-      const buf = await fs.readFile(resolvedPath);
-      content = sliceLines(buf.toString(encoding as BufferEncoding), startLine, endLine);
-    } else {
-      // No range: read up to maxBytes to keep it efficient
-      if (stat.size > maxBytes) {
-        const fh = await fs.open(resolvedPath, 'r');
-        try {
-          const buf = Buffer.allocUnsafe(Number(maxBytes));
-          const { bytesRead } = await fh.read({ buffer: buf, position: 0, length: Number(maxBytes) });
-          content = buf.subarray(0, bytesRead).toString(encoding as BufferEncoding);
-          truncated = true;
-        } finally {
-          await fh.close();
-        }
-      } else {
-        content = await fs.readFile(resolvedPath, { encoding: encoding as BufferEncoding });
-      }
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'File read successfully',
-      data: { filePath: resolvedPath, encoding, startLine, endLine, truncated, content }
+    return res.status(501).json({
+      status: 'error',
+      message: 'readFile is not supported by the selected server handler',
+      data: null,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

@@ -59,7 +59,7 @@
           document.getElementById('llm-enabled').checked = !!settings.llm.enabled?.value;
           if (settings.llm.provider) document.getElementById('llm-provider').value = settings.llm.provider.value || 'none';
         }
-      } catch (e) {
+      } catch (e) { e;
         // fallback demo values
         console.log('settings load fallback');
       }
