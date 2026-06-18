@@ -79,8 +79,12 @@
 <body>
     <div class="container">
         <h1>Endpoint Status Dashboard</h1>
-        <p>This dashboard shows which endpoints are working and which are broken to help you avoid wasting time on non-functional features.</p>
-        
+        <p>A reference of endpoint maturity across the API.</p>
+        <p style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:10px 14px;color:#94a3b8;font-size:0.9em;">
+          Note: this is a <strong>manually-maintained</strong> reference, not a live health probe.
+          For real-time health use <a href="/health" style="color:#60a5fa;">/health</a>.
+        </p>
+
         <div class="endpoint-grid">
             <div class="endpoint-card status-working">
                 <div class="endpoint-title">POST /command/execute-shell</div>
@@ -141,9 +145,9 @@
         
         <h2 style="margin-top: 40px;">Development Guidance</h2>
         <ul>
-            <li style="margin-bottom: 10px;"><strong>🟢 SAFE TO USE:</strong> Green endpoints are fully functional and tested</li>
-            <li style="margin-bottom: 10px;"><strong>🔴 AVOID COMPLETELY:</strong> Red endpoints are broken and return 404 errors</li>
-            <li style="margin-bottom: 10px;"><strong>🟡 USE WITH CAUTION:</strong> Yellow endpoints have limited functionality</li>
+            <li style="margin-bottom: 10px;"><strong>🟢 Stable:</strong> Green endpoints are fully functional and tested</li>
+            <li style="margin-bottom: 10px;"><strong>🔴 Not available:</strong> Red endpoints are not yet implemented in this build</li>
+            <li style="margin-bottom: 10px;"><strong>🟡 Partial:</strong> Yellow endpoints have limited functionality</li>
         </ul>
         
         <p><strong>RECOMMENDATION:</strong> Focus your Web UI development on the green endpoints first to avoid wasting time on broken features.</p>

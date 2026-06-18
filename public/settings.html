@@ -10,7 +10,9 @@
     .section { background:#1e293b; padding:16px; margin:12px 0; border-radius:8px; }
     .field { margin:10px 0; }
     label { display:block; font-size:0.85em; color:#94a3b8; margin-bottom:4px; }
-    input { width:100%; padding:8px; background:#0f172a; color:#e2e8f0; border:1px solid #475569; border-radius:4px; box-sizing:border-box; }
+    input, select { width:100%; padding:8px; background:#0f172a; color:#e2e8f0; border:1px solid #475569; border-radius:4px; box-sizing:border-box; }
+    input[type="checkbox"] { width:auto; }
+    small { display:block; margin-top:4px; }
     button { background:#3b82f6; color:#fff; padding:10px 18px; border:none; border-radius:6px; cursor:pointer; margin-top:12px; }
     .nav a { color:#60a5fa; margin-right:12px; text-decoration:none; }
     #output { background:#111827; padding:10px; white-space:pre-wrap; font-family:monospace; font-size:0.8em; }
@@ -28,14 +30,26 @@
 
   <div class="section">
     <h2>Server</h2>
-    <div class="field"><label>Port</label><input id="port-field" value="5005"></div>
-    <div class="field"><label>CORS Origins</label><input id="cors-field" value="http://localhost:*"></div>
+    <div class="field"><label for="port-field">Port</label><input id="port-field" type="number" min="1" max="65535" value="5005"></div>
+    <div class="field">
+      <label for="cors-field">CORS Origins</label>
+      <input id="cors-field" value="http://localhost:*">
+      <small style="color:#94a3b8;">Comma-separated list of allowed origins.</small>
+    </div>
   </div>
 
   <div class="section">
     <h2>LLM</h2>
-    <div class="field"><label>Provider</label><input id="llm-provider" value="none"></div>
-    <div class="field"><label>Enabled</label><input type="checkbox" id="llm-enabled"></div>
+    <div class="field">
+      <label for="llm-provider">Provider</label>
+      <select id="llm-provider">
+        <option value="none">none</option>
+        <option value="openai">openai</option>
+        <option value="ollama">ollama</option>
+        <option value="lmstudio">lmstudio</option>
+      </select>
+    </div>
+    <div class="field"><label for="llm-enabled">Enabled</label><input type="checkbox" id="llm-enabled"></div>
   </div>
 
   <button id="saveBtn">Save</button>
@@ -54,7 +68,9 @@
           if (settings.server.port) document.getElementById('port-field').value = settings.server.port.value || 5005;
           if (settings.server.corsOrigin || settings.server['cors-origin']) {
             const v = (settings.server.corsOrigin || settings.server['cors-origin']).value;
-            document.getElementById('cors-field').value = Array.isArray(v) ? v[0] : (v || 'http://localhost:*');
+            // Preserve ALL configured origins (previously only v[0] was shown,
+            // so saving silently dropped the rest).
+            document.getElementById('cors-field').value = Array.isArray(v) ? v.join(', ') : (v || 'http://localhost:*');
           }
         }
         if (settings.llm) {
@@ -68,10 +84,16 @@
     }
     async function save() {
       const token = localStorage.getItem('gpt-terminal-token') || '';
+      // Split the comma-separated origins back into an array so multiple values
+      // round-trip without loss; fall back to a single string if only one.
+      const corsRaw = document.getElementById('cors-field').value;
+      const corsList = corsRaw.split(',').map(s => s.trim()).filter(Boolean);
       const updates = {
         'server.port': parseInt(document.getElementById('port-field').value, 10) || 5005,
-        'server.corsOrigin': document.getElementById('cors-field').value
+        'server.corsOrigin': corsList.length > 1 ? corsList : (corsList[0] || '')
       };
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.disabled = true;
       // LLM uses special endpoint to update SettingsStore (affects dashboard/llm-console flags)
       const llmUpdates = {
         enabled: document.getElementById('llm-enabled').checked,
@@ -89,6 +111,7 @@
       });
       const out = document.getElementById('output');
       out.textContent = (res.ok && llmRes.ok) ? 'Saved successfully' : 'Save had errors';
+      saveBtn.disabled = false;
     }
     document.getElementById('saveBtn').onclick = save;
     loadSettings();

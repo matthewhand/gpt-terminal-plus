@@ -148,7 +148,7 @@ test.describe('UI Smoke Tests (mocked)', () => {
     // full editor interaction
     await page.fill('#port-field', '6000');
     await page.fill('#cors-field', 'http://example.com:*');
-    await page.fill('#llm-provider', 'ollama');
+    await page.selectOption('#llm-provider', 'ollama');
     await page.check('#llm-enabled');
     await page.click('#saveBtn');
     // Wait for the async save handler (patched fetch) to set the output text; no force
@@ -393,7 +393,7 @@ test.describe('UI Smoke Tests (mocked)', () => {
     await loadStaticWithMocks(page, 'settings.html', {
       '/settings': { server: { port: { value: 5005 } }, llm: { enabled: { value: false } } }
     });
-    await page.fill('#llm-provider', 'openai');
+    await page.selectOption('#llm-provider', 'openai');
     await expect(page.locator('#llm-provider')).toHaveValue('openai');
   });
 
@@ -642,7 +642,7 @@ test.describe('UI Smoke Tests (mocked)', () => {
     await loadStaticWithMocks(page, 'settings.html', {
       '/settings': { server: { port: { value: 5005 } }, llm: { enabled: { value: false } } }
     });
-    await page.fill('#llm-provider', 'ollama');
+    await page.selectOption('#llm-provider', 'ollama');
     await expect(page.locator('#llm-provider')).toHaveValue('ollama');
   });
 
