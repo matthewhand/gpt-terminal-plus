@@ -50,11 +50,26 @@ describe('Electron desktop shell wiring', () => {
     expect(main).toContain('nodeIntegration: false');
   });
 
-  it('package.json wires desktop, dev and smoke scripts', () => {
+  it('package.json wires desktop, dev, smoke and packaging scripts', () => {
     const pkg = JSON.parse(read('package.json'));
     expect(pkg.scripts.desktop).toMatch(/electron electron\/main\.js/);
     expect(pkg.scripts['desktop:dev']).toBeDefined();
     expect(pkg.scripts['desktop:smoke']).toContain('ELECTRON_SMOKE=1');
+    expect(pkg.scripts['dist:linux']).toContain('electron-builder');
+    expect(pkg.scripts['dist:dir']).toContain('electron-builder');
     expect(pkg.devDependencies.electron).toBeDefined();
+    expect(pkg.devDependencies['electron-builder']).toBeDefined();
+    // The server entry must stay dist/index.js; the desktop entry is overridden
+    // by electron-builder config, not by changing package.json main.
+    expect(pkg.main).toBe('dist/index.js');
+  });
+
+  it('electron-builder config targets the shell without disturbing the server entry', () => {
+    const cfg = read('electron-builder.yml');
+    expect(cfg).toContain('main: electron/main.js'); // extraMetadata override
+    expect(cfg).toMatch(/dist\/\*\*\/\*/);           // ships the compiled server
+    expect(cfg).toMatch(/electron\/\*\*\/\*/);       // ships the shell
+    expect(cfg).toContain('npmRebuild: false');      // optional native dep skipped
+    expect(cfg).toMatch(/AppImage/);                 // produces an installer
   });
 });

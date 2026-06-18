@@ -41,11 +41,12 @@ window.
 ```bash
 npm run desktop        # build + launch
 npm run desktop:smoke  # headless self-test (boots, loads UI, exits 0/1)
+npm run dist:linux     # package a single-file .AppImage installer
 ```
 
 See [electron/README.md](electron/README.md) for how it works, why Electron over
-Tauri, and the path to packaged installers. Status: working prototype (not yet
-packaged for distribution).
+Tauri, and packaging details. Status: working prototype, packaged to a verified
+`.AppImage` (macOS/Windows targets, icon/signing remain).
 
 ## LLM Configuration (Optional)
 

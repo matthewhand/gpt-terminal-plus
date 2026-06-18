@@ -27,6 +27,24 @@ npm run desktop:dev    # launch against an existing dist/ build
 npm run desktop:smoke  # headless self-test (xvfb): boots, loads UI, exits 0/1
 ```
 
+## Package it
+
+```bash
+npm run dist:dir       # unpacked app -> release/linux-unpacked/ (fast, runnable)
+npm run dist:linux     # single-file installer -> release/*.AppImage
+```
+
+Packaging is driven by [`electron-builder.yml`](../electron-builder.yml). It
+overrides the app entry to `electron/main.js` via `extraMetadata.main` so the
+server entry (`dist/index.js`, used by `npm start` and `@yao-pkg/pkg`) is
+untouched. `asar: false` keeps resources as plain files for predictable path
+resolution; `npmRebuild: false` skips the optional `cpu-features` native dep
+(ssh2 falls back to Node crypto), so no C++ toolchain is required.
+
+Both targets are verified: the unpacked binary and the `.AppImage` each boot the
+embedded server and serve the UI headlessly (`GET / -> 200`, exit 0). Run the
+AppImage without FUSE via `--appimage-extract-and-run`.
+
 ## How it works
 
 - `main.js`
@@ -49,6 +67,8 @@ capture a screenshot (needs a GPU-capable display).
 
 ## Status
 
-Working prototype. Not yet packaged for distribution — `electron-builder` /
-`electron-forge` (or `@yao-pkg/pkg` for a headless server binary) would be the
-next step to produce installable artifacts.
+Working prototype, **packaged**: `npm run dist:linux` produces a verified,
+runnable `.AppImage`. Remaining for a polished release: app icon/branding assets,
+macOS/Windows targets (`dmg`/`nsis`), code signing, and persisting writable
+runtime config outside the app bundle (the desktop boot path uses `bootstrap()`
+which only reads config, so this is not required to run).
