@@ -198,7 +198,7 @@ configRouter.get('/security/events', checkAuthToken as any, (_req: Request, res:
 });
 
 // Minimal placeholders to satisfy tests that might call these
-configRouter.get('/schema', (_req: Request, res: Response) => {
+configRouter.get('/schema', checkAuthToken as any, (_req: Request, res: Response) => {
   try { return res.status(200).json(convictConfig().getSchema()); } catch { return res.status(200).json({}); }
 });
 

@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { handleServerError } from "../../utils/handleServerError";
-import { getServerHandler } from "../../utils/getServerHandler";
+import { getServerHandler, isLocalServerHandler } from "../../utils/getServerHandler";
 import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
+import { resolveSafePath, escapesRelativeRoot } from "../../utils/pathSafety";
 import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
 import { logSecurityEvent } from '../../middlewares/securityLogger';
 import { writeFile, readFile as fsReadFile, unlink } from 'fs/promises';
@@ -56,11 +57,6 @@ export const createFile = async (req: Request, res: Response) => {
     });
   }
 
-  let sanitizedPath = sanitizers.sanitizePath(pathValidation.sanitizedValue);
-  if (filePath.startsWith('/') && !sanitizedPath.startsWith('/')) {
-    sanitizedPath = '/' + sanitizedPath;
-  }
-
   // Validate content type
   if (content !== undefined && typeof content !== 'string') {
     return res.status(400).json({
@@ -79,13 +75,34 @@ export const createFile = async (req: Request, res: Response) => {
       throw new Error("Server handler not found");
     }
 
-    const success = await server.createFile(sanitizedPath, sanitizedContent, backup);
+    // Confine to the working root. Local: resolve against the root and reject
+    // anything that escapes it — this rejects absolute paths outside the root,
+    // closing the arbitrary-write hole the old sanitize+re-prepend left open
+    // (an absolute path like /etc/x previously round-tripped back to absolute).
+    // Remote: reject obvious ../ traversal since we cannot resolve locally.
+    if (isLocalServerHandler(server)) {
+      if (!resolveSafePath(filePath)) {
+        return res.status(400).json({
+          status: 'error',
+          message: `filePath resolves outside the working root: ${filePath}`,
+          data: null
+        });
+      }
+    } else if (escapesRelativeRoot(filePath)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'filePath escapes the working root',
+        data: null
+      });
+    }
+
+    const success = await server.createFile(filePath, sanitizedContent, backup);
 
     if (success) {
       res.status(200).json({
         status: 'success',
         message: 'File created successfully',
-        data: { filePath: sanitizedPath, backup }
+        data: { filePath, backup }
       });
     } else {
       res.status(400).json({ 
@@ -130,6 +147,17 @@ export async function readFile(req: Request, res: Response): Promise<void> {
     const server = getServerHandler(req);
     if (!server) {
       throw new Error("Server handler not found");
+    }
+
+    // Confine reads to the working root (rejects absolute/escaping paths).
+    if (isLocalServerHandler(server)) {
+      if (!resolveSafePath(filePath)) {
+        res.status(400).json({ status: 'error', message: `filePath resolves outside the working root: ${filePath}`, data: null });
+        return;
+      }
+    } else if (escapesRelativeRoot(filePath)) {
+      res.status(400).json({ status: 'error', message: 'filePath escapes the working root', data: null });
+      return;
     }
 
     const fileContent = await server.readFile(filePath, { startLine, endLine, encoding, maxBytes });
@@ -222,6 +250,20 @@ export const listFiles = async (req: Request, res: Response) => {
     const ServerHandler = getServerHandler(req);
     if (!ServerHandler) {
       throw new Error("Server handler not found");
+    }
+
+    // When an explicit directory is given, confine it to the working root
+    // (an absolute directory previously bypassed the base dir entirely).
+    if (typeof directory === 'string' && directory.trim() !== '') {
+      if (isLocalServerHandler(ServerHandler)) {
+        if (!resolveSafePath(directory)) {
+          res.status(400).json({ status: 'error', message: `directory resolves outside the working root: ${directory}`, data: null });
+          return;
+        }
+      } else if (escapesRelativeRoot(directory)) {
+        res.status(400).json({ status: 'error', message: 'directory escapes the working root', data: null });
+        return;
+      }
     }
 
     const files = await ServerHandler.listFilesWithDefaults({ directory, limit, offset, orderBy, recursive, typeFilter });

@@ -4,6 +4,10 @@ const path = require('path');
 const swaggerJsdoc = require('swagger-jsdoc');
 const { stringify: yamlStringify } = require('yaml');
 
+// Keep the spec's info.version in lockstep with the package version so Custom
+// GPT Action / SDK consumers never see a stale version.
+const pkgVersion = require('../package.json').version;
+
 function getPublicBaseUrl() {
   const envUrl = process.env.PUBLIC_BASE_URL;
   if (envUrl && /^https?:\/\//i.test(envUrl)) return envUrl.replace(/\/+$/, '');
@@ -21,7 +25,7 @@ function main() {
       openapi: '3.0.3',
       info: {
         title: 'gpt-terminal-plus API',
-        version: '0.1.0',
+        version: pkgVersion,
         description: 'OpenAPI generated from JSDoc annotations.',
       },
       servers: [{ url: baseUrl, description: 'Public base URL' }],

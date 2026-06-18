@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "gpt-terminal-plus API",
-    "version": "0.1.0",
+    "version": "1.0.0-rc.2",
     "description": "OpenAPI generated from JSDoc annotations."
   },
   "servers": [
@@ -930,89 +930,6 @@
           },
           "501": {
             "description": "Not implemented"
-          }
-        }
-      }
-    },
-    "/config/schema": {
-      "get": {
-        "operationId": "getConfigSchema",
-        "summary": "Get configuration schema",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Configuration schema"
-          }
-        }
-      }
-    },
-    "/config/override": {
-      "get": {
-        "operationId": "getConfigOverride",
-        "summary": "Get current configuration",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current configuration"
-          }
-        }
-      },
-      "post": {
-        "operationId": "setConfigOverride",
-        "summary": "Update configuration",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "description": "Arbitrary configuration overrides",
-                "properties": {
-                  "API_TOKEN": {
-                    "type": "string",
-                    "description": "Override API token (will be redacted in responses)"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Configuration updated"
-          },
-          "400": {
-            "description": "Invalid configuration"
-          }
-        }
-      }
-    },
-    "/config/settings": {
-      "get": {
-        "operationId": "getConfigSettings",
-        "summary": "Get redacted configuration settings",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Redacted configuration settings"
           }
         }
       }
