@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: gpt-terminal-plus API
-  version: 1.0.0-rc.2
+  version: 1.0.0-rc.3
   description: OpenAPI generated from JSDoc annotations.
 servers:
   - url: http://localhost:3100

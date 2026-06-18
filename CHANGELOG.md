@@ -4,6 +4,35 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.3] - 2026-06-19
+
+### Security
+- **Closed an arbitrary file-write/read hole.** The live file handlers stripped a
+  leading `/` then re-prepended it, so absolute paths reached the local action
+  unconfined (also reachable via the MCP `create_file` tool). All file ops now
+  confine to the working root via `resolveSafePath`; added a strict regression test.
+- Require auth on `GET /config/schema` (was leaking the config schema).
+- Fixed XSS sinks in `shell.html` and `llm-console.html` (command output, LLM
+  responses, session fields) — render via `textContent` / `escapeHtml`.
+
+### Added
+- **Shared web design system:** `public/assets/base.css` (design tokens + a11y
+  utilities) and `public/assets/nav.js` (one consistent app-shell nav injected
+  into every page, layout-safe for flex/grid pages), plus a skip-to-content link.
+- Two rounds of multi-agent UX critique captured in `docs/ROADMAP.md`.
+
+### Changed
+- Milestones completed/verified: auth coverage, MCP modernization (Streamable
+  HTTP), file-handler delegation; route cleanup (removed dead `config.ts`,
+  `index.ts.orig`); OpenAPI `info.version` now tracks the package version.
+- UX fixes: login token field is `password` with show/hide; settings CORS
+  multi-origin round-trips without data loss, Port=number, Provider=select;
+  removed dead/misleading UI (dashboard System Status, endpoint-status copy);
+  `aria-live` on async regions; duplicate per-page navs removed.
+
+### Docs
+- README gains an MCP section; IMPLEMENTATION/VISION/ROADMAP de-staled.
+
 ## [1.0.0-rc.2] - 2026-06-19
 
 ### Added
