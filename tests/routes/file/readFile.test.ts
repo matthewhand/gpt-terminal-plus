@@ -103,7 +103,7 @@ describe('POST /file/read', () => {
     expect(response.body.message).toContain('filePath must be provided');
   });
 
-  it('should return error for invalid line numbers', async () => {
+  it('should return 400 for invalid line numbers', async () => {
     const response = await request(app)
       .post('/file/read')
       .set('Authorization', `Bearer ${token}`)
@@ -112,11 +112,13 @@ describe('POST /file/read', () => {
         startLine: 0
       });
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
+    expect(response.body.message).toContain('startLine must be a positive integer');
+    expect(response.body.data).toBeNull();
   });
 
-  it('should return error for endLine < startLine', async () => {
+  it('should return 400 for endLine < startLine', async () => {
     const response = await request(app)
       .post('/file/read')
       .set('Authorization', `Bearer ${token}`)
@@ -126,7 +128,23 @@ describe('POST /file/read', () => {
         endLine: 2
       });
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
+    expect(response.body.message).toContain('endLine must be greater than or equal to startLine');
+    expect(response.body.data).toBeNull();
+  });
+
+  it('should return 400 for a non-integer startLine', async () => {
+    const response = await request(app)
+      .post('/file/read')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        filePath: testFile,
+        startLine: 1.5
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toContain('startLine must be a positive integer');
   });
 });

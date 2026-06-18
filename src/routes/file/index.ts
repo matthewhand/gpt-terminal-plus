@@ -104,11 +104,26 @@ export async function readFile(req: Request, res: Response): Promise<void> {
     const { filePath, startLine, endLine, encoding, maxBytes } = req.body || {};
 
     if (typeof filePath !== 'string' || !filePath.trim()) {
-      res.status(400).json({ 
-        status: 'error', 
-        message: 'filePath must be provided and must be a string', 
-        data: null 
+      res.status(400).json({
+        status: 'error',
+        message: 'filePath must be provided and must be a string',
+        data: null
       });
+      return;
+    }
+
+    // Validate the optional line range up front so malformed client input is a
+    // 400 (bad request), not a 500 from the handler throwing downstream.
+    if (startLine !== undefined && (!Number.isInteger(startLine) || startLine <= 0)) {
+      res.status(400).json({ status: 'error', message: 'startLine must be a positive integer when provided', data: null });
+      return;
+    }
+    if (endLine !== undefined && (!Number.isInteger(endLine) || endLine <= 0)) {
+      res.status(400).json({ status: 'error', message: 'endLine must be a positive integer when provided', data: null });
+      return;
+    }
+    if (startLine !== undefined && endLine !== undefined && endLine < startLine) {
+      res.status(400).json({ status: 'error', message: 'endLine must be greater than or equal to startLine', data: null });
       return;
     }
 
