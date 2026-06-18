@@ -10,7 +10,11 @@
       h1 { margin-top: 0; font-size: 1.7rem; }
       p { color: #a7acc4; line-height: 1.5; }
       label { display: block; font-weight: 600; margin-bottom: 6px; }
-      input[type="text"] { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(9,13,27,0.8); color: inherit; }
+      input[type="text"], input[type="password"] { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(9,13,27,0.8); color: inherit; }
+      .token-row { position: relative; }
+      .token-row input { padding-right: 64px; }
+      .toggle-visibility { position: absolute; right: 6px; top: 6px; width: auto; margin: 0; padding: 6px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.12); color: inherit; border-radius: 8px; font-weight: 600; }
+      :focus-visible { outline: 2px solid #5cd6ff; outline-offset: 2px; }
       button { width: 100%; margin-top: 18px; padding: 12px 16px; border-radius: 12px; border: none; background: linear-gradient(135deg, #5cd6ff, #ff71ce); color: #09121d; font-weight: 700; cursor: pointer; }
       button:disabled { opacity: 0.6; cursor: not-allowed; }
       .note { margin-top: 20px; font-size: 0.85rem; color: #8e94ab; }
@@ -28,13 +32,30 @@
       <p>Authenticate with a bearer token to access protected endpoints.</p>
       <form id="loginForm">
         <label for="token">API Token</label>
-        <input id="token" name="token" type="text" placeholder="Paste your bearer token" autocomplete="off" required />
+        <div class="token-row">
+          <input id="token" name="token" type="password" placeholder="Paste your bearer token" autocomplete="off" required />
+          <button type="button" id="toggleToken" class="toggle-visibility" aria-pressed="false" aria-label="Show token">Show</button>
+        </div>
         <button type="submit">Submit</button>
       </form>
-      <p id="message" class="hidden"></p>
+      <p id="message" class="hidden" role="status" aria-live="polite"></p>
       <p class="note">Enter your API token above. You can find it in your server logs or configuration.</p>
     </main>
     <script>
+      // Show/hide the token so users can verify what they pasted.
+      (function () {
+        const input = document.getElementById('token');
+        const toggle = document.getElementById('toggleToken');
+        toggle.addEventListener('click', function () {
+          const show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          toggle.textContent = show ? 'Hide' : 'Show';
+          toggle.setAttribute('aria-pressed', String(show));
+          toggle.setAttribute('aria-label', show ? 'Hide token' : 'Show token');
+          input.focus();
+        });
+      })();
+
       document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const token = document.getElementById('token').value;

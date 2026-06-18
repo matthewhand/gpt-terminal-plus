@@ -202,7 +202,7 @@
         </div>
       </header>
       
-      <div id="messageContainer"></div>
+      <div id="messageContainer" role="status" aria-live="polite"></div>
       
       <section>
         <h2>Active Sessions</h2>
@@ -213,7 +213,7 @@
       
       <section id="terminalSection" class="hidden">
         <h2>Terminal</h2>
-        <div id="terminalOutput" class="terminal"></div>
+        <div id="terminalOutput" class="terminal" role="log" aria-live="polite" tabindex="0"></div>
         <div class="terminal-input">
           <input type="text" id="commandInput" placeholder="Enter command..." />
           <button id="executeBtn" class="primary">Execute</button>
@@ -227,9 +227,17 @@
       let currentShell = 'bash';
       
       // Utility functions
+      // Escape untrusted values before interpolating into HTML (XSS guard).
+      function escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+          { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+        ));
+      }
+
       function showMessage(text, type = 'success') {
         const container = document.getElementById('messageContainer');
-        container.innerHTML = `<div class="message ${type}">${text}</div>`;
+        const safeType = type === 'error' ? 'error' : 'success';
+        container.innerHTML = `<div class="message ${safeType}">${escapeHtml(text)}</div>`;
         setTimeout(() => {
           container.innerHTML = '';
         }, 5000);
@@ -316,11 +324,12 @@
             body: JSON.stringify({ command })
           });
           
-          // Display result in terminal
+          // Display result in terminal. Use textContent: command output is
+          // plain text and must never be parsed as HTML (XSS sink).
           const terminal = document.getElementById('terminalOutput');
-          terminal.innerHTML += `\n$ ${command}\n`;
-          if (result.stdout) terminal.innerHTML += result.stdout;
-          if (result.stderr) terminal.innerHTML += `\n[stderr] ${result.stderr}`;
+          terminal.textContent += `\n$ ${command}\n`;
+          if (result.stdout) terminal.textContent += result.stdout;
+          if (result.stderr) terminal.textContent += `\n[stderr] ${result.stderr}`;
           terminal.scrollTop = terminal.scrollHeight;
           
           return result;
@@ -333,12 +342,12 @@
         try {
           const data = await apiCall(`/session/${sessionId}/logs`);
           const terminal = document.getElementById('terminalOutput');
-          terminal.innerHTML = '';
+          terminal.textContent = '';
           if (data.logs) {
             data.logs.forEach(log => {
-              terminal.innerHTML += `\n$ ${log.command}\n`;
-              if (log.stdout) terminal.innerHTML += log.stdout;
-              if (log.stderr) terminal.innerHTML += `\n[stderr] ${log.stderr}`;
+              terminal.textContent += `\n$ ${log.command}\n`;
+              if (log.stdout) terminal.textContent += log.stdout;
+              if (log.stderr) terminal.textContent += `\n[stderr] ${log.stderr}`;
             });
           }
           terminal.scrollTop = terminal.scrollHeight;
@@ -356,39 +365,47 @@
           return;
         }
         
-        container.innerHTML = sessions.map(session => `
+        container.innerHTML = sessions.map(session => {
+          const id = escapeHtml(session.id);
+          const status = escapeHtml(session.status);
+          const shell = escapeHtml(session.shell);
+          // For JS string contexts inside the onclick, JSON-encode to neutralize quotes.
+          const idAttr = escapeHtml(JSON.stringify(String(session.id ?? '')));
+          const shellAttr = escapeHtml(JSON.stringify(String(session.shell ?? '')));
+          return `
           <div class="card session-card">
             <div class="session-header">
-              <h3 class="session-title">${session.id}</h3>
-              <span class="session-status status-${session.status}">${session.status}</span>
+              <h3 class="session-title">${id}</h3>
+              <span class="session-status status-${status}">${status}</span>
             </div>
             <div class="session-details">
               <div class="detail">
                 <span class="detail-label">Shell</span>
-                <span>${session.shell}</span>
+                <span>${shell}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">Created</span>
-                <span>${formatDateTime(session.createdAt)}</span>
+                <span>${escapeHtml(formatDateTime(session.createdAt))}</span>
               </div>
               <div class="detail">
                 <span class="detail-label">Last Activity</span>
-                <span>${formatDateTime(session.lastActivity)}</span>
+                <span>${escapeHtml(formatDateTime(session.lastActivity))}</span>
               </div>
             </div>
             <div class="session-actions">
-              <button onclick="openTerminal('${session.id}', '${session.shell}')" class="secondary">Open</button>
-              <button onclick="stopSession('${session.id}')" class="secondary">Stop</button>
+              <button onclick="openTerminal(${idAttr}, ${shellAttr})" class="secondary">Open</button>
+              <button onclick="stopSession(${idAttr})" class="secondary">Stop</button>
             </div>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
       
       function openTerminal(sessionId, shell) {
         currentSessionId = sessionId;
         currentShell = shell;
         document.getElementById('terminalSection').classList.remove('hidden');
-        document.getElementById('terminalOutput').innerHTML = `Connected to ${shell} session ${sessionId}\n`;
+        document.getElementById('terminalOutput').textContent = `Connected to ${shell} session ${sessionId}\n`;
         loadSessionLogs(sessionId);
       }
       

@@ -38,7 +38,7 @@
         .step-item.input { border-left-color: #4CAF50; }
         .step-item.output { border-left-color: #2196F3; }
         .step-item.error { border-left-color: #f44336; }
-        .step-header { display: flex; justify-content: between; align-items: center; margin-bottom: 0.5rem; }
+        .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .step-type { font-weight: bold; color: #4CAF50; }
         .step-timestamp { font-size: 0.8rem; color: #aaa; }
         .step-content { background: #1a1a1a; padding: 0.75rem; border-radius: 4px; }
@@ -71,7 +71,7 @@
             </div>
             <div id="llm-response" style="margin-top: 1rem; padding: 0.75rem; background: #2d2d2d; border-radius: 4px; display: none;">
                 <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem;">LLM Response:</div>
-                <div id="llm-response-content"></div>
+                <div id="llm-response-content" role="status" aria-live="polite"></div>
             </div>
         </div>
     </div>
@@ -111,24 +111,36 @@
             }
         }
 
+        // Escape untrusted values before interpolating into HTML (XSS guard).
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+                { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+            ));
+        }
+
         function renderSessionList() {
             const container = document.getElementById('session-list');
-            
+
             if (sessions.length === 0) {
                 container.innerHTML = '<div class="empty-state">No sessions found</div>';
                 return;
             }
 
-            container.innerHTML = sessions.map(session => `
-                <div class="session-item" onclick="selectSession('${session.date}', '${session.sessionId}')">
-                    <div class="session-id">${session.sessionId}</div>
+            container.innerHTML = sessions.map(session => {
+                const dateAttr = escapeHtml(JSON.stringify(String(session.date ?? '')));
+                const idAttr = escapeHtml(JSON.stringify(String(session.sessionId ?? '')));
+                const types = (session.types || []).map(type => `<span class="type-badge">${escapeHtml(type)}</span>`).join('');
+                return `
+                <div class="session-item" onclick="selectSession(${dateAttr}, ${idAttr})">
+                    <div class="session-id">${escapeHtml(session.sessionId)}</div>
                     <div class="session-meta">
-                        ${new Date(session.timestamp).toLocaleString()}<br>
-                        ${session.stepCount} steps
-                        ${session.types.map(type => `<span class="type-badge">${type}</span>`).join('')}
+                        ${escapeHtml(new Date(session.timestamp).toLocaleString())}<br>
+                        ${escapeHtml(session.stepCount)} steps
+                        ${types}
                     </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         async function selectSession(date, sessionId) {
@@ -147,10 +159,10 @@
                     currentSession = data.data;
                     renderSessionDetail();
                 } else {
-                    detailContainer.innerHTML = `<div class="error">Error: ${data.message}</div>`;
+                    detailContainer.innerHTML = `<div class="error">Error: ${escapeHtml(data.message)}</div>`;
                 }
             } catch (error) {
-                detailContainer.innerHTML = `<div class="error">Failed to load session: ${error.message}</div>`;
+                detailContainer.innerHTML = `<div class="error">Failed to load session: ${escapeHtml(error.message)}</div>`;
             }
         }
 
@@ -174,9 +186,9 @@
                             <span class="step-timestamp">${new Date(meta.startedAt).toLocaleString()}</span>
                         </div>
                         <div class="step-content">
-                            <strong>Session ID:</strong> ${meta.sessionId}<br>
-                            <strong>User:</strong> ${meta.user}<br>
-                            <strong>Label:</strong> ${meta.label}
+                            <strong>Session ID:</strong> ${escapeHtml(meta.sessionId)}<br>
+                            <strong>User:</strong> ${escapeHtml(meta.user)}<br>
+                            <strong>Label:</strong> ${escapeHtml(meta.label)}
                         </div>
                     </div>
                 `;
@@ -190,11 +202,11 @@
                 html += `
                     <div class="step-item ${stepClass}">
                         <div class="step-header">
-                            <span class="step-type">${step.type}</span>
-                            <span class="step-timestamp">${new Date(step.timestamp).toLocaleString()}</span>
+                            <span class="step-type">${escapeHtml(step.type)}</span>
+                            <span class="step-timestamp">${escapeHtml(new Date(step.timestamp).toLocaleString())}</span>
                         </div>
                         <div class="step-content">
-                            <pre>${JSON.stringify(step, ['timestamp', 'type'], 2)}</pre>
+                            <pre>${escapeHtml(JSON.stringify(step, null, 2))}</pre>
                         </div>
                     </div>
                 `;
@@ -268,12 +280,12 @@
                 const data = await response.json();
                 
                 if (data.status === 'success') {
-                    responseContent.innerHTML = `<div style="white-space: pre-wrap;">${data.data.response}</div>`;
+                    responseContent.innerHTML = `<div style="white-space: pre-wrap;">${escapeHtml(data.data.response)}</div>`;
                 } else {
-                    responseContent.innerHTML = `<div style="color: #f44336;">Error: ${data.message}</div>`;
+                    responseContent.innerHTML = `<div style="color: #f44336;">Error: ${escapeHtml(data.message)}</div>`;
                 }
             } catch (error) {
-                responseContent.innerHTML = `<div style="color: #f44336;">Failed to query LLM: ${error.message}</div>`;
+                responseContent.innerHTML = `<div style="color: #f44336;">Failed to query LLM: ${escapeHtml(error.message)}</div>`;
             }
             
             promptInput.value = '';
