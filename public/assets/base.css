@@ -72,7 +72,25 @@
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   font-family: var(--font);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
+.app-skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-weight: 700;
+  text-decoration: none;
+  z-index: 200;
+  transition: top 0.15s ease;
+}
+.app-skip-link:focus { top: 8px; }
 .app-nav__brand {
   font-weight: 800;
   color: var(--text);

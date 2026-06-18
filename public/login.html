@@ -29,8 +29,7 @@
   </head>
   <body>
     <main>
-      <a href="/" class="back-link">← Back to overview</a>
-      <h1>Login & Token Manager</h1>
+      <h1>Login</h1>
       <p>Authenticate with a bearer token to access protected endpoints.</p>
       <form id="loginForm">
         <label for="token">API Token</label>
@@ -61,7 +60,9 @@
       document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const token = document.getElementById('token').value;
-        const button = document.querySelector('button');
+        // Target the submit button specifically: the Show/Hide toggle is now the
+        // first <button> in the DOM, so querySelector('button') would grab it.
+        const button = document.querySelector('#loginForm button[type="submit"]');
         const message = document.getElementById('message');
         
         // Disable button and show loading

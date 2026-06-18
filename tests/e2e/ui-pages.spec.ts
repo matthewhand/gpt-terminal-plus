@@ -51,7 +51,8 @@ test.describe('UI Smoke Tests (mocked)', () => {
       '/settings': { llm: { enabled: { value: true } }, server: { port: { value: 5005 } } }
     });
     // rely on real loadFeatures + renderFeatureCards (improved helper wait)
-    await expect(page.locator('nav a[href="/settings.html"]')).toBeVisible();
+    // Note: the canonical nav is the shared app-shell injected by /assets/nav.js,
+    // which is not loaded under setContent; assert on the page's own content.
     await expect(page.locator('.feature-card h3').filter({ hasText: 'LLM Execution Console' })).toBeVisible();
     await expect(page.locator('.feature-card h3').filter({ hasText: 'Shell / Sessions' })).toBeVisible();
     // denser: verify more cards from real render

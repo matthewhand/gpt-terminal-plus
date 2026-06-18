@@ -58,29 +58,54 @@
     var body = document.body;
     if (!body) return;
 
-    // Move existing content into a wrapper that takes over the body's layout.
-    var bodyDisplay = getComputedStyle(body).display;
+    // Snapshot the body's layout BEFORE mutating it. getComputedStyle returns a
+    // LIVE declaration, so these must be copied to plain strings now — reading
+    // them after we set body.style.* would return the new (wrong) values.
+    var cs = getComputedStyle(body);
+    var bodyDisplay = cs.display;
+    var origFlexDirection = cs.flexDirection;
+    var origGridTemplateColumns = cs.gridTemplateColumns;
+    var isFullHeightLayout =
+      (bodyDisplay === 'flex' || bodyDisplay === 'grid' || bodyDisplay === 'inline-flex' || bodyDisplay === 'inline-grid');
+
     var wrapper = document.createElement('div');
     wrapper.className = 'app-shell__content';
+    wrapper.id = 'main';
+    wrapper.setAttribute('role', 'main');
     while (body.firstChild) wrapper.appendChild(body.firstChild);
 
-    // If the page styled the body as a flex/grid container, transfer that to the
-    // wrapper so its children lay out exactly as before; otherwise leave it.
-    if (bodyDisplay === 'flex' || bodyDisplay === 'grid' || bodyDisplay === 'inline-flex' || bodyDisplay === 'inline-grid') {
-      var cs = getComputedStyle(body);
-      wrapper.style.display = bodyDisplay;
-      wrapper.style.flexDirection = cs.flexDirection;
-      wrapper.style.gridTemplateColumns = cs.gridTemplateColumns;
-      wrapper.style.height = cs.height;
-      wrapper.style.minHeight = cs.minHeight;
-      wrapper.style.overflow = cs.overflow;
-      body.style.display = 'block';
-      body.style.height = 'auto';
-      body.style.overflow = 'visible';
-    }
+    // Skip-to-content link for keyboard users (targets the content wrapper).
+    var skip = document.createElement('a');
+    skip.className = 'app-skip-link';
+    skip.href = '#main';
+    skip.textContent = 'Skip to content';
 
-    body.appendChild(buildHeader()); // nav first
-    body.appendChild(wrapper);       // then the page content
+    var header = buildHeader();
+    body.appendChild(skip);
+    body.appendChild(header); // nav first
+    body.appendChild(wrapper); // then the page content
+
+    // If the page styled the body as a flex/grid container (full-height apps like
+    // llm-console), turn the BODY into a 100vh flex column: nav (fixed height) +
+    // wrapper (fills the rest). The wrapper keeps the page's original flex/grid
+    // layout for its own children. This fills the viewport minus the nav with no
+    // overflow and no brittle calc() arithmetic.
+    if (isFullHeightLayout) {
+      body.style.display = 'flex';
+      body.style.flexDirection = 'column';
+      body.style.height = '100vh';
+      body.style.margin = '0';
+      body.style.overflow = 'hidden';
+
+      header.style.flex = '0 0 auto';
+
+      wrapper.style.flex = '1 1 auto';
+      wrapper.style.minHeight = '0';
+      wrapper.style.display = bodyDisplay;
+      wrapper.style.flexDirection = origFlexDirection;
+      wrapper.style.gridTemplateColumns = origGridTemplateColumns;
+      wrapper.style.overflow = 'hidden';
+    }
   }
 
   if (document.readyState === 'loading') {

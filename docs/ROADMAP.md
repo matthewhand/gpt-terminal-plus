@@ -290,3 +290,73 @@ The public UI has solid individual surfaces — index.html and shell.html are ge
 3. Fix `justify-content: between` → `space-between` in llm-console.html (visible bug, one line).
 4. Change the login token input to `type=password` with a show/hide toggle (security-UX, small).
 5. Add `:focus-visible` outlines to interactive elements via a shared rule (broad a11y win, small).
+
+
+---
+
+## UX & Design Critique — 2026-06-19 (round 2)
+
+Round 2 confirms that the round-1 design-system work (base.css tokens, the injected `nav.js` app-shell, XSS hardening, login `type=password`, settings CORS/port/provider controls, the softened endpoint-status banner) landed and is intact across all pages. The headline problem now is integration debt: rolling out a shared shell on top of pages that kept their own legacy navigation and palettes produced duplicate, clashing navbars on four pages and a broken full-height layout on `llm-console.html`. Average score is **5.7/10** (per-page + cross-cutting reviews), a clear improvement over round 1's **4.3/10**, but the remaining work is convergence and cleanup rather than net-new structure.
+
+### Regressions introduced by round-1 fixes
+- [ ] Duplicate/stacked navigation on dashboard, settings, login, shell — injected app-nav renders above each page's surviving legacy nav/back-link, with two conflicting "active" indicators (high, small)
+- [ ] `login.html` submit handler `document.querySelector('button')` now targets the new Show/Hide toggle (first button in DOM), so loading/disabled state hits the wrong element and allows double-submit (high, small)
+- [ ] `llm-console.html` full-height `body{height:100vh;flex}` collides with nav.js wrapper transfer → nav-height + 100vh document, outer scrollbar, console bottom pushed off-screen (high, medium)
+- [ ] `endpoint-status.html` softening applied only to the bottom legend ("Not available") while cards still render red "BROKEN" badges and raw "Returns 404 - Router mounting issue" notes — contradictory half-edit (high, small)
+
+### Navigation Consistency
+- [ ] Remove legacy `.header` nav from dashboard.html (Dashboard/Settings/API Docs + hand-coded `.active`) and dead `.header*` CSS (high, small)
+- [ ] Remove legacy `.nav` block from settings.html (← Dashboard/Shell/LLM Console) and `.nav a` CSS (high, small)
+- [ ] Delete redundant "← Back to overview" `.back-link` on login.html and shell.html plus their CSS (medium, small)
+- [ ] Reconcile LLM-console routing: dashboard card → `/llm/console` vs nav.js → `/llm-console.html`; pick one canonical path (medium, small)
+- [ ] Reconcile in-page "Setup → LLM" (`/setup`) link on llm-console.html with nav's `/settings.html` destination (medium, small)
+- [ ] Demote duplicate per-page `<h1>GPT Terminal Plus</h1>` brand on dashboard/llm-console to page-specific titles (low, small)
+- [ ] Make `.app-nav` sticky (`position:sticky;top:0;z-index`) so navigation survives long-page scroll (low, small)
+- [ ] Gate Login/Logout nav item on auth state; collapse redundant Overview-vs-brand both pointing to `/`; consider excluding `test.html` from injected nav (low, medium)
+
+### Responsiveness
+- [ ] Add a breakpoint to llm-console.html (stack to column, full-width sidebar with capped height) — currently the only page with zero responsive rules (high, small)
+- [ ] Fix nav.js full-height transfer for flex/grid pages: use `min-height`/`calc(100vh - var(--nav-h))`/`100dvh` instead of copying computed `100vh` (high, medium)
+- [ ] Lower card-grid min tracks (`minmax(min(100%,300px),1fr)` or 260px + 1fr at ≤480px) on .sections/dashboard/shell/endpoint grids to stop overflow below ~340px (medium, small)
+- [ ] Add overflow/hamburger strategy for the 8-item app-nav so it stays one row on narrow viewports instead of wrapping to 2-3 rows (medium, medium)
+- [ ] Use responsive terminal height (`min(400px,50vh)`) and let `.terminal-input`/`.session-actions` wrap under ~480px in shell.html (low, small)
+- [ ] Add small-screen padding/tap-target media queries to login, settings, dashboard, endpoint-status (low, small)
+
+### Visual Cohesion
+- [ ] Migrate dashboard.html off the legacy grey+green palette (#1a1a1a/#4CAF50/#2196F3) to base.css tokens (high, medium)
+- [ ] Migrate llm-console.html off its three-accent grey/green/two-blue palette to the single cyan `--accent` token set (medium, medium)
+- [ ] Migrate settings.html off the slate #0f172a/#60a5fa palette to tokens so it stops clashing with the cyan nav (high, medium)
+- [ ] Migrate endpoint-status.html off its fourth off-palette variant (and the standalone slate banner colors) to tokens (medium, medium)
+- [ ] Replace hard-coded hex in index.html inline styles with `var(--token)` values; delete dead `.monitoring-visual` CSS; style the unstyled inline `code` with `--mono` (medium, medium)
+- [ ] Delete shell.html's duplicated inline `:root` token block (overridden by base.css, silently diverging) (medium, medium)
+- [ ] Replace login.html hard-coded palette + duplicate `:focus-visible` with shared tokens (medium, medium)
+- [ ] Color settings.html `#output` via `--success`/`--error` per outcome instead of neutral text for both (low, small)
+
+### Accessibility
+- [ ] Make llm-console session rows real `<button>`s (or `role=button`+`tabindex`+keydown) and pass the element instead of relying on global `event` — currently keyboard-unreachable (high, medium)
+- [ ] Add non-color status cues to shell.html running/stopped pills and to endpoint-status badges/legend (no color-only meaning, WCAG 1.4.1) (high, small/medium)
+- [ ] Add a visually-hidden "Skip to content" link in nav.js targeting the content wrapper (`id=main`/`role=main`) (medium, small)
+- [ ] Add associated `<label>`/`aria-label` for shell.html command input and llm-console `#llm-prompt` (placeholder-only today) (medium, small)
+- [ ] Add `role=status`/`aria-live` to dashboard.html `#features-grid` loading/error region (medium, small)
+- [ ] Audit borderline AA contrast: shell muted/secondary/disabled button text, llm-console `#aaa` on grey surfaces; move to `--text-muted`/`--text-dim` (medium, small/medium)
+- [ ] Associate settings.html CORS hint via `aria-describedby`; add hints for provider/enabled (medium, small)
+- [ ] Replace shell.html inline `onclick` handlers with delegated listeners + `data-*` attributes for CSP-readiness (medium, medium)
+- [ ] Fix login.html error handling: use `classList.add/remove` instead of clobbering `className`, and move focus to the error/input (low, small)
+- [ ] Fix llm-console heading order (sidebar `h2` precedes page `h1` in DOM) (low, small)
+- [ ] Add `<main>` landmark to dashboard, endpoint-status (and per-page after legacy headers removed) (low, small)
+
+### Per-Page
+- [ ] dashboard.html: wrap two fetches / re-enable Save button in `finally`; escape `error.message` (innerHTML sink) via `textContent`; either gate Shell/Docs cards on settings or drop the half-used `/settings` fetch (medium, small/medium)
+- [ ] settings.html: wrap fields in `<form>` + `type=submit` (Enter support), add `<fieldset>/<legend>`, validate port/CORS with inline feedback, fix the block-label checkbox layout, title-case provider options (medium, small/medium)
+- [ ] login.html: stop persisting bearer token to localStorage (prefer httpOnly cookie / sessionStorage); send token in one channel only; add `autofocus`; rename "Login & Token Manager" → "Login"; reduce 2000ms redirect delay (medium, small/medium)
+- [ ] shell.html: make error messages persistent (manual dismiss) and diff/patch the 30s poll instead of full `innerHTML` reset; `scrollIntoView`+focus the terminal on Open; add fallback pill style for unknown statuses (medium, small/medium)
+- [ ] llm-console.html: only clear prompt on success + disable button while in flight; re-apply `.active` after auto-refresh re-render; render curated step view with raw JSON behind a disclosure (medium, small/medium)
+- [ ] endpoint-status.html: remove dev-facing "don't waste time on broken features" recommendation; add "Last reviewed: <date>/build" stamp; link cards to `/docs` anchors; trim repetitive "Fully functional and tested" notes (medium, small/medium)
+- [ ] index.html: style the too-faint Auth-required badge with `var(--warning)`; open raw json/yaml/health links in a new tab and gate auth links via login; pin tag/meta order for consistent card rhythm (medium, small/medium)
+
+### Top 5 next actions
+1. **Delete the four legacy navs/back-links** (dashboard, settings, login, shell) so the injected app-nav is the single source of truth — removes the duplicate-nav regression and the conflicting active-state signals (high, small).
+2. **Fix the `login.html` button-targeting regression** — give the submit button an id and target it explicitly so loading/disabled state and double-submit protection work again (high, small).
+3. **Fix `llm-console.html` full-height layout + add its first breakpoint** — stop hardcoding `100vh`, use `min-height:100dvh`/wrapper `flex:1`, and stack the 300px sidebar below ~768px (high, small/medium).
+4. **Reconcile endpoint-status cards with the softened legend** — relabel "BROKEN" badges and rewrite internal failure notes as user-facing copy; drop the dev-process recommendation (high, small).
+5. **Migrate dashboard, settings, llm-console, and endpoint-status palettes to base.css tokens** so the cyan/navy nav stops clashing with three-to-four off-brand bodies and the app reads as one product (high, medium).
