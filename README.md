@@ -1,8 +1,12 @@
 # GPT Terminal Plus
 
-Static-first OpenAPI artifacts with deterministic generation, an Express server with Convict-based configuration and secure redacted settings endpoint, plus a minimal web UI.
+**Vision**: A secure, multi-protocol execution platform (local + SSH + SSM) with optional AI augmentation. Primarily built as a reliable backend for Custom GPT Actions / LLM tool use, but also a capable standalone DevOps and automation tool with web UI.
+
+See [docs/VISION.md](docs/VISION.md) for the full vision, honest "what is built vs what remains" assessment, and architectural history (previous designs are archived in `docs/archived/`).
 
 **🤖 LLM Optional**: The app works perfectly without AI. LLM features are cleanly gated and optional.
+
+Current high-level status: core execution, file ops, LLM chat/providers, static OpenAPI, web UIs, auth/safety, and extensive testing are solid. See Roadmap and TODO for gaps (auth consistency on some prod routes, full handler delegation for files, MCP modernization, advanced AI/sandboxing, etc.).
 
 - OpenAPI (static artifacts):
   - [public/openapi.json](public/openapi.json)
@@ -27,6 +31,21 @@ Quick start
   - Settings UI at [public/settings.html](public/settings.html)
 - Auth header for protected endpoints:
   - `Authorization: Bearer YOUR_API_TOKEN`
+
+## Desktop app (Electron)
+
+A native desktop shell wraps the same web UI — no separate frontend. It boots the
+Express server in-process on a private loopback port and renders `public/` in a
+window.
+
+```bash
+npm run desktop        # build + launch
+npm run desktop:smoke  # headless self-test (boots, loads UI, exits 0/1)
+```
+
+See [electron/README.md](electron/README.md) for how it works, why Electron over
+Tauri, and the path to packaged installers. Status: working prototype (not yet
+packaged for distribution).
 
 ## LLM Configuration (Optional)
 

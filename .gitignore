@@ -13,6 +13,11 @@ data/
 *.bak
 .sessions.json
 
+# Jest / test result dumps
+afk-results.json
+jest-results.json
+test-results/
+
 # nyc test coverage
 .nyc_output/
 
@@ -132,6 +137,9 @@ docker/*/scripts/
 # Allow for customisation of the container on per app basis
 docker/*/.bashrc
 *.js
+# ...but the Electron desktop shell is hand-written source, not build output.
+!electron/
+!electron/*.js
 release/
 
 convict-config.json
