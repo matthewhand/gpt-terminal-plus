@@ -24,6 +24,8 @@
             flex: 1; padding: 1rem; overflow-y: auto;
         }
         .session-item {
+            display: block; width: 100%; text-align: left; font: inherit;
+            color: inherit; border: none;
             padding: 0.75rem; margin-bottom: 0.5rem; background: #3d3d3d;
             border-radius: 6px; cursor: pointer; transition: background 0.2s;
         }
@@ -50,6 +52,14 @@
             display: inline-block; background: #444; color: #fff; padding: 0.2rem 0.5rem;
             border-radius: 12px; font-size: 0.7rem; margin-right: 0.25rem;
         }
+        /* Stack the sidebar above the console on narrow viewports (was unusable
+           below ~600px: fixed 300px sidebar + 100vh/overflow:hidden). The
+           !important overrides nav.js's inline flex-direction on the wrapper. */
+        @media (max-width: 640px) {
+            .app-shell__content { flex-direction: column !important; overflow: auto !important; }
+            .sidebar { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid #444; }
+            .main-content { overflow: visible; }
+        }
     </style>
     <link rel="stylesheet" href="/assets/base.css">
     <script src="/assets/nav.js" defer></script>
@@ -65,7 +75,8 @@
             </div>
             <h3 style="margin-bottom: 0.5rem; color: #2196F3;">Ask LLM</h3>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <input type="text" id="llm-prompt" placeholder="Ask about execution logs..." 
+                <label for="llm-prompt" class="visually-hidden">Ask the LLM about execution logs</label>
+                <input type="text" id="llm-prompt" placeholder="Ask about execution logs..."
                        style="padding: 0.5rem; background: #3d3d3d; border: 1px solid #555; border-radius: 4px; color: #e0e0e0;">
                 <button onclick="queryLLM()" style="padding: 0.5rem; background: #2196F3; border: none; border-radius: 4px; color: white; cursor: pointer;">
                     Query
@@ -133,22 +144,26 @@
                 const idAttr = escapeHtml(JSON.stringify(String(session.sessionId ?? '')));
                 const types = (session.types || []).map(type => `<span class="type-badge">${escapeHtml(type)}</span>`).join('');
                 return `
-                <div class="session-item" onclick="selectSession(${dateAttr}, ${idAttr})">
+                <button type="button" class="session-item" onclick="selectSession(this, ${dateAttr}, ${idAttr})">
                     <div class="session-id">${escapeHtml(session.sessionId)}</div>
                     <div class="session-meta">
                         ${escapeHtml(new Date(session.timestamp).toLocaleString())}<br>
                         ${escapeHtml(session.stepCount)} steps
                         ${types}
                     </div>
-                </div>
+                </button>
             `;
             }).join('');
         }
 
-        async function selectSession(date, sessionId) {
-            // Update active session in sidebar
-            document.querySelectorAll('.session-item').forEach(item => item.classList.remove('active'));
-            event.target.closest('.session-item').classList.add('active');
+        async function selectSession(el, date, sessionId) {
+            // Update active session in sidebar (pass the clicked element instead
+            // of relying on the global `event`, which is non-standard).
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.remove('active');
+                item.setAttribute('aria-pressed', 'false');
+            });
+            if (el && el.classList) { el.classList.add('active'); el.setAttribute('aria-pressed', 'true'); }
 
             const detailContainer = document.getElementById('session-detail');
             detailContainer.innerHTML = '<div class="loading">Loading session details...</div>';
