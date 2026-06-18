@@ -149,8 +149,16 @@ Ambitious plan to evolve GPT Terminal Plus into a robust AI-assisted DevOps and 
 
 ## 10) Ambitious OKRs (2025-2026)
 
+> **Status review (2026-06-19):** The Q1/Q2 2026 timelines below are now in the
+> past. Current reality: multi-server registration exists (local/SSH/SSM) but the
+> centralized dashboard and 50-server scale targets are unmet (Q1 → *in
+> progress*). The provider set (OpenAI/Ollama/LM Studio) ships, but intelligent
+> model routing and additional providers are not yet built (Q2 → *partial*).
+> These OKRs are retained as direction, not commitments; treat the quarters as
+> relative ordering rather than fixed dates.
+
 ### Multi-Server Management
-**Timeline:** Q1 2026
+**Timeline:** Q1 2026 — *in progress (dashboard + scale targets unmet)*
 **Objectives:**
 - Develop a centralized dashboard for managing multiple servers (local, SSH, SSM).
 - Implement server grouping, health monitoring, and bulk operations.
@@ -166,7 +174,7 @@ Ambitious plan to evolve GPT Terminal Plus into a robust AI-assisted DevOps and 
 - Enhanced observability metrics (Section 6).
 
 ### Advanced LLM Integrations
-**Timeline:** Q2 2026
+**Timeline:** Q2 2026 — *partial (provider set ships; routing/new providers pending)*
 **Objectives:**
 - Integrate additional LLM providers (Anthropic Claude, Google Gemini, etc.).
 - Implement intelligent model routing based on task complexity and cost.

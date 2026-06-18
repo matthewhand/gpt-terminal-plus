@@ -48,6 +48,25 @@ See [electron/README.md](electron/README.md) for how it works, why Electron over
 Tauri, and packaging details. Status: working prototype, packaged to a verified
 `.AppImage` (macOS/Windows targets, icon/signing remain).
 
+## MCP server (Model Context Protocol)
+
+The same execution surface is exposed to agentic frameworks (Claude, Hermes,
+NVIDIA NemoClaw OpenShell, etc.) over MCP using the modern **Streamable HTTP**
+transport (the deprecated SSE transport has been removed). Enable it with
+`USE_MCP=true`; the endpoint is mounted at:
+
+```
+POST   /mcp   # JSON-RPC (initialize negotiates a session via mcp-session-id)
+GET    /mcp   # server→client notification stream
+DELETE /mcp   # session termination
+```
+
+All three methods require the same bearer `API_TOKEN` as the REST API. Tools map
+1:1 to the core operations — `execute_command`, `execute_code`, `execute_llm`,
+`create_file`, `read_file`, `list_files`, `fuzzy_patch_file`, `list_servers`,
+`server_set`, `model_list/select/current`, `change_directory` — and return real
+handler results. See `src/modules/mcpServer.ts`.
+
 ## LLM Configuration (Optional)
 
 The app works without AI, but you can enable LLM features:

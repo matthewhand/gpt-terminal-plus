@@ -48,7 +48,7 @@ The core "execute things safely on a chosen machine, optionally with LLM help" i
 
 Earlier versions of this project went through several significant refactors:
 
-- **Engines era**: Logic lived under `src/engines/` with different separation (fileEngine, llmEngine, etc.).
+- **Engines era**: Logic lived under `src/engines/` with different separation (fileEngine, llmEngine, etc.). Note: some engine modules (`src/engines/{fileEngine,llmEngine,remoteEngine}.ts`) still remain in the tree behind unmounted routers (`src/routes/{files,remote}.ts`) — a pending mount-or-delete decision, not yet fully removed.
 - **Heavy top-level side effects**: Much of the Express setup, ngrok, config, middleware registration happened at module load time. Tests relied heavily on `jest.resetModules()`, cache deletion tricks, and mocks.
 - **Direct Local assumptions**: Many routes (especially file) hard-coded `LocalServerHandler` or direct `fs` operations instead of routing through the abstract handler for the selected server.
 - **Test bloat and generated artifacts**: Large numbers of compiled `.d.ts`/`.js.map` files and offline/legacy test copies were present in the tree. Many low-density "smoke" or "require not throw" tests existed.

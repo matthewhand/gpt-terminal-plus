@@ -136,4 +136,12 @@ All circuit breakers return partial output with flags:
 }
 ```
 
-The implementation is now complete with all features from the README fully functional.
+> **Status note (2026-06-19):** This document is historical and aspirational in
+> places — not every feature described above is implemented today. Notably the
+> WebSocket real-time shell (`src/routes/shell/websocket.ts`,
+> `llmIntegration.ts`) and `.sessions.json` persistence are NOT present in the
+> current tree. For an honest, current "built vs. remaining" assessment see
+> [docs/VISION.md](docs/VISION.md); for shipped changes see
+> [CHANGELOG.md](CHANGELOG.md); for the live API surface see the OpenAPI spec
+> (`public/openapi.json`, 24 paths). Treat present-tense claims here as design
+> intent, not a statement of completion.
