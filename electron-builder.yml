@@ -1,0 +1,45 @@
+# electron-builder packaging config for the desktop shell.
+#
+# The package.json "main" stays dist/index.js (the server entry used by `npm
+# start` and @yao-pkg/pkg). For the packaged desktop app we override the entry
+# to electron/main.js via extraMetadata so both use-cases coexist.
+#
+# Build: npm run dist:linux        (AppImage installer)
+#        npm run dist:dir          (unpacked, fast, no installer — good for smoke)
+appId: com.gptterminalplus.desktop
+productName: GPT Terminal Plus
+copyright: MIT
+
+directories:
+  output: release
+
+# ssh2 pulls an OPTIONAL native dep (cpu-features) for crypto acceleration; it
+# is not required (ssh2 falls back to Node's built-in crypto). Skip the Electron
+# native rebuild so packaging does not need a C++ toolchain.
+npmRebuild: false
+
+extraMetadata:
+  main: electron/main.js
+
+# Ship the compiled server, the shell, the web UI and runtime config. Source
+# maps, TS sources and tests are excluded to keep the bundle lean.
+files:
+  - dist/**/*
+  - electron/**/*
+  - public/**/*
+  - config/**/*
+  - package.json
+  - "!**/*.map"
+  - "!**/*.ts"
+  - "!**/__tests__/**"
+
+# asar:false keeps resources as plain files so the `config` package and the
+# server resolve paths normally (no asar:// surprises) — simplest for a
+# prototype; revisit asar+unpack for a size-optimized release.
+asar: false
+
+linux:
+  target:
+    - AppImage
+  category: Development
+  synopsis: Secure multi-protocol execution platform with optional AI
