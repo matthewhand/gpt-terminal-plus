@@ -137,9 +137,11 @@ docker/*/scripts/
 # Allow for customisation of the container on per app basis
 docker/*/.bashrc
 *.js
-# ...but the Electron desktop shell is hand-written source, not build output.
+# ...but these are hand-written source, not build output.
 !electron/
 !electron/*.js
+!public/assets/
+!public/assets/*.js
 release/
 
 convict-config.json

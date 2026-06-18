@@ -1,0 +1,99 @@
+/*
+ * GPT Terminal Plus — shared design tokens + app-shell nav.
+ *
+ * Linked from every page so the product reads as one application. Page-specific
+ * <style> blocks still cascade on top (source order), so this file intentionally
+ * stays light: it defines design TOKENS (CSS custom properties), the shared
+ * .app-nav component, and a11y utilities — not an aggressive global reset.
+ *
+ * Migrate page styles to var(--token) over time to converge the three legacy
+ * palettes (navy+cyan, grey+green, slate+blue) onto this one.
+ */
+:root {
+  /* Surfaces (dark navy theme — the most polished existing pages) */
+  --bg: #060b1c;
+  --surface: #101529;
+  --surface-2: #162146;
+  --border: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text: #f6f7fb;
+  --text-muted: #c8cad3;
+  --text-dim: #9aa0b8;
+
+  /* Brand / accents (single primary accent: cyan) */
+  --accent: #5cd6ff;
+  --accent-2: #ff71ce;
+  --accent-contrast: #09121d;
+
+  /* State (contrast-checked against dark surfaces) */
+  --success: #7fffd4;
+  --error: #ff7f7f;
+  --warning: #ffd479;
+
+  /* Shape & motion */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 18px 40px rgba(8, 12, 26, 0.45);
+  --space: 16px;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* Accessibility utilities ------------------------------------------------ */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Shared app-shell nav (injected by nav.js) ------------------------------ */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font);
+}
+.app-nav__brand {
+  font-weight: 800;
+  color: var(--text);
+  text-decoration: none;
+  margin-right: 12px;
+  white-space: nowrap;
+}
+.app-nav__brand span { color: var(--accent); }
+.app-nav__links { display: flex; gap: 4px; flex-wrap: wrap; }
+.app-nav a.app-nav__link {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+.app-nav a.app-nav__link:hover { background: var(--surface-2); color: var(--text); }
+.app-nav a.app-nav__link[aria-current="page"] {
+  background: var(--surface-2);
+  color: var(--accent);
+  font-weight: 700;
+}
+.app-nav__spacer { flex: 1; }
