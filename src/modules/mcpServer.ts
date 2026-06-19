@@ -5,6 +5,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { registerMcpTools } from "./mcpTools";
 import { checkAuthToken } from "../middlewares/checkAuthToken";
+import { mcpAuth, getMcpOAuthConfig, protectedResourceMetadata } from "../auth/mcpOAuth";
 
 // NOTE: the deprecated SSE transport (GET /mcp/messages) was removed in favor
 // of the MCP Streamable HTTP transport (spec 2025-03-26+), which modern
@@ -17,13 +18,33 @@ import { checkAuthToken } from "../middlewares/checkAuthToken";
  *   GET    /mcp  — server-to-client notification stream (SSE within Streamable HTTP)
  *   DELETE /mcp  — session termination
  *
- * All methods require the standard bearer token (same as the REST API).
+ * Auth: by default every method requires the standard bearer token (same as the
+ * REST API). When MCP_OAUTH_ENABLED=true the endpoint additionally accepts
+ * OAuth 2.0 JWTs (validated against the configured authorization server) and
+ * advertises itself as an RFC 9728 protected resource at
+ * /.well-known/oauth-protected-resource.
  */
 export function setupMcpServer(app: express.Application, basePath = "/mcp"): void {
   // session id -> active transport
   const transports: Record<string, StreamableHTTPServerTransport> = {};
 
-  app.post(basePath, checkAuthToken as any, async (req, res) => {
+  // OAuth protected-resource metadata (served whenever OAuth is enabled so MCP
+  // clients can discover the authorization server). Public by design — it
+  // contains no secrets, only discovery pointers.
+  app.get("/.well-known/oauth-protected-resource", (req, res) => {
+    const cfg = getMcpOAuthConfig();
+    if (!cfg.enabled) {
+      res.status(404).json({ error: "not_found", message: "OAuth is not enabled for this MCP server" });
+      return;
+    }
+    const fallbackResource = `${req.protocol}://${req.get("host")}${basePath}`;
+    res.json(protectedResourceMetadata(cfg, fallbackResource));
+  });
+
+  // Resolve the static-token check once so mcpAuth can fall back to it.
+  const guard = mcpAuth(checkAuthToken as any);
+
+  app.post(basePath, guard, async (req, res) => {
     try {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
       let transport: StreamableHTTPServerTransport;
@@ -78,8 +99,8 @@ export function setupMcpServer(app: express.Application, basePath = "/mcp"): voi
     await transport.handleRequest(req, res);
   };
 
-  app.get(basePath, checkAuthToken as any, handleSessionRequest);
-  app.delete(basePath, checkAuthToken as any, handleSessionRequest);
+  app.get(basePath, guard, handleSessionRequest);
+  app.delete(basePath, guard, handleSessionRequest);
 
   console.log(`MCP server initialized with Streamable HTTP transport at ${basePath}`);
 }
