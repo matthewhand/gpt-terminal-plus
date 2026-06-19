@@ -360,3 +360,27 @@ Round 2 confirms that the round-1 design-system work (base.css tokens, the injec
 3. **Fix `llm-console.html` full-height layout + add its first breakpoint** — stop hardcoding `100vh`, use `min-height:100dvh`/wrapper `flex:1`, and stack the 300px sidebar below ~768px (high, small/medium).
 4. **Reconcile endpoint-status cards with the softened legend** — relabel "BROKEN" badges and rewrite internal failure notes as user-facing copy; drop the dev-process recommendation (high, small).
 5. **Migrate dashboard, settings, llm-console, and endpoint-status palettes to base.css tokens** so the cyan/navy nav stops clashing with three-to-four off-brand bodies and the app reads as one product (high, medium).
+
+## UX & Design Critique — 2026-06-19 (round 3)
+
+Round 3 re-scores after the convergence sprint. The round-2 headline problem (integration debt: clashing palettes, duplicate navs, broken full-height layout) is **resolved**, and several net-new items landed. Average score is **~7.8/10**, up from round 2's **5.7/10**. What remains is genuine refinement — form semantics, poll efficiency, token-storage hygiene — not structural repair.
+
+### Resolved since round 2
+- [x] All seven pages migrated to `base.css` design tokens — single cyan/navy palette; the WCAG audit (`tests/a11y/contrast.test.ts`) confirms every fg/bg pairing clears AA (lowest 6.04:1) and guards against regressions.
+- [x] Mobile navigation: `nav.js` injects a hamburger toggle (`aria-expanded`/`aria-controls`) collapsing the 8-item nav into a column ≤600px (`tests/e2e/nav-mobile.spec.ts`).
+- [x] Non-color status cues: shell pills (● running / ■ stopped) and endpoint-status badges (✔/✕/◑) — WCAG 1.4.1.
+- [x] First-run onboarding banner on the dashboard (guides token-less users to `/login`; dismiss persisted; `tests/e2e/onboarding.spec.ts`).
+- [x] `llm-console.html` full-height layout + ≤640px breakpoint; login button-targeting regression; skip-to-content link; command/prompt labels; `#features-grid` `role=status`; endpoint-status legend reconciliation (shell session endpoints now correctly labelled WORKING, since the feature is implemented).
+- [x] Shell sessions are functionally real (exec/stop/list), so the Shell page is no longer a dead end.
+
+### Still open (refinement backlog)
+- [ ] `login.html`: stop persisting the bearer token to `localStorage` (prefer `sessionStorage`/httpOnly cookie); send token in one channel only (high, small/medium).
+- [ ] `shell.html`: replace inline `onclick` with delegated listeners + `data-*` (CSP-readiness); diff/patch the 30s poll instead of full `innerHTML` reset; persistent (manually-dismissed) error messages (medium, medium).
+- [ ] `llm-console.html`: only clear the prompt on success + disable button in-flight; re-apply `.active` after the auto-refresh re-render; fix heading order (sidebar `h2` precedes page `h1`); curated step view with raw JSON behind a disclosure (medium, small/medium).
+- [ ] `settings.html`: wrap fields in a `<form>` with `type=submit` (Enter support) + `<fieldset>/<legend>`; inline port/CORS validation; `aria-describedby` for hints (medium, small/medium).
+- [ ] `index.html`: style the faint Auth-required badge with `var(--warning)`; open raw json/yaml/health links in a new tab (low/medium, small).
+- [ ] `endpoint-status.html`: add a "Last reviewed: <date>/build" stamp; link cards to `/docs` anchors (low, small).
+- [ ] Confirm the last legacy nav/back-link remnants are gone now that the app-shell nav is canonical (low, small).
+
+### Score trend
+4.3 (r1) → 5.7 (r2) → 7.8 (r3). The product now reads as one application, is mobile-usable, meets AA contrast, and has no known dead-end pages. Round 4 should focus on the form-semantics + token-storage items above and re-test on real devices.
