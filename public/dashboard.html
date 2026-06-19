@@ -35,12 +35,41 @@
         }
         .loading { text-align: center; color: var(--text-muted); padding: 2rem; }
         .error { color: var(--error); }
+        /* First-run onboarding banner */
+        .onboarding {
+            max-width: 1200px; margin: 1rem auto 0; padding: 1.25rem 1.5rem;
+            background: var(--surface); border: 1px solid var(--border);
+            border-left: 4px solid var(--accent); border-radius: var(--radius);
+        }
+        .onboarding h2 { margin: 0 0 0.5rem; color: var(--accent); font-size: 1.1rem; }
+        .onboarding ol { margin: 0.5rem 0 1rem 1.25rem; color: var(--text-muted); line-height: 1.6; }
+        .onboarding .cta {
+            display: inline-block; background: var(--accent); color: var(--accent-contrast);
+            padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-weight: 600;
+        }
+        .onboarding .dismiss {
+            background: none; border: 1px solid var(--border); color: var(--text-muted);
+            padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-left: 0.5rem;
+        }
     </style>
     <link rel="stylesheet" href="/assets/base.css">
     <script src="/assets/nav.js" defer></script>
   </head>
 <body>
     <h1>Dashboard</h1>
+
+    <div id="onboarding" class="onboarding" hidden>
+        <h2>Welcome — let's get you set up</h2>
+        <p style="margin:0;color:var(--text-muted);">It looks like this browser doesn't have an API token yet. Protected
+        consoles (Settings, Shell, LLM) need one.</p>
+        <ol>
+            <li>Grab your bearer token from the server logs or configuration.</li>
+            <li>Paste it on the login page to store it in this browser.</li>
+            <li>Come back here — the protected features will unlock automatically.</li>
+        </ol>
+        <a href="/login.html" class="cta">Add your token →</a>
+        <button type="button" class="dismiss" id="onboarding-dismiss">Dismiss</button>
+    </div>
 
     <div class="main">
         <h2>Features</h2>
@@ -59,6 +88,23 @@
             return localStorage.getItem('gpt-terminal-token') || '';
         }
 
+        // Show the first-run onboarding banner when this browser has no token
+        // (or the token is rejected) and the user hasn't dismissed it before.
+        function updateOnboarding(authed) {
+            const banner = document.getElementById('onboarding');
+            if (!banner) return;
+            const dismissed = localStorage.getItem('gpt-terminal-onboarding-dismissed') === '1';
+            banner.hidden = authed || dismissed;
+        }
+
+        (function () {
+            const dismiss = document.getElementById('onboarding-dismiss');
+            if (dismiss) dismiss.addEventListener('click', function () {
+                localStorage.setItem('gpt-terminal-onboarding-dismissed', '1');
+                document.getElementById('onboarding').hidden = true;
+            });
+        })();
+
         async function loadFeatures() {
             const grid = document.getElementById('features-grid');
 
@@ -76,10 +122,16 @@
                     settings = payload.settings || payload;
                 }
 
+                // Authed = we have a token AND the server accepted it.
+                updateOnboarding(!!token && response.ok);
+
                 // Render feature cards
                 grid.innerHTML = renderFeatureCards(settings);
 
             } catch (error) {
+                // Couldn't reach the server: if there's no stored token, the
+                // onboarding banner is still the most useful next step.
+                updateOnboarding(!!getApiToken());
                 // Never blank the page: the cards are mostly static, so render
                 // them with defaults and show a non-blocking warning above.
                 grid.innerHTML = renderFeatureCards({});
