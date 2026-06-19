@@ -7,21 +7,16 @@
     <style>
       :root {
         color-scheme: light dark;
-        --bg: #070b1c;
-        --panel: rgba(16, 21, 43, 0.9);
+        /* Page-local aliases that don't exist in base.css tokens. */
+        --panel: var(--surface);
         --card: rgba(9, 13, 27, 0.75);
-        --text: #f6f7fb;
-        --muted: #a7acc4;
-        --accent: linear-gradient(135deg, #5cd6ff, #ff71ce);
-        --border: rgba(255,255,255,0.12);
-        --shadow: 0 20px 45px rgba(8, 12, 26, 0.45);
-        --success: #7fff7f;
-        --error: #ff7f7f;
+        --muted: var(--text-muted);
+        --accent-grad: linear-gradient(135deg, var(--accent), var(--accent-2));
       }
       body {
         margin: 0;
         padding: 40px 32px 64px;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-family: var(--font);
         background: var(--bg);
         color: var(--text);
       }
@@ -41,15 +36,6 @@
         margin: 0;
         font-size: clamp(2rem, 3vw, 2.6rem);
       }
-      .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        color: #5cd6ff;
-        text-decoration: none;
-      }
-      .back-link:hover {
-        text-decoration: underline;
-      }
       .controls {
         display: flex;
         gap: 12px;
@@ -67,8 +53,8 @@
         transform: translateY(-2px);
       }
       button.primary {
-        background: var(--accent);
-        color: var(--bg);
+        background: var(--accent-grad);
+        color: var(--accent-contrast);
       }
       button.secondary {
         background: transparent;
@@ -114,14 +100,20 @@
         font-size: 0.8rem;
         font-weight: 600;
       }
+      .session-status::before {
+        margin-right: 6px;
+        font-weight: 700;
+      }
       .status-running {
-        background: rgba(127, 255, 127, 0.2);
+        background: rgba(127, 255, 212, 0.2);
         color: var(--success);
       }
+      .status-running::before { content: "\25CF"; } /* ● filled */
       .status-stopped {
         background: rgba(255, 127, 127, 0.2);
         color: var(--error);
       }
+      .status-stopped::before { content: "\25A0"; } /* ■ square */
       .session-details {
         display: grid;
         gap: 12px;
@@ -176,7 +168,7 @@
         margin: 16px 0;
       }
       .message.success {
-        background: rgba(127, 255, 127, 0.1);
+        background: rgba(127, 255, 212, 0.1);
         color: var(--success);
         border: 1px solid var(--success);
       }

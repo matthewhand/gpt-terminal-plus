@@ -17,6 +17,7 @@ data/
 afk-results.json
 jest-results.json
 test-results/
+playwright-report/
 
 # nyc test coverage
 .nyc_output/

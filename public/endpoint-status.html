@@ -6,18 +6,18 @@
     <title>Endpoint Status Dashboard</title>
     <style>
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: var(--font);
             margin: 0;
             padding: 20px;
-            background: #0b1021;
-            color: #f6f7fb;
+            background: var(--bg);
+            color: var(--text);
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
         h1 {
-            color: #5cd6ff;
+            color: var(--accent);
         }
         .endpoint-grid {
             display: grid;
@@ -26,19 +26,19 @@
             margin-top: 20px;
         }
         .endpoint-card {
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 20px;
-            background: rgba(16,21,43,0.92);
+            background: var(--surface);
         }
         .status-working {
-            border-left: 4px solid #7fff7f;
+            border-left: 4px solid var(--success);
         }
         .status-broken {
-            border-left: 4px solid #ff7f7f;
+            border-left: 4px solid var(--error);
         }
         .status-partial {
-            border-left: 4px solid #ffdf7f;
+            border-left: 4px solid var(--warning);
         }
         .endpoint-title {
             font-weight: bold;
@@ -52,25 +52,25 @@
             margin-right: 10px;
         }
         .status-badge-working {
-            background: rgba(127, 255, 127, 0.2);
-            color: #7fff7f;
+            background: rgba(127, 255, 212, 0.2);
+            color: var(--success);
         }
         .status-badge-broken {
             background: rgba(255, 127, 127, 0.2);
-            color: #ff7f7f;
+            color: var(--error);
         }
         .status-badge-partial {
-            background: rgba(255, 223, 127, 0.2);
-            color: #ffdf7f;
+            background: rgba(255, 212, 121, 0.2);
+            color: var(--warning);
         }
         .endpoint-description {
             font-size: 0.9em;
-            color: #a7acc4;
+            color: var(--text-muted);
             margin-bottom: 10px;
         }
         .endpoint-note {
             font-size: 0.8em;
-            color: #8e94ab;
+            color: var(--text-dim);
         }
     </style>
     <link rel="stylesheet" href="/assets/base.css">
@@ -80,9 +80,9 @@
     <div class="container">
         <h1>Endpoint Status Dashboard</h1>
         <p>A reference of endpoint maturity across the API.</p>
-        <p style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:10px 14px;color:#94a3b8;font-size:0.9em;">
+        <p style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text-muted);font-size:0.9em;">
           Note: this is a <strong>manually-maintained</strong> reference, not a live health probe.
-          For real-time health use <a href="/health" style="color:#60a5fa;">/health</a>.
+          For real-time health use <a href="/health" style="color:var(--accent);">/health</a>.
         </p>
 
         <div class="endpoint-grid">
@@ -150,7 +150,7 @@
             <li style="margin-bottom: 10px;"><strong>🟡 Partial:</strong> Yellow endpoints have limited functionality</li>
         </ul>
         
-        <p style="color:#a7acc4;">Endpoints marked stable are recommended for integration. See the <a href="/docs" style="color:#5cd6ff;">API docs</a> for full request/response details.</p>
+        <p style="color:var(--text-muted);">Endpoints marked stable are recommended for integration. See the <a href="/docs" style="color:var(--accent);">API docs</a> for full request/response details.</p>
     </div>
 </body>
 </html>
