@@ -8,7 +8,9 @@ import path from 'path';
 describe('Setup Policy Configuration', () => {
   let app: express.Express;
   let token: string;
-  const configPath = 'config/test/test.json';
+  // Worker-scoped path that /setup/policy actually persists to.
+  const { setupConfigPath } = require('../src/routes/setupRoutes');
+  const configPath = setupConfigPath();
   let originalConfig: string;
 
   beforeAll(() => {

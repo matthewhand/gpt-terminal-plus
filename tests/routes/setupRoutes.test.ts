@@ -3,6 +3,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { makeTestApp } from '../utils/testApp';
+import { setupConfigPath } from '../../src/routes/setupRoutes';
 
 describe('Setup Routes', () => {
   let app: express.Application;
@@ -16,7 +17,7 @@ describe('Setup Routes', () => {
 
   beforeEach(() => {
     // Clean up test config
-    const cfgPath = path.join('config/test', 'test.json');
+    const cfgPath = setupConfigPath();
     if (fs.existsSync(cfgPath)) {
       fs.unlinkSync(cfgPath);
     }
@@ -59,7 +60,7 @@ describe('Setup Routes', () => {
     });
 
     it('should load existing policy from config', async () => {
-      const cfgPath = path.join('config/test', 'test.json');
+      const cfgPath = setupConfigPath();
       const cfgDir = path.dirname(cfgPath);
       if (!fs.existsSync(cfgDir)) {
         fs.mkdirSync(cfgDir, { recursive: true });
@@ -89,7 +90,7 @@ describe('Setup Routes', () => {
       expect(response.headers.location).toBe('/setup/policy');
 
       // Check if config was saved
-      const cfgPath = path.join('config/test', 'test.json');
+      const cfgPath = setupConfigPath();
       expect(fs.existsSync(cfgPath)).toBe(true);
       const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       expect(cfg.safety.confirmRegex).toBe('new-confirm');
@@ -128,7 +129,7 @@ describe('Setup Routes', () => {
       expect(response.status).toBe(200);
       expect(response.text).toBe('Local configuration saved');
 
-      const cfgPath = path.join('config/test', 'test.json');
+      const cfgPath = setupConfigPath();
       const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       expect(cfg.local.hostname).toBe('test-host');
     });
@@ -199,7 +200,7 @@ describe('Setup Routes', () => {
       expect(response.status).toBe(200);
       expect(response.text).toBe('SSH configuration saved');
 
-      const cfgPath = path.join('config/test', 'test.json');
+      const cfgPath = setupConfigPath();
       const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       expect(cfg.ssh.hosts[0].name).toBe('test-ssh');
       expect(cfg.ssh.hosts[0].username).toBe('testuser');
@@ -239,7 +240,7 @@ describe('Setup Routes', () => {
         });
 
       expect(response.status).toBe(200);
-      const cfgPath = path.join('config/test', 'test.json');
+      const cfgPath = setupConfigPath();
       const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       expect(cfg.ssh.hosts[0].username).toBe('newuser');
       expect(cfg.ssh.hosts[0].port).toBe(2222);

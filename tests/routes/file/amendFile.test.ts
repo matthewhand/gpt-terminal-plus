@@ -19,7 +19,8 @@ function makeApp() {
 
 describe('POST /file/amend', () => {
   let app: express.Application;
-  const testDir = path.join(__dirname, '../../../tmp');
+  // Own subdir — the shared tmp/ root is recursively deleted by sibling suites.
+  const testDir = path.join(__dirname, '../../../tmp', 'amend-tests');
   const testFile = path.join(testDir, 'amend-test.txt');
   const token = 'test-token';
 

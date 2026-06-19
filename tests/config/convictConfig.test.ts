@@ -222,7 +222,10 @@ describe('Convict Configuration', () => {
   });
 
   describe('persistence functionality', () => {
-    const configPath = path.join(os.tmpdir(), 'convict-config.test.json');
+    // Use the exact path convictConfig() loads/persists from. It is scoped by
+    // JEST_WORKER_ID, so these read-back tests stay correct AND are isolated
+    // from other suites running in parallel workers.
+    const { CONFIG_FILE_PATH: configPath } = require('../../src/config/convictConfig');
 
     afterEach(() => {
       if (fs.existsSync(configPath)) {

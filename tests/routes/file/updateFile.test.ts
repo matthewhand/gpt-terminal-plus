@@ -19,7 +19,10 @@ function makeApp() {
 
 describe('POST /file/update', () => {
   let app: express.Application;
-  const testDir = path.join(process.cwd(), 'tmp');
+  // Own subdir under tmp/ — NOT the shared tmp/ root, because afterAll below
+  // does a recursive delete, which previously nuked sibling suites' files
+  // (amendFile/readFile) when they ran in parallel.
+  const testDir = path.join(process.cwd(), 'tmp', 'update-tests');
   const testFile = path.join(testDir, 'update-test.txt');
   const token = 'test-token';
 

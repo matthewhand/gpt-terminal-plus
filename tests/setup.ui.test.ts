@@ -8,7 +8,10 @@ import path from 'path';
 describe('Setup UI Interface', () => {
   let app: express.Express;
   let token: string;
-  const configPath = 'config/test/test.json';
+  // Worker-scoped path that the /setup/* routes actually persist to, so
+  // parallel suites don't clobber a shared config/test/test.json.
+  const { setupConfigPath } = require('../src/routes/setupRoutes');
+  const configPath = setupConfigPath();
   let originalConfig: string;
 
   beforeAll(() => {

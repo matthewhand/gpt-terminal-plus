@@ -5,6 +5,20 @@ import { SettingsStore } from '../settings/store';
 
 const router = express.Router();
 
+/**
+ * Resolve the persisted setup config file. Under Jest each suite runs in its own
+ * worker process; scope the test file by JEST_WORKER_ID so parallel suites don't
+ * clobber a single shared config/test/test.json. Outside tests this is just
+ * <NODE_CONFIG_DIR>/test.json (or config/test/test.json by default).
+ */
+export function setupConfigPath(): string {
+  const path = require('path');
+  const baseDir = process.env.NODE_CONFIG_DIR || 'config/test';
+  const wid = process.env.JEST_WORKER_ID;
+  const file = process.env.NODE_ENV === 'test' && wid ? `test.${wid}.json` : 'test.json';
+  return path.join(baseDir, file);
+}
+
 // Apply authentication to all setup routes
 router.use(checkAuthToken as any);
 
@@ -21,8 +35,7 @@ router.get('/policy', (req: Request, res: Response) => {
   try {
     const path = require('path');
     const fs = require('fs');
-    const baseDir = process.env.NODE_CONFIG_DIR || 'config/test';
-    const cfgPath = path.join(baseDir, 'test.json');
+    const cfgPath = setupConfigPath();
     if (fs.existsSync(cfgPath)) {
       const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
       if (raw && raw.safety) {
@@ -75,8 +88,7 @@ router.post('/policy', (req: Request, res: Response) => {
   try {
     const path = require('path');
     const fs = require('fs');
-    const baseDir = process.env.NODE_CONFIG_DIR || 'config/test';
-    const cfgPath = path.join(baseDir, 'test.json');
+    const cfgPath = setupConfigPath();
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
@@ -190,8 +202,7 @@ router.post('/local', (req: Request, res: Response) => {
     }
     const path = require('path');
     const fs = require('fs');
-    const baseDir = process.env.NODE_CONFIG_DIR || 'config/test';
-    const cfgPath = path.join(baseDir, 'test.json');
+    const cfgPath = setupConfigPath();
     let cfg: any = {};
     try {
       if (fs.existsSync(cfgPath)) cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
@@ -260,10 +271,9 @@ router.post('/ssh', (req: Request, res: Response) => {
     }
 
     // Determine target config path in tests
-    const baseDir = process.env.NODE_CONFIG_DIR || 'config/test';
     const path = require('path');
     const fs = require('fs');
-    const cfgPath = path.join(baseDir, 'test.json');
+    const cfgPath = setupConfigPath();
 
     let cfg: any = { ssh: { hosts: [] as any[] } };
     try {

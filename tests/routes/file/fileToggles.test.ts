@@ -23,7 +23,8 @@ describe('File Operation Toggles', () => {
   const token = 'test-token';
   process.env.API_TOKEN = token;
   getOrGenerateApiToken();
-  const configPath = require('os').tmpdir ? path.join(require('os').tmpdir(), 'convict-config.test.json') : path.join(process.cwd(), 'convict-config.json');
+  // Read back the exact path the app persists to (worker-scoped under Jest).
+  const { CONFIG_FILE_PATH: configPath } = require('../../../src/config/convictConfig');
 
   beforeAll(() => {
     process.env.API_TOKEN = token;

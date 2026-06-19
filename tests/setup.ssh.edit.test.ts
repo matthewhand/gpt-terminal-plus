@@ -20,7 +20,8 @@ describe('Setup UI SSH Configuration', () => {
     process.env.NODE_ENV = 'test';
     process.env.NODE_CONFIG_DIR = 'config/test';
     
-    configPath = path.join('config/test/test.json');
+    // Worker-scoped path that /setup/ssh actually persists to.
+    configPath = require('../src/routes/setupRoutes').setupConfigPath();
     backupConfigPath = configPath + '.backup';
     
     // Backup existing config if it exists

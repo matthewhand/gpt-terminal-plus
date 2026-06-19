@@ -7,9 +7,13 @@ type RedactedValue = string | number | boolean | null | string[] | number[] | bo
 
 let __singletonCfg: any | null = null;
 
-// Config file path for persistence - use test path during tests
-const CONFIG_FILE_PATH = process.env.NODE_ENV === 'test' 
-  ? path.join(os.tmpdir(), 'convict-config.test.json')
+// Config file path for persistence - use test path during tests.
+// Under Jest the suites run as separate worker processes that would otherwise
+// all persist to the same temp file and clobber each other; scope the test
+// path by JEST_WORKER_ID so each worker gets its own file. Exported so tests
+// can read back exactly what the app wrote.
+export const CONFIG_FILE_PATH = process.env.NODE_ENV === 'test'
+  ? path.join(os.tmpdir(), `convict-config.test${process.env.JEST_WORKER_ID ? '.' + process.env.JEST_WORKER_ID : ''}.json`)
   : path.join(process.cwd(), 'convict-config.json');
 
 export const convictConfig = () => {

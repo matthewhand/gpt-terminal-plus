@@ -23,7 +23,9 @@ function makeApp() {
 
 describe('Command Diff & Patch Endpoints', () => {
   let app: express.Application;
-  const testDir = path.join(__dirname, '../../../tmp');
+  // Own subdir — afterAll recursively deletes testDir; keep it off the shared
+  // tmp/ root so parallel sibling suites' files survive.
+  const testDir = path.join(__dirname, '../../../tmp', 'diff-command');
   const testFile = path.join(testDir, 'test.txt');
   const token = 'test-token';
 

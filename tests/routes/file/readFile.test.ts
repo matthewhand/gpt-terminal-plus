@@ -18,7 +18,8 @@ function makeApp() {
 
 describe('POST /file/read', () => {
   let app: express.Application;
-  const testDir = path.join(__dirname, '../../../tmp');
+  // Own subdir — the shared tmp/ root is recursively deleted by sibling suites.
+  const testDir = path.join(__dirname, '../../../tmp', 'read-tests');
   const testFile = path.join(testDir, 'read-test.txt');
   const token = 'test-token';
 

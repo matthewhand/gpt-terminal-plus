@@ -23,7 +23,9 @@ function makeApp() {
 
 describe('Diff & Patch Integration Tests', () => {
   let app: express.Application;
-  const testDir = path.join(__dirname, '../../tmp');
+  // Own subdir — afterAll recursively deletes testDir, which must NOT be the
+  // shared tmp/ root (sibling suites keep files there in parallel runs).
+  const testDir = path.join(__dirname, '../../tmp', 'diff-integration');
   const testFile = path.join(testDir, 'integration-test.txt');
   const token = 'test-token';
 

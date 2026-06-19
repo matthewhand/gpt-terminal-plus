@@ -1,7 +1,10 @@
 import request from 'supertest';
 import express from 'express';
-import fs from 'fs';
-import path from 'path';
+// The activity route + logger read via fs/promises, so the mocks below MUST
+// target that module — spying on the callback 'fs' module (as this suite used
+// to) silently no-ops, leaving the test to read whatever real data/activity
+// logs parallel suites happened to write (a flaky pass).
+import fsp from 'fs/promises';
 import { makeTestApp } from '../utils/testApp';
 
 describe('Activity Routes', () => {
@@ -19,8 +22,8 @@ describe('Activity Routes', () => {
 
   describe('GET /activity/list', () => {
     beforeEach(() => {
-      // Mock fs operations
-      jest.spyOn(fs, 'readdir').mockImplementation((path: any) => {
+      // Mock fs/promises operations (the module the route actually uses).
+      jest.spyOn(fsp, 'readdir').mockImplementation((path: any) => {
         if (path.includes('data/activity')) {
           if (path.endsWith('activity')) {
             return Promise.resolve(['2025-01-01', '2025-01-02']);
@@ -35,7 +38,7 @@ describe('Activity Routes', () => {
         return Promise.resolve([]);
       });
 
-      jest.spyOn(fs, 'readFile').mockImplementation((path: any) => {
+      jest.spyOn(fsp, 'readFile').mockImplementation((path: any) => {
         if (path.endsWith('meta.json')) {
           return Promise.resolve(JSON.stringify({
             sessionId: 'session_001',
@@ -117,7 +120,7 @@ describe('Activity Routes', () => {
     });
 
     it('should handle invalid session directories', async () => {
-      jest.spyOn(fs, 'readdir').mockResolvedValue(['invalid_dir']);
+      jest.spyOn(fsp, 'readdir').mockResolvedValue(['invalid_dir'] as any);
       const response = await request(app)
         .get('/activity/list')
         .set('Authorization', `Bearer ${token}`);
