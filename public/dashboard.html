@@ -80,7 +80,14 @@
                 grid.innerHTML = renderFeatureCards(settings);
 
             } catch (error) {
-                grid.innerHTML = `<div class="error">Failed to load features: ${error.message}</div>`;
+                // Never blank the page: the cards are mostly static, so render
+                // them with defaults and show a non-blocking warning above.
+                grid.innerHTML = renderFeatureCards({});
+                const warn = document.createElement('p');
+                warn.className = 'error';
+                warn.setAttribute('role', 'status');
+                warn.textContent = 'Could not load live settings (' + error.message + '); showing defaults.';
+                grid.parentNode.insertBefore(warn, grid);
             }
         }
 
@@ -95,10 +102,10 @@
                 <div class="feature-card ${canUseLLMConsole ? '' : 'disabled'}">
                     <h3>LLM Execution Console</h3>
                     <p>Query your execution history using AI. Browse past sessions and get intelligent insights about your command history.</p>
-                    <a href="/llm/console" class="cta ${canUseLLMConsole ? '' : 'disabled'}">
+                    <a href="/llm-console.html" class="cta ${canUseLLMConsole ? '' : 'disabled'}">
                         ${canUseLLMConsole ? 'Launch Console →' : 'Enable in Settings'}
                     </a>
-                    ${!canUseLLMConsole ? '<p style="font-size: 0.8rem; color: #f44336; margin-top: 0.5rem;">Requires LLM execution to be enabled (Setup &rarr; LLM)</p>' : ''}
+                    ${!canUseLLMConsole ? '<p style="font-size: 0.8rem; color: var(--error); margin-top: 0.5rem;">Requires LLM execution to be enabled (Settings &rarr; LLM)</p>' : ''}
                 </div>
             `);
             
