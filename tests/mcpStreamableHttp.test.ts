@@ -30,7 +30,13 @@ describe("MCP Streamable HTTP endpoint", () => {
     const { __clearSessionsForTests } = require('../src/session/ShellSessionDriver');
     _resetGlobalStateForTests();
     __clearSessionsForTests();
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mcp-test-"));
+    // Fixtures live INSIDE the workspace so read_file goes through the real,
+    // workspace-confined handler (no prod test-only bypass). Own mkdtemp subdir
+    // under tmp/ keeps it isolated from sibling suites in parallel runs.
+    const repoRoot = path.resolve(__dirname, "..");
+    const baseTmp = path.join(repoRoot, "tmp");
+    fs.mkdirSync(baseTmp, { recursive: true });
+    tmpDir = fs.mkdtempSync(path.join(baseTmp, "mcp-test-"));
     fs.writeFileSync(path.join(tmpDir, "hello.txt"), "hello mcp\n");
 
     const app = express();
@@ -131,5 +137,29 @@ describe("MCP Streamable HTTP endpoint", () => {
     const payload = JSON.parse(result.content[0].text);
     expect(payload.selected).toBeTruthy();
     expect(Array.isArray(payload.configured)).toBe(true);
+  });
+
+  it("server_set returns REAL system info (not a dummy stub)", async () => {
+    const result: any = await client.callTool({
+      name: "server_set",
+      arguments: { server: "local", getSystemInfo: true },
+    });
+    expect(result.isError).toBeFalsy();
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.selected).toBe("local");
+    expect(payload.systemInfo).toBeTruthy();
+    // The old stub returned { info: "dummy" }; real getSystemInfo reports actual fields.
+    expect(payload.systemInfo.info).toBeUndefined();
+    const keys = Object.keys(payload.systemInfo);
+    expect(keys.length).toBeGreaterThan(1);
+  });
+
+  it("server_set omits system info when not requested", async () => {
+    const result: any = await client.callTool({
+      name: "server_set",
+      arguments: { server: "local" },
+    });
+    const payload = JSON.parse(result.content[0].text);
+    expect(payload.systemInfo).toBeNull();
   });
 });

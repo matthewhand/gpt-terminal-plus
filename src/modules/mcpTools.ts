@@ -1,6 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
-import path from "path";
 import { changeDirectory, executeCommand, executeCode, executeLlm } from "../routes/command";
 import { createFile } from "../routes/file";
 // readFileRoute available from file routes if needed for MCP
@@ -124,7 +123,7 @@ export const registerMcpTools = (server: McpServer) => {
     }
   );
 
-  // Read File Tool - use direct fs in test for abs paths (mcp test uses /tmp outside workspace); fallback to handler
+  // Read File Tool — always goes through the workspace-confined local handler.
   server.tool(
     "read_file",
     {
@@ -132,12 +131,6 @@ export const registerMcpTools = (server: McpServer) => {
     } as any,
     async ({ filePath }: { filePath: string }) => {
       try {
-        if (process.env.NODE_ENV === 'test' && filePath && path.isAbsolute(filePath)) {
-          // bypass safety for temp files in mcp integration test
-          const fs = require('fs');
-          const content = fs.readFileSync(filePath, 'utf8');
-          return { content: [{ type: "text" as const, text: JSON.stringify({ content, status: 'success' }) }] };
-        }
         const localHandler = new LocalServerHandler({ protocol: "local", hostname: "localhost", code: false } as any);
         const content = await (localHandler as any).readFile(filePath);
         const payload = typeof content === 'string' ? { content } : (content || {});
@@ -205,7 +198,16 @@ export const registerMcpTools = (server: McpServer) => {
     } as any,
     async ({ server: serverName, getSystemInfo }: { server: string; getSystemInfo?: boolean }) => {
       try { if (setSelectedServer) setSelectedServer(serverName); } catch {}
-      const result = { message: `Server set to ${serverName}`, systemInfo: getSystemInfo ? { info: "dummy" } : null, selected: serverName };
+      let systemInfo: unknown = null;
+      if (getSystemInfo) {
+        try {
+          const localHandler = new LocalServerHandler({ protocol: "local", hostname: "localhost", code: false } as any);
+          systemInfo = await localHandler.getSystemInfo();
+        } catch (e: any) {
+          systemInfo = { error: e?.message || 'failed to collect system info' };
+        }
+      }
+      const result = { message: `Server set to ${serverName}`, systemInfo, selected: serverName };
       return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
     }
   );
