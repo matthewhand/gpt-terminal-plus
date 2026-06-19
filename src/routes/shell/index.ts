@@ -127,21 +127,6 @@ sessionRouter.use(checkAuthToken as any);
 // Shell Session Driver
 const sessionDriver = new ShellSessionDriver();
 
-// Minimal session exec endpoint used by tests
-sessionRouter.post('/:id?/exec', async (req: Request, res: Response) => {
-  const { command, shell } = (req.body || {}) as { command?: string; shell?: string };
-  const sessionId = (req.params?.id && String(req.params.id).trim() !== '')
-    ? String(req.params.id)
-    : `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-  // Record start of execution
-  await logSessionStep('exec-start', { command, shell }, undefined);
-
-  // Record a timeout event (tests advance timers, but do not depend on real delay)
-  await logSessionStep('executeCommand', { status: 'timeout' }, sessionId);
-  return res.json({ sessionId });
-});
-
 /**
  * @swagger
  * /shell/session/start:
@@ -293,6 +278,25 @@ sessionRouter.post('/:id/stop', async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// Legacy "session uplift" exec stub: logs an exec-start + timeout step without
+// running anything. It MUST be registered AFTER the real `/:id/exec` above so
+// it does not shadow it — `/:id?/exec` (optional id) would otherwise swallow
+// every `/<id>/exec` request. It survives only to back session.uplift.logs
+// (which reaches it directly via the router stack) and the no-id `/exec` form.
+sessionRouter.post('/:id?/exec', async (req: Request, res: Response) => {
+  const { command, shell } = (req.body || {}) as { command?: string; shell?: string };
+  const sessionId = (req.params?.id && String(req.params.id).trim() !== '')
+    ? String(req.params.id)
+    : `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // Record start of execution
+  await logSessionStep('exec-start', { command, shell }, undefined);
+
+  // Record a timeout event (tests advance timers, but do not depend on real delay)
+  await logSessionStep('executeCommand', { status: 'timeout' }, sessionId);
+  return res.json({ sessionId });
 });
 
 // WebSocket Handler

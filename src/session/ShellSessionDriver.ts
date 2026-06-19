@@ -9,27 +9,32 @@ type SessionLog = {
   timestamp?: Date;
 };
 
+type SessionStatus = 'running' | 'stopped';
+
 type SessionMeta = {
   id: string;
   shell: string;
   createdAt: number;
+  lastActivity: number;
+  status: SessionStatus;
 };
 
 const sessions = new Map<string, { meta: SessionMeta; logs: SessionLog[] }>();
 
 export class ShellSessionDriver {
-  async start(params?: { shell?: string }): Promise<SessionMeta & { status: string }> {
+  async start(params?: { shell?: string }): Promise<SessionMeta> {
     const shell = params?.shell || 'bash';
     const id = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const createdAt = Date.now();
-    const meta: SessionMeta = { id, shell, createdAt };
+    const meta: SessionMeta = { id, shell, createdAt, lastActivity: createdAt, status: 'running' };
     sessions.set(id, { meta, logs: [] });
-    return { ...meta, status: 'running' };
+    return { ...meta };
   }
 
   async exec(id: string, command: string): Promise<{ stdout: string; stderr: string; exitCode: number; success: boolean }> {
     const s = sessions.get(id);
     if (!s) throw new Error(`Session not found: ${id}`);
+    if (s.meta.status === 'stopped') throw new Error(`Session is stopped: ${id}`);
 
     if (!command || command.trim() === '') {
       throw new Error('Command cannot be empty');
@@ -49,8 +54,10 @@ export class ShellSessionDriver {
       child.on('error', reject);
       child.on('close', (code) => {
         const exitCode = typeof code === 'number' ? code : 1;
-        const log: SessionLog = { command, stdout, stderr, exitCode, at: Date.now() };
+        const at = Date.now();
+        const log: SessionLog = { command, stdout, stderr, exitCode, at };
         s.logs.push(log);
+        s.meta.lastActivity = at;
         resolve({ stdout, stderr, exitCode, success: exitCode === 0 });
       });
     });
@@ -62,26 +69,29 @@ export class ShellSessionDriver {
     return s.logs.map(log => ({ ...log, timestamp: new Date(log.at) }));
   }
 
-  async list(): Promise<Array<{ id: string; shell: string; status: string; createdAt: Date }>> {
+  async list(): Promise<Array<{ id: string; shell: string; status: SessionStatus; createdAt: Date; lastActivity: Date }>> {
     const result = [];
     for (const [id, session] of sessions.entries()) {
       result.push({
         id,
         shell: session.meta.shell,
-        status: 'running',
-        createdAt: new Date(session.meta.createdAt)
+        status: session.meta.status,
+        createdAt: new Date(session.meta.createdAt),
+        lastActivity: new Date(session.meta.lastActivity)
       });
     }
     return result;
   }
 
   async stop(id: string): Promise<void> {
-    // No persistent process is maintained in this minimal driver.
-    // Retain logs for post-stop inspection.
-    if (!sessions.has(id)) {
+    // This driver runs each exec as a one-shot child, so there is no long-lived
+    // process to kill. Mark the session stopped (so list() reports it and exec()
+    // refuses further commands) but retain meta/logs for post-stop inspection.
+    const s = sessions.get(id);
+    if (!s) {
       throw new Error(`Session not found: ${id}`);
     }
-    // Keep meta/logs for tests; no-op
+    s.meta.status = 'stopped';
   }
 }
 

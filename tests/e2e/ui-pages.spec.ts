@@ -179,8 +179,9 @@ test.describe('UI Smoke Tests (mocked)', () => {
   test('endpoint-status and test pages show key static elements', async ({ page }) => {
     await loadStaticWithMocks(page, 'endpoint-status.html', {});
     await expect(page.locator('h1')).toHaveText('Endpoint Status Dashboard');
-    // robust scoped (no .first() order brittle): broken badge inside specific card
-    await expect(page.locator('.endpoint-card').filter({ hasText: 'POST /shell/session/start' }).locator('span.status-badge-broken')).toBeVisible();
+    // robust scoped (no .first() order brittle): shell session now ships
+    // implemented, so its card carries the "working" badge.
+    await expect(page.locator('.endpoint-card').filter({ hasText: 'POST /shell/session/start' }).locator('span.status-badge-working')).toBeVisible();
     await expect(page.locator('.status-badge-partial')).toBeVisible();
 
     // consolidated with similar test page smoke
