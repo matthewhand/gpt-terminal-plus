@@ -51,18 +51,25 @@
             font-size: 0.8em;
             margin-right: 10px;
         }
+        .endpoint-status::before {
+            margin-right: 5px;
+            font-weight: 700;
+        }
         .status-badge-working {
             background: rgba(127, 255, 212, 0.2);
             color: var(--success);
         }
+        .status-badge-working::before { content: "\2714"; } /* ✔ */
         .status-badge-broken {
             background: rgba(255, 127, 127, 0.2);
             color: var(--error);
         }
+        .status-badge-broken::before { content: "\2715"; } /* ✕ */
         .status-badge-partial {
             background: rgba(255, 212, 121, 0.2);
             color: var(--warning);
         }
+        .status-badge-partial::before { content: "\25D1"; } /* ◑ half */
         .endpoint-description {
             font-size: 0.9em;
             color: var(--text-muted);

@@ -38,8 +38,20 @@
     brand.innerHTML = 'GPT&nbsp;Terminal<span>+</span>';
     header.appendChild(brand);
 
+    // Hamburger toggle — hidden on desktop via CSS, shown when the 8-item nav
+    // would otherwise wrap to several rows on narrow screens.
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'app-nav__toggle';
+    toggle.setAttribute('aria-label', 'Toggle navigation menu');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'app-nav-links');
+    toggle.innerHTML = '<span aria-hidden="true">☰</span>'; // ☰
+    header.appendChild(toggle);
+
     var nav = document.createElement('nav');
     nav.className = 'app-nav__links';
+    nav.id = 'app-nav-links';
     nav.setAttribute('aria-label', 'Primary');
     LINKS.forEach(function (l) {
       var a = document.createElement('a');
@@ -50,6 +62,18 @@
       nav.appendChild(a);
     });
     header.appendChild(nav);
+
+    toggle.addEventListener('click', function () {
+      var open = header.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    // Collapse the menu after following a link (single-page feel on mobile).
+    nav.addEventListener('click', function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains('app-nav__link')) {
+        header.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
     return header;
   }
 

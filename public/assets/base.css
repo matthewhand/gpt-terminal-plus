@@ -115,3 +115,32 @@
   font-weight: 700;
 }
 .app-nav__spacer { flex: 1; }
+
+/* Hamburger toggle — collapses the nav on narrow screens. Hidden on desktop. */
+.app-nav__toggle {
+  display: none;
+  margin-left: auto;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.app-nav__toggle:hover { background: var(--accent); color: var(--accent-contrast); }
+
+@media (max-width: 600px) {
+  .app-nav__toggle { display: inline-flex; align-items: center; }
+  /* Collapsed by default; the toggle reveals it as a full-width column. */
+  .app-nav__links {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 8px;
+  }
+  .app-nav.is-open .app-nav__links { display: flex; }
+  .app-nav a.app-nav__link { padding: 10px 12px; font-size: 1rem; }
+}
