@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Settings | GPT Terminal Plus</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#e2e8f0; padding:20px; max-width:800px; margin:0 auto; }
-    h1,h2 { color:#60a5fa; }
-    .section { background:#1e293b; padding:16px; margin:12px 0; border-radius:8px; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); padding:20px; max-width:800px; margin:0 auto; }
+    h1,h2 { color: var(--accent); }
+    .section { background: var(--surface); padding:16px; margin:12px 0; border-radius: var(--radius); border:1px solid var(--border); }
     .field { margin:10px 0; }
-    label { display:block; font-size:0.85em; color:#94a3b8; margin-bottom:4px; }
-    input, select { width:100%; padding:8px; background:#0f172a; color:#e2e8f0; border:1px solid #475569; border-radius:4px; box-sizing:border-box; }
+    label { display:block; font-size:0.85em; color: var(--text-dim); margin-bottom:4px; }
+    input, select { width:100%; padding:8px; background: var(--bg); color: var(--text); border:1px solid var(--border); border-radius:8px; box-sizing:border-box; }
     input[type="checkbox"] { width:auto; }
-    small { display:block; margin-top:4px; }
-    button { background:#3b82f6; color:#fff; padding:10px 18px; border:none; border-radius:6px; cursor:pointer; margin-top:12px; }
-    .nav a { color:#60a5fa; margin-right:12px; text-decoration:none; }
-    #output { background:#111827; padding:10px; white-space:pre-wrap; font-family:monospace; font-size:0.8em; }
+    small { display:block; margin-top:4px; color: var(--text-dim); }
+    button { background: var(--accent); color: var(--accent-contrast); padding:10px 18px; border:none; border-radius:8px; cursor:pointer; margin-top:12px; font-weight:600; }
+    button:disabled { opacity:0.6; cursor:not-allowed; }
+    #output { background: var(--surface); padding:10px; white-space:pre-wrap; font-family: var(--mono); font-size:0.8em; border-radius:8px; }
+    #output:empty { display:none; }
   </style>
     <link rel="stylesheet" href="/assets/base.css">
     <script src="/assets/nav.js" defer></script>
