@@ -1,0 +1,26 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#162146"/>
+      <stop offset="1" stop-color="#060b1c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5cd6ff"/>
+      <stop offset="1" stop-color="#ff71ce"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="104" fill="url(#bg)"/>
+  <rect x="16" y="16" width="480" height="480" rx="104" fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="3"/>
+  <!-- terminal window -->
+  <rect x="96" y="128" width="320" height="256" rx="28" fill="#0a1330" stroke="rgba(92,214,255,0.35)" stroke-width="3"/>
+  <circle cx="132" cy="166" r="9" fill="#ff7f7f"/>
+  <circle cx="164" cy="166" r="9" fill="#ffd479"/>
+  <circle cx="196" cy="166" r="9" fill="#7fffd4"/>
+  <!-- prompt chevron -->
+  <path d="M150 250 L196 286 L150 322" fill="none" stroke="url(#accent)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- cursor underscore -->
+  <rect x="216" y="306" width="86" height="20" rx="10" fill="#5cd6ff"/>
+  <!-- plus badge -->
+  <circle cx="372" cy="356" r="48" fill="#060b1c" stroke="url(#accent)" stroke-width="10"/>
+  <path d="M372 332 V380 M348 356 H396" stroke="#5cd6ff" stroke-width="14" stroke-linecap="round"/>
+</svg>

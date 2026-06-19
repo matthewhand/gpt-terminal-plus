@@ -38,8 +38,32 @@ files:
 # prototype; revisit asar+unpack for a size-optimized release.
 asar: false
 
+# A single 512x512 PNG; electron-builder derives the per-platform icon sets
+# (.icns / .ico / hicolor) from it at build time.
+icon: build/icon.png
+
 linux:
   target:
     - AppImage
   category: Development
   synopsis: Secure multi-protocol execution platform with optional AI
+  icon: build/icon.png
+
+# macOS and Windows targets are configured but must be built on (or cross-built
+# from) their native toolchains — `dist:linux` only produces the AppImage here.
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+
+win:
+  target:
+    - nsis
+    - portable
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
