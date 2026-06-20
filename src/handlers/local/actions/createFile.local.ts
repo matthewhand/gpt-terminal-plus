@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import Debug from 'debug';
+import { expandHome } from '../../../utils/fileOpsRoot';
 import { getPresentWorkingDirectory } from '../../../utils/GlobalStateHelper';
 
 const debug = Debug('app:local:createFile');
@@ -19,10 +20,10 @@ export async function createFile(filePath: string, content: string, backup: bool
   let targetPath = filePath;
   if (!path.isAbsolute(filePath)) {
     const base = directory
-      ? path.resolve(projectRoot, directory)
+      ? path.resolve(projectRoot, expandHome(directory))
       : (process.env.NODE_CONFIG_DIR || getPresentWorkingDirectory() || projectRoot);
     // Intentionally do not wrap path resolution errors; tests expect raw errors here
-    targetPath = path.join(base, filePath);
+    targetPath = path.join(base, expandHome(filePath));
   }
 
   debug(`📂 createFile -> resolved path: ${targetPath}`);

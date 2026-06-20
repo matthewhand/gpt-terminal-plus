@@ -1,4 +1,20 @@
 import path from 'path';
+import os from 'os';
+
+/**
+ * Expand a leading `~` (or `~/`) to the current user's home directory.
+ *
+ * MCP tool calls and API requests are not shell-expanded, so a client passing
+ * `~/gpt-terminal-plus` would otherwise be resolved literally (e.g.
+ * `<projectRoot>/~/gpt-terminal-plus`). Returns the input unchanged when there
+ * is no leading tilde.
+ */
+export function expandHome(p?: string): string {
+  if (!p) return p as string;
+  if (p === '~') return os.homedir();
+  if (p.startsWith('~/') || p.startsWith('~\\')) return path.join(os.homedir(), p.slice(2));
+  return p;
+}
 
 /**
  * Root directory that local file operations (read/amend/update/changeDirectory)

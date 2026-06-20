@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { getFileOpsRoot } from '../../../utils/fileOpsRoot';
+import { getFileOpsRoot, expandHome } from '../../../utils/fileOpsRoot';
 import Debug from 'debug';
 import { FileReadResult } from '../../../types/FileReadResult';
 
@@ -27,8 +27,8 @@ export async function readFile(filePath: string, directory?: string, options?: {
     // Use project root instead of process.cwd() for consistent path resolution
     const projectRoot = path.resolve(__dirname, '../../../../');
     const allowedRoot = getFileOpsRoot();
-    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
-    const resolvedPath = path.resolve(baseDir, filePath);
+    const baseDir = directory ? path.resolve(projectRoot, expandHome(directory)) : projectRoot;
+    const resolvedPath = path.resolve(baseDir, expandHome(filePath));
 
     if (!resolvedPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to read outside workspace: ${resolvedPath}`);

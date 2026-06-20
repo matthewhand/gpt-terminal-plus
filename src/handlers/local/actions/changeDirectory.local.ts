@@ -1,5 +1,6 @@
 import path from 'path';
 import Debug from 'debug';
+import { expandHome } from '../../../utils/fileOpsRoot';
 
 const debug = Debug('app:local:changeDirectory');
 
@@ -10,7 +11,7 @@ export async function changeDirectory(directory: string, currentProjectDirectory
     }
 
     // Resolve the new directory relative to the current project directory
-    const newAbsolutePath = path.resolve(currentProjectDirectory, directory);
+    const newAbsolutePath = path.resolve(currentProjectDirectory, expandHome(directory));
 
     // In a real scenario, you would perform a check here to ensure the directory exists
     // and is accessible. For this mock, we'll assume it always succeeds.

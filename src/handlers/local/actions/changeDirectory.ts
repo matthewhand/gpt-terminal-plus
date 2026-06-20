@@ -1,6 +1,6 @@
 
 import path from 'path';
-import { getFileOpsRoot } from '../../../utils/fileOpsRoot';
+import { getFileOpsRoot, expandHome } from '../../../utils/fileOpsRoot';
 import fs from 'fs/promises';
 import Debug from 'debug';
 
@@ -15,8 +15,8 @@ export async function changeDirectory(directory: string, baseDir?: string): Prom
     // Use project root instead of process.cwd() for consistent path resolution
     const projectRoot = path.resolve(__dirname, '../../../../');
     const allowedRoot = getFileOpsRoot();
-    const base = baseDir ? path.resolve(projectRoot, baseDir) : projectRoot;
-    const resolvedPath = path.resolve(base, directory);
+    const base = baseDir ? path.resolve(projectRoot, expandHome(baseDir)) : projectRoot;
+    const resolvedPath = path.resolve(base, expandHome(directory));
 
     if (!resolvedPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to change to directory outside workspace: ${resolvedPath}`);

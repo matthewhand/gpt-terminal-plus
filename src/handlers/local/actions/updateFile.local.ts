@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { getFileOpsRoot } from '../../../utils/fileOpsRoot';
+import { getFileOpsRoot, expandHome } from '../../../utils/fileOpsRoot';
 import Debug from 'debug';
 
 const debug = Debug('app:local:updateFile');
@@ -24,8 +24,8 @@ export async function updateFile(
     // Use project root instead of process.cwd() for consistent path resolution
     const projectRoot = path.resolve(__dirname, '../../../../');
     const allowedRoot = getFileOpsRoot();
-    const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
-    const absPath = path.resolve(baseDir, filePath);
+    const baseDir = directory ? path.resolve(projectRoot, expandHome(directory)) : projectRoot;
+    const absPath = path.resolve(baseDir, expandHome(filePath));
 
     if (!absPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to update outside workspace: ${absPath}`);
