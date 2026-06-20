@@ -320,46 +320,6 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         }
       },
-      '/command/execute-llm': {
-        post: {
-          operationId: 'executeLlm',
-          tags: ['Commands'],
-          summary: 'Run an LLM plan or direct instruction',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    instructions: { type: 'string' },
-                    dryRun: { type: 'boolean' },
-                    stream: { type: 'boolean' },
-                  },
-                  required: ['instructions'],
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: 'LLM execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      plan: { type: 'object' },
-                      results: { type: 'array', items: { type: 'object' } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
 
       /** ----- File operation endpoints ----- */
       '/file/create': {

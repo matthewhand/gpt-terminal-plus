@@ -5,7 +5,7 @@ import { checkAuthToken } from '../middlewares/checkAuthToken';
 import testCommandRouter from './commandRoutes';
 
 /** --- Real command handlers for prod/dev --- */
-import { executeCommand, executeShell, executeCode, executeFile, executeLlm, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command';
+import { executeCommand, executeShell, executeCode, executeFile, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command';
 
 /** --- Shared route groups (present in repo) --- */
 import serverRoutes from './serverRoutes';
@@ -55,7 +55,6 @@ export function setupApiRouter(app: express.Application): void {
     cmd.post('/command/execute-python', executePython);
     // Deprecated/other routes
     cmd.post('/command/execute-file', executeFile);
-    cmd.post('/command/execute-llm', executeLlm);
     // Dynamic per-executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
     cmd.use('/command', executeDynamicRouter);
     app.use(cmd);

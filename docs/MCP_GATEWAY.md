@@ -55,7 +55,7 @@ Two auth layers:
   "port": 8815,
   "spec_url": "http://localhost:3100/openapi.json",
   "env": {
-    "TOOL_WHITELIST": "/command/execute-shell,/command/execute-llm,/command/executors,/server/list,/file/create,/file/read,/file/list,/file/update,/file/patch,/file/diff",
+    "TOOL_WHITELIST": "/command/execute-shell,/command/executors,/server/list,/file/create,/file/read,/file/list,/file/update,/file/patch,/file/diff",
     "API_KEY": "<the app's 64-char API_TOKEN>",
     "API_AUTH_TYPE": "Bearer",
     "SERVER_URL_OVERRIDE": "http://localhost:3100"
@@ -63,11 +63,11 @@ Two auth layers:
 }
 ```
 
-The whitelist yields **15 MCP tools** (prefix match expands `/command/executors`
+The whitelist yields **14 MCP tools** (prefix match expands `/command/executors`
 and the GET shims):
 
 `get_server_list`, `post_command_execute_shell`, `get_command_executors`,
-`post_command_executors_by_name_{toggle,test,update}`, `post_command_execute_llm`,
+`post_command_executors_by_name_{toggle,test,update}`,
 `post_file_create`, `post_file_list`, `get_file_list`, `post_file_read`,
 `get_file_read`, `post_file_update`, `post_file_diff`, `post_file_patch`.
 
@@ -78,7 +78,6 @@ The terminal-control essentials — keep the surface small and high-signal:
 | Tool | Why |
 |---|---|
 | `post_command_execute_shell` | Run shell commands on the active server (the core capability) |
-| `post_command_execute_llm` | Run an LLM plan / natural-language instruction |
 | `get_command_executors` | Discover available executors (bash, python, …) |
 | `get_server_list` | See which targets are registered |
 | `post_file_read` / `post_file_list` | Inspect files & directories |
@@ -121,7 +120,7 @@ systemctl is-active gpt-terminal-plus.service mcp-server@gpt-terminal-plus.servi
 # app spec is valid + complete
 curl -s localhost:3100/openapi.json -o /tmp/spec.json && npx -y @redocly/cli@latest lint /tmp/spec.json
 
-# backend lists 15 tools + calls get_server_list over MCP StreamableHTTP (:8815)
+# backend lists 14 tools + calls get_server_list over MCP StreamableHTTP (:8815)
 python3 deploy/verify-mcp-backend.py
 
 # public OAuth route is live and gated (no token -> 401)

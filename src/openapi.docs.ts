@@ -166,44 +166,6 @@
 
 /**
  * @openapi
- * /command/execute-llm:
- *   post:
- *     operationId: executeLlm
- *     summary: Run an LLM plan or direct instruction
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               instructions:
- *                 type: string
- *               dryRun:
- *                 type: boolean
- *               stream:
- *                 type: boolean
- *             required:
- *               - instructions
- *     responses:
- *       '200':
- *         description: LLM execution complete
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 plan:
- *                   type: object
- *                 results:
- *                   type: array
- *                   items:
- *                     type: object
- */
-/**
- * @openapi
  * /settings:
  *   get:
  *     operationId: getSettings

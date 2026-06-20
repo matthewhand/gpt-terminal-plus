@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { z } from "zod";
-import { changeDirectory, executeCommand, executeCode, executeLlm } from "../routes/command";
+import { changeDirectory, executeCommand, executeCode } from "../routes/command";
 import { createFile } from "../routes/file";
 import { LocalServerHandler } from "../handlers/local/LocalServerHandler";
 import { getSupportedModels, isSupportedModel } from "../common/models";
@@ -152,19 +152,6 @@ export const registerMcpTools = (server: McpServer) => {
     async () => {
       const selected = getSelectedModel();
       return { content: [{ type: "text", text: JSON.stringify({ selected }) }] };
-    }
-  );
-
-  // Execute LLM Tool
-  server.tool(
-    "command/execute-llm",
-    {
-      instructions: z.string(),
-      dryRun: z.boolean().optional()
-    },
-    async ({ instructions, dryRun }: { instructions: string, dryRun?: boolean }) => {
-      const result = await executeLlm({ body: { instructions, dryRun } } as any, {} as any);
-      return { content: [{ type: "text", text: JSON.stringify(result) }] } as any;
     }
   );
 };

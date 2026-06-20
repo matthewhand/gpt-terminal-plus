@@ -24,74 +24,6 @@ describe('Command Routes', () => {
     app = makeApp();
   });
 
-  describe('POST /command/execute-llm', () => {
-    it('should handle dry run', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'test command', dryRun: true });
-
-      expect(response.status).toBe(200);
-      expect(response.body.plan).toBeDefined();
-      expect(response.body.results).toEqual([]);
-    });
-
-    it('should handle streaming response', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'test command', stream: true });
-
-      expect(response.status).toBe(200);
-      expect(response.headers['content-type']).toBe('text/event-stream');
-      expect(response.text).toContain('event: plan');
-      expect(response.text).toContain('event: step');
-      expect(response.text).toContain('event: done');
-    });
-
-    it('should handle interpreter engine', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'test', engine: 'llm:interpreter' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.runtime).toBe('llm:interpreter');
-      expect(response.body.result.stdout).toBe('Hello from interpreter');
-    });
-
-    it('should handle SSM commands', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'echo ssm hello' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.results[0].stdout).toBe('ssm hello');
-    });
-
-    it('should handle remote instructions', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'remote command' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.results[0].note).toBe('remote');
-    });
-
-    it('should handle failure cases', async () => {
-      const response = await request(app)
-        .post('/command/execute-llm')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ instructions: 'fail command' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.results[0].error).toBe(true);
-      expect(response.body.aiAnalysis).toBeDefined();
-    });
-  });
-
   describe('POST /command/diff', () => {
     it('should return 400 for missing filePath', async () => {
       const response = await request(app)
@@ -206,8 +138,8 @@ describe('Command Routes', () => {
   describe('authentication', () => {
     it('should require authentication for command routes', async () => {
       const response = await request(app)
-        .post('/command/execute-llm')
-        .send({ instructions: 'test' });
+        .post('/command/execute-shell')
+        .send({ command: 'test' });
 
       expect(response.status).toBe(401);
     });

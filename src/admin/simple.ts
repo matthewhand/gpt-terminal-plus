@@ -121,14 +121,6 @@ export function mountSimpleAdmin(app: Application): void {
             
             <div class="form-group">
                 <label>
-                    <input type="checkbox" id="llmEnabled" ${settingsStore.getSettings().features.executeLlm.enabled ? 'checked' : ''} />
-                    Enable LLM Delegation
-                </label>
-                <small>⚠️ Requires Shell Execution (uses shell commands internally)</small>
-            </div>
-            
-            <div class="form-group">
-                <label>
                     <input type="checkbox" id="sessionsEnabled" disabled />
                     Enable Persistent Sessions
                 </label>
@@ -177,14 +169,7 @@ export function mountSimpleAdmin(app: Application): void {
             e.preventDefault();
             
             const shellEnabled = document.getElementById('shellEnabled').checked;
-            const llmEnabled = document.getElementById('llmEnabled').checked;
-            
-            // Validate dependencies
-            if (llmEnabled && !shellEnabled) {
-                alert('❌ LLM Delegation requires Shell Execution to be enabled (LLM uses shell commands internally)');
-                return;
-            }
-            
+
             const settings = {
                 app: {
                     corsOrigins: document.getElementById('corsOrigins').value.split(',').map(s => s.trim())
@@ -192,8 +177,6 @@ export function mountSimpleAdmin(app: Application): void {
                 features: {
                     executeShell: { enabled: shellEnabled },
                     executeCode: { enabled: document.getElementById('codeEnabled').checked },
-                    executeLlm: { enabled: llmEnabled },
-
                 },
                 llm: {
                     provider: document.getElementById('llmProvider').value

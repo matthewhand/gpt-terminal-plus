@@ -22,8 +22,7 @@ let mcpConfig = {
     'server/set': true,
     'model/list': true,
     'model/select': true,
-    'model/current': true,
-    'command/execute-llm': true
+    'model/current': true
   }
 };
 
