@@ -25,11 +25,12 @@ export async function readFile(filePath: string, directory?: string, options?: {
     }
 
     // Use project root instead of process.cwd() for consistent path resolution
-    const projectRoot = getFileOpsRoot();
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const allowedRoot = getFileOpsRoot();
     const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
     const resolvedPath = path.resolve(baseDir, filePath);
 
-    if (!resolvedPath.startsWith(baseDir)) {
+    if (!resolvedPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to read outside workspace: ${resolvedPath}`);
     }
 

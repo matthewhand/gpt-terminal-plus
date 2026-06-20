@@ -13,11 +13,12 @@ export async function changeDirectory(directory: string, baseDir?: string): Prom
     }
 
     // Use project root instead of process.cwd() for consistent path resolution
-    const projectRoot = getFileOpsRoot();
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const allowedRoot = getFileOpsRoot();
     const base = baseDir ? path.resolve(projectRoot, baseDir) : projectRoot;
     const resolvedPath = path.resolve(base, directory);
 
-    if (!resolvedPath.startsWith(base)) {
+    if (!resolvedPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to change to directory outside workspace: ${resolvedPath}`);
     }
 

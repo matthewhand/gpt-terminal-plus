@@ -17,11 +17,12 @@ export async function amendFile(
     }
 
     // Use project root instead of process.cwd() for consistent path resolution
-    const projectRoot = getFileOpsRoot();
+    const projectRoot = path.resolve(__dirname, '../../../../');
+    const allowedRoot = getFileOpsRoot();
     const baseDir = directory ? path.resolve(projectRoot, directory) : projectRoot;
     const absPath = path.resolve(baseDir, filePath);
 
-    if (!absPath.startsWith(baseDir)) {
+    if (!absPath.startsWith(allowedRoot)) {
       throw new Error(`Refusing to amend outside workspace: ${absPath}`);
     }
 
