@@ -1,0 +1,24 @@
+[Unit]
+# gpt-terminal-plus HTTP API — the OpenAPI upstream that mcp-gateway's
+# mcp-openapi-proxy (server "gpt-terminal-plus") fetches and proxies.
+Description=gpt-terminal-plus API (OpenAPI upstream for mcp-gateway)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Runs shell/code execution endpoints — keep it as the unprivileged owner, never root.
+User=chatgpt
+Group=chatgpt
+WorkingDirectory=/mnt/models/projects/dormant/gpt-terminal-plus
+# .env in WorkingDirectory supplies API_TOKEN, NODE_ENV, etc. (loaded via dotenv).
+Environment=PORT=3100
+Environment=NODE_CONFIG_DIR=/mnt/models/projects/dormant/gpt-terminal-plus/config/
+ExecStart=/usr/local/bin/node --max-old-space-size=256 dist/index.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/home/chatgpt/.local/state/mcp-gateway/gpt-terminal-plus.log
+StandardError=append:/home/chatgpt/.local/state/mcp-gateway/gpt-terminal-plus.log
+
+[Install]
+WantedBy=multi-user.target
