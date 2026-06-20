@@ -230,6 +230,35 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
+      '/server/set': {
+        post: {
+          operationId: 'serverSet',
+          tags: ['Servers'],
+          summary: 'Select the active server (target) for subsequent commands and file ops',
+          description: 'Sets the active server by hostname (one of those returned by /server/list, e.g. "localhost", "worker1", "worker2"). Subsequent execute-shell/code and file operations run against the selected server. Note: the selection is global runtime state shared across clients.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { hostname: { type: 'string', description: 'Target server hostname from /server/list' } },
+                  required: ['hostname'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Server selected',
+              content: { 'application/json': { schema: { type: 'object', properties: { selected: { type: 'string' } }, required: ['selected'] } } },
+            },
+            400: { description: 'hostname is required' },
+            404: { description: 'Server not found' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
       ...buildExecutorPaths(cfg),
       
       '/command/executors': {

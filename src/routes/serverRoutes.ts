@@ -3,6 +3,7 @@ import Debug from 'debug';
 import { checkAuthToken } from '../middlewares/checkAuthToken';
 import { listRegisteredServers } from '../managers/serverRegistry';
 import { registerServer, removeServer } from './server';
+import { setSelectedServer } from '../utils/GlobalStateHelper';
 
 const debug = Debug('app:serverRoutes');
 const router = express.Router();
@@ -45,8 +46,15 @@ router.post('/set', (req: Request, res: Response) => {
   if (!hostname || typeof hostname !== 'string' || hostname.trim() === '') {
     return res.status(400).json({ error: 'hostname is required' });
   }
-  // In a full implementation we'd mark selected server; here just echo
-  return res.status(200).json({ selected: hostname });
+  const name = hostname.trim();
+  // Only allow selecting a server that is actually registered.
+  const known = listRegisteredServers().some((s: any) => s.hostname === name);
+  if (!known) {
+    return res.status(404).json({ error: `Server not found: ${name}` });
+  }
+  setSelectedServer(name);
+  debug(`selected server set to ${name}`);
+  return res.status(200).json({ selected: name });
 });
 
 export default router;
