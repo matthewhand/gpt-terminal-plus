@@ -1,5 +1,6 @@
 
 import path from 'path';
+import { getFileOpsRoot } from '../../../utils/fileOpsRoot';
 import fs from 'fs/promises';
 import Debug from 'debug';
 
@@ -12,7 +13,7 @@ export async function changeDirectory(directory: string, baseDir?: string): Prom
     }
 
     // Use project root instead of process.cwd() for consistent path resolution
-    const projectRoot = path.resolve(__dirname, '../../../../');
+    const projectRoot = getFileOpsRoot();
     const base = baseDir ? path.resolve(projectRoot, baseDir) : projectRoot;
     const resolvedPath = path.resolve(base, directory);
 
