@@ -129,20 +129,23 @@ set_predefined_secrets() {
       exit 1
     fi
   fi
-  if [[ -n "$NODE_ENV" ]]; then
-    flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
-    if [ $? -ne 0 ]; then
-      echo "Error: Failed to set NODE_ENV."
-      exit 1
-    fi
-  fi
-  if [[ -n "$DEBUG" ]]; then
-    flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
-    if [ $? -ne 0 ]; then
-      echo "Error: Failed to set DEBUG."
-      exit 1
-    fi
-  fi
+
+#  if [[ -n "$NODE_ENV" ]]; then
+#    flyctl secrets set NODE_ENV="$NODE_ENV" -a "$FLY_APP_NAME"
+#    if [ $? -ne 0 ]; then
+#      echo "Error: Failed to set NODE_ENV."
+#      exit 1
+#    fi
+#  fi
+
+#  if [[ -n "$DEBUG" ]]; then
+#    flyctl secrets set DEBUG="$DEBUG" -a "$FLY_APP_NAME"
+#    if [ $? -ne 0 ]; then
+#      echo "Error: Failed to set DEBUG."
+#      exit 1
+#    fi
+#  fi
+
   if [[ -n "$NODE_CONFIG_DIR" ]]; then
     flyctl secrets set NODE_CONFIG_DIR="$NODE_CONFIG_DIR" -a "$FLY_APP_NAME"
     if [ $? -ne 0 ]; then
