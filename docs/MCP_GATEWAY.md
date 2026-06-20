@@ -91,8 +91,12 @@ The terminal-control essentials — keep the surface small and high-signal:
 
 ## Activation (requires sudo — one command)
 
-The manifest entry and the spec changes are in place, but the privileged steps
-(systemd units + nginx edge route + reload) must be applied once:
+> Status on this host: **LIVE** — `gpt-terminal-plus.service` and
+> `mcp-server@gpt-terminal-plus.service` are enabled + active, the nginx route is
+> in place, and the OAuth endpoint returns 401 without a token. Re-run the script
+> below to re-apply (idempotent) or to deploy on a fresh host.
+
+The privileged steps (systemd units + nginx edge route + reload) are applied by:
 
 ```bash
 sudo bash /mnt/models/projects/dormant/gpt-terminal-plus/deploy/register-mcp-gateway.sh
@@ -111,9 +115,17 @@ That script (idempotent) does exactly three things:
 ## Verifying
 
 ```bash
-# app spec is valid + complete
-curl -s localhost:3100/openapi.json | npx -y @redocly/cli@latest lint /dev/stdin
+# both services healthy
+systemctl is-active gpt-terminal-plus.service mcp-server@gpt-terminal-plus.service
 
-# backend lists tools over MCP (StreamableHTTP)
-python3 /tmp/mcp_http.py        # helper used during setup; lists 15 tools + calls get_server_list
+# app spec is valid + complete
+curl -s localhost:3100/openapi.json -o /tmp/spec.json && npx -y @redocly/cli@latest lint /tmp/spec.json
+
+# backend lists 15 tools + calls get_server_list over MCP StreamableHTTP (:8815)
+python3 deploy/verify-mcp-backend.py
+
+# public OAuth route is live and gated (no token -> 401)
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  https://mcp.teamstinky.duckdns.org/oauth/ex/gpt-terminal-plus/mcp \
+  -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
 ```
