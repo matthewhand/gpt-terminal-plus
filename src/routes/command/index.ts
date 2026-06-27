@@ -7,6 +7,7 @@ import { convictConfig, persistConfig } from "../../config/convictConfig.js";
 import { getExecuteTimeout } from "../../utils/timeout.js";
 import os from "os";
 import path from "path";
+import { LocalServerHandler } from "../../handlers/local/LocalServerHandler.js";
 import { promises as fsp } from "fs";
 import shellEscape from "shell-escape";
 import { analyzeError } from "../../llm/errorAdvisor.js";
@@ -97,7 +98,7 @@ export const executeCode = async (req: Request, res: Response) => {
     try {
       server = getServerHandler(req);
     } catch {
-      const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
+      
       server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
       (req as any).server = server;
     }
@@ -508,7 +509,7 @@ export const executeShell = async (req: Request, res: Response) => {
       server = getServerHandler(req);
     } catch {
       // Fallback to local server handler if none attached
-      const { LocalServerHandler } = require('../../handlers/local/LocalServerHandler');
+      
       server = new LocalServerHandler({ protocol: 'local', hostname: 'localhost', code: false } as any);
       (req as any).server = server;
     }
@@ -653,7 +654,7 @@ executorsRouter.post('/executors/:name/toggle', async (req: Request, res: Respon
 executorsRouter.post('/executors/:name/update', (req: Request, res: Response) => {
   const { name } = req.params;
   const { cmd, args } = req.body || {};
-  const { convictConfig } = require('../../config/convictConfig');
+  
   const cfg = convictConfig();
   try {
     let touched = false;

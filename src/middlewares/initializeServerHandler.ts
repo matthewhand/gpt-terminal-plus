@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { getSelectedServer } from '../utils/GlobalStateHelper.js';
+import { getSelectedServer, setSelectedServer } from '../utils/GlobalStateHelper.js';
 import { LocalServerHandler } from '../handlers/local/LocalServerHandler.js';
 import { ServerManager } from '../managers/ServerManager.js';
 import { ServerHandler } from '../types/ServerHandler.js';
+import { listRegisteredServers } from '../managers/serverRegistry.js';
 import type { ServerRequest } from '../types/ServerRequest.js';
 import Debug from 'debug';
 
@@ -38,7 +39,7 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
       
       // Try to auto-select localhost as fallback
       try {
-        const { listRegisteredServers } = require('../managers/serverRegistry');
+        
         const servers = listRegisteredServers();
         // Prioritize localhost server with directory '.' first
         let localhostServer = servers.find((s: any) => 
@@ -53,7 +54,7 @@ export const initializeServerHandler = (req: Request, res: Response, next: NextF
         }
         
         if (localhostServer) {
-          const { setSelectedServer } = require('../utils/GlobalStateHelper');
+          
           setSelectedServer(localhostServer.hostname);
           selectedServer = localhostServer.hostname;
           debug('Auto-selected localhost server: ' + selectedServer);

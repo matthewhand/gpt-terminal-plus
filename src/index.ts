@@ -73,7 +73,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(null, swaggerOptions));
   // (duplicate OpenAPI/Swagger mounts removed)
 
  if (process.env.USE_MCP === "true") {
-  const { registerMcpTools } = require("./modules/mcpTools");
+  const { registerMcpTools } = await import("./modules/mcpTools.js");
   const mcpServer = new McpServer({ name: "GPT Terminal Plus", version: "1.0.0" });
   
   // Register all MCP tools that wrap Express routes
