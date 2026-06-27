@@ -8,6 +8,7 @@ import { SearchResult, SearchParams } from '../../types/ServerHandler.js';
 import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh.js';
 import Debug from 'debug';
 import fs from 'fs';
+import { Client as SSHClient } from 'ssh2';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks
 // import { Client } from 'ssh2';
 
@@ -30,7 +31,6 @@ export class SshServerHandler extends AbstractServerHandler {
     async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
         sshServerDebug(`Executing SSH command: ${command}`);
         return new Promise<ExecutionResult>((resolve) => {
-            const { Client: SSHClient } = require('ssh2');
             const conn = new SSHClient();
             const key = this.sshConfig.privateKeyPath ? fs.readFileSync(this.sshConfig.privateKeyPath, 'utf8') : undefined;
             const opts: any = {

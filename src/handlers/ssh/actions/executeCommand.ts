@@ -1,6 +1,7 @@
 import { Client } from 'ssh2';
 import { SshHostConfig } from '../../../types/ServerConfig.js'; // Updated to SshHostConfig
 import { escapeSpecialChars } from '../../../common/escapeSpecialChars.js';
+import { convictConfig } from '../../../config/convictConfig.js';
 import Debug from 'debug';
 
 const debug = Debug('app:executeCommand');
@@ -51,7 +52,7 @@ export async function executeCommand(client: Client, config: SshHostConfig, comm
         let stderr = '';
         let truncated = false;
         let terminated = false;
-        const maxOut = (() => { try { return require('../../../config/convictConfig').convictConfig().get('limits.maxOutputChars') as number; } catch { return 200000; } })();
+        const maxOut = (() => { try { return convictConfig().get('limits.maxOutputChars') as number; } catch { return 200000; } })();
         const execTimeout = setTimeout(() => {
             debug('Timeout reached for command: ' + escapedCommand);
             resolve({ stdout, stderr, timeout: true, truncated, terminated });
