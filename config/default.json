@@ -1,0 +1,13 @@
+{
+  "port": 3100,
+  "logLevel": "info",
+  "maxExecutionTime": 30000,
+  "allowedCommands": ["*"],
+  "auth": {
+    "apiToken": "local-development-token"
+  },
+  "limits": {
+    "maxConcurrentExecutions": 5,
+    "maxOutputSize": 1048576
+  }
+}

@@ -4,6 +4,8 @@ dotenv.config();
 
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import http from "http";
 import https from "https";
 import express from "express";
@@ -23,11 +25,15 @@ import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/c
 import { registerServersFromConfig } from './bootstrap/serverLoader.js';
 import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown.js';
 
-import './modules/ngrok';
+import './modules/ngrok.js';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
 export const app = express();
+
+// Set up ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Validate environment variables
 validateEnvironmentVariables();
@@ -190,8 +196,8 @@ const main = async (): Promise<void> => {
 // Export start to allow programmatic boot
 export const start = main;
 
-// Only auto-start when executed directly
-if (require.main === module) {
+// Only auto-start when executed directly (ES module equivalent of require.main === module)
+if (process.argv[1] === __filename) {
   main().catch((err) => {
     console.error("Fatal startup error:", err);
     process.exit(1);

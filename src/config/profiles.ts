@@ -56,6 +56,12 @@ const DEFAULTS = {
   }
 };
 
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const CONFIG_DIR = process.env.NODE_CONFIG_DIR || path.resolve(__dirname, '..', '..', 'config');
 const PRIMARY_PATH = path.join(CONFIG_DIR, 'profiles.yaml');
 const FALLBACK_SIMPLE_PATH = path.join(CONFIG_DIR, 'profiles.simple.yaml');
