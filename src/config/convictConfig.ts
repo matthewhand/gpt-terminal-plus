@@ -441,6 +441,8 @@ export const convictConfig = () => {
   }
 
   // Auto-detect common executors on first init (skip during tests to keep determinism)
+  // DISABLED: executor auto-detect causing ES module issues
+  /*
   try {
     if (process.env.NODE_ENV !== 'test') {
       const { detectSystemExecutors } = require('../utils/executorDetect');
@@ -482,6 +484,7 @@ export const convictConfig = () => {
     // Detection failures should never crash boot
     console.warn('Executor auto-detect skipped due to error:', (e as Error)?.message);
   }
+  */
   if (useCache) __singletonCfg = cfg;
 
   // Env var compatibility shims for tests and legacy names

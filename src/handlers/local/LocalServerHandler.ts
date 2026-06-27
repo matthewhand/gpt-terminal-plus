@@ -6,6 +6,7 @@ import { PaginatedResponse } from '../../types/PaginatedResponse.js';
 import { ListParams } from '../../types/ListParams.js';
 import { FileReadResult } from '../../types/FileReadResult.js';
 import { SearchResult, SearchParams } from '../../types/ServerHandler.js';
+import { spawn, StdioOptions } from 'child_process';
 
 import { executeLocalCode as executeCodeAction } from './actions/executeCode.js';
 import { createFile as createFileAction } from './actions/createFile.local.js';
@@ -28,11 +29,9 @@ export class LocalServerHandler extends AbstractServerHandler {
 
   async executeCommand(command: string, timeout?: number, directory?: string): Promise<ExecutionResult> {
     const cwd = directory || getPresentWorkingDirectory() || this.serverConfig.directory || process.cwd();
-    const childProc = require('child_process');
-    const spawn = childProc.spawn as (cmd: string, args: string[], opts: any) => any;
     const shell = '/bin/bash';
     const args = ['-lc', command];
-    const opts = { cwd, env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] };
+    const opts = { cwd, env: { ...process.env }, stdio: ['ignore', 'pipe', 'pipe'] as StdioOptions };
     return await new Promise<ExecutionResult>((resolve) => {
       const child = spawn(shell, args, opts);
       let stdout = '';

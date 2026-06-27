@@ -1,4 +1,5 @@
 // child_process is required lazily to honor Jest mocks in some tests
+import { exec, execFile } from 'child_process';
 import { convictConfig } from '../../../config/convictConfig.js';
 import debug from 'debug';
 
@@ -70,7 +71,6 @@ export async function executeCommand(
 
   // Execute the command and return the result
   return new Promise((resolve, reject) => {
-    const { exec, execFile } = require('child_process');
     if (useExecFile) {
       execFile(command, args, execOptions, (error: any, stdout: string, stderr: string) => {
         executeCommandDebug(`Command executed with execFile. stdout: ${stdout}, stderr: ${stderr}`);
