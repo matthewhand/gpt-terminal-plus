@@ -1,4 +1,4 @@
-import { executeFileOperation } from '../../engines/fileEngine';
+import { executeFileOperation } from '../../engines/fileEngine.js';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';

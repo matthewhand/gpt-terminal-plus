@@ -5,9 +5,9 @@ import helmet from 'helmet';
 import compression from 'compression';
 import bodyParser from 'body-parser';
 import Debug from 'debug';
-import { errorHandler } from './errorHandler';
-import { generalRateLimit } from './rateLimit';
-import { logMode } from './logMode';
+import { errorHandler } from './errorHandler.js';
+import { generalRateLimit } from './rateLimit.js';
+import { logMode } from './logMode.js';
 
 const debug = Debug('app:setupMiddlewares');
 

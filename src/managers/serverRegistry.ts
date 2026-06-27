@@ -1,4 +1,4 @@
-import { ServerConfig } from '../types/ServerConfig';
+import { ServerConfig } from '../types/ServerConfig.js';
 
 export interface ServerInfo extends ServerConfig {
   registeredAt: string;

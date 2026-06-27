@@ -1,4 +1,4 @@
-import { generateApiKey, generateSecureKey, validateKeyStrength } from '../../utils/keyGenerator';
+import { generateApiKey, generateSecureKey, validateKeyStrength } from '../../utils/keyGenerator.js';
 
 describe('Key Generator', () => {
   describe('generateApiKey', () => {

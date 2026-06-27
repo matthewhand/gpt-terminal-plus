@@ -1,4 +1,4 @@
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig } from '../config/convictConfig.js';
 
 class CostTracker {
   private totalCost = 0;

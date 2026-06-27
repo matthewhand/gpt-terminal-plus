@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { SshHostConfig } from '../types/ServerConfig'; // Corrected import path
+import { SshHostConfig } from '../types/ServerConfig.js'; // Corrected import path
 import Debug from 'debug';
 
 const debug = Debug('app:ssh-connection-manager');

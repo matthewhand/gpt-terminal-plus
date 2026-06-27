@@ -1,4 +1,4 @@
-import { generalRateLimit, strictRateLimit, chatRateLimit, fileRateLimit } from '../../middlewares/rateLimit';
+import { generalRateLimit, strictRateLimit, chatRateLimit, fileRateLimit } from '../../middlewares/rateLimit.js';
 import { Request, Response } from 'express';
 
 describe('Rate Limit Middlewares', () => {

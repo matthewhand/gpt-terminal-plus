@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
 
 const router = express.Router();
 

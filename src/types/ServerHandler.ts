@@ -1,10 +1,10 @@
 
-import { PaginatedResponse } from './PaginatedResponse';
-import { SystemInfo } from './SystemInfo';
-import { ServerConfig } from './ServerConfig';
-import { ExecutionResult } from './ExecutionResult';
-import { FileReadResult } from './FileReadResult';
-import { ListParams } from './ListParams';
+import { PaginatedResponse } from './PaginatedResponse.js';
+import { SystemInfo } from './SystemInfo.js';
+import { ServerConfig } from './ServerConfig.js';
+import { ExecutionResult } from './ExecutionResult.js';
+import { FileReadResult } from './FileReadResult.js';
+import { ListParams } from './ListParams.js';
 
 export interface SearchResult {
   filePath: string;

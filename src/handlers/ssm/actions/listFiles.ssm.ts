@@ -1,6 +1,6 @@
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
 import Debug from "debug";
-import { ListParams } from '../../../types/ListParams';
+import { ListParams } from '../../../types/ListParams.js';
 
 const debug = Debug("app:ssmUtils");
 

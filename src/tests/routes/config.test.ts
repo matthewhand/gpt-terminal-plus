@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { configRouter as configRoutes } from '../../routes/core';
+import { configRouter as configRoutes } from '../../routes/core.js';
 
 // Always bypass auth for these route tests
 jest.mock('../../middlewares/checkAuthToken', () => ({

@@ -2,7 +2,7 @@ import os from 'os';
 import Debug from 'debug';
 import { promisify } from 'util';
 import { exec as _exec } from 'child_process';
-import { SystemInfo } from '../../../types/SystemInfo';
+import { SystemInfo } from '../../../types/SystemInfo.js';
 
 const debug = Debug('app:local:getSystemInfo');
 

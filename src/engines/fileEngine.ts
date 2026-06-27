@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import * as pathModule from 'path';
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig } from '../config/convictConfig.js';
 
 export interface FileOperation {
   type: 'read' | 'write' | 'delete' | 'list' | 'mkdir';

@@ -1,23 +1,23 @@
 import express from 'express';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
 
 /** --- Test harness (mocks) — used ONLY when NODE_ENV==='test' --- */
-import testCommandRouter from './commandRoutes';
+import testCommandRouter from './commandRoutes.js';
 
 /** --- Real command handlers for prod/dev --- */
-import { executeCommand, executeShell, executeCode, executeFile, executeLlm, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command';
+import { executeCommand, executeShell, executeCode, executeFile, executeBash, executePython, executorsRouter, executeDynamicRouter } from './command.js';
 
 /** --- Shared route groups (present in repo) --- */
-import serverRoutes from './serverRoutes';
-import activityRoutes from './activityRoutes';
-import fileRoutes from './fileRoutes';
-import chatRoutes from './chatRoutes';
-import llmConsoleRoutes from './llmConsoleRoutes';
-import settingsRoutes from './settingsRoutes';
-import endpointStatusRouter from './endpointStatusRouter';
-import { configRouter, healthRouter } from './core';
-import { securityLogger } from '../middlewares/securityLogger';
-import { rateLimiters } from '../middlewares/advancedRateLimit';
+import serverRoutes from './serverRoutes.js';
+import activityRoutes from './activityRoutes.js';
+import fileRoutes from './fileRoutes.js';
+import chatRoutes from './chatRoutes.js';
+import llmConsoleRoutes from './llmConsoleRoutes.js';
+import settingsRoutes from './settingsRoutes.js';
+import endpointStatusRouter from './endpointStatusRouter.js';
+import { configRouter, healthRouter } from './core.js';
+import { securityLogger } from '../middlewares/securityLogger.js';
+import { rateLimiters } from '../middlewares/advancedRateLimit.js';
 
 /** Optional route groups (exist in this repo tree used by tests) */
 let setupRoutes: express.Router | null = null;
@@ -55,7 +55,6 @@ export function setupApiRouter(app: express.Application): void {
     cmd.post('/command/execute-python', executePython);
     // Deprecated/other routes
     cmd.post('/command/execute-file', executeFile);
-    cmd.post('/command/execute-llm', executeLlm);
     // Dynamic per-executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
     cmd.use('/command', executeDynamicRouter);
     app.use(cmd);

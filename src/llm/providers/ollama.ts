@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { ChatMessage, ChatRequest, ChatResponse } from '../types';
+import { ChatMessage, ChatRequest, ChatResponse } from '../types.js';
 import http from 'http';
 import https from 'https';
 import { URL } from 'url';

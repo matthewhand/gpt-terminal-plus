@@ -1,4 +1,4 @@
-import { ServerHandler } from "../utils/ServerHandler";
+import { ServerHandler } from "../utils/ServerHandler.js";
 
 declare global {
   namespace Express {

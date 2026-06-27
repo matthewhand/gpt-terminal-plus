@@ -1,2 +1,2 @@
 // Re-export from index.ts
-export { executeFile } from './index';
+export { executeFile } from './index.js';

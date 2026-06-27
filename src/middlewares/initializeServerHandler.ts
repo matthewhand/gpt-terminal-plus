@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { getSelectedServer } from '../utils/GlobalStateHelper';
-import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import { ServerManager } from '../managers/ServerManager';
-import { ServerHandler } from '../types/ServerHandler';
-import type { ServerRequest } from '../types/ServerRequest';
+import { getSelectedServer } from '../utils/GlobalStateHelper.js';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler.js';
+import { ServerManager } from '../managers/ServerManager.js';
+import { ServerHandler } from '../types/ServerHandler.js';
+import type { ServerRequest } from '../types/ServerRequest.js';
 import Debug from 'debug';
 
 const debug = Debug('app:middlewares:initializeServerHandler');

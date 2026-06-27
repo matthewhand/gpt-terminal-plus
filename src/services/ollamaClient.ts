@@ -1,4 +1,4 @@
-import { llmConfig } from '../common/llmConfig';
+import { llmConfig } from '../common/llmConfig.js';
 
 function doFetch(url: string, opts: any) {
   return fetch(url, opts);

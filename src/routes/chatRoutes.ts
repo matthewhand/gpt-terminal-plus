@@ -1,11 +1,11 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSelectedModel } from '../utils/GlobalStateHelper';
-import { chat, chatStream } from '../llm';
-import { ChatMessage } from '../llm/types';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { chatRateLimit } from '../middlewares/rateLimit';
-import { isLlmEnabled } from '../llm/llmClient';
+import { getSelectedModel } from '../utils/GlobalStateHelper.js';
+import { chat, chatStream } from '../llm.js';
+import { ChatMessage } from '../llm/types.js';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { chatRateLimit } from '../middlewares/rateLimit.js';
+import { isLlmEnabled } from '../llm/llmClient.js';
 
 const debug = Debug('app:chatRoutes');
 const router = express.Router();

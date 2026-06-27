@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { convictConfig } from '../config/convictConfig';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { convictConfig } from '../config/convictConfig.js';
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 import { Client } from 'ssh2';
-import { SystemInfo } from '../../../types/SystemInfo';
+import { SystemInfo } from '../../../types/SystemInfo.js';
 import Debug from 'debug';
-import { escapeSpecialChars } from '../../../common/escapeSpecialChars';
+import { escapeSpecialChars } from '../../../common/escapeSpecialChars.js';
 
 const debug = Debug('app:getSystemInfo');
 

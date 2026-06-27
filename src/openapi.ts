@@ -2,8 +2,8 @@ import express, { Request } from 'express';
 import { stringify as yamlStringify } from 'yaml';
 // import fs from 'fs';
 // import path from 'path';
-import { convictConfig } from './config/convictConfig';
-import { listExecutors } from './utils/executors';
+import { convictConfig } from './config/convictConfig.js';
+import { listExecutors } from './utils/executors.js';
 
 function buildExecutorPaths(cfg: any) {
   const execMode = (cfg as any).get('executors.exposureMode') as string;
@@ -14,7 +14,9 @@ function buildExecutorPaths(cfg: any) {
     paths['/command/execute-shell'] = {
       post: {
         operationId: 'executeShell',
+        tags: ['Commands'],
         summary: 'Execute a command using configured shell (generic)',
+        description: 'Runs a single command through the configured shell on the active server and returns stdout, stderr, and exit code.',
         requestBody: {
           required: true,
           content: {
@@ -56,6 +58,7 @@ function buildExecutorPaths(cfg: any) {
         paths[pathKey] = {
           post: {
             operationId: `execute_${ex.name}`,
+            tags: ['Commands'],
             summary: `Execute a ${ex.name} command`,
             requestBody: {
               required: true,
@@ -93,6 +96,7 @@ function buildExecutorPaths(cfg: any) {
         paths[pathKey] = {
           post: {
             operationId: `execute_${ex.name}`,
+            tags: ['Commands'],
             summary: `Execute a ${ex.name} snippet`,
             requestBody: {
               required: true,
@@ -161,10 +165,28 @@ export function buildSpec(req?: Request) {
     openapi: '3.0.3',
     info: {
       title: 'gpt-terminal-plus API',
-      version: '0.1.0',
-      description: 'Runtime OpenAPI surface for listing servers and executing commands/code/LLM.',
+      version: '1.0.0',
+      description: [
+        'Remote terminal, file, and LLM-execution API for gpt-terminal-plus.',
+        '',
+        'Exposes endpoints to run shell commands and code, manage files, list',
+        'registered servers, and drive LLM-planned execution. Designed to be',
+        'consumed by OpenAPI clients and by mcp-openapi-proxy / mcp-gateway as an',
+        'MCP tool server.',
+        '',
+        'All endpoints require a Bearer API token (`Authorization: Bearer <API_TOKEN>`).',
+      ].join('\n'),
+      license: { name: 'MIT', url: 'https://opensource.org/licenses/MIT' },
     },
     servers: [{ url: baseUrl, description: 'Runtime base URL' }],
+    tags: [
+      { name: 'Commands', description: 'Execute shell commands, code, and LLM-planned actions' },
+      { name: 'Files', description: 'Create, read, list, edit, and patch files on the active server' },
+      { name: 'Servers', description: 'List and select registered execution targets' },
+      { name: 'Activity', description: 'Inspect recorded execution/activity sessions' },
+      { name: 'Settings', description: 'Read redacted runtime configuration' },
+      { name: 'Config', description: 'Toggle features and persist configuration' },
+    ],
     components: {
       securitySchemes: {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'API_TOKEN' },
@@ -187,6 +209,7 @@ export function buildSpec(req?: Request) {
       '/server/list': {
         get: {
           operationId: 'serverList',
+          tags: ['Servers'],
           summary: 'List servers for this API token',
           responses: {
             200: {
@@ -207,11 +230,41 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         },
       },
+      '/server/set': {
+        post: {
+          operationId: 'serverSet',
+          tags: ['Servers'],
+          summary: 'Select the active server (target) for subsequent commands and file ops',
+          description: 'Sets the active server by hostname (one of those returned by /server/list, e.g. "localhost", "worker1", "worker2"). Subsequent execute-shell/code and file operations run against the selected server. Note: the selection is global runtime state shared across clients.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: { hostname: { type: 'string', description: 'Target server hostname from /server/list' } },
+                  required: ['hostname'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'Server selected',
+              content: { 'application/json': { schema: { type: 'object', properties: { selected: { type: 'string' } }, required: ['selected'] } } },
+            },
+            400: { description: 'hostname is required' },
+            404: { description: 'Server not found' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
       ...buildExecutorPaths(cfg),
       
       '/command/executors': {
         get: {
           operationId: 'listExecutors',
+          tags: ['Commands'],
           summary: 'List available executors (bash, python, etc.)',
           responses: {
             200: {
@@ -247,6 +300,7 @@ export function buildSpec(req?: Request) {
       '/command/executors/{name}/toggle': {
         post: {
           operationId: 'toggleExecutor',
+          tags: ['Commands'],
           summary: 'Enable or disable an executor',
           parameters: [
             { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
@@ -266,6 +320,7 @@ export function buildSpec(req?: Request) {
       '/command/executors/{name}/test': {
         post: {
           operationId: 'testExecutor',
+          tags: ['Commands'],
           summary: 'Run a lightweight version command to validate executor',
           parameters: [
             { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
@@ -277,6 +332,7 @@ export function buildSpec(req?: Request) {
       '/command/executors/{name}/update': {
         post: {
           operationId: 'updateExecutor',
+          tags: ['Commands'],
           summary: 'Update executor command and args',
           parameters: [
             { name: 'name', in: 'path', required: true, schema: { type: 'string' } }
@@ -293,50 +349,12 @@ export function buildSpec(req?: Request) {
           security: [{ bearerAuth: [] as any[] }],
         }
       },
-      '/command/execute-llm': {
-        post: {
-          operationId: 'executeLlm',
-          summary: 'Run an LLM plan or direct instruction',
-          requestBody: {
-            required: true,
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    instructions: { type: 'string' },
-                    dryRun: { type: 'boolean' },
-                    stream: { type: 'boolean' },
-                  },
-                  required: ['instructions'],
-                },
-              },
-            },
-          },
-          responses: {
-            200: {
-              description: 'LLM execution complete',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'object',
-                    properties: {
-                      plan: { type: 'object' },
-                      results: { type: 'array', items: { type: 'object' } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          security: [{ bearerAuth: [] as any[] }],
-        },
-      },
 
       /** ----- File operation endpoints ----- */
       '/file/create': {
         post: {
           operationId: 'fileCreate',
+          tags: ['Files'],
           summary: 'Create or replace a file on the active server',
           'x-openai-isConsequential': filesConsequential,
           requestBody: {
@@ -365,6 +383,7 @@ export function buildSpec(req?: Request) {
       '/file/list': {
         post: {
           operationId: 'fileList',
+          tags: ['Files'],
           summary: 'List files in a directory on the active server',
           requestBody: {
             required: false,
@@ -413,6 +432,7 @@ export function buildSpec(req?: Request) {
         },
         get: {
           operationId: 'fileListGet',
+          tags: ['Files'],
           summary: 'List files (GET shim)',
           security: [{ bearerAuth: [] as any[] }],
           parameters: [
@@ -421,9 +441,68 @@ export function buildSpec(req?: Request) {
           responses: { 200: { description: 'OK' } },
         },
       },
+      '/file/read': {
+        post: {
+          operationId: 'fileRead',
+          tags: ['Files'],
+          summary: 'Read a file (optionally a line range) from the active server',
+          description: 'Returns file content. Optionally restrict to a line range with startLine/endLine, or cap bytes with maxBytes.',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    filePath: { type: 'string' },
+                    startLine: { type: 'integer' },
+                    endLine: { type: 'integer' },
+                    encoding: { type: 'string', default: 'utf-8' },
+                    maxBytes: { type: 'integer' },
+                  },
+                  required: ['filePath'],
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: 'File content',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      content: { type: 'string' },
+                      filePath: { type: 'string' },
+                      truncated: { type: 'boolean' },
+                    },
+                  },
+                },
+              },
+            },
+            400: { description: 'Bad request' },
+            404: { description: 'File not found' },
+          },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+        get: {
+          operationId: 'fileReadGet',
+          tags: ['Files'],
+          summary: 'Read a file (GET shim)',
+          parameters: [
+            { in: 'query', name: 'filePath', required: true, schema: { type: 'string' } },
+            { in: 'query', name: 'startLine', schema: { type: 'integer' } },
+            { in: 'query', name: 'endLine', schema: { type: 'integer' } },
+          ],
+          responses: { 200: { description: 'File content' }, 404: { description: 'File not found' } },
+          security: [{ bearerAuth: [] as any[] }],
+        },
+      },
       '/file/update': {
         post: {
           operationId: 'fileUpdate',
+          tags: ['Files'],
           summary: 'Regex replace within a file',
           'x-openai-isConsequential': filesConsequential,
           requestBody: {
@@ -454,6 +533,7 @@ export function buildSpec(req?: Request) {
       '/file/amend': {
         post: {
           operationId: 'fileAmend',
+          tags: ['Files'],
           summary: 'Append content to a file',
           'x-openai-isConsequential': filesConsequential,
           requestBody: {
@@ -482,6 +562,7 @@ export function buildSpec(req?: Request) {
       '/file/diff': {
         post: {
           operationId: 'fileApplyDiff',
+          tags: ['Files'],
           summary: 'Apply a unified diff using git apply',
           description: 'Validates with `git apply --check`, then applies with `git apply`. Currently supported only for the local server handler.',
           'x-openai-isConsequential': filesConsequential,
@@ -508,6 +589,7 @@ export function buildSpec(req?: Request) {
       '/file/patch': {
         post: {
           operationId: 'fileApplyPatch',
+          tags: ['Files'],
           summary: 'Apply a structured patch via git apply',
           description: 'Generates a minimal unified diff for the target file and applies it with git apply. Currently supported only for the local server handler.',
           'x-openai-isConsequential': filesConsequential,
@@ -540,6 +622,7 @@ export function buildSpec(req?: Request) {
       '/activity/list': {
         get: {
           operationId: 'activityList',
+          tags: ['Activity'],
           summary: 'List recent activity sessions',
           parameters: [
             { name: 'date', in: 'query', required: false, schema: { type: 'string', format: 'YYYY-MM-DD' } },
@@ -578,6 +661,7 @@ export function buildSpec(req?: Request) {
       '/activity/session/{date}/{id}': {
         get: {
           operationId: 'activitySession',
+          tags: ['Activity'],
           summary: 'Fetch a full activity session',
           parameters: [
             { name: 'date', in: 'path', required: true, schema: { type: 'string', format: 'YYYY-MM-DD' } },
@@ -606,6 +690,7 @@ export function buildSpec(req?: Request) {
       '/settings': {
         get: {
           operationId: 'getSettings',
+          tags: ['Settings'],
           summary: 'Get redacted configuration settings',
           description: 'Returns grouped configuration values with secrets redacted. Values overridden by environment variables are marked as readOnly.',
           security: [{ bearerAuth: [] as any[] }],
@@ -623,14 +708,7 @@ export function buildSpec(req?: Request) {
                         type: 'object',
                         properties: {
                           value: {
-                            anyOf: [
-                              { type: 'string' },
-                              { type: 'number' },
-                              { type: 'boolean' },
-                              { type: 'object' },
-                              { type: 'array' },
-                              { type: 'null' }
-                            ]
+                            description: 'Any JSON-serializable settings value (string, number, boolean, object, array, or null)',
                           },
                           readOnly: { type: 'boolean' }
                         },
@@ -649,6 +727,7 @@ export function buildSpec(req?: Request) {
       '/config/persist': {
         post: {
           operationId: 'persistConfig',
+          tags: ['Config'],
           summary: 'Persist current runtime config changes to disk',
           description: 'Saves the current configuration state to convict-config.json for persistence across restarts',
           security: [{ bearerAuth: [] as any[] }],
@@ -690,6 +769,7 @@ export function buildSpec(req?: Request) {
       '/config/toggle/llm': {
         post: {
           operationId: 'toggleLlm',
+          tags: ['Config'],
           summary: 'Toggle LLM execution and persist the change',
           description: 'Enables or disables LLM execution endpoints and persists the configuration',
           security: [{ bearerAuth: [] as any[] }],
@@ -731,6 +811,7 @@ export function buildSpec(req?: Request) {
       '/config/toggle/files': {
         post: {
           operationId: 'toggleFiles',
+          tags: ['Config'],
           summary: 'Toggle file operations and persist the change',
           description: 'Enables or disables file operation endpoints and persists the configuration',
           security: [{ bearerAuth: [] as any[] }],
@@ -771,6 +852,7 @@ export function buildSpec(req?: Request) {
       '/config/toggle/shell': {
         post: {
           operationId: 'toggleShell',
+          tags: ['Config'],
           summary: 'Toggle shell execution and persist the change',
           description: 'Enables or disables shell execution endpoints and persists the configuration',
           security: [{ bearerAuth: [] as any[] }],

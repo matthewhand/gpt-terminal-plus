@@ -1,9 +1,9 @@
-import { AbstractServerHandler } from '../AbstractServerHandler';
-import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig';
-import { ExecutionResult } from '../../types/ExecutionResult';
-import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { SearchResult, SearchParams } from '../../types/ServerHandler';
-import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm';
+import { AbstractServerHandler } from '../AbstractServerHandler.js';
+import { SsmTargetConfig, ServerConfig } from '../../types/ServerConfig.js';
+import { ExecutionResult } from '../../types/ExecutionResult.js';
+import { PaginatedResponse } from '../../types/PaginatedResponse.js';
+import { SearchResult, SearchParams } from '../../types/ServerHandler.js';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssm.js';
 import Debug from 'debug';
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from '@aws-sdk/client-ssm';
 

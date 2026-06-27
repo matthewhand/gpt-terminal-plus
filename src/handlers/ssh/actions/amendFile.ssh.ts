@@ -1,8 +1,8 @@
 import { Client } from "ssh2";
-import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper";
+import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper.js";
 import Debug from 'debug';
 import { v4 as uuidv4 } from 'uuid';
-import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
+import { escapeSpecialChars } from "../../../common/escapeSpecialChars.js";
 
 const debug = Debug('app:amendFile');
 

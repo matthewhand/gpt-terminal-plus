@@ -74,7 +74,6 @@ export const SettingsSchema = z.object({
   features: z.object({
     executeShell: ExecuteShellSchema.default({}),
     executeCode: ExecuteCodeSchema.default({}),
-    executeLlm: ExecuteLlmSchema.default({}),
   }).default({}),
   llm: z
     .object({

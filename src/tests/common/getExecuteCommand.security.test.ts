@@ -1,4 +1,4 @@
-import { getExecuteCommand } from '../../common/getExecuteCommand';
+import { getExecuteCommand } from '../../common/getExecuteCommand.js';
 
 describe('getExecuteCommand - quoting and safety', () => {
   const specialPaths = [

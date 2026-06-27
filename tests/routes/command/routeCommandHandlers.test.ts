@@ -9,7 +9,6 @@ jest.mock('../../../src/llm/llmClient', () => ({
 const executeCommandHandler = require('../../../src/routes/command/executeCommand');
 const executeCodeHandler = require('../../../src/routes/command/executeCode');
 const executeFileHandler = require('../../../src/routes/command/executeFile');
-const executeLlmHandler = require('../../../src/routes/command/executeLlm');
 const changeDirectoryHandler = require('../../../src/routes/command/changeDirectory');
 const executeShellHandler = require('../../../src/routes/command/executeShell');
 
@@ -159,39 +158,6 @@ describe('Route Command Handlers', () => {
       await executeFileHandler.executeFile(mockRequest as Request, mockResponse as Response);
 
       // Should call status (either success or error, but not necessarily 400)
-      expect(mockResponse.status).toHaveBeenCalled();
-    });
-  });
-
-  describe('executeLlm handler', () => {
-    it('should handle missing instructions in request body', async () => {
-      mockRequest.body = {};
-
-      await executeLlmHandler.executeLlm(mockRequest as Request, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'instructions is required'
-      });
-    });
-
-    it('should handle empty instructions', async () => {
-      mockRequest.body = { instructions: '' };
-
-      await executeLlmHandler.executeLlm(mockRequest as Request, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'instructions is required'
-      });
-    });
-
-    it('should handle valid instructions', async () => {
-      mockRequest.body = { instructions: 'Say hello' };
-
-      await executeLlmHandler.executeLlm(mockRequest as Request, mockResponse as Response);
-
-      // Should call status (might be 500 due to LLM config, but not 400 for valid input)
       expect(mockResponse.status).toHaveBeenCalled();
     });
   });

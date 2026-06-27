@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { executeFileOperation } from '../engines/fileEngine';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { executeFileOperation } from '../engines/fileEngine.js';
 
 const router = express.Router();
 router.use(checkAuthToken as any);

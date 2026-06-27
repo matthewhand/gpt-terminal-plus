@@ -1,5 +1,7 @@
 import request from 'supertest';
-import { app } from '../../utils/testApp';
+import { createTestApp } from '../../utils/testApp.js';
+
+const app = createTestApp();
 
 describe('Middlewares: CORS and Security Headers', () => {
   beforeAll(async () => {

@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { getSupportedModels, isSupportedModel } from '../common/models';
-import { getSelectedModel, setSelectedModel } from '../utils/GlobalStateHelper';
-import { isLlmEnabled } from '../llm/llmClient';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { getSupportedModels, isSupportedModel } from '../common/models.js';
+import { getSelectedModel, setSelectedModel } from '../utils/GlobalStateHelper.js';
+import { isLlmEnabled } from '../llm/llmClient.js';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
 
 const debug = Debug('app:modelRoutes');
 const router = express.Router();

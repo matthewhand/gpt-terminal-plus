@@ -4,10 +4,12 @@ Static-first OpenAPI artifacts with deterministic generation, an Express server 
 
 **🤖 LLM Optional**: The app works perfectly without AI. LLM features are cleanly gated and optional.
 
-- OpenAPI (static artifacts):
-  - [public/openapi.json](public/openapi.json)
-  - [public/openapi.yaml](public/openapi.yaml)
+- OpenAPI:
+  - **Canonical (runtime, complete): GET `/openapi.json`** and GET `/openapi.yaml` — served by the running app, OpenAPI 3.0.3, validates clean under `redocly lint`.
+  - Static artifacts (sparse, JSDoc-derived; not a full mirror): [public/openapi.json](public/openapi.json) / [public/openapi.yaml](public/openapi.yaml)
   - Swagger UI: GET [/docs](/docs)
+- Use as an MCP server (mcp-gateway + OAuth):
+  - [docs/MCP_GATEWAY.md](docs/MCP_GATEWAY.md)
 - Settings UI (redacted):
   - [public/settings.html](public/settings.html)
   - Protected by HTTP Bearer auth using `API_TOKEN`

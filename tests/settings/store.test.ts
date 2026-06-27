@@ -141,8 +141,8 @@ describe('settings/store.ts - Settings Store', () => {
     });
 
     it('should set enabled and save', () => {
-      const settings = SettingsStore.setEnabled('executeLlm', false);
-      expect(settings.features.executeLlm.enabled).toBe(false);
+      const settings = SettingsStore.setEnabled('executeCode', false);
+      expect(settings.features.executeCode.enabled).toBe(false);
       expect(mockFs.writeFileSync).toHaveBeenCalled();
       vi.runAllTimers(); // Debounce
     });

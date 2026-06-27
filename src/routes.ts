@@ -1,2 +1,2 @@
-export { setupApiRouter } from './routes/index';
-export { default } from './routes/index';
+export { setupApiRouter } from './routes/index.js';
+export { default } from './routes/index.js';

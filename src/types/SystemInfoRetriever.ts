@@ -1,6 +1,6 @@
 // src/interfaces/SystemInfoRetriever.ts
 
-import { SystemInfo } from '../types/SystemInfo';
+import { SystemInfo } from '../types/SystemInfo.js';
 
 /**
  * Interface for retrieving system information from a remote server.

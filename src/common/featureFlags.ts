@@ -1,7 +1,6 @@
 export type FeatureFlags = {
   executeShellEnabled: boolean
   executeCodeEnabled: boolean
-  executeLlmEnabled: boolean
 };
 
 export function getFeatureFlags(): FeatureFlags {
@@ -9,6 +8,5 @@ export function getFeatureFlags(): FeatureFlags {
   return {
     executeShellEnabled: true,
     executeCodeEnabled: true,
-    executeLlmEnabled: true,
   };
 }

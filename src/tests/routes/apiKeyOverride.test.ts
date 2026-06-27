@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
-import { configRouter as configRoutes } from '../../routes/core';
-import { checkAuthToken } from '../../middlewares/checkAuthToken';
+import { configRouter as configRoutes } from '../../routes/core.js';
+import { checkAuthToken } from '../../middlewares/checkAuthToken.js';
 
 jest.mock('../../middlewares/checkAuthToken');
 jest.mock('../../config/convictConfig', () => ({

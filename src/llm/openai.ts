@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { OpenAiChatCompletionRequest, OpenAiChatCompletionResponse } from '@src/types/llm';
+import { OpenAiChatCompletionRequest, OpenAiChatCompletionResponse } from '../types/llm.js';
 import { Response } from 'express';
 
 export async function executeLlm(request: OpenAiChatCompletionRequest, apiKey: string, endpoint: string): Promise<OpenAiChatCompletionResponse> {

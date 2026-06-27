@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { ServerConfig } from '../../../types/ServerConfig';
+import { ServerConfig } from '../../../types/ServerConfig.js';
 import Debug from 'debug';
 
 const debug = Debug('app:readFile');

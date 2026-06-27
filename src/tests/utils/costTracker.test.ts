@@ -1,4 +1,4 @@
-import { costTracker } from '../../utils/costTracker';
+import { costTracker } from '../../utils/costTracker.js';
 
 jest.mock('../../config/convictConfig', () => ({
   convictConfig: () => ({

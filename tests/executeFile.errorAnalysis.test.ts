@@ -286,8 +286,7 @@ echo "Arguments: $@"`;
       // Test that the main command endpoints are available
       const availableEndpoints = [
         '/command/execute-code',
-        '/command/execute-shell',
-        '/command/execute-llm'
+        '/command/execute-shell'
       ];
 
       for (const endpoint of availableEndpoints) {

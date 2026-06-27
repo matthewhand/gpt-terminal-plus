@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { executeLlm, executeLlmStream } from '@src/llm/openai';
-import { OpenAiChatCompletionRequest, OpenAiChatCompletionResponse } from '@src/types/llm';
+import { executeLlm, executeLlmStream } from '../../llm/openai.js';
+import { OpenAiChatCompletionRequest, OpenAiChatCompletionResponse } from '../../types/llm.js';
 import { Readable } from 'stream';
 import { Response } from 'express';
 

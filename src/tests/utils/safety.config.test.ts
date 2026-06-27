@@ -1,5 +1,5 @@
 import type { IConfig } from 'config';
-import { evaluateCommandSafety } from '@src/utils/safety';
+import { evaluateCommandSafety } from '../../utils/safety.js';
 
 jest.mock('config');
 

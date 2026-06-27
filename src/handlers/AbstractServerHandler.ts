@@ -1,7 +1,7 @@
-import { ServerConfig } from '../types/ServerConfig';
-import { ExecutionResult } from '../types/ExecutionResult';
-import { PaginatedResponse } from '../types/PaginatedResponse';
-import { SearchResult, SearchParams } from '../types/ServerHandler';
+import { ServerConfig } from '../types/ServerConfig.js';
+import { ExecutionResult } from '../types/ExecutionResult.js';
+import { PaginatedResponse } from '../types/PaginatedResponse.js';
+import { SearchResult, SearchParams } from '../types/ServerHandler.js';
 
 export abstract class AbstractServerHandler {
   protected serverConfig: ServerConfig;

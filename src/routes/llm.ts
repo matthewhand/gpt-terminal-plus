@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { planCommand } from '../engines/llmEngine';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { planCommand } from '../engines/llmEngine.js';
 
 const router = express.Router();
 router.use(checkAuthToken as any);

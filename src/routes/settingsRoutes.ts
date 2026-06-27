@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import Debug from 'debug';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { getRedactedSettings } from '../config/convictConfig';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { getRedactedSettings } from '../config/convictConfig.js';
 
 const debug = Debug('app:settingsRoutes');
 const router = express.Router();
@@ -22,8 +22,7 @@ let mcpConfig = {
     'server/set': true,
     'model/list': true,
     'model/select': true,
-    'model/current': true,
-    'command/execute-llm': true
+    'model/current': true
   }
 };
 

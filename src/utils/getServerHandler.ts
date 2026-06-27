@@ -1,5 +1,5 @@
-import { ServerHandler } from "../types/ServerHandler";
-import type { ServerRequest } from "../types/ServerRequest";
+import { ServerHandler } from "../types/ServerHandler.js";
+import type { ServerRequest } from "../types/ServerRequest.js";
 
 /**
  * Safely gets the server handler from the request.

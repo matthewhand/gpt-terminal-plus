@@ -1,5 +1,5 @@
 // child_process is required lazily to honor Jest mocks in some tests
-import { convictConfig } from '../../../config/convictConfig';
+import { convictConfig } from '../../../config/convictConfig.js';
 import debug from 'debug';
 
 const executeCommandDebug = debug('app:executeCommand');

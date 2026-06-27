@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig } from '../config/convictConfig.js';
 
 const DANGEROUS_COMMANDS = [
   'rm -rf /', 'sudo rm -rf', 'mkfs', 'dd if=', 'format', 'fdisk',

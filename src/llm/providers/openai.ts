@@ -1,7 +1,7 @@
 import Debug from 'debug';
 import OpenAI from 'openai';
-import { getResolvedLlmConfig } from '../config';
-import { ChatMessage, ChatRequest, ChatResponse } from '../types';
+import { getResolvedLlmConfig } from '../config.js';
+import { ChatMessage, ChatRequest, ChatResponse } from '../types.js';
 
 const debug = Debug('app:llm:openai');
 

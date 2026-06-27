@@ -1,6 +1,6 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { ExecutionResult } from '../../../types/ExecutionResult';
+import { ExecutionResult } from '../../../types/ExecutionResult.js';
 import debug from 'debug';
 
 const execFileAsync = promisify(execFile);

@@ -1,10 +1,10 @@
 import express, { Request, Response, Router } from 'express';
-import { checkAuthToken } from '../../middlewares/checkAuthToken';
-import { planCommand } from '../../engines/llmEngine';
+import { checkAuthToken } from '../../middlewares/checkAuthToken.js';
+import { planCommand } from '../../engines/llmEngine.js';
 import { spawn } from 'child_process';
-import { logSessionStep } from '../../utils/activityLogger';
-import { convictConfig } from '../../config/convictConfig';
-import { ShellSessionDriver } from '../../session/ShellSessionDriver';
+import { logSessionStep } from '../../utils/activityLogger.js';
+import { convictConfig } from '../../config/convictConfig.js';
+import { ShellSessionDriver } from '../../session/ShellSessionDriver.js';
 
 const router = Router();
 

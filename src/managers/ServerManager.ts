@@ -1,9 +1,9 @@
 import config from 'config';
 import debug from 'debug';
-import { ServerConfig, LocalServerConfig, SshHostConfig, SsmTargetConfig } from '../types/ServerConfig';
-import { LocalServerHandler } from '../handlers/local/LocalServerHandler';
-import { SshServerHandler } from '../handlers/ssh/SshServerHandler';
-import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler';
+import { ServerConfig, LocalServerConfig, SshHostConfig, SsmTargetConfig } from '../types/ServerConfig.js';
+import { LocalServerHandler } from '../handlers/local/LocalServerHandler.js';
+import { SshServerHandler } from '../handlers/ssh/SshServerHandler.js';
+import { SsmServerHandler } from '../handlers/ssm/SsmServerHandler.js';
 
 const serverManagerDebug = debug('app:ServerManager');
 
@@ -26,12 +26,15 @@ export class ServerManager {
   private loadServersFromConfig(): void {
     serverManagerDebug('Loading servers from configuration');
 
-    // Load local config
+    // Load local config. The local server must always be resolvable under
+    // 'localhost' (the default selected server). Some config profiles only set
+    // `local.host` (not `hostname`), so merge whatever is present onto the
+    // default local config rather than skipping registration entirely.
     try {
-      const localConfig = config.get<LocalServerConfig>('local');
-      if (localConfig && localConfig.hostname) {
-        this.servers.set(localConfig.hostname, localConfig);
-      }
+      const localConfig = (config.get<LocalServerConfig>('local') || {}) as Partial<LocalServerConfig>;
+      const defaultLocal = ServerManager.getDefaultLocalServerConfig();
+      const merged = { ...defaultLocal, ...localConfig, protocol: 'local' as const, hostname: localConfig.hostname || defaultLocal.hostname };
+      this.servers.set(merged.hostname, merged);
     } catch {
       serverManagerDebug('Local config not found, using default');
       const defaultLocal = ServerManager.getDefaultLocalServerConfig();

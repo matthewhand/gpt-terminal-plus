@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { SshHostConfig } from '../../../types/ServerConfig';
+import { SshHostConfig } from '../../../types/ServerConfig.js';
 import Debug from 'debug';
 
 const debug = Debug('app:connect');

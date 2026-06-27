@@ -1,8 +1,8 @@
 import express from 'express';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
-import { initializeServerHandler } from '../middlewares/initializeServerHandler';
-import { fileRateLimit } from '../middlewares/rateLimit';
-import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
+import { initializeServerHandler } from '../middlewares/initializeServerHandler.js';
+import { fileRateLimit } from '../middlewares/rateLimit.js';
+import { validateFileOperation, sanitizeInput } from '../middlewares/inputValidation.js';
 
 // File route handlers
 import {
@@ -18,7 +18,7 @@ import {
   listFileOperations,
   toggleFileOperation,
   bulkToggleFileOperations
-} from './file';
+} from './file.js';
 
 const router = express.Router();
 

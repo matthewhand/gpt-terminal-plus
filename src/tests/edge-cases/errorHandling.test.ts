@@ -1,6 +1,6 @@
-import { costTracker } from '../../utils/costTracker';
-import { executeFileOperation } from '../../engines/fileEngine';
-import { createSSHSession } from '../../engines/remoteEngine';
+import { costTracker } from '../../utils/costTracker.js';
+import { executeFileOperation } from '../../engines/fileEngine.js';
+import { createSSHSession } from '../../engines/remoteEngine.js';
 // getExecuteTimeout is loaded dynamically in tests that mock config
 
 jest.mock('../../config/convictConfig');

@@ -1,8 +1,8 @@
 import Debug from 'debug';
-import { chat } from './index';
-import { getSupportedModels } from '../common/models';
-import { getSelectedModel } from '../utils/GlobalStateHelper';
-import { isLlmEnabled } from './llmClient';
+import { chat } from './index.js';
+import { getSupportedModels } from '../common/models.js';
+import { getSelectedModel } from '../utils/GlobalStateHelper.js';
+import { isLlmEnabled } from './llmClient.js';
 
 const debug = Debug('app:llm:errorAdvisor');
 

@@ -1,4 +1,4 @@
-import { validateCommand } from '../../middlewares/commandValidator';
+import { validateCommand } from '../../middlewares/commandValidator.js';
 
 jest.mock('../../config/convictConfig', () => ({
   convictConfig: () => ({

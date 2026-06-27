@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { logSecurityEvent } from './securityLogger';
+import { logSecurityEvent } from './securityLogger.js';
 
 interface RateLimitConfig {
   windowMs: number;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { setSelectedServer } from '../utils/GlobalStateHelper';
+import { setSelectedServer } from '../utils/GlobalStateHelper.js';
 import Debug from 'debug';
 
 const debug = Debug('app:setSelectedServerMiddleware');

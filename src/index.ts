@@ -11,17 +11,17 @@ import express from "express";
 // import cors from "cors";
 import config from "config";
 // import bodyParser from "body-parser";
-import { setupApiRouter } from "./routes/index";
-import shellRouter from './routes/shell';
-import publicRouter from './routes/publicRouter';
-import { registerOpenApiRoutes } from "./openapi";
+import { setupApiRouter } from "./routes/index.js";
+import shellRouter from './routes/shell.js';
+import publicRouter from './routes/publicRouter.js';
+import { registerOpenApiRoutes } from "./openapi.js";
 import swaggerUi from "swagger-ui-express";
 
-import { validateEnvironmentVariables } from './utils/envValidation';
-import setupMiddlewares from './middlewares/setupMiddlewares';
-import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler';
-import { registerServersFromConfig } from './bootstrap/serverLoader';
-import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown';
+import { validateEnvironmentVariables } from './utils/envValidation.js';
+import setupMiddlewares from './middlewares/setupMiddlewares.js';
+import { generateDefaultConfig, persistConfig, isConfigLoaded } from './config/configHandler.js';
+import { registerServersFromConfig } from './bootstrap/serverLoader.js';
+import { setupGracefulShutdown, createShutdownHandler } from './utils/gracefulShutdown.js';
 
 import './modules/ngrok';
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -37,11 +37,11 @@ setupMiddlewares(app);
 
 /**
  * Static assets
- * - Serve public/ at /
+ * - Serve client/dist/ at /
  * - Serve repository docs/ at /docs-static (distinct from Swagger UI at /docs)
  */
-// Serve static assets from public/
-app.use(express.static(path.resolve(__dirname, '..', 'public')));
+// Serve static assets from client/dist/
+app.use(express.static(path.resolve(__dirname, '..', 'client', 'dist')));
 // Serve documentation markdown as static files
 app.use('/docs-static', express.static(path.resolve(__dirname, '..', 'docs')));
 

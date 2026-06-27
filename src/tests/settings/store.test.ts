@@ -1,4 +1,4 @@
-import { SettingsStore } from '@src/settings/store';
+import { SettingsStore } from '../../settings/store.js';
 
 describe('SettingsStore', () => {
   beforeEach(() => {
@@ -38,7 +38,6 @@ describe('SettingsStore', () => {
     expect(updated.features.executeCode.local.timeoutMs).toBe(1234);
     // Other feature sections remain present with defaults
     expect(updated.features.executeShell).toBeDefined();
-    expect(updated.features.executeLlm).toBeDefined();
   });
 
   it('merges top-level sections (app, llm) shallowly', () => {
@@ -64,7 +63,6 @@ describe('SettingsStore', () => {
       features: {
         executeShell: { enabled: true, local: { enabled: true, timeoutMs: 1000 }, ssh: { enabled: false, timeoutMs: 2000 }, ssm: { enabled: false, timeoutMs: 3000 } },
         executeCode: { enabled: false, local: { enabled: true, timeoutMs: 1000 }, ssh: { enabled: false, timeoutMs: 2000 }, ssm: { enabled: false, timeoutMs: 3000 } },
-        executeLlm: { enabled: true, local: { enabled: true, timeoutMs: 1000 }, ssh: { enabled: false, timeoutMs: 2000 }, ssm: { enabled: false, timeoutMs: 3000 } },
       },
       llm: { enabled: false, provider: 'none', defaultModel: '', baseURL: '', apiKey: '', ollamaURL: 'http://localhost:11434', lmstudioURL: 'http://localhost:1234/v1' },
     } as any);

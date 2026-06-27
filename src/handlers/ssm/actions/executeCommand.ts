@@ -1,8 +1,8 @@
 import { SSMClient, SendCommandCommand, GetCommandInvocationCommand } from "@aws-sdk/client-ssm";
 import { v4 as uuidv4 } from "uuid";
 import Debug from "debug";
-import { retryOperation } from "./retryOperation";
-import { paginateOutput } from "./paginateOutput";
+import { retryOperation } from "./retryOperation.js";
+import { paginateOutput } from "./paginateOutput.js";
 
 const debug = Debug("app:ssmUtils");
 const DEFAULT_RETRIES = parseInt(process.env.SSM_RETRIES || "3");

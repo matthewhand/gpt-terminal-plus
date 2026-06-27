@@ -1,6 +1,6 @@
 import { Client } from 'ssh2';
-import { SshHostConfig } from '../../../types/ServerConfig'; // Updated to SshHostConfig
-import { escapeSpecialChars } from '../../../common/escapeSpecialChars';
+import { SshHostConfig } from '../../../types/ServerConfig.js'; // Updated to SshHostConfig
+import { escapeSpecialChars } from '../../../common/escapeSpecialChars.js';
 import Debug from 'debug';
 
 const debug = Debug('app:executeCommand');

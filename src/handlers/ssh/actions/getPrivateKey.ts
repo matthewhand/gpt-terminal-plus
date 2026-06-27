@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { SshHostConfig } from '../../../types/ServerConfig';
+import { SshHostConfig } from '../../../types/ServerConfig.js';
 import Debug from 'debug';
 
 const debug = Debug('app:getPrivateKey');

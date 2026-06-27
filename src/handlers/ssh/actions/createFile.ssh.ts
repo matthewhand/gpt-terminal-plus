@@ -1,6 +1,6 @@
 import { Client } from "ssh2";
-import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper";
-import { escapeSpecialChars } from "../../../common/escapeSpecialChars";
+import { getPresentWorkingDirectory } from "../../../utils/GlobalStateHelper.js";
+import { escapeSpecialChars } from "../../../common/escapeSpecialChars.js";
 import Debug from 'debug';
 
 const debug = Debug('app:createFile');

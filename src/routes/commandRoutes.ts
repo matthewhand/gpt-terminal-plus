@@ -1,6 +1,6 @@
 import type { Application, Request, Response } from 'express';
 import { Router } from 'express';
-import { executeCode, executeShell, executeBash, executePython, executeDynamicRouter } from './command';
+import { executeCode, executeShell, executeBash, executePython, executeDynamicRouter } from './command.js';
 
 const router = Router();
 
@@ -13,91 +13,12 @@ const logReq = (path: string, body: any) => {
   }
 };
 
-function makePlan(instructions: string) {
-  const safe = String(instructions).replace(/'/g, "\'");
-  return { commands: [{ cmd: `echo '${safe}'` }] };
-}
-
-function sseWrite(res: Response, event: string, data: any) {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`);
-}
-
-// Mock handlers for tests (if NODE_ENV === 'test')
-
-const handleExecuteLlm = (req: Request, res: Response) => {
-  logReq('/command/execute-llm', req.body);
-  const { instructions = '', dryRun = false, stream = false } = (req.body ?? {}) as {
-    instructions?: string; dryRun?: boolean; stream?: boolean;
-  };
-
-  const plan = makePlan(String(instructions));
-
-  if (stream) {
-    res.status(200);
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.write(': connected\n\n');
-    sseWrite(res, 'plan', plan);
-    const stepPayload: Record<string, any> = { status: 'ok' };
-    if (String(instructions).toLowerCase().includes('remote')) stepPayload.note = 'remote';
-    sseWrite(res, 'step', stepPayload);
-    sseWrite(res, 'done', {});
-    res.end();
-    return;
-  }
-
-  if (dryRun) {
-    res.status(200).json({ plan, results: [] });
-    return;
-  }
-
-  // Mock interpreter engine
-  const { engine = '', model = 'gpt-4o' } = req.body;
-  if (engine === 'llm:interpreter' || engine === 'interpreter') {
-    const result = { stdout: 'Hello from interpreter', stderr: '', exitCode: 0, error: false };
-    res.status(200).json({
-      runtime: 'llm:interpreter',
-      engine: 'interpreter',
-      model,
-      result,
-      aiAnalysis: undefined,
-      plan: [],
-      safety: []
-    });
-    return;
-  }
-
-  // Mock SSM success for "echo ssm hello"
-  const text = String(instructions);
-  if (/ssm\b/i.test(text) && /^\s*echo\s+/.test(text)) {
-    const echoed = text.replace(/^\s*echo\s+/, '').trim();
-    const ok = { stdout: echoed, stderr: '', exitCode: 0, error: false };
-    res.status(200).json({ plan, results: [ok] });
-    return;
-  }
-
-  const fail = {
-    stdout: '',
-    stderr: 'mock failure',
-    exitCode: 1,
-    error: true,
-  };
-  res.status(200).json({
-    plan,
-    results: [fail],
-    aiAnalysis: { text: 'Mock analysis: investigate syntax, paths, or permissions.' },
-  });
-};
-
 // Mount under /command (app.ts should do: app.use('/command', router))
 router.post('/execute-shell', executeShell); // Use actual executeShell
 router.post('/execute-code', executeCode); // Use actual executeCode
 // New explicit executor endpoints used by tests
 router.post('/execute-bash', executeBash);
 router.post('/execute-python', executePython);
-router.post('/execute-llm', handleExecuteLlm); // Use mocked streaming/dry-run behavior in tests
 // Dynamic executor endpoints: /command/execute-:name (mounted last to avoid shadowing explicit routes)
 router.use('/', executeDynamicRouter);
 

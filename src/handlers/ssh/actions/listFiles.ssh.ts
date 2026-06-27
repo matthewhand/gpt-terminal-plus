@@ -1,6 +1,6 @@
 import { Client } from 'ssh2';
-import { ServerConfig } from '../../../types/ServerConfig';
-import { ListParams } from '../../../types/ListParams';
+import { ServerConfig } from '../../../types/ServerConfig.js';
+import { ListParams } from '../../../types/ListParams.js';
 import Debug from 'debug';
 
 const debug = Debug('app:listFiles');

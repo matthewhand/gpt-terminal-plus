@@ -10,7 +10,7 @@ describe('executeCommand with execFile (USE_EXECFILE=true)', () => {
     });
 
     it('should execute command using execFile and return output', async () => {
-        const { executeCommand } = require('@src/handlers/local/actions/executeCommand');
+        const { executeCommand } = require('../../../../handlers/local/actions/executeCommand');
         const childProcess = require('child_process');
         // Ensure execFile is mocked as a jest function.
         childProcess.execFile = jest.fn((cmd, args, options, callback) => {
@@ -24,7 +24,7 @@ describe('executeCommand with execFile (USE_EXECFILE=true)', () => {
     });
 
     it('should reject if execFile returns an error', async () => {
-        const { executeCommand } = require('@src/handlers/local/actions/executeCommand');
+        const { executeCommand } = require('../../../../handlers/local/actions/executeCommand');
         const childProcess = require('child_process');
         childProcess.execFile = jest.fn((cmd, args, options, callback) => {
             callback(new Error('execFile error'), '', '');
@@ -44,7 +44,7 @@ describe('executeCommand with exec (USE_EXECFILE=false)', () => {
     });
 
     it('should execute command using exec and return output', async () => {
-        const { executeCommand } = require('@src/handlers/local/actions/executeCommand');
+        const { executeCommand } = require('../../../../handlers/local/actions/executeCommand');
         const childProcess = require('child_process');
         childProcess.exec = jest.fn((cmd, options, callback) => {
             callback(null, 'exec output', '');
@@ -57,7 +57,7 @@ describe('executeCommand with exec (USE_EXECFILE=false)', () => {
     });
 
     it('should reject if exec returns an error', async () => {
-        const { executeCommand } = require('@src/handlers/local/actions/executeCommand');
+        const { executeCommand } = require('../../../../handlers/local/actions/executeCommand');
         const childProcess = require('child_process');
         childProcess.exec = jest.fn((cmd, options, callback) => {
             callback(new Error('exec error'), '', '');

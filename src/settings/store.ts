@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { SettingsSchema, type Settings } from './schema';
+import { SettingsSchema, type Settings } from './schema.js';
 
 const DEFAULTS: Settings = SettingsSchema.parse({});
 const SETTINGS_FILE =
@@ -71,9 +71,6 @@ export const SettingsStore = {
             executeCode: partial.features.executeCode
               ? { ..._settings.features.executeCode, ...partial.features.executeCode }
               : _settings.features.executeCode,
-            executeLlm: partial.features.executeLlm
-              ? { ..._settings.features.executeLlm, ...partial.features.executeLlm }
-              : _settings.features.executeLlm,
           }
         : _settings.features,
       app: partial.app ? { ..._settings.app, ...partial.app } : _settings.app,
@@ -91,12 +88,12 @@ export const SettingsStore = {
     return this.get();
   },
 
-  isEnabled(feature: 'executeShell' | 'executeCode' | 'executeLlm'): boolean {
+  isEnabled(feature: 'executeShell' | 'executeCode'): boolean {
     ensureLoaded();
     return Boolean(_settings.features[feature]?.enabled);
   },
 
-  setEnabled(feature: 'executeShell' | 'executeCode' | 'executeLlm', enabled: boolean): Settings {
+  setEnabled(feature: 'executeShell' | 'executeCode', enabled: boolean): Settings {
     ensureLoaded();
     return this.set({
       features: {

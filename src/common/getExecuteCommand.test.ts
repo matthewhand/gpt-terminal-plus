@@ -1,4 +1,4 @@
-import { getExecuteCommand } from './getExecuteCommand';
+import { getExecuteCommand } from './getExecuteCommand.js';
 
 describe('getExecuteCommand', () => {
   test('should return the correct command for bash shell', () => {

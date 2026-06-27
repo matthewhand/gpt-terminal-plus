@@ -2,7 +2,7 @@ import Debug from 'debug';
 import http from 'http';
 import https from 'https';
 import { URL } from 'url';
-import { ChatMessage, ChatRequest, ChatResponse } from '../types';
+import { ChatMessage, ChatRequest, ChatResponse } from '../types.js';
 
 const debug = Debug('app:llm:lmstudio');
 

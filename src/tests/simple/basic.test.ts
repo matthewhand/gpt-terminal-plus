@@ -1,6 +1,6 @@
-import { getOrGenerateApiToken } from '../../common/apiToken';
-import { escapeSpecialChars } from '../../common/escapeSpecialChars';
-import { getExecuteCommand } from '../../common/getExecuteCommand';
+import { getOrGenerateApiToken } from '../../common/apiToken.js';
+import { escapeSpecialChars } from '../../common/escapeSpecialChars.js';
+import { getExecuteCommand } from '../../common/getExecuteCommand.js';
 
 describe('Core Utilities Integration', () => {
   const originalApiToken = process.env.API_TOKEN;

@@ -1,4 +1,4 @@
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig } from '../config/convictConfig.js';
 
 export interface LimitConfig {
   maxInputChars: number;

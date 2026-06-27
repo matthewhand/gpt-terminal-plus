@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { convictConfig } from '../config/convictConfig';
-import { getToolDefinitions, executeTool } from '../llm/activityTools';
-import { checkAuthToken } from '../middlewares/checkAuthToken';
+import { convictConfig } from '../config/convictConfig.js';
+import { getToolDefinitions, executeTool } from '../llm/activityTools.js';
+import { checkAuthToken } from '../middlewares/checkAuthToken.js';
 
 const router = express.Router();
 

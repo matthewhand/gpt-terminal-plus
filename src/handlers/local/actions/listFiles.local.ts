@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { ListParams } from '../../../types/ListParams';
+import { ListParams } from '../../../types/ListParams.js';
+import { expandHome } from '../../../utils/fileOpsRoot.js';
 import Debug from 'debug';
 
 const debug = Debug('app:local:listFiles');
@@ -23,7 +24,8 @@ const listFiles = async ({
   try {
     // Sanitize & normalize directory - use project root instead of process.cwd()
     const baseDir = path.resolve(__dirname, '../../../../'); // Go up to project root
-    const absDir = path.isAbsolute(directory) ? directory : path.resolve(baseDir, directory);
+    const dir = expandHome(directory);
+    const absDir = path.isAbsolute(dir) ? dir : path.resolve(baseDir, dir);
 
     debug(`📂 Listing files in: ${absDir}, limit=${limit}, offset=${offset}, orderBy=${orderBy}, recursive=${recursive}, typeFilter=${typeFilter ?? 'both'}`);
 

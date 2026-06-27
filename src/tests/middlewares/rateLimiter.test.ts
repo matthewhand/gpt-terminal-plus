@@ -1,4 +1,4 @@
-import { rateLimiter } from '../../middlewares/rateLimiter';
+import { rateLimiter } from '../../middlewares/rateLimiter.js';
 
 describe('Rate Limiter', () => {
   let req: any, res: any, next: jest.Mock;

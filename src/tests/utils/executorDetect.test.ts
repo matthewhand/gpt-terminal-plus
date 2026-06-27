@@ -1,4 +1,4 @@
-import { detectSystemExecutors } from '../../utils/executorDetect';
+import { detectSystemExecutors } from '../../utils/executorDetect.js';
 
 describe('detectSystemExecutors', () => {
   it('returns executor availability map', () => {

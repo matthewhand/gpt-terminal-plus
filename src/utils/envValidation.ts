@@ -1,5 +1,5 @@
 import Debug from 'debug';
-import { redact } from '../utils/redact';
+import { redact } from '../utils/redact.js';
 
 const debug = Debug('app:envValidation');
 

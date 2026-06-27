@@ -1,4 +1,4 @@
-import { escapeRegExp } from '@src/utils/escapeRegExp';
+import { escapeRegExp } from '../../utils/escapeRegExp.js';
 
 describe('escapeRegExp', () => {
   it('escapes all common regex metacharacters', () => {

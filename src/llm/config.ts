@@ -12,7 +12,7 @@ export interface ResolvedLlmConfig {
 
 
 
-import { convictConfig } from '../config/convictConfig';
+import { convictConfig } from '../config/convictConfig.js';
 
 export function getResolvedLlmConfig(): ResolvedLlmConfig {
   const config = convictConfig();

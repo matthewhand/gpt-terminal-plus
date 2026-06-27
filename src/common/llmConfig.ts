@@ -1,4 +1,4 @@
-import { getSettings } from '../settings/store';
+import { getSettings } from '../settings/store.js';
 
 export type LlmConfig = ReturnType<typeof getSettings>['llm'];
 

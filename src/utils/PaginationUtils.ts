@@ -1,4 +1,4 @@
-import { PaginatedResponse } from '../types/PaginatedResponse';
+import { PaginatedResponse } from '../types/PaginatedResponse.js';
 
 /**
  * Handles pagination logic.

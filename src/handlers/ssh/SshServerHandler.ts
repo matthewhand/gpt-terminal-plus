@@ -1,11 +1,11 @@
-import { AbstractServerHandler } from '../AbstractServerHandler';
-import { SshHostConfig, ServerConfig } from '../../types/ServerConfig';
-import { ExecutionResult } from '../../types/ExecutionResult';
-import { SystemInfo } from '../../types/SystemInfo';
-import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { FileReadResult } from '../../types/FileReadResult';
-import { SearchResult, SearchParams } from '../../types/ServerHandler';
-import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh';
+import { AbstractServerHandler } from '../AbstractServerHandler.js';
+import { SshHostConfig, ServerConfig } from '../../types/ServerConfig.js';
+import { ExecutionResult } from '../../types/ExecutionResult.js';
+import { SystemInfo } from '../../types/SystemInfo.js';
+import { PaginatedResponse } from '../../types/PaginatedResponse.js';
+import { FileReadResult } from '../../types/FileReadResult.js';
+import { SearchResult, SearchParams } from '../../types/ServerHandler.js';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.ssh.js';
 import Debug from 'debug';
 import fs from 'fs';
 // Using runtime require for ssh2 Client to avoid type-only import issues with jest mocks

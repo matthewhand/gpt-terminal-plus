@@ -1,5 +1,5 @@
-import { convictConfig } from '../config/convictConfig';
-import { costTracker } from '../utils/costTracker';
+import { convictConfig } from '../config/convictConfig.js';
+import { costTracker } from '../utils/costTracker.js';
 
 export interface LLMResponse {
   command?: string;

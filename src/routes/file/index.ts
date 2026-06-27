@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { handleServerError } from "../../utils/handleServerError";
-import { getServerHandler } from "../../utils/getServerHandler";
-import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation";
-import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch';
-import { logSecurityEvent } from '../../middlewares/securityLogger';
+import { handleServerError } from "../../utils/handleServerError.js";
+import { getServerHandler } from "../../utils/getServerHandler.js";
+import { validateInput, validationPatterns, sanitizers } from "../../middlewares/inputValidation.js";
+import { applyFilePatch } from '../../handlers/local/actions/applyFilePatch.js';
+import { logSecurityEvent } from '../../middlewares/securityLogger.js';
 import { writeFile, readFile as fsReadFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -11,8 +11,8 @@ import path from 'path';
 import fs from 'fs';
 import Debug from 'debug';
 import { z } from 'zod';
-import { getSettings } from '../../settings/store';
-import { convictConfig, persistConfig } from '../../config/convictConfig';
+import { getSettings } from '../../settings/store.js';
+import { convictConfig, persistConfig } from '../../config/convictConfig.js';
 
 const debug = Debug('app:fileRoutes');
 const execAsync = promisify(exec);

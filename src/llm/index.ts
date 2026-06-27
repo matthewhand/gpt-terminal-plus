@@ -1,10 +1,10 @@
 import Debug from 'debug';
-import { ChatRequest, ChatResponse } from './types';
-import { getLlmClient, getDefaultModel } from './llmClient';
-import { chatWithOllama, OllamaConfig } from './providers/ollama';
-import { chatWithLmStudio, LmStudioConfig } from './providers/lmstudio';
-import { chatWithOpenAI } from './providers/openai';
-import { ServerConfig } from '../types/ServerConfig';
+import { ChatRequest, ChatResponse } from './types.js';
+import { getLlmClient, getDefaultModel } from './llmClient.js';
+import { chatWithOllama, OllamaConfig } from './providers/ollama.js';
+import { chatWithLmStudio, LmStudioConfig } from './providers/lmstudio.js';
+import { chatWithOpenAI } from './providers/openai.js';
+import { ServerConfig } from '../types/ServerConfig.js';
 
 const debug = Debug('app:llm:index');
 

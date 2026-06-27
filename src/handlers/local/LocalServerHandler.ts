@@ -1,25 +1,25 @@
-import { AbstractServerHandler } from '../AbstractServerHandler';
-import { ServerConfig } from '../../types/ServerConfig';
-import { SystemInfo } from '../../types/SystemInfo';
-import { ExecutionResult } from '../../types/ExecutionResult';
-import { PaginatedResponse } from '../../types/PaginatedResponse';
-import { ListParams } from '../../types/ListParams';
-import { FileReadResult } from '../../types/FileReadResult';
-import { SearchResult, SearchParams } from '../../types/ServerHandler';
+import { AbstractServerHandler } from '../AbstractServerHandler.js';
+import { ServerConfig } from '../../types/ServerConfig.js';
+import { SystemInfo } from '../../types/SystemInfo.js';
+import { ExecutionResult } from '../../types/ExecutionResult.js';
+import { PaginatedResponse } from '../../types/PaginatedResponse.js';
+import { ListParams } from '../../types/ListParams.js';
+import { FileReadResult } from '../../types/FileReadResult.js';
+import { SearchResult, SearchParams } from '../../types/ServerHandler.js';
 
-import { executeLocalCode as executeCodeAction } from './actions/executeCode';
-import { createFile as createFileAction } from './actions/createFile.local';
-import { readFile as readFileAction } from './actions/readFile.local';
-import { amendFile as amendFileAction } from './actions/amendFile.local';
-import { updateFile as updateFileAction } from './actions/updateFile.local';
+import { executeLocalCode as executeCodeAction } from './actions/executeCode.js';
+import { createFile as createFileAction } from './actions/createFile.local.js';
+import { readFile as readFileAction } from './actions/readFile.local.js';
+import { amendFile as amendFileAction } from './actions/amendFile.local.js';
+import { updateFile as updateFileAction } from './actions/updateFile.local.js';
 import fs from 'fs/promises';
 import path from 'path';
-import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper';
+import { getPresentWorkingDirectory } from '../../utils/GlobalStateHelper.js';
 import { exec as _exec } from 'child_process';
-import { getSystemInfo as getSystemInfoAction } from './actions/getSystemInfo';
-import { presentWorkingDirectory as presentWorkingDirectoryAction } from './actions/presentWorkingDirectory';
-import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.local';
-import listFilesAction from './actions/listFiles.local';
+import { getSystemInfo as getSystemInfoAction } from './actions/getSystemInfo.js';
+import { presentWorkingDirectory as presentWorkingDirectoryAction } from './actions/presentWorkingDirectory.js';
+import { changeDirectory as changeDirectoryAction } from './actions/changeDirectory.local.js';
+import listFilesAction from './actions/listFiles.local.js';
 
 export class LocalServerHandler extends AbstractServerHandler {
   constructor(serverConfig: ServerConfig) {

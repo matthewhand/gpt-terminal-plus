@@ -1,4 +1,4 @@
-import { escapeSpecialChars } from './escapeSpecialChars';
+import { escapeSpecialChars } from './escapeSpecialChars.js';
 
 describe('escapeSpecialChars', () => {
   test('should not modify a string with no special characters', () => {

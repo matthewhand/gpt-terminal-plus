@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { isConfigLoaded, generateDefaultConfig, persistConfig } from '@src/config/configHandler';
+import { isConfigLoaded, generateDefaultConfig, persistConfig } from '../../config/configHandler.js';
 
 describe('Config Handler', () => {
   describe('isConfigLoaded', () => {

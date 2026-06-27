@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import llmRoutes from '../../routes/llm';
+import llmRoutes from '../../routes/llm.js';
 
 jest.mock('../../middlewares/checkAuthToken', () => ({
   checkAuthToken: (req: any, res: any, next: any) => next()

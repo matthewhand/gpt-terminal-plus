@@ -40,7 +40,7 @@ describe('advancedRateLimit middleware', () => {
       delete process.env.JEST_WORKER_ID;
 
       try {
-        const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
+        const { advancedRateLimit } = await import('../../middlewares/advancedRateLimit.js');
         const mw = advancedRateLimit({ windowMs: 1000, maxRequests: 2 });
 
         const req: any = { ip: '1.2.3.4', get: () => undefined };
@@ -82,7 +82,7 @@ describe('advancedRateLimit middleware', () => {
       delete process.env.JEST_WORKER_ID;
 
       try {
-        const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
+        const { advancedRateLimit } = await import('../../middlewares/advancedRateLimit.js');
         const mw = advancedRateLimit({ windowMs: 2000, maxRequests: 2 });
 
         const req: any = { ip: '5.6.7.8', get: () => undefined };
@@ -121,7 +121,7 @@ describe('advancedRateLimit middleware', () => {
 
       try {
         const windowMs = 1500;
-        const { advancedRateLimit } = await import('@src/middlewares/advancedRateLimit');
+        const { advancedRateLimit } = await import('../../middlewares/advancedRateLimit.js');
         const mw = advancedRateLimit({ windowMs, maxRequests: 1 });
 
         const req: any = { ip: '9.9.9.9', get: () => undefined };
@@ -160,7 +160,7 @@ describe('advancedRateLimit middleware', () => {
       delete process.env.JEST_WORKER_ID;
 
       try {
-        const { rateLimiters } = await import('@src/middlewares/advancedRateLimit');
+        const { rateLimiters } = await import('../../middlewares/advancedRateLimit.js');
         const mw = rateLimiters.perUser(1); // only one request per unique key
 
         const mkReq = (auth: string | undefined, ip = '10.0.0.1') => ({

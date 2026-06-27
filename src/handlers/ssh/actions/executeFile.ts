@@ -1,5 +1,5 @@
 import { Client } from 'ssh2';
-import { ExecutionResult } from '../../../types/ExecutionResult';
+import { ExecutionResult } from '../../../types/ExecutionResult.js';
 import debug from 'debug';
 
 const executeFileDebug = debug('app:ssh:executeFile');

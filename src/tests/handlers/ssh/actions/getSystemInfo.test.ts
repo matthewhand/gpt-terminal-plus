@@ -1,6 +1,6 @@
 import { Client } from 'ssh2';
-import { getSystemInfo } from '../../../../handlers/ssh/actions/getSystemInfo';
-import { escapeSpecialChars } from '../../../../common/escapeSpecialChars';
+import { getSystemInfo } from '../../../../handlers/ssh/actions/getSystemInfo.js';
+import { escapeSpecialChars } from '../../../../common/escapeSpecialChars.js';
 
 jest.mock('ssh2');
 jest.mock('../../../../common/escapeSpecialChars');

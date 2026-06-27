@@ -30,7 +30,6 @@ describe('SettingsSchema', () => {
     // features defaults (mirrors execution groups)
     expect(parsed.features.executeShell.enabled).toBe(true);
     expect(parsed.features.executeCode.enabled).toBe(true);
-    expect(parsed.features.executeLlm.enabled).toBe(true);
 
     // llm defaults
     expect(parsed.llm.enabled).toBe(false);

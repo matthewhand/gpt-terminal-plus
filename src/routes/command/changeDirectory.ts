@@ -1,2 +1,2 @@
 // Re-export from index.ts
-export { changeDirectory } from './index';
+export { changeDirectory } from './index.js';

@@ -1,5 +1,5 @@
-import { getOrGenerateApiToken } from '../common/apiToken';
-import { convictConfig } from '../config/convictConfig';
+import { getOrGenerateApiToken } from '../common/apiToken.js';
+import { convictConfig } from '../config/convictConfig.js';
 import { Request, Response, NextFunction } from 'express';
 import Debug from 'debug';
 

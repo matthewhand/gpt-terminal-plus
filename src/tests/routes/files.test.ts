@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import filesRoutes from '../../routes/files';
+import filesRoutes from '../../routes/files.js';
 
 jest.mock('../../middlewares/checkAuthToken', () => ({
   checkAuthToken: (req: any, res: any, next: any) => next()

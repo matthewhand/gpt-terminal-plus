@@ -18,7 +18,6 @@ jest.mock('../../src/routes/command', () => ({
   executeShell: jest.fn(),
   executeCode: jest.fn(),
   executeFile: jest.fn(),
-  executeLlm: jest.fn(),
   executeBash: jest.fn(),
   executePython: jest.fn(),
   executorsRouter: jest.fn(),

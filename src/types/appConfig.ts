@@ -1,4 +1,4 @@
-import { ServerConfig } from './ServerConfig';
+import { ServerConfig } from './ServerConfig.js';
 
 /**
  * Interface representing the application configuration.

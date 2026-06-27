@@ -1,8 +1,8 @@
-import { convictConfig } from '../config/convictConfig';
-import { ChatRequest, ChatResponse } from './types';
-import { chatWithOpenAI, chatWithOpenAIStream } from './providers/openai';
-import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama';
-import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio';
+import { convictConfig } from '../config/convictConfig.js';
+import { ChatRequest, ChatResponse } from './types.js';
+import { chatWithOpenAI, chatWithOpenAIStream } from './providers/openai.js';
+import { chatWithOllama, chatWithOllamaStream, OllamaConfig } from './providers/ollama.js';
+import { chatWithLmStudio, chatWithLmStudioStream, LmStudioConfig } from './providers/lmstudio.js';
 
 export interface LlmClient {
   provider: string;

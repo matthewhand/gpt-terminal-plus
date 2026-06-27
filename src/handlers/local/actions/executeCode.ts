@@ -1,7 +1,7 @@
 import { exec as _exec } from 'child_process';
 import shellEscape from 'shell-escape';
-import { ExecutionResult } from '../../../types/ExecutionResult';
-import { convictConfig } from '../../../config/convictConfig';
+import { ExecutionResult } from '../../../types/ExecutionResult.js';
+import { convictConfig } from '../../../config/convictConfig.js';
 import Debug from 'debug';
 
 const debug = Debug('app:local:executeCode');

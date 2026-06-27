@@ -169,13 +169,6 @@ describe('openapi.ts - OpenAPI Spec and Routes', () => {
       expect(spec.paths['/command/executors/{name}/update']).toBeDefined();
     });
 
-    it('should include /command/execute-llm path', () => {
-      const spec = openapi.buildSpec();
-      const llmPath = spec.paths['/command/execute-llm'];
-      expect(llmPath.post.operationId).toBe('executeLlm');
-      expect(llmPath.post.requestBody.content['application/json'].schema.required).toEqual(['instructions']);
-    });
-
     it('should include file operation paths with x-openai-isConsequential from config', () => {
       (convictConfig as jest.Mock).mockReturnValue({ get: jest.fn(key => key === 'files.consequential' ? true : null) });
       const spec = openapi.buildSpec();

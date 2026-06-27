@@ -1,5 +1,5 @@
-import { enforceInputLimit, clipOutput, getLimitConfig } from '../../utils/limits';
-import { convictConfig } from '../../config/convictConfig';
+import { enforceInputLimit, clipOutput, getLimitConfig } from '../../utils/limits.js';
+import { convictConfig } from '../../config/convictConfig.js';
 
 describe('utils/limits', () => {
   const originalEnv = { ...process.env } as NodeJS.ProcessEnv;

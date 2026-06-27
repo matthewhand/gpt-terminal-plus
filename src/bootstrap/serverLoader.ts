@@ -1,6 +1,6 @@
 import config from 'config';
-import { registerServerInMemory } from '../managers/serverRegistry';
-import { ServerConfig } from '../types/ServerConfig';
+import { registerServerInMemory } from '../managers/serverRegistry.js';
+import { ServerConfig } from '../types/ServerConfig.js';
 
 export function registerServersFromConfig(): void {
   let hasLocalhost = false;

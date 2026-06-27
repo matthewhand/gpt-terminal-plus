@@ -1,3 +1,3 @@
 // Re-export from index.ts
-export { sessionRouter } from './index';
-export { sessionRouter as default } from './index';
+export { sessionRouter } from './index.js';
+export { sessionRouter as default } from './index.js';

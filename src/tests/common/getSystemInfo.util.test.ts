@@ -1,4 +1,4 @@
-import { getSystemInfo } from '../../../src/common/getSystemInfo';
+import { getSystemInfo } from '../../../src/common/getSystemInfo.js';
 
 describe('common/getSystemInfo (unit)', () => {
   it('throws when executionFunction is not a function', async () => {

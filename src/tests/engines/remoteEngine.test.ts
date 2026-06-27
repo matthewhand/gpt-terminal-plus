@@ -1,4 +1,4 @@
-import { createSSHSession, createSSMSession } from '../../engines/remoteEngine';
+import { createSSHSession, createSSMSession } from '../../engines/remoteEngine.js';
 import { spawn } from 'child_process';
 
 jest.mock('child_process');

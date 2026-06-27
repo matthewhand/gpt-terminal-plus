@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import Debug from "debug";
-import { handleServerError } from "../../utils/handleServerError";
-import { getServerHandler } from "../../utils/getServerHandler";
-import { ServerManager } from "../../managers/ServerManager";
+import { handleServerError } from "../../utils/handleServerError.js";
+import { getServerHandler } from "../../utils/getServerHandler.js";
+import { ServerManager } from "../../managers/ServerManager.js";
 import { writeFile, readFile } from "fs/promises";
 import path from "path";
 

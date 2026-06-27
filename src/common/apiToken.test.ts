@@ -1,4 +1,4 @@
-import { getOrGenerateApiToken } from './apiToken';
+import { getOrGenerateApiToken } from './apiToken.js';
 
 describe('getOrGenerateApiToken', () => {
   const OLD_ENV = process.env;

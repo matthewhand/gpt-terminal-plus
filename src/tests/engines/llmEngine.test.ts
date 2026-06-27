@@ -1,5 +1,5 @@
-import { planCommand } from '../../engines/llmEngine';
-import { costTracker } from '../../utils/costTracker';
+import { planCommand } from '../../engines/llmEngine.js';
+import { costTracker } from '../../utils/costTracker.js';
 
 jest.mock('../../config/convictConfig');
 jest.mock('../../utils/costTracker');
